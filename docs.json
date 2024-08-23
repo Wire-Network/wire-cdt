@@ -1,0 +1,26 @@
+{
+	"name": "cdt",
+	"generators": [
+    	{
+			"name": "collate_markdown",
+			"options": {
+				"docs_dir": "docs"
+			}
+		},
+		{
+			"name": "doxygen_to_xml",
+			"options": {
+				"INPUT": "libraries/sysiolib",
+				"EXCLUDE_PATTERNS": "*.cpp *.c",
+				"ENABLE_PREPROCESSING": "YES",
+				"MACRO_EXPANSION": "YES",
+				"EXPAND_ONLY_PREDEF": "YES",
+				"PREDEFINED": "__attribute__(x)="
+			}
+		},
+    	{
+			"name": "doxybook",
+			"options": {}
+		}
+	]
+}
