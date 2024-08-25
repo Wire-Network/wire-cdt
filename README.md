@@ -154,4 +154,4 @@ sudo apt remove cdt
 
 ## License
 
-[MIT](./LICENSE)
+[FSL-1.1-Apache-2.0](./LICENSE.md)
