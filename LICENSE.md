@@ -1,11 +1,11 @@
-Wire Network
-Copyright (c) 2024 WIRE NETWORK, INC. and its contributors. All Rights Reserved.
-This software is owned and created by Wire Network, but it builds upon AntelopeIO/leap and EOSIO/eos.
+Wire Network <br/>
+Copyright (c) 2024 WIRE NETWORK, INC. and its contributors. All Rights Reserved.<br/>
+This software is owned and created by Wire Network, but it builds upon AntelopeIO/cdt and EOSIO/eos.cdt.
 
-AntelopeIO/cdt
+AntelopeIO/cdt<br/>
 Copyright (c) 2021-2022 EOS Network Foundation (ENF) and its contributors.  All rights reserved. 
 
-EOSIO/eosio.cdt
+EOSIO/eosio.cdt<br/>
 Copyright (c) 2017-2021 block.one and its contributors.  All rights reserved.
 
 ---
