@@ -23,7 +23,7 @@ include_directories(${LLVM_BINDIR}/include)
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-set(EOSIO_STACK_SIZE 8192)
+set(SYSIO_STACK_SIZE 8192)
 
 macro (add_tool name)
    set(LLVM_LINK_COMPONENTS support)

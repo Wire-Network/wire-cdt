@@ -9,7 +9,7 @@
 #include "dispatcher.hpp"
 #include "contract.hpp"
 
-#ifndef EOSIO_NATIVE
+#ifndef SYSIO_NATIVE
 static_assert( sizeof(long) == sizeof(int), "unexpected size difference" );
 #endif
 
@@ -25,5 +25,5 @@ static_assert( sizeof(long) == sizeof(int), "unexpected size difference" );
 
 /**
  * @defgroup types Types
- * @brief C++ Types API for data layout of data-structures available for the EOSIO platform
+ * @brief C++ Types API for data layout of data-structures available for the SYSIO platform
  */

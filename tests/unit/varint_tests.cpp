@@ -22,7 +22,7 @@ static constexpr int32_t i32min = numeric_limits<int32_t>::min(); // -2147483648
 static constexpr int32_t i32max = numeric_limits<int32_t>::max(); //  2147483647
 
 // Defined in `sysio.cdt/libraries/sysio/varint.hpp`
-EOSIO_TEST_BEGIN(unsigned_int_type_test)
+SYSIO_TEST_BEGIN(unsigned_int_type_test)
    //// unsigned_int(uint32_t)
    CHECK_EQUAL( unsigned_int{}.value, 0 )
    CHECK_EQUAL( unsigned_int{u32min}.value, 0 )
@@ -121,10 +121,10 @@ EOSIO_TEST_BEGIN(unsigned_int_type_test)
    ds.seekp(0);
    ds >> ui;
    CHECK_EQUAL( cui, ui)
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 // Defined in `sysio.cdt/libraries/sysio/varint.hpp`
-EOSIO_TEST_BEGIN(signed_int_type_test)
+SYSIO_TEST_BEGIN(signed_int_type_test)
    //// signed_int(uint32_t)
    CHECK_EQUAL( signed_int{}.value, 0 )
    CHECK_EQUAL( signed_int{i32min}.value, -2147483648 )
@@ -250,9 +250,9 @@ EOSIO_TEST_BEGIN(signed_int_type_test)
    CHECK_EQUAL( b, bb )
    CHECK_EQUAL( c, cc )
    CHECK_EQUAL( d, dd )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(unsigned_int_constexpr_test)
+SYSIO_TEST_BEGIN(unsigned_int_constexpr_test)
    //// unsigned_int(uint32_t)
    static_assert( unsigned_int{}.value == 0 );
    static_assert( unsigned_int{u32min}.value == 0 );
@@ -343,9 +343,9 @@ EOSIO_TEST_BEGIN(unsigned_int_constexpr_test)
    static_assert( unsigned_int{0xffffffff}.value == 4294967295 ); // 4 bytes
    static_assert( unsigned_int{100l}.value == 100 );  // cast from long
    static_assert( sizeof(unsigned_int{0xf}) == 4 );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(signed_int_constexpr_test)
+SYSIO_TEST_BEGIN(signed_int_constexpr_test)
    //// signed_int(uint32_t)
    static_assert( signed_int{}.value == 0 );
    static_assert( signed_int{i32min}.value == -2147483648 );
@@ -458,7 +458,7 @@ EOSIO_TEST_BEGIN(signed_int_constexpr_test)
    static_assert( signed_int{-0x80000000l}.value == -2147483648 ); // 4 bytes
    static_assert( signed_int{100u}.value == 100 ); // cast from unsigned
    static_assert( sizeof(signed_int{0xf}) == 4 );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -467,9 +467,9 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(unsigned_int_type_test)
-   EOSIO_TEST(signed_int_type_test);
-   EOSIO_TEST(unsigned_int_constexpr_test);
-   EOSIO_TEST(signed_int_constexpr_test);
+   SYSIO_TEST(unsigned_int_type_test)
+   SYSIO_TEST(signed_int_type_test);
+   SYSIO_TEST(unsigned_int_constexpr_test);
+   SYSIO_TEST(signed_int_constexpr_test);
    return has_failed();
 }

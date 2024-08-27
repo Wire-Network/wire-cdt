@@ -1,5 +1,5 @@
 /*
- * Regression test for https://github.com/EOSIO/sysio.cdt/issues/601.
+ * Regression test for https://github.com/SYSIO/sysio.cdt/issues/601.
  *
  * Verifies that a struct can inherit from a typedef'd class/struct.
  */

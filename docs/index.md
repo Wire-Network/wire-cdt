@@ -6,7 +6,7 @@ In addition to being a general purpose WebAssembly toolchain, specific features 
 
 ## Upgrading
 
-If you are upgrading to CDT version 3.0 or later from version 1.8.1 (or earlier) of [EOSIO.CDT](https://github.com/EOSIO/sysio.cdt), then please read [EOSIO.CDT to CDT](./04_upgrading/sysio.cdt-to-cdt.md).
+If you are upgrading to CDT version 3.0 or later from version 1.8.1 (or earlier) of [SYSIO.CDT](https://github.com/SYSIO/sysio.cdt), then please read [SYSIO.CDT to CDT](./04_upgrading/sysio.cdt-to-cdt.md).
 
 ## License
 

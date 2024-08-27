@@ -1,5 +1,5 @@
 /*
- * Regression test for https://github.com/EOSIO/sysio.cdt/issues/602.
+ * Regression test for https://github.com/SYSIO/sysio.cdt/issues/602.
  *
  * Verifies that an aliased type can be used as a variant template arg.
  */

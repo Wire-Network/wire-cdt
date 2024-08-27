@@ -94,15 +94,15 @@ namespace sysio {
 
   /// @cond INTERNAL
 
- // Helper macro for EOSIO_DISPATCH_INTERNAL
- #define EOSIO_DISPATCH_INTERNAL( r, OP, elem ) \
+ // Helper macro for SYSIO_DISPATCH_INTERNAL
+ #define SYSIO_DISPATCH_INTERNAL( r, OP, elem ) \
     case sysio::name( BOOST_PP_STRINGIZE(elem) ).value: \
        sysio::execute_action( sysio::name(receiver), sysio::name(code), &OP::elem ); \
        break;
 
- // Helper macro for EOSIO_DISPATCH
- #define EOSIO_DISPATCH_HELPER( TYPE,  MEMBERS ) \
-    BOOST_PP_SEQ_FOR_EACH( EOSIO_DISPATCH_INTERNAL, TYPE, MEMBERS )
+ // Helper macro for SYSIO_DISPATCH
+ #define SYSIO_DISPATCH_HELPER( TYPE,  MEMBERS ) \
+    BOOST_PP_SEQ_FOR_EACH( SYSIO_DISPATCH_INTERNAL, TYPE, MEMBERS )
 
 /// @endcond
 
@@ -116,16 +116,16 @@ namespace sysio {
  *
  * Example:
  * @code
- * EOSIO_DISPATCH( sysio::bios, (setpriv)(setalimits)(setglimits)(setprods)(reqauth) )
+ * SYSIO_DISPATCH( sysio::bios, (setpriv)(setalimits)(setglimits)(setprods)(reqauth) )
  * @endcode
  */
-#define EOSIO_DISPATCH( TYPE, MEMBERS ) \
+#define SYSIO_DISPATCH( TYPE, MEMBERS ) \
 extern "C" { \
    [[sysio::wasm_entry]] \
    void apply( uint64_t receiver, uint64_t code, uint64_t action ) { \
       if( code == receiver ) { \
          switch( action ) { \
-            EOSIO_DISPATCH_HELPER( TYPE, MEMBERS ) \
+            SYSIO_DISPATCH_HELPER( TYPE, MEMBERS ) \
          } \
          /* does not allow destructor of thiscontract to run: sysio_exit(0); */ \
       } \

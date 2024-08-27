@@ -14,7 +14,7 @@ content_title: Troubleshooting
         "what":"Provided keys, permissions, and delays do not satisfy declared authorizations",
         "details":[
             {
-                "message":"transaction declares authority '{"actor":"account_name","permission":"permission_name"}', but does not have signatures for it under a provided delay of 0 ms, provided permissions [], provided keys ["EOS5ZcMvpgtDMdVtvCFewAQYTyfN6Vqhg4kdgauffx3jiaKaeWfY1"], and a delay max limit of 3888000000 ms",
+                "message":"transaction declares authority '{"actor":"account_name","permission":"permission_name"}', but does not have signatures for it under a provided delay of 0 ms, provided permissions [], provided keys ["SYS5ZcMvpgtDMdVtvCFewAQYTyfN6Vqhg4kdgauffx3jiaKaeWfY1"], and a delay max limit of 3888000000 ms",
                 "file":"authorization_manager.cpp",
                 "line_number":524,
                 "method":"check_authorization"
@@ -154,7 +154,7 @@ The code above has one `print` statement before the `singleton_set.send` and ano
 ## Assertion failure while creating an account after sysio.system was installed
 
 ```sh
-cleos create account sysio bob EOS5HUanbay86UUnr1d4fuBsQ3ksjfgZYoLUVvrYVLy6pj4i8xqVY
+cleos create account sysio bob SYS5HUanbay86UUnr1d4fuBsQ3ksjfgZYoLUVvrYVLy6pj4i8xqVY
 ```
 
 ```console
@@ -164,4 +164,4 @@ assertion failure with message: system contract must first be initialized
 ```
 
 The failure is stating that `sysio.system` `init` action was not called yet. The `init` action is implemented by the `void init(uint64_t, symbol)` function. The first parameter is the version, this should always be `0` for now, until a new version of `init` will be created that handles more information.
-The second parameter is the system's symbol (i.e. for main net this is `EOS`). If you followed the [BIOS Boot Sequence](https://docs.eosnetwork.com/docs/latest/tutorials/bios-boot-sequence) tutorial and created a system with the default symbol `SYS` then `SYS` shall be used as the system's symbol in the `init` action. It is whatever symbol you as the chain creator want to use in your `Antelope` based blockchain.
+The second parameter is the system's symbol (i.e. for main net this is `SYS`). If you followed the [BIOS Boot Sequence](https://docs.eosnetwork.com/docs/latest/tutorials/bios-boot-sequence) tutorial and created a system with the default symbol `SYS` then `SYS` shall be used as the system's symbol in the `init` action. It is whatever symbol you as the chain creator want to use in your `Antelope` based blockchain.

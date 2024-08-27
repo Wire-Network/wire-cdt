@@ -21,7 +21,7 @@ static constexpr int64_t asset_min{-asset_mask}; // -4611686018427387903
 static constexpr int64_t asset_max{ asset_mask}; //  4611686018427387903
 
 // Definitions in `sysio.cdt/libraries/sysio/asset.hpp`
-EOSIO_TEST_BEGIN(asset_type_test)
+SYSIO_TEST_BEGIN(asset_type_test)
    static constexpr symbol s0{"A", 0};
    static constexpr symbol s1{"Z", 0};
    static constexpr symbol s2{"AAAAAAA", 0};
@@ -354,10 +354,10 @@ EOSIO_TEST_BEGIN(asset_type_test)
    // friend bool operator>=( const asset&, const asset&)
    CHECK_EQUAL( ( asset{1LL, sym_no_prec} >= asset{0LL, sym_no_prec} ), true )
    CHECK_EQUAL( ( asset{1LL, sym_no_prec} >= asset{1LL, sym_no_prec} ), true )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 // Definitions in `sysio.cdt/libraries/sysio/asset.hpp`
-EOSIO_TEST_BEGIN(extended_asset_type_test)
+SYSIO_TEST_BEGIN(extended_asset_type_test)
    static constexpr symbol sym_no_prec{"SYMBOLL",0};
    static constexpr symbol sym_prec{"SYMBOLL",63};
 
@@ -531,7 +531,7 @@ EOSIO_TEST_BEGIN(extended_asset_type_test)
          return b;
       })
    )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -540,7 +540,7 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(asset_type_test);
-   EOSIO_TEST(extended_asset_type_test);
+   SYSIO_TEST(asset_type_test);
+   SYSIO_TEST(extended_asset_type_test);
    return has_failed();
 }

@@ -34,7 +34,7 @@ CONTRACT explicit_nested_tests : public contract {
       std::vector<std::vector<_mystruct>> vvmys;
       auto primary_key() const { return id; }
 
-      EOSLIB_SERIALIZE(testdata, (id)(data)(data_vec)(data_vec2)(data_vec3)(tup1)(var1)(vvmys));
+      SYSLIB_SERIALIZE(testdata, (id)(data)(data_vec)(data_vec2)(data_vec3)(tup1)(var1)(vvmys));
    };
    using test_data_idx = multi_index<"testdata"_n, testdata>;
 

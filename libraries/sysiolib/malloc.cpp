@@ -3,7 +3,7 @@
 #include "core/sysio/check.hpp"
 #include "core/sysio/print.hpp"
 
-#ifdef EOSIO_NATIVE
+#ifdef SYSIO_NATIVE
    extern "C" {
       size_t _current_memory();
       size_t _grow_memory(size_t);
@@ -46,7 +46,7 @@ namespace sysio {
          }
 
          sbrk_bytes += num_bytes;
-#ifdef EOSIO_NATIVE
+#ifdef SYSIO_NATIVE
       return reinterpret_cast<void*>((char*)__get_heap_base()+prev_num_bytes);
 #else
       return reinterpret_cast<void*>(prev_num_bytes);

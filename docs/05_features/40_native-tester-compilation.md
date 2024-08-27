@@ -35,7 +35,7 @@ and then a quick test
 using namespace sysio;
 using namespace sysio::native;
 
-EOSIO_TEST_BEGIN(hello_test)
+SYSIO_TEST_BEGIN(hello_test)
    // These can be redefined by the user to suit there needs per unit test
    // the idea is that in a future release there will be a base library that 
    // initializes these to "useable" default implementations and probably 
@@ -81,12 +81,12 @@ EOSIO_TEST_BEGIN(hello_test)
             apply("test"_n.value, "test"_n.value, "check"_n.value);
             });
 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 // boilerplate main, this will be generated in a future release
 int main(int argc, char** argv) {
    silence_output(true);
-   EOSIO_TEST(hello_test);
+   SYSIO_TEST(hello_test);
    return has_failed();
 }
 ```
@@ -117,6 +117,6 @@ Every `intrinsic` that is defined for sysio (prints, require_auth, etc.) is re-d
         - `REQUIRE_PRINT("<print message>", [](<args>){ whatever_function(<args>); })`
         - `REQUIRE_PRINT([](std::string print_buffer){ user defined comparison function }, [](<args>){ whatever_function(<args>); })`
 - REQUIRE_EQUAL(X, Y) : This macro will check whether two inputs `X` and `Y` equal eachother and fail the test and halt the test on failure.
-- EOSIO_TEST_BEGIN(X) : This macro defines the beginning of a unit test and assigns `X` as the symbolic name of that test.
-- EOSIO_TEST_END : This macro defines the end of a unit test.
-- EOSIO_TEST(X) : This is used to run a particular named unit test `X` in the main function.
+- SYSIO_TEST_BEGIN(X) : This macro defines the beginning of a unit test and assigns `X` as the symbolic name of that test.
+- SYSIO_TEST_END : This macro defines the end of a unit test.
+- SYSIO_TEST(X) : This is used to run a particular named unit test `X` in the main function.

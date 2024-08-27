@@ -21,7 +21,7 @@ static constexpr uint64_t u64min = numeric_limits<uint64_t>::min(); // 0ULL
 static constexpr uint64_t u64max = numeric_limits<uint64_t>::max(); // 18446744073709551615ULL
 
 // Definitions in `sysio.cdt/libraries/sysio/symbol.hpp`
-EOSIO_TEST_BEGIN(symbol_code_type_test)
+SYSIO_TEST_BEGIN(symbol_code_type_test)
    //// constexpr symbol_code()
    // constexpr uint64_t raw()const
    CHECK_EQUAL( symbol_code{}.raw(), 0ULL )
@@ -117,10 +117,10 @@ EOSIO_TEST_BEGIN(symbol_code_type_test)
    CHECK_EQUAL( symbol_code{} < symbol_code{"Z"}, true )
    CHECK_EQUAL( symbol_code{} < symbol_code{"AAAAAAA"}, true )
    CHECK_EQUAL( symbol_code{} < symbol_code{"ZZZZZZZ"}, true )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 // Definitions in `sysio.cdt/libraries/sysio/symbol.hpp`
-EOSIO_TEST_BEGIN(symbol_type_test)
+SYSIO_TEST_BEGIN(symbol_type_test)
    static constexpr symbol_code sc0{"A"};
    static constexpr symbol_code sc1{"Z"};
    static constexpr symbol_code sc2{"AAAAAAA"};
@@ -217,10 +217,10 @@ EOSIO_TEST_BEGIN(symbol_type_test)
    CHECK_EQUAL( (symbol{} < symbol{sc1, 0}), true )
    CHECK_EQUAL( (symbol{} < symbol{sc2, 0}), true )
    CHECK_EQUAL( (symbol{} < symbol{sc3, 0}), true )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 // Definitions in `sysio.cdt/libraries/sysio/symbol.hpp`
-EOSIO_TEST_BEGIN(extended_symbol_type_test)
+SYSIO_TEST_BEGIN(extended_symbol_type_test)
    static constexpr name n0{"1"};
    static constexpr name n1{"5"};
    static constexpr name n2{"a"};
@@ -292,7 +292,7 @@ EOSIO_TEST_BEGIN(extended_symbol_type_test)
    CHECK_EQUAL( (extended_symbol{} < extended_symbol{s1, {}}), true )
    CHECK_EQUAL( (extended_symbol{} < extended_symbol{s2, {}}), true )
    CHECK_EQUAL( (extended_symbol{} < extended_symbol{s3, {}}), true )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -301,8 +301,8 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(symbol_code_type_test);
-   EOSIO_TEST(symbol_type_test);
-   EOSIO_TEST(extended_symbol_type_test);
+   SYSIO_TEST(symbol_code_type_test);
+   SYSIO_TEST(symbol_type_test);
+   SYSIO_TEST(extended_symbol_type_test);
    return has_failed();
 }

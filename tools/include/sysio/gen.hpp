@@ -121,7 +121,7 @@ struct generation_utils {
       auto check = [&](const clang::Type* pt) {
         if (auto tst = llvm::dyn_cast<clang::TemplateSpecializationType>(pt))
          if (auto rt = llvm::dyn_cast<clang::RecordType>(tst->desugar()))
-            return rt->getDecl()->isEosioIgnore();
+            return rt->getDecl()->isSysioIgnore();
 
          return false;
       };
@@ -140,7 +140,7 @@ struct generation_utils {
       auto get = [&](const clang::Type* pt) {
          if (auto tst = llvm::dyn_cast<clang::TemplateSpecializationType>(pt))
             if (auto decl = llvm::dyn_cast<clang::RecordType>(tst->desugar()))
-               return decl->getDecl()->isEosioIgnore() ? tst->getArg(0).getAsType() : type;
+               return decl->getDecl()->isSysioIgnore() ? tst->getArg(0).getAsType() : type;
          return type;
       };
 
@@ -171,34 +171,34 @@ struct generation_utils {
    }
 
    static inline bool has_sysio_ricardian( const clang::CXXMethodDecl* decl ) {
-      return decl->hasEosioRicardian();
+      return decl->hasSysioRicardian();
    }
    static inline bool has_sysio_ricardian( const clang::CXXRecordDecl* decl ) {
-      return decl->hasEosioRicardian();
+      return decl->hasSysioRicardian();
    }
 
    static inline std::string get_sysio_ricardian( const clang::CXXMethodDecl* decl ) {
-      return decl->getEosioRicardianAttr()->getName();
+      return decl->getSysioRicardianAttr()->getName();
    }
    static inline std::string get_sysio_ricardian( const clang::CXXRecordDecl* decl ) {
-      return decl->getEosioRicardianAttr()->getName();
+      return decl->getSysioRicardianAttr()->getName();
    }
 
    static inline std::string get_action_name( const clang::CXXMethodDecl* decl ) {
       std::string action_name = "";
-      auto tmp = decl->getEosioActionAttr()->getName();
+      auto tmp = decl->getSysioActionAttr()->getName();
       if (!tmp.empty())
          return tmp;
       return decl->getNameAsString();
    }
    static inline std::string get_notify_pair( const clang::CXXMethodDecl* decl ) {
       std::string notify_pair = "";
-      auto tmp = decl->getEosioNotifyAttr()->getName();
+      auto tmp = decl->getSysioNotifyAttr()->getName();
       return tmp;
    }
    static inline std::string get_action_name( const clang::CXXRecordDecl* decl ) {
       std::string action_name = "";
-      auto tmp = decl->getEosioActionAttr()->getName();
+      auto tmp = decl->getSysioActionAttr()->getName();
       if (!tmp.empty())
          return tmp;
       return decl->getName();
@@ -275,10 +275,10 @@ struct generation_utils {
 
    static inline bool is_sysio_contract( const clang::CXXMethodDecl* decl, const std::string& cn ) {
       std::string name = "";
-      if (decl->isEosioContract())
-         name = decl->getEosioContractAttr()->getName();
-      else if (decl->getParent()->isEosioContract())
-         name = decl->getParent()->getEosioContractAttr()->getName();
+      if (decl->isSysioContract())
+         name = decl->getSysioContractAttr()->getName();
+      else if (decl->getParent()->isSysioContract())
+         name = decl->getParent()->getSysioContractAttr()->getName();
       if (name.empty()) {
          name = decl->getParent()->getName().str();
       }
@@ -289,12 +289,12 @@ struct generation_utils {
    static inline bool is_sysio_contract( const clang::CXXRecordDecl* decl, const std::string& cn ) {
       std::string name = "";
       auto pd = llvm::dyn_cast<clang::CXXRecordDecl>(decl->getParent());
-      if (decl->isEosioContract()) {
-         auto nm = decl->getEosioContractAttr()->getName().str();
+      if (decl->isSysioContract()) {
+         auto nm = decl->getSysioContractAttr()->getName().str();
          name = nm.empty() ? decl->getName().str() : nm;
       }
-      else if (pd && pd->isEosioContract()) {
-         auto nm = pd->getEosioContractAttr()->getName().str();
+      else if (pd && pd->isSysioContract()) {
+         auto nm = pd->getSysioContractAttr()->getName().str();
          name = nm.empty() ? pd->getName().str() : nm;
       }
       parsed_contract_name = name;

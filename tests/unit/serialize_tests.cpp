@@ -25,7 +25,7 @@ using sysio::datastream;
 
 struct B {
    const char c{};
-   EOSLIB_SERIALIZE( B, (c) )
+   SYSLIB_SERIALIZE( B, (c) )
 
    friend bool operator==(const B& lhs, const B& rhs) {
          return lhs.c == rhs.c;
@@ -34,7 +34,7 @@ struct B {
 
 struct D1 : public B {
    const int i{};
-   EOSLIB_SERIALIZE_DERIVED( D1, B, (i) )
+   SYSLIB_SERIALIZE_DERIVED( D1, B, (i) )
 
    friend bool operator==(const D1& lhs, const D1& rhs) {
       return tie(lhs.c, lhs.i) == tie(rhs.c, rhs.i);
@@ -43,7 +43,7 @@ struct D1 : public B {
 
 struct D2 : public D1 {
    const vector<double> v{};
-   EOSLIB_SERIALIZE_DERIVED( D2, D1, (v) )
+   SYSLIB_SERIALIZE_DERIVED( D2, D1, (v) )
 
    friend bool operator==(const D2& lhs, const D2& rhs) {
       return tie(lhs.c, lhs.i, lhs.v) == tie(rhs.c, rhs.i, rhs.v);
@@ -51,7 +51,7 @@ struct D2 : public D1 {
 };
 
 // Definitions in `sysio.cdt/libraries/sysio/serialize.hpp`
-EOSIO_TEST_BEGIN(serialize_test)
+SYSIO_TEST_BEGIN(serialize_test)
    static constexpr uint16_t buffer_size{256};
    char ds_buffer[buffer_size]{}; // Buffer for the datastream to point to
    char ds_expected_buffer[buffer_size]{}; // Buffer to compare `ds_buffer` with
@@ -99,7 +99,7 @@ EOSIO_TEST_BEGIN(serialize_test)
    ds.seekp(0);
    ds >> dd2;
    REQUIRE_EQUAL( d2, dd2 )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -108,6 +108,6 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(serialize_test)
+   SYSIO_TEST(serialize_test)
    return has_failed();
 }

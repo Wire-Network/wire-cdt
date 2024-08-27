@@ -230,7 +230,7 @@ namespace sysio { namespace cdt {
             std::string name = decl->getNameAsString();
             static std::set<std::string> _action_set; //used for validations
             static std::set<std::string> _notify_set; //used for validations
-            if (decl->isEosioAction()) {
+            if (decl->isSysioAction()) {
                name = generation_utils::get_action_name(decl);
                validate_name(name, [&](auto s) {
                   CDT_ERROR("codegen_error", decl->getLocation(), std::string("action name (")+s+") is not a valid sysio name");
@@ -248,11 +248,11 @@ namespace sysio { namespace cdt {
                }
                cg.actions.insert(full_action_name); // insert the method action, so we don't create the dispatcher twice
 
-               if (decl->isEosioReadOnly()) {
+               if (decl->isSysioReadOnly()) {
                   read_only_actions.insert(decl);
                }
             }
-            else if (decl->isEosioNotify()) {
+            else if (decl->isSysioNotify()) {
                name = generation_utils::get_notify_pair(decl);
                auto first = name.substr(0, name.find("::"));
                if (first != "*")
@@ -409,7 +409,7 @@ namespace sysio { namespace cdt {
          }
 
          virtual bool VisitCXXRecordDecl(CXXRecordDecl* decl) {
-            if (decl->isEosioContract()) {
+            if (decl->isSysioContract()) {
                auto process_data_member = [this]( CXXRecordDecl* rd ) {
                   for (auto it = rd->decls_begin(); it != rd->decls_end(); ++it) {
                      if (auto* f = dyn_cast<FieldDecl>(*it) ) {

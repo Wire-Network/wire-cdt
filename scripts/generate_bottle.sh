@@ -30,7 +30,7 @@ export SSUBPREFIX
 
 hash=`openssl dgst -sha256 ${NAME}.tar.gz | awk 'NF>1{print $NF}'`
 
-echo "class EosioCdt < Formula
+echo "class SysioCdt < Formula
    # typed: false
    # frozen_string_literal: true
 

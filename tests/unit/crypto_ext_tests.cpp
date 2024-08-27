@@ -9,7 +9,7 @@
 using namespace sysio::native;
 
 // Definitions in `sysio.cdt/libraries/sysio/crypto_ext.hpp`
-EOSIO_TEST_BEGIN(ec_point_test)
+SYSIO_TEST_BEGIN(ec_point_test)
    std::string x_str = "0123456789abcdeffedcba9876543210";
    std::string y_str = "fedcba98765432100123456789abcdef";
    std::string serialized_str = "0123456789abcdeffedcba9876543210fedcba98765432100123456789abcdef";
@@ -33,9 +33,9 @@ EOSIO_TEST_BEGIN(ec_point_test)
 
    sysio::ec_point_view view2{ point };
    CHECK_EQUAL( view2.serialized(), serialized );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(g1_point_test)
+SYSIO_TEST_BEGIN(g1_point_test)
    std::vector<char> chars_1(1), chars_32(32), chars_33(33), chars_64(64), chars_65(65);
 
    CHECK_EQUAL( (sysio::g1_point{chars_32, chars_32}.serialized().size()), 64 );
@@ -53,9 +53,9 @@ EOSIO_TEST_BEGIN(g1_point_test)
 
    CHECK_ASSERT( "point size must match", ([&]() {sysio::g1_point_view{chars_65};}) );
    CHECK_ASSERT( "point size must match", ([&]() {sysio::g1_point_view{chars_32};}) );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(g2_point_test)
+SYSIO_TEST_BEGIN(g2_point_test)
    std::vector<char> chars_1(1), chars_64(64), chars_65(65), chars_128(128), chars_129(129);
 
    CHECK_EQUAL( (sysio::g2_point{chars_64, chars_64}.serialized().size()), 128 );
@@ -73,14 +73,14 @@ EOSIO_TEST_BEGIN(g2_point_test)
 
    CHECK_ASSERT( "point size must match", ([&]() {sysio::g2_point_view{chars_129};}) );
    CHECK_ASSERT( "point size must match", ([&]() {sysio::g2_point_view{chars_64};}) );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(bigint_test)
+SYSIO_TEST_BEGIN(bigint_test)
    std::vector<char> chars_128(128), chars_256(256);
 
    CHECK_EQUAL( (sysio::bigint{chars_128}.size()), 128 );
    CHECK_EQUAL( (sysio::bigint{chars_256}.size()), 256 );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -89,10 +89,10 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(ec_point_test)
-   EOSIO_TEST(g1_point_test)
-   EOSIO_TEST(g2_point_test)
-   EOSIO_TEST(bigint_test)
+   SYSIO_TEST(ec_point_test)
+   SYSIO_TEST(g1_point_test)
+   SYSIO_TEST(g2_point_test)
+   SYSIO_TEST(bigint_test)
 
    return has_failed();
 }

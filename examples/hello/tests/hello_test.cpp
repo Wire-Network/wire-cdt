@@ -7,9 +7,9 @@ using namespace sysio;
 using namespace sysio::native;
 
 // need to create a dispatcher, codegen will not be done for native builds until a later release
-EOSIO_DISPATCH(hello, (hi)(check))
+SYSIO_DISPATCH(hello, (hi)(check))
 
-EOSIO_TEST_BEGIN(hello_test)
+SYSIO_TEST_BEGIN(hello_test)
    // These can be redefined by the user to suit there needs per unit test
    // the idea is that in a future release we will have a base library that 
    // initializes these to "useable" default implementations and probably 
@@ -55,11 +55,11 @@ EOSIO_TEST_BEGIN(hello_test)
             apply("test"_n.value, "test"_n.value, "check"_n.value);
             });
 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 // boilerplate main, this will be generated in a future release
 int main(int argc, char** argv) {
    silence_output(true);
-   EOSIO_TEST(hello_test);
+   SYSIO_TEST(hello_test);
    return has_failed();
 }

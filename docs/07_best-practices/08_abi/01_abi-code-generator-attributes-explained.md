@@ -23,12 +23,12 @@ void testa( name n ){
 
 struct [[sysio::action]] testa {
    name n;
-   EOSLIB_SERIALIZE( testa, (n) )
+   SYSLIB_SERIALIZE( testa, (n) )
 };
 
 struct __attribute__((sysio_action)) testa {
    name n;
-   EOSLIB_SERIALIZE( testa, (n) )
+   SYSLIB_SERIALIZE( testa, (n) )
 };
 ```
 
@@ -60,7 +60,7 @@ class [[sysio::contract("ANY_NAME_YOU_LIKE")]] test_contract : public sysio::con
 
 The code above will mark this `class` as being an `Antelope` contract, this allows for namespacing of contracts, i.e. you can include headers like `sysio::token` and not have `sysio::token`'s actions/tables wind up in you ABI or generated dispatcher.
 
-## [[sysio::on_notify("VALID_EOSIO_ACCOUNT_NAME::VALID_EOSIO_ACTION_NAME")]]
+## [[sysio::on_notify("VALID_SYSIO_ACCOUNT_NAME::VALID_SYSIO_ACTION_NAME")]]
 ```cpp
 [[sysio::on_notify("sysio.token::transfer")]]
 void on_token_transfer(name from, name to, assert quantity, std::string memo) {

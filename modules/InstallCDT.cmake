@@ -75,8 +75,8 @@ cdt_tool_install_and_symlink(cdt-ld cdt-ld)
 cdt_tool_install_and_symlink(cdt-abidiff cdt-abidiff)
 cdt_tool_install_and_symlink(cdt-init cdt-init)
 
-cdt_clang_install(../lib/LLVMEosioApply${CMAKE_SHARED_LIBRARY_SUFFIX})
-cdt_clang_install(../lib/LLVMEosioSoftfloat${CMAKE_SHARED_LIBRARY_SUFFIX})
+cdt_clang_install(../lib/LLVMSysioApply${CMAKE_SHARED_LIBRARY_SUFFIX})
+cdt_clang_install(../lib/LLVMSysioSoftfloat${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 cdt_cmake_install_and_symlink(cdt-config.cmake cdt-config.cmake)
 cdt_cmake_install_and_symlink(CDTWasmToolchain.cmake CDTWasmToolchain.cmake)

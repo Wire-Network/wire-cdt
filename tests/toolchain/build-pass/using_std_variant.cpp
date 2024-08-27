@@ -1,5 +1,5 @@
 /*
- * Regression test for https://github.com/EOSIO/sysio.cdt/issues/558
+ * Regression test for https://github.com/SYSIO/sysio.cdt/issues/558
  *
  * Verifies that a class/function can be used from the std namespace
  */

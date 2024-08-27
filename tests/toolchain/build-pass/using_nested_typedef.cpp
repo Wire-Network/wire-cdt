@@ -1,5 +1,5 @@
 /*
- * Regression test for https://github.com/EOSIO/sysio.cdt/issues/600
+ * Regression test for https://github.com/SYSIO/sysio.cdt/issues/600
  *
  * Verifies that nested typedefs build.
  */

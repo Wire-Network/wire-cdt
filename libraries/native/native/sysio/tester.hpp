@@ -101,7 +101,7 @@ inline bool expect_print(bool check, const std::string& li, const char (&expecte
 #define REQUIRE_EQUAL(X, Y) \
    sysio::check(X == Y, std::string(std::string("REQUIRE_EQUAL failed (")+#X+" != "+#Y+") {"+__FILE__+":"+std::to_string(__LINE__)+"}").c_str());
 
-#define EOSIO_TEST(X) \
+#define SYSIO_TEST(X) \
    int X ## _ret = setjmp(*___env_ptr); \
    if ( X ## _ret == 0 ) \
       X(); \
@@ -113,13 +113,13 @@ inline bool expect_print(bool check, const std::string& li, const char (&expecte
       silence_output(___original_disable_output); \
    }
 
-#define EOSIO_TEST_BEGIN(X) \
+#define SYSIO_TEST_BEGIN(X) \
    void X() { \
       static constexpr const char* __test_name = #X; \
       ___earlier_unit_test_has_failed = ___has_failed; \
       ___has_failed = false;
 
-#define EOSIO_TEST_END \
+#define SYSIO_TEST_END \
       bool ___original_disable_output = ___disable_output; \
       silence_output(false); \
       if (___has_failed) \

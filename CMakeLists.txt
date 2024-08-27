@@ -73,7 +73,7 @@ configure_file(${CMAKE_SOURCE_DIR}/scripts/ricardeos/ricardeos.py ${CMAKE_BINARY
 install(FILES ${CMAKE_BINARY_DIR}/scripts/ricardeos.py DESTINATION ${CDT_INSTALL_PREFIX}/scripts)
 
 # section for package construction
-set(VENDOR "EOSNetworkFoundation")
+set(VENDOR "SYSNetworkFoundation")
 set(PROJECT_NAME "cdt")
 set(DESC "Toolchain and supporting tools to facilitate C/C++ development of contracts for Antelope blockchains")
 set(URL "https://github.com/AntelopeIO/cdt")

@@ -8,4 +8,4 @@ void send_inline::test( name user, name inline_code ) {
    hi.send(user);
 }
 
-EOSIO_DISPATCH( send_inline, (test) )
+SYSIO_DISPATCH( send_inline, (test) )

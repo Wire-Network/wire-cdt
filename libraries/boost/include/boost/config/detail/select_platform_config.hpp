@@ -45,7 +45,7 @@
 // Haiku
 #  define BOOST_PLATFORM_CONFIG "boost/config/platform/haiku.hpp"
 
-#elif defined(__BEOS__)
+#elif defined(__BSYS__)
 // BeOS
 #  define BOOST_PLATFORM_CONFIG "boost/config/platform/beos.hpp"
 

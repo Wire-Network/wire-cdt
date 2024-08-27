@@ -10,7 +10,7 @@
 
 using namespace sysio::native;
 
-EOSIO_TEST_BEGIN(rope_test)
+SYSIO_TEST_BEGIN(rope_test)
    sysio::rope r("test string 0");
    r += ", test string 1";
    r += ", test string 2";
@@ -63,7 +63,7 @@ EOSIO_TEST_BEGIN(rope_test)
    for (int i=0; i < s3.length(); i++) {
       REQUIRE_EQUAL(s3[i], r3[i]);
    }
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char** argv) {
    bool verbose = false;
@@ -72,6 +72,6 @@ int main(int argc, char** argv) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(rope_test);
+   SYSIO_TEST(rope_test);
    return has_failed();
 }

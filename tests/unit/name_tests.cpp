@@ -17,7 +17,7 @@ using sysio::name;
 constexpr uint64_t u64max = numeric_limits<uint64_t>::max(); // 18446744073709551615ULL
 
 // Definitions in `sysio.cdt/libraries/sysio/name.hpp`
-EOSIO_TEST_BEGIN(name_type_test_ctr_num)
+SYSIO_TEST_BEGIN(name_type_test_ctr_num)
    //// constexpr name()
    CHECK_EQUAL( name{}.value, 0ULL )
 
@@ -33,9 +33,9 @@ EOSIO_TEST_BEGIN(name_type_test_ctr_num)
    // test that constexpr constructor is evaluated at compile time
    static_assert( name{0ULL}.value == 0ULL );   
    static_assert( name{name::raw{1ULL}}.value == 1ULL );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_ctr_str_lit)
+SYSIO_TEST_BEGIN(name_type_test_ctr_str_lit)
    //// constexpr explicit name(string_view)
    // Note:
    // These are the exact `uint64_t` value representations of the given string
@@ -66,19 +66,19 @@ EOSIO_TEST_BEGIN(name_type_test_ctr_str_lit)
 
    // test that constexpr constructor is evaluated at compile time
    static_assert( name{"1"}.value == 576460752303423488ULL );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_str_not_allowed)
+SYSIO_TEST_BEGIN(name_type_test_str_not_allowed)
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name{"-1"};}) )
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name{"0"};}) )
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name{"6"};}) )
    CHECK_ASSERT( "thirteenth character in name cannot be a letter that comes after j", ([]() {name{"111111111111k"};}) )
    CHECK_ASSERT( "thirteenth character in name cannot be a letter that comes after j", ([]() {name{"zzzzzzzzzzzzk"};}) )
    CHECK_ASSERT( "string is too long to be a valid name", ([]() {name{"12345abcdefghj"};}) )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 
-EOSIO_TEST_BEGIN(name_type_test_char_to_value)
+SYSIO_TEST_BEGIN(name_type_test_char_to_value)
    // --------------------------------------------
    // static constexpr uint8_t char_to_value(char)
    char c{'.'};
@@ -95,9 +95,9 @@ EOSIO_TEST_BEGIN(name_type_test_char_to_value)
       CHECK_EQUAL( name::char_to_value(c), expected_value )
       ++expected_value;
    }
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_allowed_chars)
+SYSIO_TEST_BEGIN(name_type_test_allowed_chars)
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name::char_to_value(char{'-'});}) )
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name::char_to_value(char{'/'});}) )
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name::char_to_value(char{'6'});}) )
@@ -105,9 +105,9 @@ EOSIO_TEST_BEGIN(name_type_test_allowed_chars)
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name::char_to_value(char{'Z'});}) )
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name::char_to_value(char{'`'});}) )
    CHECK_ASSERT( "character is not in allowed character set for names", ([]() {name::char_to_value(char{'{'});}) );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_str_len)
+SYSIO_TEST_BEGIN(name_type_test_str_len)
    // -------------------------------
    // constexpr uint8_t length()cosnt
    CHECK_EQUAL( name{""}.length(), 0 )
@@ -124,13 +124,13 @@ EOSIO_TEST_BEGIN(name_type_test_str_len)
    CHECK_EQUAL( name{"sysioaccoun"}.length(), 11 )
    CHECK_EQUAL( name{"sysioaccount"}.length(), 12 )
    CHECK_EQUAL( name{"sysioaccountj"}.length(), 13 )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_str_too_long)
+SYSIO_TEST_BEGIN(name_type_test_str_too_long)
    CHECK_ASSERT( "string is too long to be a valid name", ([]() {name{"12345abcdefghj"}.length();}) )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_suffix)
+SYSIO_TEST_BEGIN(name_type_test_suffix)
    // ----------------------------
    // constexpr name suffix()const
    CHECK_EQUAL( name{".sysioaccounj"}.suffix(), name{"sysioaccounj"} )
@@ -148,10 +148,10 @@ EOSIO_TEST_BEGIN(name_type_test_suffix)
 
    CHECK_EQUAL( name{"e.o.s.i.o.a.c"}.suffix(), name{"c"} )
    CHECK_EQUAL( name{"eos.ioa.cco"}.suffix(), name{"cco"} )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 
-EOSIO_TEST_BEGIN(name_type_test_prefix)
+SYSIO_TEST_BEGIN(name_type_test_prefix)
    // ----------------------------
    // constexpr name prefix()const
 
@@ -177,9 +177,9 @@ EOSIO_TEST_BEGIN(name_type_test_prefix)
    CHECK_EQUAL( name{"a.my.account"}.prefix().prefix(), name{"a"} )
 
    static_assert( name{"e.osioaccounj"}.prefix() == name{"e"} );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_raw)
+SYSIO_TEST_BEGIN(name_type_test_raw)
    // -----------------------------
    // constexpr operator raw()const
    CHECK_EQUAL( name{"1"}.operator name::raw(), static_cast<name::raw>(576460752303423488ULL) )
@@ -207,10 +207,10 @@ EOSIO_TEST_BEGIN(name_type_test_raw)
    CHECK_EQUAL( name{"555555555555j"}.operator name::raw(), static_cast<name::raw>(2975281302211218015ULL) )
    CHECK_EQUAL( name{"aaaaaaaaaaaaj"}.operator name::raw(), static_cast<name::raw>(3570337562653461615ULL) )
    CHECK_EQUAL( name{"zzzzzzzzzzzzj"}.operator name::raw(), static_cast<name::raw>(u64max) )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 
-EOSIO_TEST_BEGIN(name_type_test_op_bool)
+SYSIO_TEST_BEGIN(name_type_test_op_bool)
    // ---------------------------------------
    // constexpr explicit operator bool()const
    // Note that I must be explicit about calling the operator because it is defined as `explicit`
@@ -225,9 +225,9 @@ EOSIO_TEST_BEGIN(name_type_test_op_bool)
    CHECK_EQUAL( !name{"1"}.operator bool(), false )
 
    static_assert( name{0}.operator bool() == false );
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_memcmp)
+SYSIO_TEST_BEGIN(name_type_test_memcmp)
    // ----------------------------------------
    // char* write_as_string(char*, char*)const
    constexpr uint8_t buffer_size{32};
@@ -283,9 +283,9 @@ EOSIO_TEST_BEGIN(name_type_test_memcmp)
    CHECK_EQUAL( memcmp(str.c_str(), buffer, strlen(str.c_str())), 0 )
    name{str = "zzzzzzzzzzzzj"}.write_as_string( buffer, buffer + sizeof(buffer) );
    CHECK_EQUAL( memcmp(str.c_str(), buffer, strlen(str.c_str())), 0 )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_to_str)
+SYSIO_TEST_BEGIN(name_type_test_to_str)
    // -----------------------
    // string to_string()const
    CHECK_EQUAL( name{"1"}.to_string(), "1" )
@@ -313,10 +313,10 @@ EOSIO_TEST_BEGIN(name_type_test_to_str)
    CHECK_EQUAL( name{"555555555555j"}.to_string(), "555555555555j" )
    CHECK_EQUAL( name{"aaaaaaaaaaaaj"}.to_string(), "aaaaaaaaaaaaj" )
    CHECK_EQUAL( name{"zzzzzzzzzzzzj"}.to_string(), "zzzzzzzzzzzzj" )
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 
-EOSIO_TEST_BEGIN(name_type_test_equal)
+SYSIO_TEST_BEGIN(name_type_test_equal)
    // ----------------------------------------------------------
    // friend constexpr bool operator==(const name&, const name&)
    CHECK_EQUAL( name{"1"} == name{"1"}, true )
@@ -347,9 +347,9 @@ EOSIO_TEST_BEGIN(name_type_test_equal)
 
    // test constexpr
    static_assert( name{"1"} == name{"1"} ); 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_not_equal)
+SYSIO_TEST_BEGIN(name_type_test_not_equal)
    // -----------------------------------------------------------
    // friend constexpr bool operator!=(const name&, const name&)
    CHECK_EQUAL( name{"1"} != name{}, true )
@@ -380,9 +380,9 @@ EOSIO_TEST_BEGIN(name_type_test_not_equal)
 
    // test constexpr
    static_assert( name{"1"} != name{"2"} ); 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(name_type_test_less_than)
+SYSIO_TEST_BEGIN(name_type_test_less_than)
    // ---------------------------------------------------------
    // friend constexpr bool operator<(const name&, const name&)
    CHECK_EQUAL( name{} < name{"1"}, true )
@@ -413,10 +413,10 @@ EOSIO_TEST_BEGIN(name_type_test_less_than)
 
    // test constexpr
    static_assert( name{} < name{"1"} ); 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 
-EOSIO_TEST_BEGIN(name_type_test_op_n)
+SYSIO_TEST_BEGIN(name_type_test_op_n)
    // ------------------------------------
    // inline constexpr name operator""_n()
    CHECK_EQUAL( name{}, ""_n )
@@ -449,7 +449,7 @@ EOSIO_TEST_BEGIN(name_type_test_op_n)
 
    // test constexpr
    static_assert( name{"1"} == "1"_n ); 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -458,22 +458,22 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(name_type_test_ctr_num)
-   EOSIO_TEST(name_type_test_ctr_str_lit)
-   EOSIO_TEST(name_type_test_str_not_allowed)
-   EOSIO_TEST(name_type_test_char_to_value)
-   EOSIO_TEST(name_type_test_allowed_chars)
-   EOSIO_TEST(name_type_test_str_len)
-   EOSIO_TEST(name_type_test_suffix)
-   EOSIO_TEST(name_type_test_prefix)
-   EOSIO_TEST(name_type_test_raw)
-   EOSIO_TEST(name_type_test_op_bool)
-   EOSIO_TEST(name_type_test_memcmp)
-   EOSIO_TEST(name_type_test_to_str)
-   EOSIO_TEST(name_type_test_equal)
-   EOSIO_TEST(name_type_test_not_equal)
-   EOSIO_TEST(name_type_test_less_than)
-   EOSIO_TEST(name_type_test_op_n)
+   SYSIO_TEST(name_type_test_ctr_num)
+   SYSIO_TEST(name_type_test_ctr_str_lit)
+   SYSIO_TEST(name_type_test_str_not_allowed)
+   SYSIO_TEST(name_type_test_char_to_value)
+   SYSIO_TEST(name_type_test_allowed_chars)
+   SYSIO_TEST(name_type_test_str_len)
+   SYSIO_TEST(name_type_test_suffix)
+   SYSIO_TEST(name_type_test_prefix)
+   SYSIO_TEST(name_type_test_raw)
+   SYSIO_TEST(name_type_test_op_bool)
+   SYSIO_TEST(name_type_test_memcmp)
+   SYSIO_TEST(name_type_test_to_str)
+   SYSIO_TEST(name_type_test_equal)
+   SYSIO_TEST(name_type_test_not_equal)
+   SYSIO_TEST(name_type_test_less_than)
+   SYSIO_TEST(name_type_test_op_n)
 
    return has_failed();
 }

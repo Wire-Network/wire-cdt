@@ -74,7 +74,7 @@ namespace sysio {
     *    unsigned long long b; //8
     *    int  c; //4
     *
-    *    EOSLIB_SERIALIZE( dummy_action, (a)(b)(c) )
+    *    SYSLIB_SERIALIZE( dummy_action, (a)(b)(c) )
     *  };
     *  dummy_action msg = unpack_action_data<dummy_action>();
     *  @endcode
@@ -225,7 +225,7 @@ namespace sysio {
          return std::tie( a.actor, a.permission ) < std::tie( b.actor, b.permission );
       }
 
-      EOSLIB_SERIALIZE( permission_level, (actor)(permission) )
+      SYSLIB_SERIALIZE( permission_level, (actor)(permission) )
    };
 
    /**
@@ -318,7 +318,7 @@ namespace sysio {
 
       /// @cond INTERNAL
 
-      EOSLIB_SERIALIZE( action, (account)(name)(authorization)(data) )
+      SYSLIB_SERIALIZE( action, (account)(name)(authorization)(data) )
 
       /// @endcond
 
@@ -577,7 +577,7 @@ INLINE_ACTION_SENDER3( CONTRACT_CLASS, NAME, ::sysio::name(#NAME) )
  *
  * @brief A macro to simplify calling inline actions
  * @details The send inline action macro is intended to simplify the process of calling inline actions. When calling new actions from existing actions
- * EOSIO supports two communication models, inline and deferred. Inline actions are executed as part of the current transaction. This macro
+ * SYSIO supports two communication models, inline and deferred. Inline actions are executed as part of the current transaction. This macro
  * creates an @ref action using the supplied parameters and automatically calls action.send() on this newly created action.
  *
  * Example:

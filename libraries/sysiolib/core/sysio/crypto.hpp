@@ -20,7 +20,7 @@ namespace sysio {
     */
 
    /**
-    *  EOSIO ECC public key data
+    *  SYSIO ECC public key data
     *
     *  Fixed size representation of either a K1 or R1 compressed public key
 
@@ -29,7 +29,7 @@ namespace sysio {
    using ecc_public_key = std::array<char, 33>;
 
    /**
-    *  EOSIO WebAuthN public key
+    *  SYSIO WebAuthN public key
     *
     *  @ingroup public_key
     */
@@ -86,7 +86,7 @@ namespace sysio {
    };
 
    /**
-    *  EOSIO Public Key
+    *  SYSIO Public Key
     *
     *  A public key is a variant of
     *   0 : a ECC K1 public key
@@ -141,7 +141,7 @@ namespace sysio {
     */
 
    /**
-    *  EOSIO ECC signature data
+    *  SYSIO ECC signature data
     *
     *  Fixed size representation of either a K1 or R1 ECC compact signature
 
@@ -150,7 +150,7 @@ namespace sysio {
    using ecc_signature = std::array<char, 65>;
 
    /**
-    *  EOSIO WebAuthN signature
+    *  SYSIO WebAuthN signature
     *
     *  @ingroup signature
     */
@@ -185,7 +185,7 @@ namespace sysio {
    };
 
    /**
-    *  EOSIO Signature
+    *  SYSIO Signature
     *
     *  A signature is a variant of
     *   0 : a ECC K1 signature

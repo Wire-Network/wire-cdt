@@ -13,7 +13,7 @@ using std::move;
 using sysio::binary_extension;
 
 // Definitions in `sysio.cdt/libraries/sysio/binary_extension.hpp`
-EOSIO_TEST_BEGIN(binary_extension_test)
+SYSIO_TEST_BEGIN(binary_extension_test)
    //// constexpr binary_extension()
    // constexpr bool has_value()const
    CHECK_EQUAL( (binary_extension<const char>{}.has_value()), false )
@@ -221,9 +221,9 @@ EOSIO_TEST_BEGIN(binary_extension_test)
    be_str_reset.reset();
    CHECK_EQUAL( be_str_reset.has_value(), false )
 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
-EOSIO_TEST_BEGIN(binary_extension_assignment_test)
+SYSIO_TEST_BEGIN(binary_extension_assignment_test)
    // Regression for PR #792
    {
       binary_extension<char> be('a');
@@ -254,7 +254,7 @@ EOSIO_TEST_BEGIN(binary_extension_assignment_test)
       CHECK_EQUAL(be3.value(), be_move_assign.value());
    }
 
-EOSIO_TEST_END
+SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -263,7 +263,7 @@ int main(int argc, char* argv[]) {
    }
    silence_output(!verbose);
 
-   EOSIO_TEST(binary_extension_test);
-   EOSIO_TEST(binary_extension_assignment_test);
+   SYSIO_TEST(binary_extension_test);
+   SYSIO_TEST(binary_extension_assignment_test);
    return has_failed();
 }

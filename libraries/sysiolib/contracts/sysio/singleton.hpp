@@ -7,7 +7,7 @@ namespace  sysio {
    /**
     *  @defgroup singleton Singleton Table
     *  @ingroup contracts
-    *  @brief Defines EOSIO Singleton Table used with %multiindex
+    *  @brief Defines SYSIO Singleton Table used with %multiindex
     */
 
    /**
@@ -41,7 +41,7 @@ namespace  sysio {
           */
          uint64_t primary_key() const { return pk_value; }
 
-         EOSLIB_SERIALIZE( row, (value) )
+         SYSLIB_SERIALIZE( row, (value) )
       };
 
       typedef sysio::multi_index<SingletonName, row> table;

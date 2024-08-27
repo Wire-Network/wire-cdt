@@ -23,7 +23,7 @@ class [[sysio::contract]] multi_index_large : public contract {
          long double               get_f128()const    { return f128; }
          const sysio::checksum256& get_chk256()const  { return chk256; }
 
-         EOSLIB_SERIALIZE( main_record, (id)(u64)(u128)(f64)(f128)(chk256))
+         SYSLIB_SERIALIZE( main_record, (id)(u64)(u128)(f64)(f128)(chk256))
       };
 
       using test_tables = sysio::multi_index<"testtaba"_n, main_record,

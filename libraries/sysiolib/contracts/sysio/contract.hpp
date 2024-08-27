@@ -8,7 +8,7 @@
  * @defgroup contract Contract
  * @ingroup contracts
  * @ingroup types
- * @brief Defines contract type which is %base class for every EOSIO contract
+ * @brief Defines contract type which is %base class for every SYSIO contract
  */
 
 /**
@@ -22,10 +22,10 @@
 namespace sysio {
 
 /**
- * %Base class for EOSIO contract.
+ * %Base class for SYSIO contract.
  *
  * @ingroup contract
- * @details %A new contract should derive from this class, so it can make use of EOSIO_ABI macro.
+ * @details %A new contract should derive from this class, so it can make use of SYSIO_ABI macro.
  */
 class contract {
    public:

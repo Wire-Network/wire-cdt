@@ -1,7 +1,7 @@
 #include <memory>
 #include "core/sysio/check.hpp"
 
-#ifdef EOSIO_NATIVE
+#ifdef SYSIO_NATIVE
    extern "C" {
       size_t _current_memory();
       size_t _grow_memory(size_t);
