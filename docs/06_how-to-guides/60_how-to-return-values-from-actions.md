@@ -69,7 +69,7 @@ For a complete example of a smart contract that implements an action which retur
 ## Next Steps
 
 * Compile the smart contract and deploy it to the Antelope testnet or any Antelope based blockchain.
-* Use the `cleos` command to send the `checkwithrv` action to the smart contract and observe the returned value in the `cleos` output.
+* Use the `clio` command to send the `checkwithrv` action to the smart contract and observe the returned value in the `clio` output.
 * Use other means (e.g. programmatically) to send the  `checkwithrv` action to the smart contract and observe the returned value in the action trace.
 
 [[info | Returned values from actions availability]]

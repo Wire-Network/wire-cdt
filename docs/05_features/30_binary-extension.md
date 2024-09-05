@@ -370,7 +370,7 @@ Now, let's start up a blockchain instance, compile this smart contract, and test
 ```
 
 ```
-~/binary_extension_contract $ cleos set contract sysio ./
+~/binary_extension_contract $ clio set contract sysio ./
 ```
 
 ```
@@ -385,7 +385,7 @@ warning: transaction executed locally, but may not be confirmed by the network y
 Next, let's push some data to our contract.
 
 ```
-~/binary_extension_contract $ cleos push action sysio regpkey '{"primary_key":"sysio.name"}' -p sysio
+~/binary_extension_contract $ clio push action sysio regpkey '{"primary_key":"sysio.name"}' -p sysio
 ```
 
 ```
@@ -402,7 +402,7 @@ warning: transaction executed locally, but may not be confirmed by the network y
 Finally, let's read back the data we have just written.
 
 ```
-~/binary_extension_contract $ cleos push action sysio printbyp '{"primary_key":"sysio.name"}' -p sysio
+~/binary_extension_contract $ clio push action sysio printbyp '{"primary_key":"sysio.name"}' -p sysio
 ```
 
 ```
@@ -515,7 +515,7 @@ Next, let's upgrade the contract and try to read from our table and write to our
 ```
 
 ```
-~/binary_extension_contract $ cleos set contract sysio ./
+~/binary_extension_contract $ clio set contract sysio ./
 ```
 
 ```
@@ -528,7 +528,7 @@ warning: transaction executed locally, but may not be confirmed by the network y
 ```
 
 ```
-~/binary_extension_contract $ cleos push action sysio printbyp '{"primary_key":"sysio.name"}' -p sysio
+~/binary_extension_contract $ clio push action sysio printbyp '{"primary_key":"sysio.name"}' -p sysio
 ```
 
 ```
@@ -540,7 +540,7 @@ assertion failure with message: read
 Whoops! We aren't able to read the data we've previously written to our table!
 
 ```
-~/binary_extension_contract $ cleos push action sysio regpkey '{"primary_key":"sysio.name2"}' -p sysio
+~/binary_extension_contract $ clio push action sysio regpkey '{"primary_key":"sysio.name2"}' -p sysio
 ```
 
 ```
@@ -667,7 +667,7 @@ Note the `$` after the types now; this indicates that this type is an `sysio::bi
 Now, let's upgrade the contract again and try to read/write from/to our table:
 
 ```
-~/binary_extension_contract $ cleos set contract sysio ./
+~/binary_extension_contract $ clio set contract sysio ./
 ```
 
 ```
@@ -680,7 +680,7 @@ warning: transaction executed locally, but may not be confirmed by the network y
 ```
 
 ```
-~/binary_extension_contract $ cleos push action sysio printbyp '{"primary_key":"sysio.name"}' -p sysio
+~/binary_extension_contract $ clio push action sysio printbyp '{"primary_key":"sysio.name"}' -p sysio
 ```
 
 ```
@@ -696,7 +696,7 @@ warning: transaction executed locally, but may not be confirmed by the network y
 ```
 
 ```
-~/binary_extension_contract $ cleos push action sysio regpkey '{"primary_key":"sysio.name2"}' -p sysio
+~/binary_extension_contract $ clio push action sysio regpkey '{"primary_key":"sysio.name2"}' -p sysio
 ```
 
 ```

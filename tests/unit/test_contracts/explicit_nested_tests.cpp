@@ -39,7 +39,7 @@ CONTRACT explicit_nested_tests : public contract {
    using test_data_idx = multi_index<"testdata"_n, testdata>;
 
    [[sysio::action]]
-    //usage: cleos -v push action sysio vvstr '[[["abc", "cde"],["def","fgh"]]]' -p sysio@active
+    //usage: clio -v push action sysio vvstr '[[["abc", "cde"],["def","fgh"]]]' -p sysio@active
    std::vector<std::vector<std::string>> vvstr(std::vector<std::vector<std::string>> input) {
       std::vector<std::vector<std::string>> output = input;
       for(auto & row : output) {
@@ -51,7 +51,7 @@ CONTRACT explicit_nested_tests : public contract {
       return output;
    } 
    [[sysio::action]]
-   // usage : cleos -v push action sysio vvvstr '[[[["abc", "cde"],["def","fgh"]]]]' -p sysio@active
+   // usage : clio -v push action sysio vvvstr '[[[["abc", "cde"],["def","fgh"]]]]' -p sysio@active
    std::vector<std::vector<std::vector<std::string>>> vvvstr(std::vector<std::vector<std::vector<std::string>>> input) {
       std::vector<std::vector<std::vector<std::string>>> output = input;
       for(auto & vecvec : output){
@@ -66,51 +66,51 @@ CONTRACT explicit_nested_tests : public contract {
    } 
 
    [[sysio::action]]
-   //usage : cleos -v push action sysio mapo '[[{"key":1,"value":2.0},{"key":2,"value":3.9}]]'  -p sysio@active
+   //usage : clio -v push action sysio mapo '[[{"key":1,"value":2.0},{"key":2,"value":3.9}]]'  -p sysio@active
    std::map<uint64_t, std::optional<float> >  mapo(std::map<uint64_t, std::optional<float>>  input){
       std::map<uint64_t, std::optional<float>> output = input;
       return output;
    }
 
    [[sysio::action]]
-   // usage : cleos -v push action sysio vecop '[[{"first":1,"second":2.0},{"first":2,"second":3.9}]]'  -p sysio@active
+   // usage : clio -v push action sysio vecop '[[{"first":1,"second":2.0},{"first":2,"second":3.9}]]'  -p sysio@active
    std::vector<std::optional<std::pair<uint64_t,float>>>  vecop(std::vector<std::optional<std::pair<uint64_t,float>>>  input){
       std::vector<std::optional<std::pair<uint64_t,float>>> output = input;
       return output;
    }
 
    [[sysio::action]]
-    // usage : cleos -v push action sysio vecpo '[[{"first":1,"second":2.0},{"first":2,"second":3.9}]]'  -p sysio@active
+    // usage : clio -v push action sysio vecpo '[[{"first":1,"second":2.0},{"first":2,"second":3.9}]]'  -p sysio@active
    std::vector<std::pair<uint64_t, opt_float >>  vecpo(std::vector<std::pair<uint64_t, opt_float >>  input){
       std::vector<std::pair<uint64_t, opt_float >> output = input;
       return output;
    }
 
    [[sysio::action]]
-   // usage : cleos -v push action sysio vecpoe '[[{"first":1,"second":2.0},{"first":2,"second":3.9}]]'  -p sysio@active
+   // usage : clio -v push action sysio vecpoe '[[{"first":1,"second":2.0},{"first":2,"second":3.9}]]'  -p sysio@active
    std::vector<std::pair<uint64_t, std::optional<float> >>  vecpoe(std::vector<std::pair<uint64_t, std::optional<float> >>  input){
       std::vector<std::pair<uint64_t, std::optional<float> >> output = input;
       return output;
    }
 
    [[sysio::action]]
-   // usage : cleos -v push action sysio tup '[{"field_0":1,"field_1":2.0,"field_2":[4,5,6,7]}]'  -p sysio@active
+   // usage : clio -v push action sysio tup '[{"field_0":1,"field_1":2.0,"field_2":[4,5,6,7]}]'  -p sysio@active
    std::tuple<uint64_t, std::optional<float>, std::vector<int>>  tup(std::tuple<uint64_t, std::optional<float>, std::vector<int>>  input){
       std::tuple<uint64_t, std::optional<float>, std::vector<int>> output = input;
       return output;
    }
 
    [[sysio::action]]
-    // usage : cleos -v push action sysio var '[["uint64",8]]'  -p sysio@active
-    // usage : cleos -v push action sysio var '[["B_optional_B_pair_int32_float32_E_E", {"first":1,"second":2.0}]]'  -p sysio@active
-    // usage : cleos -v push action sysio var '[["B_vector_int32_E", [2,3,4]]]'  -p sysio@active
+    // usage : clio -v push action sysio var '[["uint64",8]]'  -p sysio@active
+    // usage : clio -v push action sysio var '[["B_optional_B_pair_int32_float32_E_E", {"first":1,"second":2.0}]]'  -p sysio@active
+    // usage : clio -v push action sysio var '[["B_vector_int32_E", [2,3,4]]]'  -p sysio@active
    std::variant<uint64_t, std::optional<std::pair<int, float>>, std::vector<int>>  var(std::variant<uint64_t, std::optional<std::pair<int, float>>, std::vector<int>>  input){
       std::variant<uint64_t, std::optional<std::pair<int, float>>, std::vector<int>> output = input;
       return output;
    }
 
    [[sysio::action]]  // sdl means set deque list , as we support them should test them as well.
-   // usage : cleos -v push action sysio sdlstr '[[[["abc", "cde"],["def","fgh"]]]]' -p sysio@active
+   // usage : clio -v push action sysio sdlstr '[[[["abc", "cde"],["def","fgh"]]]]' -p sysio@active
    std::set<std::deque<std::list<std::string>>> sdlstr(std::set<std::deque<std::list<std::string>>> input) {
       std::set<std::deque<std::list<std::string>>> output = input;
       for(auto & deqlist : output){
@@ -126,7 +126,7 @@ CONTRACT explicit_nested_tests : public contract {
 
    typedef std::vector<std::vector<std::string>>  vecvecstr;
    [[sysio::action]]   // this test is for the whole type is not explicit nested by the inside type is a alias of explicit nested.
-   // usage : cleos -v push action sysio vivvstr '[[[["abc", "cde"],["def","fgh"]]]]' -p sysio@active
+   // usage : clio -v push action sysio vivvstr '[[[["abc", "cde"],["def","fgh"]]]]' -p sysio@active
    std::vector<vecvecstr> vivvstr(std::vector<vecvecstr> input) {
       std::vector<vecvecstr> output = input;
       for(auto & vecvec : output){
@@ -144,7 +144,7 @@ CONTRACT explicit_nested_tests : public contract {
    typedef set<myvec3> myset;
 
    [[sysio::action]]   // this test is for the whole type is not explicit nested by the inside type is a alias of explicit nested.
-   // usage : cleos -v push action sysio sivvvi '[[[[[1, 2],[3,4]]]]]' -p sysio@active
+   // usage : clio -v push action sysio sivvvi '[[[[[1, 2],[3,4]]]]]' -p sysio@active
    myset sivvvi(myset input) {
       myset output = input;
       for(auto & vvvi : output){
@@ -167,8 +167,8 @@ CONTRACT explicit_nested_tests : public contract {
    }
 
    [[sysio::action]]   // this test is for the put simple data to table, so as to check the the data read from table is the same
-   // usage : cleos -v push action sysio putd '[sysio]' -p sysio@active
-   //             cleos -v get table sysio sysio testdata
+   // usage : clio -v push action sysio putd '[sysio]' -p sysio@active
+   //             clio -v get table sysio sysio testdata
    void putd(name user) {
       require_auth(user);
       test_data_idx _tests(get_self(), get_self().value);

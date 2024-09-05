@@ -95,7 +95,7 @@ struct project {
                                     "   - run the command 'make'\n\n"
                                     " - After build -\n"
                                     "   - The built smart contract is under the '@' directory in the 'build' directory\n"
-                                    "   - You can then do a 'set contract' action with 'cleos' and point in to the './build/@' directory\n\n"
+                                    "   - You can then do a 'set contract' action with 'clio' and point in to the './build/@' directory\n\n"
                                     " - Additions to CMake should be done to the CMakeLists.txt in the './src' directory and not in the top level CMakeLists.txt";
 
    const std::string readme_bare = " --- @ Project ---\n\n"

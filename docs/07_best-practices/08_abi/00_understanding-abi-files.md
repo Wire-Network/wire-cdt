@@ -543,4 +543,4 @@ Every time you change a struct, add a table, add an action or add parameters to 
 
 ### Table returns no rows
 
-Check that your table is accurately described in the ABI file. For example, If you use `cleos` to add a table on a contract with a malformed ABI definition and then get rows from that table, you will receive an empty result. `cleos` will not produce an error when adding a row nor reading a row when a contract has failed to properly describe its tables in its ABI.
+Check that your table is accurately described in the ABI file. For example, If you use `clio` to add a table on a contract with a malformed ABI definition and then get rows from that table, you will receive an empty result. `clio` will not produce an error when adding a row nor reading a row when a contract has failed to properly describe its tables in its ABI.

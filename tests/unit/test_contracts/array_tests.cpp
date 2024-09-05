@@ -78,7 +78,7 @@ class [[sysio::contract]] array_tests : public contract {
 
    // test return using std::array, not supported so far
    [[sysio::action]]
-   // cleos -v push action sysio testre '[[1,2,3,4]]' -p sysio@active
+   // clio -v push action sysio testre '[[1,2,3,4]]' -p sysio@active
    std::array<int,4> testre(std::array<int,4> input){
       std::array<int,4> arr = input;
       for(auto & v : arr) v += 1;
@@ -87,7 +87,7 @@ class [[sysio::contract]] array_tests : public contract {
 
    // test return using std::vector
    [[sysio::action]]
-   // cleos -v push action sysio testrev '[[1,2,3,4]]' -p sysio@active
+   // clio -v push action sysio testrev '[[1,2,3,4]]' -p sysio@active
    std::vector<int> testrev(std::vector<int> input){
       std::vector<int> vec = input;
       for(auto & v : vec) v += 1;
