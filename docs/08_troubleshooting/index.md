@@ -37,7 +37,7 @@ Unexpected input encountered while processing struct 'action_name_here'
 __Possible solution__: You did not specify correctly the parameter when sending the action to the blockchain. When no parameter is needed the command should look like the one below
 
 ```sh
-cleos push action eostutorial1 get '[]' -p eostutorial1@active
+clio push action eostutorial1 get '[]' -p eostutorial1@active
 ```
 
 The command above is one way of sending correctly `get` action with no parameters to the blockchain.
@@ -59,7 +59,7 @@ or
 Error 3160009: No wasm file found
 ```
 
-__Possible solution__: Verify that `abi` and `wasm` files exist in the directory specified in the `cleos set contract` command, and that their names match the directory name.
+__Possible solution__: Verify that `abi` and `wasm` files exist in the directory specified in the `clio set contract` command, and that their names match the directory name.
 
 ## Action triggers a ram charge which cannot be initiated from a notification
 
@@ -154,7 +154,7 @@ The code above has one `print` statement before the `singleton_set.send` and ano
 ## Assertion failure while creating an account after sysio.system was installed
 
 ```sh
-cleos create account sysio bob SYS5HUanbay86UUnr1d4fuBsQ3ksjfgZYoLUVvrYVLy6pj4i8xqVY
+clio create account sysio bob SYS5HUanbay86UUnr1d4fuBsQ3ksjfgZYoLUVvrYVLy6pj4i8xqVY
 ```
 
 ```console

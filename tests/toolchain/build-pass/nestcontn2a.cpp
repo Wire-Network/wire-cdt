@@ -1,18 +1,18 @@
 /* Verify the support of nested containers in sysio multi-index table
- * For each action, an example regarding how to use the action with the cleos command line is given.
+ * For each action, an example regarding how to use the action with the clio command line is given.
  *
  * std:pair<T1,T2> is a struct with 2 fields first and second,
  * std::map<K,V> is handled as an array/vector of pairs/structs by SYSIO with implicit fields key, value,
- * the cases of combined use of key/value and first/second involving map,pair in the cleos are documented here.
+ * the cases of combined use of key/value and first/second involving map,pair in the clio are documented here.
  * so handling of std::pair is NOT the same as the handling of a general struct such as struct mystruct!
  *
- * When assigning data input with cleos:
+ * When assigning data input with clio:
  *      [] represents an empty vector<T>/set<T> or empty map<T1,T2> where T, T1, T2 can be any composite types
  *      null represents an uninitialized std::optional<T> where T can be any composite type
  *      BUT [] or null can NOT be used to represent an empty struct or empty std::pair
  *
  * Expected printout:
- *      For each setx action, the printed result on the cleos console is given in its corresponding prntx action.
+ *      For each setx action, the printed result on the clio console is given in its corresponding prntx action.
  */
 
 #include <sysio/sysio.hpp>
@@ -147,8 +147,8 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         //  sysio-cpp compile error for std::tuple: Tried to get a nested template type of a template not containing one
 
          /*Examples:
-          * cleos --verbose push action nestcontn2a setv '["alice", [100,200,300,600]]' -p alice@active
-          * cleos --verbose push action nestcontn2a setv '["bob", []]' -p bob@active
+          * clio --verbose push action nestcontn2a setv '["alice", [100,200,300,600]]' -p alice@active
+          * clio --verbose push action nestcontn2a setv '["bob", []]' -p bob@active
           */
         [[sysio::action]]
         void setv(name user, const vector<uint16_t>& v)
@@ -158,10 +158,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a prntv '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a prntv '["alice"]' -p alice@active
          *      output: >> size of stored v:4 vals of v:100,200,300,600,
          *
-         *  cleos --verbose push action nestcontn2a prntv '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a prntv '["bob"]' -p bob@active
          *      output: >> size of stored v:0 vals of v:
          */
         [[sysio::action]]
@@ -175,8 +175,8 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a setst '["alice", [101,201,301]]' -p alice@active
-         *  cleos --verbose push action nestcontn2a setst '["bob", []]' -p bob@active
+         *  clio --verbose push action nestcontn2a setst '["alice", [101,201,301]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setst '["bob", []]' -p bob@active
          */
         [[sysio::action]]
         void setst(name user, const set<uint16_t> & st)
@@ -186,10 +186,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a prntst '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a prntst '["alice"]' -p alice@active
          *      output: >> size of stored st:3 vals:101,201,301,
          *
-         *  cleos --verbose push action nestcontn2a prntst '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a prntst '["bob"]' -p bob@active
          *      output: >> size of stored st:0 vals:
          */
         [[sysio::action]]
@@ -204,13 +204,13 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
         /*Examples:
          * To use shortcut notation:
-         *   cleos --verbose push action nestcontn2a setm '["alice", [{"key":"str1","value":"str1val"}, {"key":"str3","value":"str3val"}]]' -p alice@active
+         *   clio --verbose push action nestcontn2a setm '["alice", [{"key":"str1","value":"str1val"}, {"key":"str3","value":"str3val"}]]' -p alice@active
          *
          * To use full JSON notation:
-         *   cleos --verbose push action nestcontn2a setm '{"user":"jane", "m":[{"key":"str4", "value":"str4val"}, {"key":"str6", "value":"str6val"}]}' -p jane@active
+         *   clio --verbose push action nestcontn2a setm '{"user":"jane", "m":[{"key":"str4", "value":"str4val"}, {"key":"str6", "value":"str6val"}]}' -p jane@active
          *
          * To pass an empty map:
-         *   cleos --verbose push action nestcontn2a setm '["bob", []]' -p bob@active
+         *   clio --verbose push action nestcontn2a setm '["bob", []]' -p bob@active
          */
         [[sysio::action]]
         void setm(name user, const map<string,string>  & m)
@@ -220,13 +220,13 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /* Examples:
-         *  cleos --verbose push action nestcontn2a prntm '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a prntm '["alice"]' -p alice@active
          *      output: >> size of stored m:2 vals of m:str1:str1val  str3:str3val
          *
-         *  cleos --verbose push action nestcontn2a prntm '["jane"]' -p jane@active
+         *  clio --verbose push action nestcontn2a prntm '["jane"]' -p jane@active
          *      output: >> size of stored m:2 vals of m:str4:str4val  str6:str6val
          *
-         *  cleos --verbose push action nestcontn2a prntm '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a prntm '["bob"]' -p bob@active
          *      output: >> size of stored m:0 vals of m:
         */
         [[sysio::action]]
@@ -239,7 +239,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
         }
 
-        //Example: cleos --verbose push action nestcontn2a sets '["alice", {"_count":18, "_strID":"dumstr"}]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a sets '["alice", {"_count":18, "_strID":"dumstr"}]' -p alice@active
         [[sysio::action]]
         void sets(name user, const mystruct& s)
         {
@@ -248,7 +248,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         * cleos --verbose push action nestcontn2a  prnts '["alice"]' -p alice@active
+         * clio --verbose push action nestcontn2a  prnts '["alice"]' -p alice@active
          *      output: >> stored mystruct val:18,dumstr
          */
         [[sysio::action]]
@@ -258,7 +258,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
             sysio::print("stored mystruct val:", iter->s._count,",", iter->s._strID);
         }
 
-        //Example: cleos --verbose push action nestcontn2a sets2 '["alice", {"_structfld":{"_count":18, "_strID":"dumstr"}, "_strID2":"dumstr2"}]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a sets2 '["alice", {"_structfld":{"_count":18, "_strID":"dumstr"}, "_strID2":"dumstr2"}]' -p alice@active
         [[sysio::action]]
         void sets2(name user, const mystruct2& s2)
         {
@@ -267,7 +267,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prnts2 '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prnts2 '["alice"]' -p alice@active
          *      output: >> stored mystruct2 val:18,dumstr,dumstr2
          */
         [[sysio::action]]
@@ -278,7 +278,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setvs '["alice", [{"_count":18, "_strID":"dumstr"},{"_count":19, "_strID":"dumstr2"}]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setvs '["alice", [{"_count":18, "_strID":"dumstr"},{"_count":19, "_strID":"dumstr2"}]]' -p alice@active
          */
         [[sysio::action]]
         void setvs(name user, const vector<mystruct>& vs)
@@ -288,7 +288,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntvs '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntvs '["alice"]' -p alice@active
          *      output: >> stored vector<mystruct>  size=2:
          *              >> 18,dumstr
          *              >> 19,dumstr2
@@ -306,10 +306,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
         /*Examples
          *  To pass a null value:
-         *      cleos --verbose push action nestcontn2a seto '["bob", null]' -p bob@active
+         *      clio --verbose push action nestcontn2a seto '["bob", null]' -p bob@active
          *
          *  To pass a non-null value:
-         *      cleos --verbose push action nestcontn2a seto '["alice","hello strval22"]' -p alice@active
+         *      clio --verbose push action nestcontn2a seto '["alice","hello strval22"]' -p alice@active
          *
          */
         [[sysio::action]]
@@ -320,10 +320,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prnto '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prnto '["bob"]' -p bob@active
          *      output: >> stored optional<string>  has null value!
          *
-         *  cleos --verbose push action nestcontn2a  prnto '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prnto '["alice"]' -p alice@active
          *      output: >> stored optional<string> =hello strval22
          */
         [[sysio::action]]
@@ -336,7 +336,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
                 sysio::print("stored optional<string>  has null value!");
         }
 
-        //Example: cleos --verbose push action nestcontn2a setp '["alice", {"first":183, "second":269}]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a setp '["alice", {"first":183, "second":269}]' -p alice@active
         [[sysio::action]]
         void setp(name user, const pair<uint16_t, uint16_t>& p)
         {
@@ -345,7 +345,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntp '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntp '["alice"]' -p alice@active
          *      output: tored pair<uint16_t,uint16_t> val:183,269
          */
         [[sysio::action]]
@@ -358,7 +358,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         //============Two-layer nest containers start here===========
         //=== 1. Try vector - set,vector,optional,map,pair
 
-        //Example: cleos --verbose push action nestcontn2a setvst '["alice", [[10,20],[3], [400,500,600]]]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a setvst '["alice", [[10,20],[3], [400,500,600]]]' -p alice@active
         [[sysio::action]]
         void setvst(name user, const vector<set_uint16>& vst)
         {
@@ -368,7 +368,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntvst '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntvst '["alice"]' -p alice@active
          *      output: >> stored vector<set<T>>:size=3 vals:
          *              >> 10 20
          *              >> 3
@@ -389,7 +389,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
 
-        //Example: cleos --verbose push action nestcontn2a setvv '["alice", [[1,2],[30], [40,50,60]]]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a setvv '["alice", [[1,2],[30], [40,50,60]]]' -p alice@active
         [[sysio::action]]
         void setvv(name user, const vector<vec_uint16>& vv)
         {
@@ -399,7 +399,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntvv '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntvv '["alice"]' -p alice@active
          *      output: >> stored vector<vector<T>> vals:
          *              >> 1 2
          *              >> 30
@@ -415,13 +415,13 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
             {
                 for (int j=0; j < iter->vv[i].size(); j++)
                     sysio::print(iter->vv[i][j], " ");
-                sysio::print("\n"); //--- use cleos --verbose to show new lines !!!
+                sysio::print("\n"); //--- use clio --verbose to show new lines !!!
             }
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setvo '["alice", [100, null, 200, null, 300]]' -p alice@active
-         *        ******user data can NOT be pushed into the chain, cleos get table will not work if using setvo
+         *  clio --verbose push action nestcontn2a setvo '["alice", [100, null, 200, null, 300]]' -p alice@active
+         *        ******user data can NOT be pushed into the chain, clio get table will not work if using setvo
          *  vector<optional<T> > is  NOT supported currently!
          */
         [[sysio::action]]
@@ -431,7 +431,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
             sysio::print("type defined vector<optional<T> > stored successfully!");
         }
 
-        //Example: cleos --verbose push action nestcontn2a  prntvo '["alice"]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a  prntvo '["alice"]' -p alice@active
         //          NOT supported
         [[sysio::action]]
         void prntvo(name user)
@@ -449,7 +449,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setvm '["alice", [ [{"first":10,"second":100},{"first":11,"second":101}], [{"first":80,"second":800},{"first":81,"second":9009}] ]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setvm '["alice", [ [{"first":10,"second":100},{"first":11,"second":101}], [{"first":80,"second":800},{"first":81,"second":9009}] ]]' -p alice@active
          */
         [[sysio::action]]
         void setvm(name user, const vector<mp_uint16>& vm)
@@ -459,7 +459,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntvm '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntvm '["alice"]' -p alice@active
          *      output: >> stored vector<mp_uint16>: size=2 content:
          *              >>
          *              >> Element 0--->
@@ -484,7 +484,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setvp '["alice", [{"first":18, "second":28}, {"first":19, "second":29}]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setvp '["alice", [{"first":18, "second":28}, {"first":19, "second":29}]]' -p alice@active
          */
         [[sysio::action]]
         void setvp(name user, const vector<pair<uint32_t, uint32_t> >& vp)
@@ -494,7 +494,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntvp '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntvp '["alice"]' -p alice@active
          *      output: >> stored vector<pair<uint32_t, uint32_t> >  size=2:
          *              >> 18,28
          *              >> 19,29
@@ -512,7 +512,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
         //=== 2. Try set - set,vector,optional,map,pair
 
-        //Example: cleos --verbose push action nestcontn2a setstst '["alice", [[10,20],[3], [400,500,600]]]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a setstst '["alice", [[10,20],[3], [400,500,600]]]' -p alice@active
         [[sysio::action]]
         void setstst(name user, const set<set_uint16>& stst)
         {
@@ -522,7 +522,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntstst '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntstst '["alice"]' -p alice@active
          *      output: >> stored set<set<T>>:size=3 vals:
          *              >> 3
          *              >> 10 20
@@ -542,7 +542,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
             }
         }
 
-         //Example: cleos --verbose push action nestcontn2a setstv '["alice", [[16,26],[36], [46,506,606]]]' -p alice@active
+         //Example: clio --verbose push action nestcontn2a setstv '["alice", [[16,26],[36], [46,506,606]]]' -p alice@active
         [[sysio::action]]
         void setstv(name user, const set<vec_uint16>& stv)
         {
@@ -551,7 +551,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntstv '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntstv '["alice"]' -p alice@active
          *      output: >> stored set<vector<T>>:size=3 vals:
          *              >> 16 26
          *              >> 36
@@ -572,8 +572,8 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setsto '["alice", [101, null, 201, 301]]' -p alice@active
-         *        ***user data can NOT be pushed into the chain, cleos get table will not work if using setsto
+         *  clio --verbose push action nestcontn2a setsto '["alice", [101, null, 201, 301]]' -p alice@active
+         *        ***user data can NOT be pushed into the chain, clio get table will not work if using setsto
          *  set<optional<T> > is  NOT supported currently!
          */
         [[sysio::action]]
@@ -583,7 +583,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
             sysio::print("type defined set<optional<T> > stored successfully!");
         }
 
-        //Example: cleos --verbose push action nestcontn2a  prntsto '["alice"]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a  prntsto '["alice"]' -p alice@active
         //          NOT supported
         [[sysio::action]]
         void prntsto(name user)
@@ -600,7 +600,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         * cleos --verbose push action nestcontn2a setstm '["alice", [ [{"first":30,"second":300},{"first":31,"second":301}], [{"first":60,"second":600},{"first":61,"second":601}] ]]' -p alice@active
+         * clio --verbose push action nestcontn2a setstm '["alice", [ [{"first":30,"second":300},{"first":31,"second":301}], [{"first":60,"second":600},{"first":61,"second":601}] ]]' -p alice@active
          */
         [[sysio::action]]
         void setstm(name user, const set<mp_uint16>& stm)
@@ -610,7 +610,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntstm '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntstm '["alice"]' -p alice@active
          *      output: >> stored set<mp_uint16>: size=2 content:
          *              >>
          *              >> Element 0--->
@@ -634,7 +634,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setstp '["alice", [{"first":68, "second":128}, {"first":69, "second":129}]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setstp '["alice", [{"first":68, "second":128}, {"first":69, "second":129}]]' -p alice@active
          */
         [[sysio::action]]
         void setstp(name user, const set<pair<uint32_t, uint32_t> >& stp)
@@ -644,7 +644,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntstp '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntstp '["alice"]' -p alice@active
          *      output: >> stored set<pair<uint32_t, uint32_t> >  size=2:
          *              >> 68,128
          *              >> 69,129
@@ -664,8 +664,8 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a setost '["bob", null]' -p bob@active
-         *  cleos --verbose push action nestcontn2a setost '["alice", [1006,2006, 3006]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setost '["bob", null]' -p bob@active
+         *  clio --verbose push action nestcontn2a setost '["alice", [1006,2006, 3006]]' -p alice@active
          */
         [[sysio::action]]
         void setost(name user, const optional<set_uint16>& ost)
@@ -675,11 +675,11 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prntost '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prntost '["bob"]' -p bob@active
          *      output: >> stored optional<set_uint16>  vals:
          *              >> NULL or no value
          *
-         *  cleos --verbose push action nestcontn2a  prntost '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntost '["alice"]' -p alice@active
          *      output: >> stored optional<set_uint16>  vals:
          *              >> 1006 2006 3006
          */
@@ -700,9 +700,9 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a setov '["bob", null]' -p bob@active
+         *  clio --verbose push action nestcontn2a setov '["bob", null]' -p bob@active
          *
-         *  cleos --verbose push action nestcontn2a setov '["alice", [1001,2001, 3001]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setov '["alice", [1001,2001, 3001]]' -p alice@active
          */
         [[sysio::action]]
         void setov(name user, const optional<vec_uint16>& ov)
@@ -712,11 +712,11 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prntov '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prntov '["bob"]' -p bob@active
          *      output: >> stored optional<vec_uint16>  vals:
          *              >> NULL or no value
          *
-         *  cleos --verbose push action nestcontn2a  prntov '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntov '["alice"]' -p alice@active
          *      output: >> stored optional<vec_uint16>  vals:
          *              >> 1001 2001 3001
          */
@@ -737,9 +737,9 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a setoo '["bob", null]' -p bob@active
+         *  clio --verbose push action nestcontn2a setoo '["bob", null]' -p bob@active
          *
-         *  cleos --verbose push action nestcontn2a setoo '["alice",123]' -p alice@active
+         *  clio --verbose push action nestcontn2a setoo '["alice",123]' -p alice@active
          */
         [[sysio::action]]
         void setoo(name user, const optional<op_uint16>& oo)
@@ -749,10 +749,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prntoo '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prntoo '["bob"]' -p bob@active
          *      ouput: >> stored optional<optional<T>> val:null or no real value stored
          *
-         *  cleos --verbose push action nestcontn2a  prntoo '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntoo '["alice"]' -p alice@active
          *      output: >> stored optional<optional<T>> val:123
          */
         [[sysio::action]]
@@ -767,9 +767,9 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  setom '["alice",[{"first":10,"second":1000},{"first":11,"second":1001}] ]' -p alice@active
+         *  clio --verbose push action nestcontn2a  setom '["alice",[{"first":10,"second":1000},{"first":11,"second":1001}] ]' -p alice@active
          *
-         *  cleos --verbose push action nestcontn2a  setom '["bob", null ]' -p bob@active
+         *  clio --verbose push action nestcontn2a  setom '["bob", null ]' -p bob@active
          */
         [[sysio::action]]
         void setom(name user, const optional<mp_uint16>& om)
@@ -779,10 +779,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntom '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntom '["alice"]' -p alice@active
          *      output: >> size of stored om:2 vals:10:1000  11:1001
          *
-         *  cleos --verbose push action nestcontn2a  prntom '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prntom '["bob"]' -p bob@active
          *      output: >> optional<mp_uint16> has NULL value
          */
         [[sysio::action]]
@@ -803,9 +803,9 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a setop '["alice", {"first":60, "second":61}]' -p alice@active
+         *  clio --verbose push action nestcontn2a setop '["alice", {"first":60, "second":61}]' -p alice@active
          *
-         *  cleos --verbose push action nestcontn2a setop '["bob", null]' -p bob@active
+         *  clio --verbose push action nestcontn2a setop '["bob", null]' -p bob@active
          */
         [[sysio::action]]
         void setop(name user, const optional<pr_unit16> & op)
@@ -815,10 +815,10 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prntop '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntop '["alice"]' -p alice@active
          *      output: >> stored optional<pr_unit16> data:60 61
          *
-         *  cleos --verbose push action nestcontn2a  prntop '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prntop '["bob"]' -p bob@active
          *      output: >> optional<pr_unit16> has NULL value
          */
         [[sysio::action]]
@@ -835,7 +835,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         //=== 4. Try map - set,vector,optional,map,pair
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setmst '["alice", [{"key":1,"value":[10,11,12,16]},  {"key":2,"value":[200,300]} ]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setmst '["alice", [{"key":1,"value":[10,11,12,16]},  {"key":2,"value":[200,300]} ]]' -p alice@active
          */
         [[sysio::action]]
         void setmst(name user, const map<uint16_t, set_uint16> & mst)
@@ -845,7 +845,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntmst '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntmst '["alice"]' -p alice@active
          *      output: >> stored map<uint16_t, set_uint16>: size=2 content:
          *              >> 1:vals 10 11 12 16
          *              >> 2:vals 200 300
@@ -869,7 +869,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Example:
-         * cleos --verbose push action nestcontn2a setmv '["alice", [{"key":1,"value":[10,11,12,16]},  {"key":2,"value":[200,300]} ]]' -p alice@active
+         * clio --verbose push action nestcontn2a setmv '["alice", [{"key":1,"value":[10,11,12,16]},  {"key":2,"value":[200,300]} ]]' -p alice@active
          */
         [[sysio::action]]
         void setmv(name user, const map<uint16_t, vec_uint16>& mv)
@@ -879,7 +879,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntmv '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntmv '["alice"]' -p alice@active
          *      output: >> stored map<uint16_t, vec_uint16>: size=2 content:
          *              >> 1:vals 10 11 12 16
          *              >> 2:vals 200 300
@@ -902,7 +902,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setmo '["alice", [{"key":10,"value":1000},{"key":11,"value":null}]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setmo '["alice", [{"key":10,"value":1000},{"key":11,"value":null}]]' -p alice@active
          */
         [[sysio::action]]
         void setmo(name user, const map<uint16_t, op_uint16>& mo)
@@ -912,7 +912,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntmo '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntmo '["alice"]' -p alice@active
          *      output: >> size of stored mo:2 vals
          *              >> 10:1000 11:NULL
          */
@@ -932,8 +932,8 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos push action nestcontn2a setmm '["alice", [{"key":10,"value":[{"first":200,"second":2000}, {"first":201,"second":2001}] }, {"key":11,"value":[{"first":300,"second":3000}, {"first":301,"second":3001}] } ]]' -p alice@active
-         *       Attention: please note the cleos input of mm or map<K1, map<K2, V> > is a combination of strings key/value and first/second !
+         *  clio push action nestcontn2a setmm '["alice", [{"key":10,"value":[{"first":200,"second":2000}, {"first":201,"second":2001}] }, {"key":11,"value":[{"first":300,"second":3000}, {"first":301,"second":3001}] } ]]' -p alice@active
+         *       Attention: please note the clio input of mm or map<K1, map<K2, V> > is a combination of strings key/value and first/second !
          *       i.e the "value" part of mm is an array of <first,second> pairs!
          */
         [[sysio::action]]
@@ -944,7 +944,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntmm '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntmm '["alice"]' -p alice@active
          *      output: >> stored map<uint16_t, mp_uint16> val:size=2 vals are the following:
          *              >> 10--->
          *              >> 	200:2000
@@ -969,7 +969,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setmp '["alice", [{"key":36,"value":{"first":300, "second":301}}, {"key":37,"value":{"first":600, "second":601}} ]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setmp '["alice", [{"key":36,"value":{"first":300, "second":301}}, {"key":37,"value":{"first":600, "second":601}} ]]' -p alice@active
          */
         [[sysio::action]]
         void setmp(name user, const map<uint16_t, pr_unit16> & mp)
@@ -979,7 +979,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntmp '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntmp '["alice"]' -p alice@active
          *      output: >> size of stored mp:2 vals:
          *              >> 36:300 301
          *              >> 37:600 601
@@ -996,7 +996,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         //=== 5. Try pair - set,vector,optional,map,pair
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setpst '["alice", {"first":20, "second":[200,201,202]}]' -p alice@active
+         *  clio --verbose push action nestcontn2a setpst '["alice", {"first":20, "second":[200,201,202]}]' -p alice@active
          */
         [[sysio::action]]
         void setpst(name user, const pair<uint32_t, set_uint16>& pst)
@@ -1006,7 +1006,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntpst '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntpst '["alice"]' -p alice@active
          *      output: >> content of stored pair<uint32_t, set_uint16>: first=20
          *              >> second=200 201 202
          */
@@ -1020,7 +1020,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setpv '["alice", {"first":10, "second":[100,101,102]}]' -p alice@active
+         *  clio --verbose push action nestcontn2a setpv '["alice", {"first":10, "second":[100,101,102]}]' -p alice@active
          */
         [[sysio::action]]
         void setpv(name user, const pair<uint32_t, vec_uint16>& pv)
@@ -1030,7 +1030,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntpv '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntpv '["alice"]' -p alice@active
          *      output: >> content of stored pair<uint32_t, vec_uint16>: first=10
          *              >> second=100 101 102
          */
@@ -1044,9 +1044,9 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a setpo '["alice", {"first":70, "second":71}]' -p alice@active
+         *  clio --verbose push action nestcontn2a setpo '["alice", {"first":70, "second":71}]' -p alice@active
          *
-         *  cleos --verbose push action nestcontn2a setpo '["bob", {"first":70, "second":null}]' -p bob@active
+         *  clio --verbose push action nestcontn2a setpo '["bob", {"first":70, "second":null}]' -p bob@active
          */
         [[sysio::action]]
         void setpo(name user, const pair<uint32_t, op_uint16> & po)
@@ -1056,11 +1056,11 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prntpo '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntpo '["alice"]' -p alice@active
          *      output: >> content of stored pair<uint16_t, op_unit16>: first=70
          *              >> second=71
          *
-         *  cleos --verbose push action nestcontn2a  prntpo '["bob"]' -p bob@active
+         *  clio --verbose push action nestcontn2a  prntpo '["bob"]' -p bob@active
          *      output: >> content of stored pair<uint16_t, op_unit16>: first=70
          *              >> second=NULL
          */
@@ -1076,7 +1076,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setpm '["alice", {"key":6, "value":[{"first":20,"second":300}, {"first":21,"second":301}] }]' -p alice@active
+         *  clio --verbose push action nestcontn2a setpm '["alice", {"key":6, "value":[{"first":20,"second":300}, {"first":21,"second":301}] }]' -p alice@active
          *      Remark: the data input for pm uses a combination of key/vale and first/second
          */
         [[sysio::action]]
@@ -1087,7 +1087,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Examples:
-         *  cleos --verbose push action nestcontn2a  prntpm '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntpm '["alice"]' -p alice@active
          *      output: >> content of stored pair<uint16_t, mp_uint16>: first=6
          *              >> second=20:300  21:301
          */
@@ -1102,7 +1102,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
 
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setpp '["alice", {"key":30, "value":{"first":301, "second":302} }]' -p alice@active
+         *  clio --verbose push action nestcontn2a setpp '["alice", {"key":30, "value":{"first":301, "second":302} }]' -p alice@active
          *      Remark: input data for pp or pair-pair is a combination of key/value and first/second
          */
         [[sysio::action]]
@@ -1113,7 +1113,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         * cleos --verbose push action nestcontn2a  prntpp '["alice"]' -p alice@active
+         * clio --verbose push action nestcontn2a  prntpp '["alice"]' -p alice@active
          *      output: >> content of stored pair<uint16_t, pr_unit16>: first=30
          *              >> second=301 302
          */
@@ -1129,7 +1129,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         //Try an example of 3-layer nested container
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a setovv '["alice", [[21,22],[230], [240,250,260,280]]]' -p alice@active
+         *  clio --verbose push action nestcontn2a setovv '["alice", [[21,22],[230], [240,250,260,280]]]' -p alice@active
          */
         [[sysio::action]]
         void setovv(name user, const optional<vecvec_uint32>& ovv)
@@ -1141,7 +1141,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
         }
 
         /*Example:
-         *  cleos --verbose push action nestcontn2a  prntovv '["alice"]' -p alice@active
+         *  clio --verbose push action nestcontn2a  prntovv '["alice"]' -p alice@active
          *      output: >> stored optional<vector<vector<T> > > vals:
          *              >> 21 22
          *              >> 230
@@ -1166,7 +1166,7 @@ class [[sysio::contract("nestcontn2a")]] nestcontn2a : public sysio::contract {
                 sysio::print("stored optional<vector<vector<T> > >  has null value!");
         }
 
-        //Example: cleos --verbose push action nestcontn2a erase '["alice"]' -p alice@active
+        //Example: clio --verbose push action nestcontn2a erase '["alice"]' -p alice@active
         [[sysio::action]]
         void erase(name user)
         {

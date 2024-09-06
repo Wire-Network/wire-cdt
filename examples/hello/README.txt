@@ -7,7 +7,7 @@
 
  - After build -
    - The built smart contract is under the 'hello' directory in the 'build' directory
-   - You can then do a 'set contract' action with 'cleos' and point to the './build/hello' directory
+   - You can then do a 'set contract' action with 'clio' and point to the './build/hello' directory
 
 - Additions to cmake should be done to the CMakeLists.txt in the './src' directory and not in the top level CMakeLists.txt
 
@@ -17,4 +17,4 @@
 
  - After build -
    - The built smart contract is in the 'build' directory
-   - You can then do a 'set contract' action with 'cleos' and point to the 'build' directory
+   - You can then do a 'set contract' action with 'clio' and point to the 'build' directory
