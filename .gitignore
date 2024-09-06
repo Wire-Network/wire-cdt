@@ -49,3 +49,6 @@ __pycache__/
 *.vim
 .idea/
 .ccls-cache/
+
+
+tmp/
