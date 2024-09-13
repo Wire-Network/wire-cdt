@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1inline__dispatcher" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::inline_dispatcher</compoundname>
+    <templateparamlist>
+      <param>
+        <type>typename</type>
+      </param>
+      <param>
+        <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+      </param>
+    </templateparamlist>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="552" column="4" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="552" bodyend="-1"/>
+    <listofallmembers>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

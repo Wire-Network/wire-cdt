@@ -1,0 +1,315 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="dispatcher_8hpp" kind="file" language="C++">
+    <compoundname>dispatcher.hpp</compoundname>
+    <includes refid="action_8hpp" local="yes">action.hpp</includes>
+    <includes local="no">boost/fusion/adapted/std_tuple.hpp</includes>
+    <includes local="no">boost/fusion/include/std_tuple.hpp</includes>
+    <includes local="no">boost/mp11/tuple.hpp</includes>
+    <includedby refid="sysio_8hpp" local="yes">libraries/sysiolib/contracts/sysio/sysio.hpp</includedby>
+    <incdepgraph>
+      <node id="15">
+        <label>list</label>
+      </node>
+      <node id="41">
+        <label>boost/preprocessor/facilities/overload.hpp</label>
+      </node>
+      <node id="16">
+        <label>queue</label>
+      </node>
+      <node id="8">
+        <label>boost/preprocessor/seq/seq.hpp</label>
+      </node>
+      <node id="10">
+        <label>../../core/sysio/datastream.hpp</label>
+        <link refid="datastream_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
+        </childnode>
+        <childnode refid="22" relation="include">
+        </childnode>
+        <childnode refid="23" relation="include">
+        </childnode>
+        <childnode refid="24" relation="include">
+        </childnode>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="26" relation="include">
+        </childnode>
+        <childnode refid="27" relation="include">
+        </childnode>
+        <childnode refid="28" relation="include">
+        </childnode>
+      </node>
+      <node id="32">
+        <label>../../core/sysio/ignore.hpp</label>
+        <link refid="ignore_8hpp"/>
+        <childnode refid="10" relation="include">
+        </childnode>
+      </node>
+      <node id="14">
+        <label>varint.hpp</label>
+        <link refid="varint_8hpp"/>
+      </node>
+      <node id="34">
+        <label>stdint.h</label>
+      </node>
+      <node id="22">
+        <label>variant</label>
+      </node>
+      <node id="26">
+        <label>boost/fusion/include/std_tuple.hpp</label>
+      </node>
+      <node id="25">
+        <label>boost/fusion/adapted/std_tuple.hpp</label>
+      </node>
+      <node id="12">
+        <label>string</label>
+      </node>
+      <node id="20">
+        <label>map</label>
+      </node>
+      <node id="2">
+        <label>action.hpp</label>
+        <link refid="action_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+        <childnode refid="32" relation="include">
+        </childnode>
+        <childnode refid="33" relation="include">
+        </childnode>
+        <childnode refid="38" relation="include">
+        </childnode>
+        <childnode refid="39" relation="include">
+        </childnode>
+        <childnode refid="40" relation="include">
+        </childnode>
+        <childnode refid="41" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>libraries/sysiolib/contracts/sysio/dispatcher.hpp</label>
+        <link refid="dispatcher_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="26" relation="include">
+        </childnode>
+        <childnode refid="27" relation="include">
+        </childnode>
+      </node>
+      <node id="40">
+        <label>boost/preprocessor/tuple/enum.hpp</label>
+      </node>
+      <node id="9">
+        <label>boost/preprocessor/stringize.hpp</label>
+      </node>
+      <node id="24">
+        <label>boost/fusion/include/for_each.hpp</label>
+      </node>
+      <node id="7">
+        <label>boost/preprocessor/seq/size.hpp</label>
+      </node>
+      <node id="11">
+        <label>check.hpp</label>
+        <link refid="check_8hpp"/>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="38">
+        <label>boost/preprocessor/variadic/size.hpp</label>
+      </node>
+      <node id="39">
+        <label>boost/preprocessor/variadic/to_tuple.hpp</label>
+      </node>
+      <node id="13">
+        <label>string_view</label>
+      </node>
+      <node id="37">
+        <label>cstdio</label>
+      </node>
+      <node id="33">
+        <label>../../core/sysio/time.hpp</label>
+        <link refid="time_8hpp"/>
+        <childnode refid="34" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+        <childnode refid="36" relation="include">
+        </childnode>
+        <childnode refid="37" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="36">
+        <label>ctime</label>
+      </node>
+      <node id="29">
+        <label>../../core/sysio/name.hpp</label>
+        <link refid="name_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="30" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>../../core/sysio/serialize.hpp</label>
+        <link refid="serialize_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+      </node>
+      <node id="21">
+        <label>optional</label>
+      </node>
+      <node id="17">
+        <label>vector</label>
+      </node>
+      <node id="18">
+        <label>array</label>
+      </node>
+      <node id="31">
+        <label>bluegrass/meta/refl.hpp</label>
+      </node>
+      <node id="3">
+        <label>cstdlib</label>
+      </node>
+      <node id="28">
+        <label>boost/pfr.hpp</label>
+      </node>
+      <node id="6">
+        <label>boost/preprocessor/seq/enum.hpp</label>
+      </node>
+      <node id="35">
+        <label>chrono</label>
+      </node>
+      <node id="30">
+        <label>reflect.hpp</label>
+        <link refid="reflect_8hpp"/>
+        <childnode refid="31" relation="include">
+        </childnode>
+      </node>
+      <node id="19">
+        <label>set</label>
+      </node>
+      <node id="23">
+        <label>boost/fusion/algorithm/iteration/for_each.hpp</label>
+      </node>
+      <node id="27">
+        <label>boost/mp11/tuple.hpp</label>
+      </node>
+      <node id="5">
+        <label>boost/preprocessor/seq/for_each.hpp</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="1">
+        <label>libraries/sysiolib/contracts/sysio/dispatcher.hpp</label>
+        <link refid="dispatcher_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>libraries/sysiolib/contracts/sysio/sysio.hpp</label>
+        <link refid="sysio_8hpp"/>
+      </node>
+    </invincdepgraph>
+    <innernamespace refid="namespacesysio">sysio</innernamespace>
+      <sectiondef kind="define">
+      <memberdef kind="define" id="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" prot="public" static="no">
+        <name>SYSIO_DISPATCH</name>
+        <param><defname>TYPE</defname></param>
+        <param><defname>MEMBERS</defname></param>
+        <initializer>extern &quot;C&quot; { \
+   [[sysio::wasm_entry]] \
+   void apply( uint64_t receiver, uint64_t code, uint64_t action ) { \
+      if( code == receiver ) { \
+         switch( action ) { \
+            SYSIO_DISPATCH_HELPER( TYPE, MEMBERS ) \
+         } \
+         /* does not allow destructor of thiscontract to run: sysio_exit(0); */ \
+      } \
+   } \
+} \</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Convenient macro to create contract apply handler</para>
+<para><simplesect kind="note"><para>To be able to use this macro, the contract needs to be derived from <ref refid="classsysio_1_1contract" kindref="compound">sysio::contract</ref> </para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>TYPE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The class name of the contract </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>MEMBERS</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The sequence of available actions supported by this contract</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+Example: <programlisting><codeline><highlight class="normal">SYSIO_DISPATCH(<sp/>sysio::bios,<sp/>(setpriv)(setalimits)(setglimits)(setprods)(reqauth)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/dispatcher.hpp" line="122" column="9" bodyfile="libraries/sysiolib/contracts/sysio/dispatcher.hpp" bodystart="122" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/dispatcher.hpp"/>
+  </compounddef>
+</doxygen>

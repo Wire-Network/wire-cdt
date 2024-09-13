@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1__datastream__detail_1_1is__datastream_3_01datastream_3_01_t_01_4_01_4" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::_datastream_detail::is_datastream&lt; datastream&lt; T &gt; &gt;</compoundname>
+    <includes refid="datastream_8hpp" local="no">datastream.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1__datastream__detail_1_1is__datastream_3_01datastream_3_01_t_01_4_01_4_a8322816d798d8d087513f45c44c6344f_1a8322816d798d8d087513f45c44c6344f" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>constexpr bool</type>
+        <definition>constexpr bool sysio::_datastream_detail::is_datastream&lt; datastream&lt; T &gt; &gt;::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <initializer>= true</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="604" column="47" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="604" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="604" column="4" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="604" bodyend="604"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1__datastream__detail_1_1is__datastream_3_01datastream_3_01_t_01_4_01_4_a8322816d798d8d087513f45c44c6344f_1a8322816d798d8d087513f45c44c6344f" prot="public" virt="non-virtual"><scope>sysio::_datastream_detail::is_datastream&lt; datastream&lt; T &gt; &gt;</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

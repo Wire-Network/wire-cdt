@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="binary__extension_8hpp" kind="file" language="C++">
+    <compoundname>binary_extension.hpp</compoundname>
+    <includes refid="check_8hpp" local="yes">check.hpp</includes>
+    <incdepgraph>
+      <node id="3">
+        <label>string</label>
+      </node>
+      <node id="2">
+        <label>check.hpp</label>
+        <link refid="check_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>string_view</label>
+      </node>
+      <node id="1">
+        <label>libraries/sysiolib/core/sysio/binary_extension.hpp</label>
+        <link refid="binary__extension_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+    </incdepgraph>
+    <innerclass refid="classsysio_1_1binary__extension" prot="public">sysio::binary_extension</innerclass>
+    <innernamespace refid="namespacesysio">sysio</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/binary_extension.hpp"/>
+  </compounddef>
+</doxygen>

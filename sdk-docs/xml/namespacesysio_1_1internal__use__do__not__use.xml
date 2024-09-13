@@ -1,0 +1,731 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="namespacesysio_1_1internal__use__do__not__use" kind="namespace" language="C++">
+    <compoundname>sysio::internal_use_do_not_use</compoundname>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a1e9debdba1e17cf4f87e17912b9976fa_1a1e9debdba1e17cf4f87e17912b9976fa" prot="public" static="no" mutable="no">
+        <type>const char *</type>
+        <definition>const char uint32_t const char * sysio::internal_use_do_not_use::msg</definition>
+        <argsstring></argsstring>
+        <name>msg</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="15" column="25" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="15" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_aa4b9fbff02f26fb7f8000cef661b8de5_1aa4b9fbff02f26fb7f8000cef661b8de5" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>const char uint32_t const char uint32_t sysio::internal_use_do_not_use::msg_len</definition>
+        <argsstring></argsstring>
+        <name>msg_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="18" column="38" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="18" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a9be93b951172cf6b1d89036caa9547d2_1a9be93b951172cf6b1d89036caa9547d2" kindref="member">uint64_t</ref></type>
+        <definition>uint64_t sysio::internal_use_do_not_use::code</definition>
+        <argsstring></argsstring>
+        <name>code</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="21" column="23" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="21" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a6620afefe36bfacb5da5a111ab0d907e_1a6620afefe36bfacb5da5a111ab0d907e" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a9be93b951172cf6b1d89036caa9547d2_1a9be93b951172cf6b1d89036caa9547d2" kindref="member">uint64_t</ref></type>
+        <definition>uint64_t sysio::internal_use_do_not_use::sysio_contract_name</definition>
+        <argsstring></argsstring>
+        <name>sysio_contract_name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/context.hpp" line="7" column="27" bodyfile="libraries/sysiolib/core/sysio/context.hpp" bodystart="7" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ac481197874d253cfaf7b7ae5f96e47c3_1ac481197874d253cfaf7b7ae5f96e47c3" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::op1_len</definition>
+        <argsstring></argsstring>
+        <name>op1_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="22" column="29" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a62a5952514253f54086df58631a8f2a5_1a62a5952514253f54086df58631a8f2a5" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>uint32_t const char* sysio::internal_use_do_not_use::op2</definition>
+        <argsstring></argsstring>
+        <name>op2</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="22" column="48" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a9efff25a733107f42929fd380b4c8372_1a9efff25a733107f42929fd380b4c8372" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t const char uint32_t sysio::internal_use_do_not_use::op2_len</definition>
+        <argsstring></argsstring>
+        <name>op2_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="22" column="61" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_af98a113b6511e21c52fbd2f6ff60362a_1af98a113b6511e21c52fbd2f6ff60362a" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char *</type>
+        <definition>const char uint32_t const char uint32_t const char uint32_t const char uint32_t int32_t char * sysio::internal_use_do_not_use::result</definition>
+        <argsstring></argsstring>
+        <name>result</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="22" column="74" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a8c1962786c97be8df86610323f633fed_1a8c1962786c97be8df86610323f633fed" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>const char uint32_t const char uint32_t const char uint32_t const char uint32_t int32_t char uint32_t sysio::internal_use_do_not_use::result_len</definition>
+        <argsstring></argsstring>
+        <name>result_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="22" column="90" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ac1c81dff46bb70b1337bf0c90d5a52fb_1ac1c81dff46bb70b1337bf0c90d5a52fb" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::g1_len</definition>
+        <argsstring></argsstring>
+        <name>g1_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="25" column="29" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="25" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a5d823e77aa4d56467fcf4dbe021549c2_1a5d823e77aa4d56467fcf4dbe021549c2" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>uint32_t const char* sysio::internal_use_do_not_use::scalar</definition>
+        <argsstring></argsstring>
+        <name>scalar</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="25" column="47" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="25" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a1010e710a78dcc851c2da6669ee5f797_1a1010e710a78dcc851c2da6669ee5f797" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t const char uint32_t sysio::internal_use_do_not_use::scalar_len</definition>
+        <argsstring></argsstring>
+        <name>scalar_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="25" column="63" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="25" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_accdc0099082eacc52e97c6eed1e634d4_1accdc0099082eacc52e97c6eed1e634d4" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::pairs_len</definition>
+        <argsstring></argsstring>
+        <name>pairs_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="28" column="29" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="28" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a321d7ee9098d7be03498afbf2f8901b9_1a321d7ee9098d7be03498afbf2f8901b9" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::base_len</definition>
+        <argsstring></argsstring>
+        <name>base_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="31" column="29" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ab8b8d1fb25728079b2b361aab1813e6e_1ab8b8d1fb25728079b2b361aab1813e6e" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>uint32_t const char* sysio::internal_use_do_not_use::exp</definition>
+        <argsstring></argsstring>
+        <name>exp</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="31" column="49" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_aa56fc3f6653996bb40b8369e18d573b0_1aa56fc3f6653996bb40b8369e18d573b0" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t const char uint32_t sysio::internal_use_do_not_use::exp_len</definition>
+        <argsstring></argsstring>
+        <name>exp_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="31" column="62" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a9ce147b5241e512e82655e6f250c5dc3_1a9ce147b5241e512e82655e6f250c5dc3" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>uint32_t const char uint32_t const char* sysio::internal_use_do_not_use::mod</definition>
+        <argsstring></argsstring>
+        <name>mod</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="31" column="81" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a7429d6bb9a8d72782ea03355cbeb1210_1a7429d6bb9a8d72782ea03355cbeb1210" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t const char uint32_t const char uint32_t sysio::internal_use_do_not_use::mod_len</definition>
+        <argsstring></argsstring>
+        <name>mod_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="31" column="94" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_aa9cafaf1709bec38f666a7e8e5ba370c_1aa9cafaf1709bec38f666a7e8e5ba370c" prot="public" static="no" mutable="no">
+        <type>const char *</type>
+        <definition>const char* sysio::internal_use_do_not_use::state</definition>
+        <argsstring></argsstring>
+        <name>state</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="25" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_afa0da916b7340b8c284c5d827e408308_1afa0da916b7340b8c284c5d827e408308" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>const char uint32_t sysio::internal_use_do_not_use::state_len</definition>
+        <argsstring></argsstring>
+        <name>state_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="40" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a2ef3ee1e961a3017fd58b28b3ca9197f_1a2ef3ee1e961a3017fd58b28b3ca9197f" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>const char uint32_t const char uint32_t const char* sysio::internal_use_do_not_use::t0_offset</definition>
+        <argsstring></argsstring>
+        <name>t0_offset</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="93" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a0d2b6be822855c6836d34a091977068d_1a0d2b6be822855c6836d34a091977068d" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>const char uint32_t const char uint32_t const char uint32_t sysio::internal_use_do_not_use::t0_len</definition>
+        <argsstring></argsstring>
+        <name>t0_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="112" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a76888230526fc8d926fcbc04a1b726d3_1a76888230526fc8d926fcbc04a1b726d3" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>const char uint32_t const char uint32_t const char uint32_t const char* sysio::internal_use_do_not_use::t1_offset</definition>
+        <argsstring></argsstring>
+        <name>t1_offset</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="130" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_accd3934d2654b697bfd2d8ed491418f2_1accd3934d2654b697bfd2d8ed491418f2" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>const char uint32_t const char uint32_t const char uint32_t const char uint32_t sysio::internal_use_do_not_use::t1_len</definition>
+        <argsstring></argsstring>
+        <name>t1_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="149" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a75d0e81bc08930ff58816bf21bfa8a15_1a75d0e81bc08930ff58816bf21bfa8a15" prot="public" static="no" mutable="no">
+        <type>const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> int32_t</type>
+        <definition>const char uint32_t const char uint32_t const char uint32_t const char uint32_t int32_t sysio::internal_use_do_not_use::final</definition>
+        <argsstring></argsstring>
+        <name>final</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="34" column="164" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a1d3a88dc50e8377be82d07b91857f728_1a1d3a88dc50e8377be82d07b91857f728" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::sig_len</definition>
+        <argsstring></argsstring>
+        <name>sig_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="37" column="29" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a7f5a710bda6e60de4c2cd7ed6a565af2_1a7f5a710bda6e60de4c2cd7ed6a565af2" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char *</type>
+        <definition>uint32_t const char* sysio::internal_use_do_not_use::dig</definition>
+        <argsstring></argsstring>
+        <name>dig</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="37" column="48" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ab110978e414f2965a54922d18ee6b553_1ab110978e414f2965a54922d18ee6b553" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t const char uint32_t sysio::internal_use_do_not_use::dig_len</definition>
+        <argsstring></argsstring>
+        <name>dig_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="37" column="61" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a2c13901bcbc95705e8529709522f8932_1a2c13901bcbc95705e8529709522f8932" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char *</type>
+        <definition>uint32_t const char uint32_t char* sysio::internal_use_do_not_use::pub</definition>
+        <argsstring></argsstring>
+        <name>pub</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="37" column="74" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a5d8947332c6b7cbd8ab6a927da19df7f_1a5d8947332c6b7cbd8ab6a927da19df7f" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> const char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t const char uint32_t char uint32_t sysio::internal_use_do_not_use::pub_len</definition>
+        <argsstring></argsstring>
+        <name>pub_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="37" column="87" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a69920260940746ae99ee8728a1ad8736_1a69920260940746ae99ee8728a1ad8736" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::data_len</definition>
+        <argsstring></argsstring>
+        <name>data_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="40" column="29" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="40" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a893a85a865f7e916d4a72390cf2aaa18_1a893a85a865f7e916d4a72390cf2aaa18" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char *</type>
+        <definition>uint32_t char* sysio::internal_use_do_not_use::hash</definition>
+        <argsstring></argsstring>
+        <name>hash</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="40" column="43" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="40" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a1b61d2f28d6d02ba51d13f7a7a88b965_1a1b61d2f28d6d02ba51d13f7a7a88b965" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t char uint32_t sysio::internal_use_do_not_use::hash_len</definition>
+        <argsstring></argsstring>
+        <name>hash_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="40" column="57" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="40" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a763c25b48df2110fd01dfa80fc91237d_1a763c25b48df2110fd01dfa80fc91237d" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref> int32_t</type>
+        <definition>uint32_t char uint32_t int32_t sysio::internal_use_do_not_use::keccak</definition>
+        <argsstring></argsstring>
+        <name>keccak</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="40" column="74" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="40" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>const char sysio::internal_use_do_not_use::uint32_t</definition>
+        <argsstring></argsstring>
+        <name>uint32_t</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="18" column="18" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="18" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ae82f9528dbd927004bf2a9d80dc9e9f3_1ae82f9528dbd927004bf2a9d80dc9e9f3" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::len</definition>
+        <argsstring></argsstring>
+        <name>len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="24" column="23" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="24" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ae1c7f8c2e3e51895b16b242de84d4aa9_1ae1c7f8c2e3e51895b16b242de84d4aa9" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a9be93b951172cf6b1d89036caa9547d2_1a9be93b951172cf6b1d89036caa9547d2" kindref="member">uint64_t</ref></type>
+        <definition>uint64_t sysio::internal_use_do_not_use::permission</definition>
+        <argsstring></argsstring>
+        <name>permission</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="39" column="23" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a559456a47e2a0a9cc4bf093662e53d31_1a559456a47e2a0a9cc4bf093662e53d31" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_aa4e5d94d6ba2e34521adf80eea4cde4d_1aa4e5d94d6ba2e34521adf80eea4cde4d" kindref="member">size_t</ref></type>
+        <definition>size_t sysio::internal_use_do_not_use::size</definition>
+        <argsstring></argsstring>
+        <name>size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="45" column="20" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a9be93b951172cf6b1d89036caa9547d2_1a9be93b951172cf6b1d89036caa9547d2" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>const char const char sysio::internal_use_do_not_use::uint64_t</definition>
+        <argsstring></argsstring>
+        <name>uint64_t</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="32" column="9" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="32" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_ab51175948b2ab877560ae936ba8c556d_1ab51175948b2ab877560ae936ba8c556d" prot="public" static="no" mutable="no">
+        <type>int64_t *</type>
+        <definition>int64_t sysio::internal_use_do_not_use::ram_bytes</definition>
+        <argsstring></argsstring>
+        <name>ram_bytes</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="16" column="22" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_af4f450b3fa9762f7fd3e2cc09fea60a9_1af4f450b3fa9762f7fd3e2cc09fea60a9" prot="public" static="no" mutable="no">
+        <type>int64_t int64_t *</type>
+        <definition>int64_t int64_t sysio::internal_use_do_not_use::net_weight</definition>
+        <argsstring></argsstring>
+        <name>net_weight</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="16" column="40" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a631eb3f5d21bb6efacb8ca8ef4b07d57_1a631eb3f5d21bb6efacb8ca8ef4b07d57" prot="public" static="no" mutable="no">
+        <type>int64_t int64_t int64_t *</type>
+        <definition>int64_t int64_t int64_t sysio::internal_use_do_not_use::cpu_weight</definition>
+        <argsstring></argsstring>
+        <name>cpu_weight</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="16" column="59" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a23f5fbe172654c3853f1009e92556cfd_1a23f5fbe172654c3853f1009e92556cfd" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool sysio::internal_use_do_not_use::is_priv</definition>
+        <argsstring></argsstring>
+        <name>is_priv</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="22" column="19" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a1d7782f1d87aa708078b1010efb256d8_1a1d7782f1d87aa708078b1010efb256d8" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>uint32_t sysio::internal_use_do_not_use::datalen</definition>
+        <argsstring></argsstring>
+        <name>datalen</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="25" column="23" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="25" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_a5aabb4ccd9d1395849572305cf53748e_1a5aabb4ccd9d1395849572305cf53748e" prot="public" static="no" mutable="no">
+        <type>char *</type>
+        <definition>char* sysio::internal_use_do_not_use::producer_data</definition>
+        <argsstring></argsstring>
+        <name>producer_data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="37" column="19" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_aeccb358a2fb130df01a4e60f6265e86d_1aeccb358a2fb130df01a4e60f6265e86d" prot="public" static="no" mutable="no">
+        <type>char <ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+        <definition>char uint32_t sysio::internal_use_do_not_use::producer_data_size</definition>
+        <argsstring></argsstring>
+        <name>producer_data_size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="37" column="42" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1_1internal__use__do__not__use_aa4e5d94d6ba2e34521adf80eea4cde4d_1aa4e5d94d6ba2e34521adf80eea4cde4d" prot="public" static="no" mutable="no">
+        <type>const char</type>
+        <definition>char sysio::internal_use_do_not_use::size_t</definition>
+        <argsstring></argsstring>
+        <name>size_t</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="17" column="38" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="17" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="namespacesysio_1_1internal__use__do__not__use_aeb150c937675f95c86f27f99dd822d3b_1aeb150c937675f95c86f27f99dd822d3b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::internal_use_do_not_use::__attribute__</definition>
+        <argsstring>((sysio_wasm_import)) void sysio_assert(uint32_t test</argsstring>
+        <name>__attribute__</name>
+        <param>
+          <type>(sysio_wasm_import)</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="14" column="10" declfile="libraries/sysiolib/contracts/sysio/transaction.hpp" declline="34" declcolumn="10"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_1_1internal__use__do__not__use_af2bce1f22c80a439f5f7b898f77901da_1af2bce1f22c80a439f5f7b898f77901da" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>struct</type>
+        <definition>struct sysio::internal_use_do_not_use::__attribute__</definition>
+        <argsstring>((aligned(16))) capi_checksum256_ext</argsstring>
+        <name>__attribute__</name>
+        <param>
+          <type>(aligned(16))</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="450" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="19" bodyend="19"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_1_1internal__use__do__not__use_1a72735e6cd7f8a91f5fd058e19c803daf" prot="public" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>auto</type>
+        <definition>static auto sysio::internal_use_do_not_use::sha3_helper</definition>
+        <argsstring>(const char *data, uint32_t length, bool keccak)</argsstring>
+        <name>sha3_helper</name>
+        <param>
+          <type>const char *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref></type>
+          <declname>length</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>keccak</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="43" column="26" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="43" bodyend="50"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_1_1internal__use__do__not__use_aa8a81a92659015e1aebb17f47221f06b_1aa8a81a92659015e1aebb17f47221f06b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::internal_use_do_not_use::__attribute</definition>
+        <argsstring>((sysio_wasm_import)) int64_t set_proposed_producers(char *</argsstring>
+        <name>__attribute</name>
+        <param>
+          <type>(sysio_wasm_import)</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="30" column="10"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_1_1internal__use__do__not__use_ae2d1abc23c1f63d943a8870888b16892_1ae2d1abc23c1f63d943a8870888b16892" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::internal_use_do_not_use::__attribute__</definition>
+        <argsstring>((sysio_wasm_import, noreturn)) void sysio_exit(int32_t code)</argsstring>
+        <name>__attribute__</name>
+        <param>
+          <type>(sysio_wasm_import, noreturn)</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="14" column="7" declfile="libraries/sysiolib/contracts/sysio/system.hpp" declline="14" declcolumn="7"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_1_1internal__use__do__not__use_a63ec55f8d63df2e8dff29c87d6372986_1a63ec55f8d63df2e8dff29c87d6372986" prot="public" static="no" const="yes" explicit="no" inline="no" refqual="lvalue" virt="non-virtual">
+        <type></type>
+        <definition>sysio::internal_use_do_not_use::__attribute__</definition>
+        <argsstring>((sysio_wasm_import)) void send_deferred(const uint128_t &amp;</argsstring>
+        <name>__attribute__</name>
+        <param>
+          <type>(sysio_wasm_import)</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="16" column="10" declfile="libraries/sysiolib/contracts/sysio/transaction.hpp" declline="19" declcolumn="10"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/check.hpp" line="12" column="4"/>
+  </compounddef>
+</doxygen>

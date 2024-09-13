@@ -1,0 +1,164 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classsysio_1_1transaction__header" kind="class" language="C++" prot="public">
+    <compoundname>sysio::transaction_header</compoundname>
+    <derivedcompoundref refid="classsysio_1_1transaction" prot="public" virt="non-virtual">sysio::transaction</derivedcompoundref>
+    <includes refid="transaction_8hpp" local="no">transaction.hpp</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classsysio_1_1transaction__header_a9b1ae50f94ccde761c2b1cc69cb5db8b_1a9b1ae50f94ccde761c2b1cc69cb5db8b" prot="public" static="no" mutable="no">
+        <type><ref refid="classsysio_1_1time__point__sec" kindref="compound">time_point_sec</ref></type>
+        <definition>time_point_sec sysio::transaction_header::expiration</definition>
+        <argsstring></argsstring>
+        <name>expiration</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="94" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="94" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction__header_a396ab3534edcdb4527c10df6cba2cef9_1a396ab3534edcdb4527c10df6cba2cef9" prot="public" static="no" mutable="no">
+        <type>uint16_t</type>
+        <definition>uint16_t sysio::transaction_header::ref_block_num</definition>
+        <argsstring></argsstring>
+        <name>ref_block_num</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="95" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="95" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction__header_a5dc72a37c82cd7d14e991ba6f2d70519_1a5dc72a37c82cd7d14e991ba6f2d70519" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::transaction_header::ref_block_prefix</definition>
+        <argsstring></argsstring>
+        <name>ref_block_prefix</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="96" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="96" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction__header_a4a048be5a00805369b846ad49004a2e2_1a4a048be5a00805369b846ad49004a2e2" prot="public" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1unsigned__int" kindref="compound">unsigned_int</ref></type>
+        <definition>unsigned_int sysio::transaction_header::max_net_usage_words</definition>
+        <argsstring></argsstring>
+        <name>max_net_usage_words</name>
+        <initializer>= 0UL</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="97" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="97" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction__header_a9e57dad7fd75e1074c5703cc149367b2_1a9e57dad7fd75e1074c5703cc149367b2" prot="public" static="no" mutable="no">
+        <type>uint8_t</type>
+        <definition>uint8_t sysio::transaction_header::max_cpu_usage_ms</definition>
+        <argsstring></argsstring>
+        <name>max_cpu_usage_ms</name>
+        <initializer>= 0UL</initializer>
+        <briefdescription>
+<para>number of 8 byte words this transaction can serialize into after compressions </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="98" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="98" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction__header_a9c85d3aba75e7e9cd30c19d6dfc07bbf_1a9c85d3aba75e7e9cd30c19d6dfc07bbf" prot="public" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1unsigned__int" kindref="compound">unsigned_int</ref></type>
+        <definition>unsigned_int sysio::transaction_header::delay_sec</definition>
+        <argsstring></argsstring>
+        <name>delay_sec</name>
+        <initializer>= 0UL</initializer>
+        <briefdescription>
+<para>number of CPU usage units to bill transaction for </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="99" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="99" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1transaction__header_a5d22bef96f6b88a7b137185739d19f9f_1a5d22bef96f6b88a7b137185739d19f9f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::transaction_header::transaction_header</definition>
+        <argsstring>(time_point_sec exp=time_point_sec(current_time_point())+60)</argsstring>
+        <name>transaction_header</name>
+        <param>
+          <type><ref refid="classsysio_1_1time__point__sec" kindref="compound">time_point_sec</ref></type>
+          <declname>exp</declname>
+          <defval><ref refid="classsysio_1_1time__point__sec" kindref="compound">time_point_sec</ref>(<ref refid="group__system_ga6a9fba6c93fcad4e6089f6dae813bdc7_1ga6a9fba6c93fcad4e6089f6dae813bdc7" kindref="member">current_time_point</ref>())+60</defval>
+        </param>
+        <briefdescription>
+<para>Construct a new <ref refid="classsysio_1_1transaction__header" kindref="compound">transaction_header</ref> object initialising the transaction header expiration to now + 60 seconds. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new <ref refid="classsysio_1_1transaction__header" kindref="compound">transaction_header</ref> with an expiration of now + 60 seconds. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="90" column="7" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="90" bodyend="92"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Contains details about the transaction. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>Class <ref refid="classsysio_1_1transaction__header" kindref="compound">transaction_header</ref> contains details about the transaction </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>sysio::transaction_header</label>
+        <link refid="classsysio_1_1transaction__header"/>
+      </node>
+      <node id="2">
+        <label>sysio::transaction</label>
+        <link refid="classsysio_1_1transaction"/>
+        <childnode refid="1" relation="public-inheritance">
+        </childnode>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>sysio::transaction_header</label>
+        <link refid="classsysio_1_1transaction__header"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>delay_sec</edgelabel>
+          <edgelabel>max_net_usage_words</edgelabel>
+        </childnode>
+        <childnode refid="3" relation="usage">
+          <edgelabel>expiration</edgelabel>
+        </childnode>
+      </node>
+      <node id="2">
+        <label>sysio::unsigned_int</label>
+        <link refid="structsysio_1_1unsigned__int"/>
+      </node>
+      <node id="3">
+        <label>sysio::time_point_sec</label>
+        <link refid="classsysio_1_1time__point__sec"/>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="82" column="4" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="82" bodyend="102"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1transaction__header_a9c85d3aba75e7e9cd30c19d6dfc07bbf_1a9c85d3aba75e7e9cd30c19d6dfc07bbf" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>delay_sec</name></member>
+      <member refid="classsysio_1_1transaction__header_a9b1ae50f94ccde761c2b1cc69cb5db8b_1a9b1ae50f94ccde761c2b1cc69cb5db8b" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>expiration</name></member>
+      <member refid="classsysio_1_1transaction__header_a9e57dad7fd75e1074c5703cc149367b2_1a9e57dad7fd75e1074c5703cc149367b2" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>max_cpu_usage_ms</name></member>
+      <member refid="classsysio_1_1transaction__header_a4a048be5a00805369b846ad49004a2e2_1a4a048be5a00805369b846ad49004a2e2" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>max_net_usage_words</name></member>
+      <member refid="classsysio_1_1transaction__header_a396ab3534edcdb4527c10df6cba2cef9_1a396ab3534edcdb4527c10df6cba2cef9" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>ref_block_num</name></member>
+      <member refid="classsysio_1_1transaction__header_a5dc72a37c82cd7d14e991ba6f2d70519_1a5dc72a37c82cd7d14e991ba6f2d70519" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>ref_block_prefix</name></member>
+      <member refid="classsysio_1_1transaction__header_a5d22bef96f6b88a7b137185739d19f9f_1a5d22bef96f6b88a7b137185739d19f9f" prot="public" virt="non-virtual"><scope>sysio::transaction_header</scope><name>transaction_header</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

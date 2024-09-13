@@ -1,0 +1,329 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="serialize_8hpp" kind="file" language="C++">
+    <compoundname>serialize.hpp</compoundname>
+    <includes local="no">boost/preprocessor/seq/for_each.hpp</includes>
+    <includes local="no">boost/preprocessor/seq/enum.hpp</includes>
+    <includes local="no">boost/preprocessor/seq/size.hpp</includes>
+    <includes local="no">boost/preprocessor/seq/seq.hpp</includes>
+    <includes local="no">boost/preprocessor/stringize.hpp</includes>
+    <includedby refid="asset_8hpp" local="yes">libraries/sysiolib/core/sysio/asset.hpp</includedby>
+    <includedby refid="crypto_8hpp" local="yes">libraries/sysiolib/core/sysio/crypto.hpp</includedby>
+    <includedby refid="crypto__ext_8hpp" local="yes">libraries/sysiolib/core/sysio/crypto_ext.hpp</includedby>
+    <includedby refid="name_8hpp" local="yes">libraries/sysiolib/core/sysio/name.hpp</includedby>
+    <includedby refid="symbol_8hpp" local="yes">libraries/sysiolib/core/sysio/symbol.hpp</includedby>
+    <includedby refid="time_8hpp" local="yes">libraries/sysiolib/core/sysio/time.hpp</includedby>
+    <includedby refid="action_8hpp" local="yes">libraries/sysiolib/contracts/sysio/action.hpp</includedby>
+    <includedby refid="multi__index_8hpp" local="yes">libraries/sysiolib/contracts/sysio/multi_index.hpp</includedby>
+    <includedby refid="privileged_8hpp" local="yes">libraries/sysiolib/contracts/sysio/privileged.hpp</includedby>
+    <includedby refid="security__group_8hpp" local="yes">libraries/sysiolib/contracts/sysio/security_group.hpp</includedby>
+    <includedby refid="transaction_8hpp" local="yes">libraries/sysiolib/contracts/sysio/transaction.hpp</includedby>
+    <incdepgraph>
+      <node id="5">
+        <label>boost/preprocessor/seq/seq.hpp</label>
+      </node>
+      <node id="6">
+        <label>boost/preprocessor/stringize.hpp</label>
+      </node>
+      <node id="4">
+        <label>boost/preprocessor/seq/size.hpp</label>
+      </node>
+      <node id="1">
+        <label>libraries/sysiolib/core/sysio/serialize.hpp</label>
+        <link refid="serialize_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>boost/preprocessor/seq/enum.hpp</label>
+      </node>
+      <node id="2">
+        <label>boost/preprocessor/seq/for_each.hpp</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="4">
+        <label>libraries/sysiolib/contracts/sysio/permission.hpp</label>
+        <link refid="permission_8hpp"/>
+      </node>
+      <node id="11">
+        <label>libraries/sysiolib/contracts/sysio/action.hpp</label>
+        <link refid="action_8hpp"/>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+      </node>
+      <node id="12">
+        <label>libraries/sysiolib/contracts/sysio/dispatcher.hpp</label>
+        <link refid="dispatcher_8hpp"/>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>libraries/sysiolib/core/sysio/crypto.hpp</label>
+        <link refid="crypto_8hpp"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+      </node>
+      <node id="16">
+        <label>libraries/sysiolib/contracts/sysio/transaction.hpp</label>
+        <link refid="transaction_8hpp"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="15">
+        <label>libraries/sysiolib/contracts/sysio/singleton.hpp</label>
+        <link refid="singleton_8hpp"/>
+      </node>
+      <node id="20">
+        <label>libraries/sysiolib/core/sysio/time.hpp</label>
+        <link refid="time_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+      </node>
+      <node id="8">
+        <label>libraries/sysiolib/core/sysio/name.hpp</label>
+        <link refid="name_8hpp"/>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="19" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>libraries/sysiolib/core/sysio/symbol.hpp</label>
+        <link refid="symbol_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>libraries/sysiolib/core/sysio/serialize.hpp</label>
+        <link refid="serialize_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+      </node>
+      <node id="13">
+        <label>libraries/sysiolib/contracts/sysio/sysio.hpp</label>
+        <link refid="sysio_8hpp"/>
+      </node>
+      <node id="5">
+        <label>libraries/sysiolib/contracts/sysio/privileged.hpp</label>
+        <link refid="privileged_8hpp"/>
+      </node>
+      <node id="6">
+        <label>libraries/sysiolib/contracts/sysio/producer_schedule.hpp</label>
+        <link refid="producer__schedule_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="18">
+        <label>libraries/sysiolib/contracts/sysio/security_group.hpp</label>
+        <link refid="security__group_8hpp"/>
+      </node>
+      <node id="17">
+        <label>libraries/sysiolib/contracts/sysio/contract.hpp</label>
+        <link refid="contract_8hpp"/>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="19">
+        <label>libraries/sysiolib/contracts/sysio/system.hpp</label>
+        <link refid="system_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>libraries/sysiolib/core/sysio/asset.hpp</label>
+        <link refid="asset_8hpp"/>
+      </node>
+      <node id="14">
+        <label>libraries/sysiolib/contracts/sysio/multi_index.hpp</label>
+        <link refid="multi__index_8hpp"/>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="9">
+        <label>libraries/sysiolib/core/sysio/context.hpp</label>
+        <link refid="context_8hpp"/>
+      </node>
+      <node id="7">
+        <label>libraries/sysiolib/core/sysio/crypto_ext.hpp</label>
+        <link refid="crypto__ext_8hpp"/>
+      </node>
+    </invincdepgraph>
+      <sectiondef kind="define">
+      <memberdef kind="define" id="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" prot="public" static="no">
+        <name>SYSLIB_REFLECT_MEMBER_OP</name>
+        <param><defname>r</defname></param>
+        <param><defname>OP</defname></param>
+        <param><defname>elem</defname></param>
+        <initializer>  OP t.elem</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/serialize.hpp" line="7" column="9" bodyfile="libraries/sysiolib/core/sysio/serialize.hpp" bodystart="7" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="group__serialize_ga93471969d3fbf0b324316ca2530c6d8a_1ga93471969d3fbf0b324316ca2530c6d8a" prot="public" static="no">
+        <name>SYSLIB_SERIALIZE</name>
+        <param><defname>TYPE</defname></param>
+        <param><defname>MEMBERS</defname></param>
+        <initializer> template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &lt;&lt; ( DataStream&amp; ds, const TYPE&amp; t ){ \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &lt;&lt;, MEMBERS );\
+ }\
+ template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &gt;&gt; ( DataStream&amp; ds, TYPE&amp; t ){ \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &gt;&gt;, MEMBERS );\
+ }</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Defines serialization and deserialization for a class</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>TYPE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the class to have its serialization and deserialization defined </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>MEMBERS</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a sequence of member names. (field1)(field2)(field3) </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/serialize.hpp" line="23" column="9" bodyfile="libraries/sysiolib/core/sysio/serialize.hpp" bodystart="23" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="group__serialize_gac270bd4ed2158457a457cb321b480327_1gac270bd4ed2158457a457cb321b480327" prot="public" static="no">
+        <name>SYSLIB_SERIALIZE_DERIVED</name>
+        <param><defname>TYPE</defname></param>
+        <param><defname>BASE</defname></param>
+        <param><defname>MEMBERS</defname></param>
+        <initializer> template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &lt;&lt; ( DataStream&amp; ds, const TYPE&amp; t ){ \
+    ds &lt;&lt; static_cast&lt;const BASE&amp;&gt;(t); \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &lt;&lt;, MEMBERS );\
+ }\
+ template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &gt;&gt; ( DataStream&amp; ds, TYPE&amp; t ){ \
+    ds &gt;&gt; static_cast&lt;BASE&amp;&gt;(t); \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &gt;&gt;, MEMBERS );\
+ }</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Defines serialization and deserialization for a class which inherits from other classes that have their serialization and deserialization defined</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>TYPE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the class to have its serialization and deserialization defined </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>BASE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a sequence of base class names (basea)(baseb)(basec) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>MEMBERS</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a sequence of member names. (field1)(field2)(field3) </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/serialize.hpp" line="42" column="9" bodyfile="libraries/sysiolib/core/sysio/serialize.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/serialize.hpp"/>
+  </compounddef>
+</doxygen>

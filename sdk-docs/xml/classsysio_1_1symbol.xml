@@ -1,0 +1,334 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classsysio_1_1symbol" kind="class" language="C++" prot="public">
+    <compoundname>sysio::symbol</compoundname>
+    <includes refid="symbol_8hpp" local="no">symbol.hpp</includes>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classsysio_1_1symbol_1a4e941aa5ba8ff738fc04ed398bf3645b" prot="private" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::symbol::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="340" column="16" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="340" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1symbol_a7f6ea33d866890c5726f3a9691c8b97f_1a7f6ea33d866890c5726f3a9691c8b97f" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::symbol::symbol</definition>
+        <argsstring>()</argsstring>
+        <name>symbol</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new symbol object defaulting to a value of 0 </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="248" column="17" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="248" bodyend="248"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_a8c44e87dd310f0d4e164ee95d2cf5481_1a8c44e87dd310f0d4e164ee95d2cf5481" prot="public" static="no" constexpr="yes" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::symbol::symbol</definition>
+        <argsstring>(uint64_t raw)</argsstring>
+        <name>symbol</name>
+        <param>
+          <type>uint64_t</type>
+          <declname>raw</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new symbol given a scoped enumerated type of raw (uint64_t).</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>raw</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The raw value which is a scoped enumerated type of unit64_t </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="255" column="26" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="255" bodyend="255"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_a4df999297f3c49723d3467bfeacb47b3_1a4df999297f3c49723d3467bfeacb47b3" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::symbol::symbol</definition>
+        <argsstring>(symbol_code sc, uint8_t precision)</argsstring>
+        <name>symbol</name>
+        <param>
+          <type><ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref></type>
+          <declname>sc</declname>
+        </param>
+        <param>
+          <type>uint8_t</type>
+          <declname>precision</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new symbol given a <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref> and a uint8_t precision.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>sc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref> </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>precision</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The number of decimal places used for the symbol </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="263" column="17" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="263" bodyend="265"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_abb91d4a1d30de2af3eb0d9e8cb5d0bd6_1abb91d4a1d30de2af3eb0d9e8cb5d0bd6" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::symbol::symbol</definition>
+        <argsstring>(std::string_view ss, uint8_t precision)</argsstring>
+        <name>symbol</name>
+        <param>
+          <type>std::string_view</type>
+          <declname>ss</declname>
+        </param>
+        <param>
+          <type>uint8_t</type>
+          <declname>precision</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new symbol given a string and a uint8_t precision.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ss</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The string containing the symbol </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>precision</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The number of decimal places used for the symbol </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="273" column="17" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="273" bodyend="275"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_aca7e916a701819d61bdb8bb3a5c0dc7d_1aca7e916a701819d61bdb8bb3a5c0dc7d" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr bool</type>
+        <definition>constexpr bool sysio::symbol::is_valid</definition>
+        <argsstring>() const</argsstring>
+        <name>is_valid</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Is this symbol valid </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="280" column="22" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="280" bodyend="280"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_a8303e488632a36bad7698db2c246940e_1a8303e488632a36bad7698db2c246940e" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr uint8_t</type>
+        <definition>constexpr uint8_t sysio::symbol::precision</definition>
+        <argsstring>() const</argsstring>
+        <name>precision</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>This symbol&apos;s precision </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="285" column="25" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="285" bodyend="285"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_a6eb5445e04d799c47f1d732907185d09_1a6eb5445e04d799c47f1d732907185d09" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref></type>
+        <definition>constexpr symbol_code sysio::symbol::code</definition>
+        <argsstring>() const</argsstring>
+        <name>code</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns representation of symbol name </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="290" column="29" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="290" bodyend="290"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_ac7adc9143945adae9236b7d6d0b16395_1ac7adc9143945adae9236b7d6d0b16395" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr uint64_t</type>
+        <definition>constexpr uint64_t sysio::symbol::raw</definition>
+        <argsstring>() const</argsstring>
+        <name>raw</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns uint64_t repreresentation of the symbol </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="295" column="26" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="295" bodyend="295"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_a66bc3829c7ea4f27a346dc3991484bee_1a66bc3829c7ea4f27a346dc3991484bee" prot="public" static="no" constexpr="yes" const="yes" explicit="yes" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::symbol::operator bool</definition>
+        <argsstring>() const</argsstring>
+        <name>operator bool</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="297" column="26" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="297" bodyend="297"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1symbol_a696269bfc276539a7e07e27a5718121a_1a696269bfc276539a7e07e27a5718121a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::symbol::print</definition>
+        <argsstring>(bool show_precision=true) const</argsstring>
+        <name>print</name>
+        <param>
+          <type>bool</type>
+          <declname>show_precision</declname>
+          <defval>true</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Print the symbol </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="302" column="12" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="302" bodyend="310"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="classsysio_1_1symbol_a06158b3ad9ea76cb86154fc1f13bb022_1a06158b3ad9ea76cb86154fc1f13bb022" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr friend bool</type>
+        <definition>constexpr friend bool operator==</definition>
+        <argsstring>(const symbol &amp;a, const symbol &amp;b)</argsstring>
+        <name>operator==</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Equivalency operator. Returns true if a == b (are the same)</para>
+<para><simplesect kind="return"><para>boolean - true if both provided symbols are the same </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="317" column="29" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="317" bodyend="319"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1symbol_a7cc47b109fc3ba4a813599a8282697de_1a7cc47b109fc3ba4a813599a8282697de" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr friend bool</type>
+        <definition>constexpr friend bool operator!=</definition>
+        <argsstring>(const symbol &amp;a, const symbol &amp;b)</argsstring>
+        <name>operator!=</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Inverted equivalency operator. Returns true if a != b (are different)</para>
+<para><simplesect kind="return"><para>boolean - true if both provided symbols are not the same </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="326" column="29" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="326" bodyend="328"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1symbol_ac294f798fa7a67062a34d57fb002a4a9_1ac294f798fa7a67062a34d57fb002a4a9" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr friend bool</type>
+        <definition>constexpr friend bool operator&lt;</definition>
+        <argsstring>(const symbol &amp;a, const symbol &amp;b)</argsstring>
+        <name>operator&lt;</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+<para>Less than operator. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Less than operator. Returns true if a &lt; b. <simplesect kind="return"><para>boolean - true if symbol <computeroutput>a</computeroutput> is less than <computeroutput>b</computeroutput> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="335" column="24" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="335" bodyend="337"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Stores information about a symbol, the symbol can be 7 characters long. </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="243" column="4" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="243" bodyend="341"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1symbol_a6eb5445e04d799c47f1d732907185d09_1a6eb5445e04d799c47f1d732907185d09" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>code</name></member>
+      <member refid="classsysio_1_1symbol_aca7e916a701819d61bdb8bb3a5c0dc7d_1aca7e916a701819d61bdb8bb3a5c0dc7d" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>is_valid</name></member>
+      <member refid="classsysio_1_1symbol_a66bc3829c7ea4f27a346dc3991484bee_1a66bc3829c7ea4f27a346dc3991484bee" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>operator bool</name></member>
+      <member refid="classsysio_1_1symbol_a7cc47b109fc3ba4a813599a8282697de_1a7cc47b109fc3ba4a813599a8282697de" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>operator!=</name></member>
+      <member refid="classsysio_1_1symbol_ac294f798fa7a67062a34d57fb002a4a9_1ac294f798fa7a67062a34d57fb002a4a9" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>operator&lt;</name></member>
+      <member refid="classsysio_1_1symbol_a06158b3ad9ea76cb86154fc1f13bb022_1a06158b3ad9ea76cb86154fc1f13bb022" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>operator==</name></member>
+      <member refid="classsysio_1_1symbol_a8303e488632a36bad7698db2c246940e_1a8303e488632a36bad7698db2c246940e" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>precision</name></member>
+      <member refid="classsysio_1_1symbol_a696269bfc276539a7e07e27a5718121a_1a696269bfc276539a7e07e27a5718121a" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>print</name></member>
+      <member refid="classsysio_1_1symbol_ac7adc9143945adae9236b7d6d0b16395_1ac7adc9143945adae9236b7d6d0b16395" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>raw</name></member>
+      <member refid="classsysio_1_1symbol_a7f6ea33d866890c5726f3a9691c8b97f_1a7f6ea33d866890c5726f3a9691c8b97f" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>symbol</name></member>
+      <member refid="classsysio_1_1symbol_a8c44e87dd310f0d4e164ee95d2cf5481_1a8c44e87dd310f0d4e164ee95d2cf5481" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>symbol</name></member>
+      <member refid="classsysio_1_1symbol_a4df999297f3c49723d3467bfeacb47b3_1a4df999297f3c49723d3467bfeacb47b3" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>symbol</name></member>
+      <member refid="classsysio_1_1symbol_abb91d4a1d30de2af3eb0d9e8cb5d0bd6_1abb91d4a1d30de2af3eb0d9e8cb5d0bd6" prot="public" virt="non-virtual"><scope>sysio::symbol</scope><name>symbol</name></member>
+      <member refid="classsysio_1_1symbol_1a4e941aa5ba8ff738fc04ed398bf3645b" prot="private" virt="non-virtual"><scope>sysio::symbol</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

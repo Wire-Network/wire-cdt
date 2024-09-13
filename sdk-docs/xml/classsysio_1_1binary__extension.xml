@@ -1,0 +1,224 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classsysio_1_1binary__extension" kind="class" language="C++" prot="public">
+    <compoundname>sysio::binary_extension</compoundname>
+    <includes refid="binary__extension_8hpp" local="no">binary_extension.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="public-type">
+      <memberdef kind="typedef" id="classsysio_1_1binary__extension_a5e5993040b9b59747b8c01969a59f663_1a5e5993040b9b59747b8c01969a59f663" prot="public" static="no">
+        <type>T</type>
+        <definition>using sysio::binary_extension&lt; T &gt;::value_type =  T</definition>
+        <argsstring></argsstring>
+        <name>value_type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="22" column="10" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classsysio_1_1binary__extension_1a24f3394dc02520dcfe2257fecc6ca0b6" prot="private" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool sysio::binary_extension&lt; T &gt;::_has_value</definition>
+        <argsstring></argsstring>
+        <name>_has_value</name>
+        <initializer>= false</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="182" column="15" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="182" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1binary__extension_1af6118825a51c995e1b3d49292853d5e3" prot="private" static="no" mutable="no">
+        <type>std::aligned_storage&lt; sizeof(T), alignof(T)&gt;::type</type>
+        <definition>std::aligned_storage&lt;sizeof(T), alignof(T)&gt;::type sysio::binary_extension&lt; T &gt;::_data</definition>
+        <argsstring></argsstring>
+        <name>_data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="183" column="47" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="183" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1binary__extension_a1c1883e2b2519b55d1f96f629887d2fb_1a1c1883e2b2519b55d1f96f629887d2fb" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::binary_extension&lt; T &gt;::binary_extension</definition>
+        <argsstring>()</argsstring>
+        <name>binary_extension</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="24" column="20" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="24" bodyend="24"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1binary__extension_a35f762e14f20e52e1d886e1bab8d0a72_1a35f762e14f20e52e1d886e1bab8d0a72" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::binary_extension&lt; T &gt;::binary_extension</definition>
+        <argsstring>(const T &amp;ext)</argsstring>
+        <name>binary_extension</name>
+        <param>
+          <type>const T &amp;</type>
+          <declname>ext</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="25" column="20" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="25" bodyend="29"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1binary__extension_af56c2897aa6ab08caa86412528bbb931_1af56c2897aa6ab08caa86412528bbb931" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::binary_extension&lt; T &gt;::binary_extension</definition>
+        <argsstring>(T &amp;&amp;ext)</argsstring>
+        <name>binary_extension</name>
+        <param>
+          <type>T &amp;&amp;</type>
+          <declname>ext</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="30" column="20" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="30" bodyend="34"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1binary__extension_a900ec5a4d4ff2baf58ac164158f6f428_1a900ec5a4d4ff2baf58ac164158f6f428" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type>constexpr</type>
+        <definition>constexpr sysio::binary_extension&lt; T &gt;::binary_extension</definition>
+        <argsstring>(std::in_place_t, Args &amp;&amp;... args)</argsstring>
+        <name>binary_extension</name>
+        <param>
+          <type>std::in_place_t</type>
+        </param>
+        <param>
+          <type>Args &amp;&amp;...</type>
+          <declname>args</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>construct contained type in place </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="37" column="20" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="37" bodyend="41"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1binary__extension_a2efd8f4b34118f5cdeec4996286cf0db_1a2efd8f4b34118f5cdeec4996286cf0db" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::binary_extension&lt; T &gt;::binary_extension</definition>
+        <argsstring>(const binary_extension &amp;other)</argsstring>
+        <name>binary_extension</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1binary__extension" kindref="compound">binary_extension</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="43" column="20" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="43" bodyend="47"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1binary__extension_acec153eb43572c2d8b9956a0a1cbf34a_1acec153eb43572c2d8b9956a0a1cbf34a" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::binary_extension&lt; T &gt;::binary_extension</definition>
+        <argsstring>(binary_extension &amp;&amp;other)</argsstring>
+        <name>binary_extension</name>
+        <param>
+          <type><ref refid="classsysio_1_1binary__extension" kindref="compound">binary_extension</ref> &amp;&amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="49" column="20" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="49" bodyend="56"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-func">
+      <memberdef kind="function" id="classsysio_1_1binary__extension_1a3729dc8195ca636455c8c5aea400b56a" prot="private" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr T &amp;</type>
+        <definition>constexpr T&amp; sysio::binary_extension&lt; T &gt;::_get</definition>
+        <argsstring>()</argsstring>
+        <name>_get</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="185" column="22" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="185" bodyend="187"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1binary__extension_1a4e157328b927841109c62e898664961f" prot="private" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr const T &amp;</type>
+        <definition>constexpr const T&amp; sysio::binary_extension&lt; T &gt;::_get</definition>
+        <argsstring>() const</argsstring>
+        <name>_get</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="189" column="28" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="189" bodyend="191"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Container to hold a binary payload for an extension</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Contained typed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/binary_extension.hpp" line="20" column="4" bodyfile="libraries/sysiolib/core/sysio/binary_extension.hpp" bodystart="20" bodyend="192"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1binary__extension_1af6118825a51c995e1b3d49292853d5e3" prot="private" virt="non-virtual"><scope>sysio::binary_extension</scope><name>_data</name></member>
+      <member refid="classsysio_1_1binary__extension_1a3729dc8195ca636455c8c5aea400b56a" prot="private" virt="non-virtual"><scope>sysio::binary_extension</scope><name>_get</name></member>
+      <member refid="classsysio_1_1binary__extension_1a4e157328b927841109c62e898664961f" prot="private" virt="non-virtual"><scope>sysio::binary_extension</scope><name>_get</name></member>
+      <member refid="classsysio_1_1binary__extension_1a24f3394dc02520dcfe2257fecc6ca0b6" prot="private" virt="non-virtual"><scope>sysio::binary_extension</scope><name>_has_value</name></member>
+      <member refid="classsysio_1_1binary__extension_a1c1883e2b2519b55d1f96f629887d2fb_1a1c1883e2b2519b55d1f96f629887d2fb" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>binary_extension</name></member>
+      <member refid="classsysio_1_1binary__extension_a35f762e14f20e52e1d886e1bab8d0a72_1a35f762e14f20e52e1d886e1bab8d0a72" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>binary_extension</name></member>
+      <member refid="classsysio_1_1binary__extension_af56c2897aa6ab08caa86412528bbb931_1af56c2897aa6ab08caa86412528bbb931" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>binary_extension</name></member>
+      <member refid="classsysio_1_1binary__extension_a900ec5a4d4ff2baf58ac164158f6f428_1a900ec5a4d4ff2baf58ac164158f6f428" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>binary_extension</name></member>
+      <member refid="classsysio_1_1binary__extension_a2efd8f4b34118f5cdeec4996286cf0db_1a2efd8f4b34118f5cdeec4996286cf0db" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>binary_extension</name></member>
+      <member refid="classsysio_1_1binary__extension_acec153eb43572c2d8b9956a0a1cbf34a_1acec153eb43572c2d8b9956a0a1cbf34a" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>binary_extension</name></member>
+      <member refid="classsysio_1_1binary__extension_a5e5993040b9b59747b8c01969a59f663_1a5e5993040b9b59747b8c01969a59f663" prot="public" virt="non-virtual"><scope>sysio::binary_extension</scope><name>value_type</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

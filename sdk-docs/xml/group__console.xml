@@ -1,0 +1,285 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__console" kind="group">
+    <compoundname>console</compoundname>
+    <title>Console</title>
+    <innerclass refid="classsysio_1_1iostream" prot="public">sysio::iostream</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__console_1gabd88fded96c1630a019aac052b4e7459" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::printhex</definition>
+        <argsstring>(const void *ptr, uint32_t size)</argsstring>
+        <name>printhex</name>
+        <param>
+          <type>const void *</type>
+          <declname>ptr</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>size</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints a block of bytes in hexadecimal</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ptr</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- pointer to bytes of interest </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- number of bytes to print </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="77" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="77" bodyend="79"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1ga5d4d10b7489ff7cdc7a7f23f247d59e2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::printl</definition>
+        <argsstring>(const char *ptr, size_t len)</argsstring>
+        <name>printl</name>
+        <param>
+          <type>const char *</type>
+          <declname>ptr</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints string to a given length</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ptr</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a string </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- number of chars to print </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="88" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="88" bodyend="90"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1gac994825ff7d74c284b5f0ff008208353" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(const char *ptr)</argsstring>
+        <name>print</name>
+        <param>
+          <type>const char *</type>
+          <declname>ptr</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints string</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ptr</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a null terminated string </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="98" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="98" bodyend="100"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1ga0126e8ec4434410b7bc09e64b7f6a90b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(float num)</argsstring>
+        <name>print</name>
+        <param>
+          <type>float</type>
+          <declname>num</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints single-precision floating point number (i.e. float)</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>num</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="140" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="140" bodyend="140"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1ga5bb7861d851fe74f1e17a0ab6ebfa0a4" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(double num)</argsstring>
+        <name>print</name>
+        <param>
+          <type>double</type>
+          <declname>num</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints double-precision floating point number (i.e. double)</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>num</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="148" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="148" bodyend="148"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1gac0ffe8e9b66c8bebd5b4c88b5cf061b0" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(long double num)</argsstring>
+        <name>print</name>
+        <param>
+          <type>long double</type>
+          <declname>num</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints quadruple-precision floating point number (i.e. long double)</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>num</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="156" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="156" bodyend="156"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1gaf493049d7f561c79a1a0ba9d04cdcac8" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt;!std::is_integral&lt; std::decay_t&lt; T &gt;&gt;::value, int &gt;</type>
+            <defval>0</defval>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(T &amp;&amp;t)</argsstring>
+        <name>print</name>
+        <param>
+          <type>T &amp;&amp;</type>
+          <declname>t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints class object</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>t</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>T must implements <ref refid="group__console_gac994825ff7d74c284b5f0ff008208353_1gac994825ff7d74c284b5f0ff008208353" kindref="member">print()</ref> function </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="166" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="166" bodyend="173"/>
+      </memberdef>
+      <memberdef kind="function" id="group__console_1gad43a54fc19452b6b16350f44d55f5639" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::print_f</definition>
+        <argsstring>(const char *s)</argsstring>
+        <name>print_f</name>
+        <param>
+          <type>const char *</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints null terminated string</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>s</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>null terminated string to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="181" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="181" bodyend="183"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Defines C++ wrapper to log/print text messages. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>This API uses C++ variadic templates and type detection to make it easy to print any native type. You can even overload the <computeroutput><ref refid="group__console_gac994825ff7d74c284b5f0ff008208353_1gac994825ff7d74c284b5f0ff008208353" kindref="member">print()</ref></computeroutput> method for your own custom types.</para>
+<para><bold>Example:</bold> <programlisting><codeline><highlight class="normal">print(<sp/>&quot;hello<sp/>world,<sp/>this<sp/>is<sp/>a<sp/>number:<sp/>&quot;,<sp/>5<sp/>);</highlight></codeline>
+</programlisting></para>
+<sect1 id="group__console_1override">
+<title>Overriding Print for your Types</title>
+<para>There are two ways to overload print:<orderedlist>
+<listitem><para>implement void print( const T&amp; )</para>
+</listitem><listitem><para>implement T::print()const </para>
+</listitem></orderedlist>
+</para>
+</sect1>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

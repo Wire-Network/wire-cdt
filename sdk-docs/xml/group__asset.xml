@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__asset" kind="group">
+    <compoundname>asset</compoundname>
+    <title>Asset</title>
+    <innerclass refid="structsysio_1_1asset" prot="public">sysio::asset</innerclass>
+    <innerclass refid="structsysio_1_1extended__asset" prot="public">sysio::extended_asset</innerclass>
+    <briefdescription>
+<para>Defines C++ API for managing assets. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

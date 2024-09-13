@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1producer__schedule" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::producer_schedule</compoundname>
+    <includes refid="producer__schedule_8hpp" local="no">producer_schedule.hpp</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1producer__schedule_af7a12b5e73ed0a4d278d692214a74cfb_1af7a12b5e73ed0a4d278d692214a74cfb" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::producer_schedule::version</definition>
+        <argsstring></argsstring>
+        <name>version</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Version number of the schedule. It is sequentially incrementing version number </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="63" column="36" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="63" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1producer__schedule_a80ab9eb83f912b5a37670d640c826867_1a80ab9eb83f912b5a37670d640c826867" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; <ref refid="structsysio_1_1producer__key" kindref="compound">producer_key</ref> &gt;</type>
+        <definition>std::vector&lt;producer_key&gt; sysio::producer_schedule::producers</definition>
+        <argsstring></argsstring>
+        <name>producers</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>List of producers for this schedule, including its signing key </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="68" column="22" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="68" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1producer__schedule_a245e12c1aa061e9095d516a681add403_1a245e12c1aa061e9095d516a681add403" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::producer_schedule::CDT_REFLECT</definition>
+        <argsstring>(version, producers)</argsstring>
+        <name>CDT_REFLECT</name>
+        <param>
+          <type><ref refid="structsysio_1_1producer__schedule_af7a12b5e73ed0a4d278d692214a74cfb_1af7a12b5e73ed0a4d278d692214a74cfb" kindref="member">version</ref></type>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1producer__schedule_a80ab9eb83f912b5a37670d640c826867_1a80ab9eb83f912b5a37670d640c826867" kindref="member">producers</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="70" column="7"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Defines both the order, account name, and signing keys of the active set of producers. </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="59" column="4" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="59" bodyend="71"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1producer__schedule_a245e12c1aa061e9095d516a681add403_1a245e12c1aa061e9095d516a681add403" prot="public" virt="non-virtual"><scope>sysio::producer_schedule</scope><name>CDT_REFLECT</name></member>
+      <member refid="structsysio_1_1producer__schedule_a80ab9eb83f912b5a37670d640c826867_1a80ab9eb83f912b5a37670d640c826867" prot="public" virt="non-virtual"><scope>sysio::producer_schedule</scope><name>producers</name></member>
+      <member refid="structsysio_1_1producer__schedule_af7a12b5e73ed0a4d278d692214a74cfb_1af7a12b5e73ed0a4d278d692214a74cfb" prot="public" virt="non-virtual"><scope>sysio::producer_schedule</scope><name>version</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

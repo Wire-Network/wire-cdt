@@ -1,0 +1,1192 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.9.1" xml:lang="en-US">
+  <compound refid="structsysio_1_1action" kind="struct"><name>sysio::action</name>
+    <member refid="structsysio_1_1action_a8662ba752a262c18f2a7e1cd2038b006_1a8662ba752a262c18f2a7e1cd2038b006" kind="variable"><name>account</name></member>
+    <member refid="structsysio_1_1action_a41598e4f27abad1286be1c43b56a082d_1a41598e4f27abad1286be1c43b56a082d" kind="variable"><name>name</name></member>
+    <member refid="structsysio_1_1action_af71c7ccc6b7d57485740e3e5031ea648_1af71c7ccc6b7d57485740e3e5031ea648" kind="variable"><name>authorization</name></member>
+    <member refid="structsysio_1_1action_a4ab3001a2ec5181d1be9265fee63b3b0_1a4ab3001a2ec5181d1be9265fee63b3b0" kind="variable"><name>data</name></member>
+    <member refid="structsysio_1_1action_a637e54f12135c849690edd8113712f03_1a637e54f12135c849690edd8113712f03" kind="function"><name>action</name></member>
+    <member refid="structsysio_1_1action_a003eada12e89f1fb4e9508f272a8265e_1a003eada12e89f1fb4e9508f272a8265e" kind="function"><name>action</name></member>
+    <member refid="structsysio_1_1action_ab5bd149bd360b2c07a42d8878841ce6f_1ab5bd149bd360b2c07a42d8878841ce6f" kind="function"><name>action</name></member>
+    <member refid="structsysio_1_1action_aa728335bad9e6fdc948b93ebe328e67a_1aa728335bad9e6fdc948b93ebe328e67a" kind="function"><name>send</name></member>
+    <member refid="structsysio_1_1action_aba0fd489a56059301eb9cadde3c8b577_1aba0fd489a56059301eb9cadde3c8b577" kind="function"><name>send_context_free</name></member>
+    <member refid="structsysio_1_1action_a7b4b61727fa1faeb8d194457420eb283_1a7b4b61727fa1faeb8d194457420eb283" kind="function"><name>data_as</name></member>
+  </compound>
+  <compound refid="structsysio_1_1action__wrapper" kind="struct"><name>sysio::action_wrapper</name>
+    <member refid="structsysio_1_1action__wrapper_ae2b8b50530afe3f802df033192c3afd1_1ae2b8b50530afe3f802df033192c3afd1" kind="variable"><name>action_name</name></member>
+    <member refid="structsysio_1_1action__wrapper_a494adc8e9e4553a28e1a2c036fe74001_1a494adc8e9e4553a28e1a2c036fe74001" kind="variable"><name>code_name</name></member>
+    <member refid="structsysio_1_1action__wrapper_ae7761c2bca37ad4ede294b22bb023e06_1ae7761c2bca37ad4ede294b22bb023e06" kind="variable"><name>permissions</name></member>
+    <member refid="structsysio_1_1action__wrapper_a7f7251b6c6594eab5c0e22e4b341ee6d_1a7f7251b6c6594eab5c0e22e4b341ee6d" kind="function"><name>action_wrapper</name></member>
+    <member refid="structsysio_1_1action__wrapper_a8b89c0da61b24d074681992ba488c7f8_1a8b89c0da61b24d074681992ba488c7f8" kind="function"><name>action_wrapper</name></member>
+    <member refid="structsysio_1_1action__wrapper_a1587e576fedf0f27cd866c4203409f9e_1a1587e576fedf0f27cd866c4203409f9e" kind="function"><name>action_wrapper</name></member>
+    <member refid="structsysio_1_1action__wrapper_ad3ba325fd285ceafbd2e06ec66f30517_1ad3ba325fd285ceafbd2e06ec66f30517" kind="function"><name>action_wrapper</name></member>
+    <member refid="structsysio_1_1action__wrapper_a897c6c3744fdc245bebd853e8e7930b5_1a897c6c3744fdc245bebd853e8e7930b5" kind="function"><name>action_wrapper</name></member>
+    <member refid="structsysio_1_1action__wrapper_abab1dd14dc9fc77e09e9c49cbf7b2eaf_1abab1dd14dc9fc77e09e9c49cbf7b2eaf" kind="function"><name>to_action</name></member>
+    <member refid="structsysio_1_1action__wrapper_a12bfeafd2255266590dd20e230543473_1a12bfeafd2255266590dd20e230543473" kind="function"><name>send</name></member>
+    <member refid="structsysio_1_1action__wrapper_aa7c5a0dff10acb8ac7e495432ec6604f_1aa7c5a0dff10acb8ac7e495432ec6604f" kind="function"><name>send_context_free</name></member>
+    <member refid="structsysio_1_1action__wrapper_a53055c7ad2ffd2efc5fda7fa56901811_1a53055c7ad2ffd2efc5fda7fa56901811" kind="function"><name>get_mem_ptr</name></member>
+  </compound>
+  <compound refid="structsysio_1_1asset" kind="struct"><name>sysio::asset</name>
+    <member refid="structsysio_1_1asset_af7fa1f9918f151ee601f837ea8a79df8_1af7fa1f9918f151ee601f837ea8a79df8" kind="variable"><name>amount</name></member>
+    <member refid="structsysio_1_1asset_a298f43036710fc8d6de6d1a68d78cdd2_1a298f43036710fc8d6de6d1a68d78cdd2" kind="variable"><name>symbol</name></member>
+    <member refid="structsysio_1_1asset_a0ea85ad3fd171559419728e6686013c9_1a0ea85ad3fd171559419728e6686013c9" kind="variable"><name>max_amount</name></member>
+    <member refid="structsysio_1_1asset_a44cbc796ad8acae2f786de42c428c462_1a44cbc796ad8acae2f786de42c428c462" kind="function"><name>asset</name></member>
+    <member refid="structsysio_1_1asset_ab23d20088814f99d291193718db10c68_1ab23d20088814f99d291193718db10c68" kind="function"><name>asset</name></member>
+    <member refid="structsysio_1_1asset_a04e0c5eba1eaeac34a93102e1301a8f1_1a04e0c5eba1eaeac34a93102e1301a8f1" kind="function"><name>is_amount_within_range</name></member>
+    <member refid="structsysio_1_1asset_acb3df677195ca7c80e6f128a19873927_1acb3df677195ca7c80e6f128a19873927" kind="function"><name>is_valid</name></member>
+    <member refid="structsysio_1_1asset_a61744dd3f36be3dd69db6fb9d7775aa3_1a61744dd3f36be3dd69db6fb9d7775aa3" kind="function"><name>set_amount</name></member>
+    <member refid="structsysio_1_1asset_ae045be06766a4a5698e40f3f69ba4cca_1ae045be06766a4a5698e40f3f69ba4cca" kind="function"><name>write_as_string</name></member>
+    <member refid="structsysio_1_1asset_a667dc5962cd118c5b6d95ef5a024fde7_1a667dc5962cd118c5b6d95ef5a024fde7" kind="function"><name>to_string</name></member>
+    <member refid="structsysio_1_1asset_a4c2a3bd81cdbada25090e0322a51b106_1a4c2a3bd81cdbada25090e0322a51b106" kind="function"><name>print</name></member>
+  </compound>
+  <compound refid="classsysio_1_1binary__extension" kind="class"><name>sysio::binary_extension</name>
+    <member refid="classsysio_1_1binary__extension_a5e5993040b9b59747b8c01969a59f663_1a5e5993040b9b59747b8c01969a59f663" kind="typedef"><name>value_type</name></member>
+    <member refid="classsysio_1_1binary__extension_1a24f3394dc02520dcfe2257fecc6ca0b6" kind="variable"><name>_has_value</name></member>
+    <member refid="classsysio_1_1binary__extension_1af6118825a51c995e1b3d49292853d5e3" kind="variable"><name>_data</name></member>
+    <member refid="classsysio_1_1binary__extension_a1c1883e2b2519b55d1f96f629887d2fb_1a1c1883e2b2519b55d1f96f629887d2fb" kind="function"><name>binary_extension</name></member>
+    <member refid="classsysio_1_1binary__extension_a35f762e14f20e52e1d886e1bab8d0a72_1a35f762e14f20e52e1d886e1bab8d0a72" kind="function"><name>binary_extension</name></member>
+    <member refid="classsysio_1_1binary__extension_af56c2897aa6ab08caa86412528bbb931_1af56c2897aa6ab08caa86412528bbb931" kind="function"><name>binary_extension</name></member>
+    <member refid="classsysio_1_1binary__extension_a900ec5a4d4ff2baf58ac164158f6f428_1a900ec5a4d4ff2baf58ac164158f6f428" kind="function"><name>binary_extension</name></member>
+    <member refid="classsysio_1_1binary__extension_a2efd8f4b34118f5cdeec4996286cf0db_1a2efd8f4b34118f5cdeec4996286cf0db" kind="function"><name>binary_extension</name></member>
+    <member refid="classsysio_1_1binary__extension_acec153eb43572c2d8b9956a0a1cbf34a_1acec153eb43572c2d8b9956a0a1cbf34a" kind="function"><name>binary_extension</name></member>
+    <member refid="classsysio_1_1binary__extension_1a3729dc8195ca636455c8c5aea400b56a" kind="function"><name>_get</name></member>
+    <member refid="classsysio_1_1binary__extension_1a4e157328b927841109c62e898664961f" kind="function"><name>_get</name></member>
+  </compound>
+  <compound refid="structsysio_1_1block__signing__authority__v0" kind="struct"><name>sysio::block_signing_authority_v0</name>
+    <member refid="structsysio_1_1block__signing__authority__v0_afb5a95f90b2f14444816c2135f05da13_1afb5a95f90b2f14444816c2135f05da13" kind="variable"><name>threshold</name></member>
+    <member refid="structsysio_1_1block__signing__authority__v0_a34f4e76133b73e9e3ce128a5817a3ab3_1a34f4e76133b73e9e3ce128a5817a3ab3" kind="variable"><name>keys</name></member>
+    <member refid="structsysio_1_1block__signing__authority__v0_a04fcdbfce87ce0f33bbbd3f906605e9d_1a04fcdbfce87ce0f33bbbd3f906605e9d" kind="function"><name>is_valid</name></member>
+    <member refid="structsysio_1_1block__signing__authority__v0_a733a5cc8381ddd2c39a87bdcb5d2042d_1a733a5cc8381ddd2c39a87bdcb5d2042d" kind="function"><name>CDT_REFLECT</name></member>
+  </compound>
+  <compound refid="classsysio_1_1block__timestamp" kind="class"><name>sysio::block_timestamp</name>
+    <member refid="classsysio_1_1block__timestamp_aa92b13059d11c64e2584e1e4484f88ea_1aa92b13059d11c64e2584e1e4484f88ea" kind="function"><name>block_timestamp</name></member>
+    <member refid="classsysio_1_1block__timestamp_a61892aeca3b41b5843569b7a8395f985_1a61892aeca3b41b5843569b7a8395f985" kind="function"><name>block_timestamp</name></member>
+    <member refid="classsysio_1_1block__timestamp_a7cd3d8b1b0a87083561fa9b361e7a979_1a7cd3d8b1b0a87083561fa9b361e7a979" kind="function"><name>block_timestamp</name></member>
+    <member refid="classsysio_1_1block__timestamp_a95652ffb7c94d84dbb7519adcad8ec63_1a95652ffb7c94d84dbb7519adcad8ec63" kind="function"><name>next</name></member>
+    <member refid="classsysio_1_1block__timestamp_ae1734edc19650801b8b32a2bb38d4af4_1ae1734edc19650801b8b32a2bb38d4af4" kind="function"><name>to_time_point</name></member>
+    <member refid="classsysio_1_1block__timestamp_a76a598e1b62a7d1d8263c1b66a5ef594_1a76a598e1b62a7d1d8263c1b66a5ef594" kind="function"><name>operator time_point</name></member>
+    <member refid="classsysio_1_1block__timestamp_a76a3ee28fba7ca3a61471da3858ae0d6_1a76a3ee28fba7ca3a61471da3858ae0d6" kind="function"><name>to_string</name></member>
+    <member refid="classsysio_1_1block__timestamp_a6f4f0fc5ba64c32ca748510e8a2cd479_1a6f4f0fc5ba64c32ca748510e8a2cd479" kind="function"><name>maximum</name></member>
+    <member refid="classsysio_1_1block__timestamp_afbaa4dde837864959ff60e0e33eb2850_1afbaa4dde837864959ff60e0e33eb2850" kind="function"><name>min</name></member>
+    <member refid="classsysio_1_1block__timestamp_a3c706b65545cfffe7aa576a0c653eb73_1a3c706b65545cfffe7aa576a0c653eb73" kind="function"><name>from_iso_string</name></member>
+    <member refid="classsysio_1_1block__timestamp_1a76056992fd668163ab22aa0564a1916f" kind="function"><name>set_time_point</name></member>
+    <member refid="classsysio_1_1block__timestamp_1a1d5f2884cd85db45736ffa4c928f23e8" kind="function"><name>set_time_point</name></member>
+  </compound>
+  <compound refid="structsysio_1_1blockchain__parameters" kind="struct"><name>sysio::blockchain_parameters</name>
+    <member refid="structsysio_1_1blockchain__parameters_a7b5cd1e666be7f1d73cf09ff52bf7ee7_1a7b5cd1e666be7f1d73cf09ff52bf7ee7" kind="variable"><name>max_block_net_usage</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_af9824f6ca8c5f0134523452f27eb8797_1af9824f6ca8c5f0134523452f27eb8797" kind="variable"><name>target_block_net_usage_pct</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_abb18f1690c365801145fe33c21743b6e_1abb18f1690c365801145fe33c21743b6e" kind="variable"><name>max_transaction_net_usage</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_af9733758cc366fdcfbbe9dc3fe2460da_1af9733758cc366fdcfbbe9dc3fe2460da" kind="variable"><name>base_per_transaction_net_usage</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_ac95ad51a1d75af94c90d785cd19c5796_1ac95ad51a1d75af94c90d785cd19c5796" kind="variable"><name>net_usage_leeway</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_a33dc15a8af7642c79291ff817bfba804_1a33dc15a8af7642c79291ff817bfba804" kind="variable"><name>context_free_discount_net_usage_num</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_ad4a2d067e1f77337ffa5537266d453c9_1ad4a2d067e1f77337ffa5537266d453c9" kind="variable"><name>context_free_discount_net_usage_den</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_adfdbb978c27f421348130cacff58a164_1adfdbb978c27f421348130cacff58a164" kind="variable"><name>max_block_cpu_usage</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_a71dffda1e9c99c858d6e5ce3849a451e_1a71dffda1e9c99c858d6e5ce3849a451e" kind="variable"><name>target_block_cpu_usage_pct</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_a88c4425f8e04b99f85f2c5ec13520179_1a88c4425f8e04b99f85f2c5ec13520179" kind="variable"><name>max_transaction_cpu_usage</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_a36084639be814839caf617c966a465cb_1a36084639be814839caf617c966a465cb" kind="variable"><name>min_transaction_cpu_usage</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_ab65c452f8dabce7a4827955af278b4e3_1ab65c452f8dabce7a4827955af278b4e3" kind="variable"><name>max_transaction_lifetime</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_ac3c689c29f8beec18e105a56402e4501_1ac3c689c29f8beec18e105a56402e4501" kind="variable"><name>deferred_trx_expiration_window</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_ab6a3466396f2375c2644ac98877446d0_1ab6a3466396f2375c2644ac98877446d0" kind="variable"><name>max_transaction_delay</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_a9f20c14f35e1938513a24c1c8039cd85_1a9f20c14f35e1938513a24c1c8039cd85" kind="variable"><name>max_inline_action_size</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_abe88e662ea94410ec98e6ef33043238e_1abe88e662ea94410ec98e6ef33043238e" kind="variable"><name>max_inline_action_depth</name></member>
+    <member refid="structsysio_1_1blockchain__parameters_a7eac74a6db454f3c1a13cb22e9650ef2_1a7eac74a6db454f3c1a13cb22e9650ef2" kind="variable"><name>max_authority_depth</name></member>
+  </compound>
+  <compound refid="structsysio_1_1fixed__bytes_1_1bool__pack" kind="struct"><name>sysio::fixed_bytes::bool_pack</name>
+  </compound>
+  <compound refid="structsysio_1_1impl_1_1concat__t" kind="struct"><name>sysio::impl::concat_t</name>
+    <member refid="structsysio_1_1impl_1_1concat__t_aa123186afa4a99104459ab8558107f4e_1aa123186afa4a99104459ab8558107f4e" kind="variable"><name>left</name></member>
+    <member refid="structsysio_1_1impl_1_1concat__t_a15639b26df9bfaf28b560b94f28f0797_1a15639b26df9bfaf28b560b94f28f0797" kind="variable"><name>right</name></member>
+    <member refid="structsysio_1_1impl_1_1concat__t_a9ccee85d0e88e5080723267340652a5e_1a9ccee85d0e88e5080723267340652a5e" kind="variable"><name>temp</name></member>
+    <member refid="structsysio_1_1impl_1_1concat__t_a95ac3af735851a1e2547960f46d95ae1_1a95ac3af735851a1e2547960f46d95ae1" kind="variable"><name>temp_left</name></member>
+  </compound>
+  <compound refid="structsysio_1_1multi__index_1_1const__iterator" kind="struct"><name>sysio::multi_index::const_iterator</name>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_1a7f78b0f7c57ccc6af2ef597b8a07ea3e" kind="variable"><name>_multidx</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_1a372215961078836d14e8a5ab3c0d2342" kind="variable"><name>_item</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a474ad2ee1333aa717a29bb55a9d5fc44_1a474ad2ee1333aa717a29bb55a9d5fc44" kind="friend"><name>multi_index</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_ab0ac7de651351823aece097eb3be1cfb_1ab0ac7de651351823aece097eb3be1cfb" kind="friend"><name>operator==</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a5fbca5b71055f2b793ae1607239b13a0_1a5fbca5b71055f2b793ae1607239b13a0" kind="friend"><name>operator!=</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a507879cc40271c9c020e4d8de536c32d_1a507879cc40271c9c020e4d8de536c32d" kind="function"><name>operator*</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a1cdd54f16f2afe15ec4a5febcd2be6e2_1a1cdd54f16f2afe15ec4a5febcd2be6e2" kind="function"><name>operator-&gt;</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a6a204d7012b78df1cb06b577c1740229_1a6a204d7012b78df1cb06b577c1740229" kind="function"><name>operator++</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a4dd4b652199f04f7a36422b6c9f71a73_1a4dd4b652199f04f7a36422b6c9f71a73" kind="function"><name>operator--</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_af95b8b6aab66718df245acc91ff0c9a8_1af95b8b6aab66718df245acc91ff0c9a8" kind="function"><name>operator++</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_a7c00911905bc8f7178685d1d492fe100_1a7c00911905bc8f7178685d1d492fe100" kind="function"><name>operator--</name></member>
+    <member refid="structsysio_1_1multi__index_1_1const__iterator_1acae5dd9624162eae09169f86c811a082" kind="function"><name>const_iterator</name></member>
+  </compound>
+  <compound refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kind="struct"><name>sysio::multi_index::index::const_iterator</name>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a98d9477848d2c563b310010a4f7b8fed_1a98d9477848d2c563b310010a4f7b8fed" kind="friend"><name>index</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_ab0ac7de651351823aece097eb3be1cfb_1ab0ac7de651351823aece097eb3be1cfb" kind="friend"><name>operator==</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a5fbca5b71055f2b793ae1607239b13a0_1a5fbca5b71055f2b793ae1607239b13a0" kind="friend"><name>operator!=</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_1a0c394fc8764f48faa82ce567b82d2ace" kind="variable"><name>_idx</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_1a61f7d60287413179015acf92b3907c5d" kind="variable"><name>_item</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_aca596aa040b45d5c45de46e01e0c4ea2_1aca596aa040b45d5c45de46e01e0c4ea2" kind="function"><name>operator*</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a07fddc696fb1c9449df110d51fa48310_1a07fddc696fb1c9449df110d51fa48310" kind="function"><name>operator-&gt;</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a858609d2d5ad93392610544cda51deea_1a858609d2d5ad93392610544cda51deea" kind="function"><name>operator++</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a1751fafad55c4dbcbd8a6f859c5287e7_1a1751fafad55c4dbcbd8a6f859c5287e7" kind="function"><name>operator--</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a668db3ddcb34e4991b310ce51d23de11_1a668db3ddcb34e4991b310ce51d23de11" kind="function"><name>operator++</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a11dc73fd97844ead6a92578bb19d14b3_1a11dc73fd97844ead6a92578bb19d14b3" kind="function"><name>operator--</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_a96a4f55014359e85feba85bdd0736901_1a96a4f55014359e85feba85bdd0736901" kind="function"><name>const_iterator</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1_1const__iterator_1a752fff3d042766d74c20e4f7c6342770" kind="function"><name>const_iterator</name></member>
+  </compound>
+  <compound refid="structsysio_1_1const__mem__fun" kind="struct"><name>sysio::const_mem_fun</name>
+    <member refid="structsysio_1_1const__mem__fun_a6f11389196b343f68b7870fa8d420e18_1a6f11389196b343f68b7870fa8d420e18" kind="typedef"><name>result_type</name></member>
+    <member refid="structsysio_1_1const__mem__fun_a58592c0e25c06c5cfdb966b64024fb3a_1a58592c0e25c06c5cfdb966b64024fb3a" kind="function"><name>operator()</name></member>
+    <member refid="structsysio_1_1const__mem__fun_a32e9b1522112a44361f185c0eb186c4b_1a32e9b1522112a44361f185c0eb186c4b" kind="function"><name>operator()</name></member>
+    <member refid="structsysio_1_1const__mem__fun_adc1c68eaf282c14a6d8a49ac3e26de36_1adc1c68eaf282c14a6d8a49ac3e26de36" kind="function"><name>operator()</name></member>
+    <member refid="structsysio_1_1const__mem__fun_aa2df8251eb06173b0850bf004266f9c5_1aa2df8251eb06173b0850bf004266f9c5" kind="function"><name>operator()</name></member>
+  </compound>
+  <compound refid="classsysio_1_1contract" kind="class"><name>sysio::contract</name>
+    <member refid="classsysio_1_1contract_a3359b2c117b9e45458351a98774f2d0e_1a3359b2c117b9e45458351a98774f2d0e" kind="variable"><name>_self</name></member>
+    <member refid="classsysio_1_1contract_a3b4aa681b696a4d862e1d0a5076eeca3_1a3b4aa681b696a4d862e1d0a5076eeca3" kind="variable"><name>_first_receiver</name></member>
+    <member refid="classsysio_1_1contract_aa2391f9f3366aec514d156305867c220_1aa2391f9f3366aec514d156305867c220" kind="variable"><name>_ds</name></member>
+    <member refid="classsysio_1_1contract_afff5d15c6d184455045f4525f4edd866_1afff5d15c6d184455045f4525f4edd866" kind="function"><name>contract</name></member>
+    <member refid="classsysio_1_1contract_afcf159ee1e7df486dd1a087e3fe0793f_1afcf159ee1e7df486dd1a087e3fe0793f" kind="function"><name>get_self</name></member>
+    <member refid="classsysio_1_1contract_ab2db64e88f7e235107ab4d24c5d337ec_1ab2db64e88f7e235107ab4d24c5d337ec" kind="function"><name>get_code</name></member>
+    <member refid="classsysio_1_1contract_a094c0663758d7687ad3a08b4bb3650c5_1a094c0663758d7687ad3a08b4bb3650c5" kind="function"><name>get_first_receiver</name></member>
+    <member refid="classsysio_1_1contract_a40d688540e3b0ec874865f1c6cb9b88f_1a40d688540e3b0ec874865f1c6cb9b88f" kind="function"><name>get_datastream</name></member>
+    <member refid="classsysio_1_1contract_a84a40df7246382e14bf56a728dde76d9_1a84a40df7246382e14bf56a728dde76d9" kind="function"><name>get_datastream</name></member>
+  </compound>
+  <compound refid="classsysio_1_1datastream" kind="class"><name>sysio::datastream</name>
+    <member refid="classsysio_1_1datastream_1a8c1a0adcc6938a34868ad21a3ae77b63" kind="variable"><name>_start</name></member>
+    <member refid="classsysio_1_1datastream_1a603a2f6bf025fdb912a5aafbe3bf86b4" kind="variable"><name>_pos</name></member>
+    <member refid="classsysio_1_1datastream_1a430b3d08bd8c8dd8dbad53a6b53489fa" kind="variable"><name>_end</name></member>
+    <member refid="classsysio_1_1datastream_a59d28f35278d00b6ec5946a2128c8fe5_1a59d28f35278d00b6ec5946a2128c8fe5" kind="function"><name>datastream</name></member>
+    <member refid="classsysio_1_1datastream_a4362347c2ba76b35f9aa0f2e6ed5c9b7_1a4362347c2ba76b35f9aa0f2e6ed5c9b7" kind="function"><name>skip</name></member>
+    <member refid="classsysio_1_1datastream_afb3b7e55bf903587e75503e15962b1c7_1afb3b7e55bf903587e75503e15962b1c7" kind="function"><name>read</name></member>
+    <member refid="classsysio_1_1datastream_af6378fd7af33198c7341a86963aa3f60_1af6378fd7af33198c7341a86963aa3f60" kind="function"><name>write</name></member>
+    <member refid="classsysio_1_1datastream_a8c4a7110edc8efd755fbb94967b2c04a_1a8c4a7110edc8efd755fbb94967b2c04a" kind="function"><name>write</name></member>
+    <member refid="classsysio_1_1datastream_acf81b6fde346f97b3571d8c75fa11d50_1acf81b6fde346f97b3571d8c75fa11d50" kind="function"><name>write</name></member>
+    <member refid="classsysio_1_1datastream_a14b2204dc15bc773c48f1d2c8218927b_1a14b2204dc15bc773c48f1d2c8218927b" kind="function"><name>put</name></member>
+    <member refid="classsysio_1_1datastream_afca0aba94c18ae68b2b83998ebe959d7_1afca0aba94c18ae68b2b83998ebe959d7" kind="function"><name>get</name></member>
+    <member refid="classsysio_1_1datastream_aee69ee07647e8ebbab2d7d8b2bd96993_1aee69ee07647e8ebbab2d7d8b2bd96993" kind="function"><name>get</name></member>
+    <member refid="classsysio_1_1datastream_a36152a92f7d916d912eddf13434b5858_1a36152a92f7d916d912eddf13434b5858" kind="function"><name>pos</name></member>
+    <member refid="classsysio_1_1datastream_a91a0cb67cce1f6b0a349d54b7d039026_1a91a0cb67cce1f6b0a349d54b7d039026" kind="function"><name>valid</name></member>
+    <member refid="classsysio_1_1datastream_aebd293be91ac06e89e7be74c9e2fc19a_1aebd293be91ac06e89e7be74c9e2fc19a" kind="function"><name>seekp</name></member>
+    <member refid="classsysio_1_1datastream_a78c2f75d1729c45be355f3a0fbd0d67d_1a78c2f75d1729c45be355f3a0fbd0d67d" kind="function"><name>tellp</name></member>
+    <member refid="classsysio_1_1datastream_acf2946abb156ab97dce9dc8ce8770e9d_1acf2946abb156ab97dce9dc8ce8770e9d" kind="function"><name>remaining</name></member>
+  </compound>
+  <compound refid="classsysio_1_1datastream_3_01size__t_01_4" kind="class"><name>sysio::datastream&lt; size_t &gt;</name>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_1a36011bf42716c2a0778a7955c9c632a7" kind="variable"><name>_size</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a6a102f3b65e00b7b91c5ef76bd513ffe_1a6a102f3b65e00b7b91c5ef76bd513ffe" kind="function"><name>datastream</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_ad96e7d1fa61f9f3367ba00eb04104863_1ad96e7d1fa61f9f3367ba00eb04104863" kind="function"><name>skip</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a3a46c330a11171f3aeab322967209cf1_1a3a46c330a11171f3aeab322967209cf1" kind="function"><name>write</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a9c060d2b80aa07ab30692ac4754e8cf2_1a9c060d2b80aa07ab30692ac4754e8cf2" kind="function"><name>write</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a593fa8b30ccd38afb1b57a62d2f2d146_1a593fa8b30ccd38afb1b57a62d2f2d146" kind="function"><name>write</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a3836e05a5487f5e22ce98f8a9df20f85_1a3836e05a5487f5e22ce98f8a9df20f85" kind="function"><name>put</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a563440cf99ef536e612f5999e25219c2_1a563440cf99ef536e612f5999e25219c2" kind="function"><name>valid</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_a9c3e09b3f7a6870138e898d343e0c5a6_1a9c3e09b3f7a6870138e898d343e0c5a6" kind="function"><name>seekp</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_ae88e93ec001405a1f957b71fe7bbba70_1ae88e93ec001405a1f957b71fe7bbba70" kind="function"><name>tellp</name></member>
+    <member refid="classsysio_1_1datastream_3_01size__t_01_4_ade1c4cab2508f175d413be62d4de20cb_1ade1c4cab2508f175d413be62d4de20cb" kind="function"><name>remaining</name></member>
+  </compound>
+  <compound refid="structsysio_1_1ec__point" kind="struct"><name>sysio::ec_point</name>
+    <member refid="structsysio_1_1ec__point_a92e673166edca3b5d1071aab4d127f0c_1a92e673166edca3b5d1071aab4d127f0c" kind="variable"><name>x</name></member>
+    <member refid="structsysio_1_1ec__point_a5e836b77dafca9d85b35a7d6850d7b5e_1a5e836b77dafca9d85b35a7d6850d7b5e" kind="variable"><name>y</name></member>
+    <member refid="structsysio_1_1ec__point_a5073906c95b584a728fc5fc4c66d70f4_1a5073906c95b584a728fc5fc4c66d70f4" kind="function"><name>ec_point</name></member>
+    <member refid="structsysio_1_1ec__point_ab8d2269f531b5f29ef46f60c2bb85f35_1ab8d2269f531b5f29ef46f60c2bb85f35" kind="function"><name>ec_point</name></member>
+    <member refid="structsysio_1_1ec__point_a583e67eac13dcc850736e5e70464eba8_1a583e67eac13dcc850736e5e70464eba8" kind="function"><name>serialized</name></member>
+  </compound>
+  <compound refid="structsysio_1_1ec__point__view" kind="struct"><name>sysio::ec_point_view</name>
+    <member refid="structsysio_1_1ec__point__view_a43ca579694f296abce5411095794be81_1a43ca579694f296abce5411095794be81" kind="variable"><name>x</name></member>
+    <member refid="structsysio_1_1ec__point__view_a49cb8c409963cca56a5d2a6e6211392d_1a49cb8c409963cca56a5d2a6e6211392d" kind="variable"><name>y</name></member>
+    <member refid="structsysio_1_1ec__point__view_acff6b8d242a93a105afde653ef8b4665_1acff6b8d242a93a105afde653ef8b4665" kind="variable"><name>size</name></member>
+    <member refid="structsysio_1_1ec__point__view_a300f186c31980bb22434ca5678c3b813_1a300f186c31980bb22434ca5678c3b813" kind="function"><name>ec_point_view</name></member>
+    <member refid="structsysio_1_1ec__point__view_a9b8cca3f34d282c19645c90099850e06_1a9b8cca3f34d282c19645c90099850e06" kind="function"><name>ec_point_view</name></member>
+    <member refid="structsysio_1_1ec__point__view_a61e94d79127f61163a256fc4f8f0f789_1a61e94d79127f61163a256fc4f8f0f789" kind="function"><name>ec_point_view</name></member>
+    <member refid="structsysio_1_1ec__point__view_a77c96a7ab64e26eff0f16f17b8a974e7_1a77c96a7ab64e26eff0f16f17b8a974e7" kind="function"><name>serialized</name></member>
+  </compound>
+  <compound refid="structsysio_1_1extended__asset" kind="struct"><name>sysio::extended_asset</name>
+    <member refid="structsysio_1_1extended__asset_a718e77d9107857a0eed4f6b52f248822_1a718e77d9107857a0eed4f6b52f248822" kind="variable"><name>quantity</name></member>
+    <member refid="structsysio_1_1extended__asset_a8effdd21bf5808e7eefa2342ae7e9554_1a8effdd21bf5808e7eefa2342ae7e9554" kind="variable"><name>contract</name></member>
+    <member refid="structsysio_1_1extended__asset_aaad500859b073c777fb35fb04aecb2d1_1aaad500859b073c777fb35fb04aecb2d1" kind="function"><name>get_extended_symbol</name></member>
+    <member refid="structsysio_1_1extended__asset_a8d1abdafef8a6fbf2da99cae8eaf0664_1a8d1abdafef8a6fbf2da99cae8eaf0664" kind="function"><name>extended_asset</name></member>
+    <member refid="structsysio_1_1extended__asset_a1b68c045b88236a19fad3e79b16fee01_1a1b68c045b88236a19fad3e79b16fee01" kind="function"><name>extended_asset</name></member>
+    <member refid="structsysio_1_1extended__asset_aff33dadbf2558fd6fb558be0911295c3_1aff33dadbf2558fd6fb558be0911295c3" kind="function"><name>extended_asset</name></member>
+    <member refid="structsysio_1_1extended__asset_ac1690534347583ffeeb0a398372f602c_1ac1690534347583ffeeb0a398372f602c" kind="function"><name>print</name></member>
+  </compound>
+  <compound refid="classsysio_1_1extended__symbol" kind="class"><name>sysio::extended_symbol</name>
+    <member refid="classsysio_1_1extended__symbol_1ab7c360aeda68aa88779d8ae0f211a41a" kind="variable"><name>sym</name></member>
+    <member refid="classsysio_1_1extended__symbol_1a50d73cd6823aa04aea8713f480516020" kind="variable"><name>contract</name></member>
+    <member refid="classsysio_1_1extended__symbol_aea773c9990f3de42bae4d13e9a4e6a71_1aea773c9990f3de42bae4d13e9a4e6a71" kind="function"><name>extended_symbol</name></member>
+    <member refid="classsysio_1_1extended__symbol_af986cd310c85e855569a6eb15ad5ed37_1af986cd310c85e855569a6eb15ad5ed37" kind="function"><name>extended_symbol</name></member>
+    <member refid="classsysio_1_1extended__symbol_a391aeb78fc6e30fb67c39b2a55ac4f48_1a391aeb78fc6e30fb67c39b2a55ac4f48" kind="function"><name>get_symbol</name></member>
+    <member refid="classsysio_1_1extended__symbol_ae1b421436666e73018eaaf1b1cae6b43_1ae1b421436666e73018eaaf1b1cae6b43" kind="function"><name>get_contract</name></member>
+    <member refid="classsysio_1_1extended__symbol_a131e2dff0dc898f956e5a5663b4076b9_1a131e2dff0dc898f956e5a5663b4076b9" kind="function"><name>print</name></member>
+    <member refid="classsysio_1_1extended__symbol_aa453845fb7e0380184ffa85f25d303d5_1aa453845fb7e0380184ffa85f25d303d5" kind="friend"><name>operator==</name></member>
+    <member refid="classsysio_1_1extended__symbol_a254da219070d2e4d99e13437024a963f_1a254da219070d2e4d99e13437024a963f" kind="friend"><name>operator!=</name></member>
+    <member refid="classsysio_1_1extended__symbol_a9a314f158ff0f9f0388f043b8fd78551_1a9a314f158ff0f9f0388f043b8fd78551" kind="friend"><name>operator&lt;</name></member>
+  </compound>
+  <compound refid="classsysio_1_1fixed__bytes" kind="class"><name>sysio::fixed_bytes</name>
+    <member refid="classsysio_1_1fixed__bytes_1a2cfd7fc1864b62804ad68f799b09cd5b" kind="typedef"><name>all_true</name></member>
+    <member refid="classsysio_1_1fixed__bytes_ada224aadb868c1689e25807ea1f4fc4f_1ada224aadb868c1689e25807ea1f4fc4f" kind="typedef"><name>word_t</name></member>
+    <member refid="classsysio_1_1fixed__bytes_1a01c6b39567ad32ceaed4cbdb6f563f94" kind="variable"><name>_data</name></member>
+    <member refid="classsysio_1_1fixed__bytes_1a659d06c837f078f12a3b364cd8d3ba03" kind="function"><name>set_from_word_sequence</name></member>
+    <member refid="classsysio_1_1fixed__bytes_ac0e00da6877e9eb06189feb7d58f2465_1ac0e00da6877e9eb06189feb7d58f2465" kind="function"><name>num_words</name></member>
+    <member refid="classsysio_1_1fixed__bytes_a40de8b9caf7258f0327df706d80ffe4e_1a40de8b9caf7258f0327df706d80ffe4e" kind="function"><name>padded_bytes</name></member>
+    <member refid="classsysio_1_1fixed__bytes_a2562862faa198d8a5d6c2fda6cbe5413_1a2562862faa198d8a5d6c2fda6cbe5413" kind="function"><name>make_from_word_sequence</name></member>
+    <member refid="classsysio_1_1fixed__bytes_a8c5d1c71b3b0557a911e7cd373dfb3ac_1a8c5d1c71b3b0557a911e7cd373dfb3ac" kind="function"><name>fixed_bytes</name></member>
+    <member refid="classsysio_1_1fixed__bytes_aebe0d2ada8807e0e2035dd04fdb988a8_1aebe0d2ada8807e0e2035dd04fdb988a8" kind="function"><name>fixed_bytes</name></member>
+    <member refid="classsysio_1_1fixed__bytes_a37791ddd82a554f237c2454299f306a7_1a37791ddd82a554f237c2454299f306a7" kind="function"><name>fixed_bytes</name></member>
+    <member refid="classsysio_1_1fixed__bytes_a2addaa5da0fe9ccbfbaece359b2a2928_1a2addaa5da0fe9ccbfbaece359b2a2928" kind="function"><name>fixed_bytes</name></member>
+    <member refid="classsysio_1_1fixed__bytes_a53cf0957fc8211171b6612da99cda6c5_1a53cf0957fc8211171b6612da99cda6c5" kind="function"><name>get_array</name></member>
+    <member refid="classsysio_1_1fixed__bytes_ac80cc6b881c32d57aed1ab56e2932592_1ac80cc6b881c32d57aed1ab56e2932592" kind="function"><name>data</name></member>
+    <member refid="classsysio_1_1fixed__bytes_ae782872d63020d8f56b4d3b154ba43c4_1ae782872d63020d8f56b4d3b154ba43c4" kind="function"><name>size</name></member>
+    <member refid="classsysio_1_1fixed__bytes_aad9a158304048cca3d7cd62176bc086a_1aad9a158304048cca3d7cd62176bc086a" kind="function"><name>extract_as_byte_array</name></member>
+    <member refid="classsysio_1_1fixed__bytes_adc9f1e733fb2c60190ee9ba83667e3ec_1adc9f1e733fb2c60190ee9ba83667e3ec" kind="function"><name>print</name></member>
+  </compound>
+  <compound refid="structsysio_1_1ignore" kind="struct"><name>sysio::ignore</name>
+  </compound>
+  <compound refid="structsysio_1_1ignore__wrapper" kind="struct"><name>sysio::ignore_wrapper</name>
+    <member refid="structsysio_1_1ignore__wrapper_a3266ad427b28180e16901309c6b5818b_1a3266ad427b28180e16901309c6b5818b" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1ignore__wrapper_abda68d986b6a9faf66485eec75e4c598_1abda68d986b6a9faf66485eec75e4c598" kind="function"><name>ignore_wrapper</name></member>
+    <member refid="structsysio_1_1ignore__wrapper_a57135a00fadd2ae8fa49988e02f2b5c3_1a57135a00fadd2ae8fa49988e02f2b5c3" kind="function"><name>ignore_wrapper</name></member>
+    <member refid="structsysio_1_1ignore__wrapper_abb2dd9bed012456e7a82ec363a1f2309_1abb2dd9bed012456e7a82ec363a1f2309" kind="function"><name>ignore_wrapper</name></member>
+    <member refid="structsysio_1_1ignore__wrapper_a42bf22f0b0404151300f7fd2529334fc_1a42bf22f0b0404151300f7fd2529334fc" kind="function"><name>get</name></member>
+    <member refid="structsysio_1_1ignore__wrapper_aa726de7bd12d61264f71ac963cbb15b5_1aa726de7bd12d61264f71ac963cbb15b5" kind="function"><name>operator T</name></member>
+    <member refid="structsysio_1_1ignore__wrapper_acefbfb9b2560568f9fbb8a80d4939f69_1acefbfb9b2560568f9fbb8a80d4939f69" kind="function"><name>operator ignore&lt; T &gt;</name></member>
+  </compound>
+  <compound refid="structsysio_1_1multi__index_1_1index" kind="struct"><name>sysio::multi_index::index</name>
+    <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312" kind="enum"><name>constants</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ae1591537c219343eaf605fbb0035628d" kind="enumvalue"><name>table_name</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ab8e7b01cf8ea74d8c1b41311e5498188" kind="enumvalue"><name>index_name</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ae093d80a48b28722540883bd866848ca" kind="enumvalue"><name>index_number</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312a0f1e0709b468bc40dcae27b0a8998eab" kind="enumvalue"><name>index_table_name</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a98409e5bf6c5fea84ac773c18bd98006_1a98409e5bf6c5fea84ac773c18bd98006" kind="typedef"><name>secondary_extractor_type</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a51418af730662b740c109efdbbe9a10c_1a51418af730662b740c109efdbbe9a10c" kind="typedef"><name>secondary_key_type</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a7676f9318ba61b6d002e65153b9e88ba_1a7676f9318ba61b6d002e65153b9e88ba" kind="typedef"><name>const_reverse_iterator</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a474ad2ee1333aa717a29bb55a9d5fc44_1a474ad2ee1333aa717a29bb55a9d5fc44" kind="friend"><name>multi_index</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1a22e672bd7a993ae1f1d968d872e5e49d" kind="variable"><name>_multidx</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a70155c2b001c422111af0dbc8e13b2f3_1a70155c2b001c422111af0dbc8e13b2f3" kind="function"><name>validate_index_name</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a5b510beb4f1fb9ac3ee3e020df2806b9_1a5b510beb4f1fb9ac3ee3e020df2806b9" kind="function"><name>name</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_acfb2dd237ee5e6e76894159a199fd617_1acfb2dd237ee5e6e76894159a199fd617" kind="function"><name>number</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a61228c36c637079f63ae83c3dba20454_1a61228c36c637079f63ae83c3dba20454" kind="function"><name>extract_secondary_key</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_aa2be3cc1f208e3d24fbd73df9916236f_1aa2be3cc1f208e3d24fbd73df9916236f" kind="function"><name>cbegin</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a2d95954ec3f07d4f981356d9bedf4842_1a2d95954ec3f07d4f981356d9bedf4842" kind="function"><name>begin</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_aae3652f49e9f5c744d51c67869161cc2_1aae3652f49e9f5c744d51c67869161cc2" kind="function"><name>cend</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a7a26156399f193bdeb55f652f6492831_1a7a26156399f193bdeb55f652f6492831" kind="function"><name>end</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a57c62c7f79ce7daa8950a18cf6480ce9_1a57c62c7f79ce7daa8950a18cf6480ce9" kind="function"><name>crbegin</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a326f64c0ea8465b26892e3bf772ad66d_1a326f64c0ea8465b26892e3bf772ad66d" kind="function"><name>rbegin</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a407fe8bf106adfd870a49317a5598249_1a407fe8bf106adfd870a49317a5598249" kind="function"><name>crend</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a612eb999d4bfd8b28d6b681e715abf05_1a612eb999d4bfd8b28d6b681e715abf05" kind="function"><name>rend</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_aa0c2d4dc636cb514461b98060601c28d_1aa0c2d4dc636cb514461b98060601c28d" kind="function"><name>find</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_ade2af5e6387b8bf90a8d9228df2be118_1ade2af5e6387b8bf90a8d9228df2be118" kind="function"><name>find</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a8b869f1fd50fdb2abc9c23a43b33c8c7_1a8b869f1fd50fdb2abc9c23a43b33c8c7" kind="function"><name>require_find</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a9184a62d273a84ebf3501a390e45a280_1a9184a62d273a84ebf3501a390e45a280" kind="function"><name>require_find</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a29d5fabf8b8c6fc401967143bcefe5e7_1a29d5fabf8b8c6fc401967143bcefe5e7" kind="function"><name>get</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_af774cb3588d673f538ba4fd45623adc6_1af774cb3588d673f538ba4fd45623adc6" kind="function"><name>get</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_acd74f85da2ec37bc9c10d2f502cc1c61_1acd74f85da2ec37bc9c10d2f502cc1c61" kind="function"><name>lower_bound</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a1dcbd9dfcebeae20413446f85766ec24_1a1dcbd9dfcebeae20413446f85766ec24" kind="function"><name>lower_bound</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_aa0e0765307d930126e041e4517816fe8_1aa0e0765307d930126e041e4517816fe8" kind="function"><name>upper_bound</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a1962d3724962dc8b3a5d1f9436f43e04_1a1962d3724962dc8b3a5d1f9436f43e04" kind="function"><name>upper_bound</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a2072b55e641a2647d3f8e4b2b8c85f00_1a2072b55e641a2647d3f8e4b2b8c85f00" kind="function"><name>iterator_to</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a61714828302ae7bc7de95731e6f7a125_1a61714828302ae7bc7de95731e6f7a125" kind="function"><name>modify</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a9529858acdd20a18d6a701b2733694b4_1a9529858acdd20a18d6a701b2733694b4" kind="function"><name>modify</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a25e03e204081638720167ec4591f9c2b_1a25e03e204081638720167ec4591f9c2b" kind="function"><name>erase</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_acc4b886f69d1a4bddd24f1f7047fa5a9_1acc4b886f69d1a4bddd24f1f7047fa5a9" kind="function"><name>get_code</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_a8a8fa2358897d2052e359ccef58c0f42_1a8a8fa2358897d2052e359ccef58c0f42" kind="function"><name>get_scope</name></member>
+    <member refid="structsysio_1_1multi__index_1_1index_1a105ab85ccb30d647a6102166af37968d" kind="function"><name>index</name></member>
+  </compound>
+  <compound refid="structsysio_1_1indexed__by" kind="struct"><name>sysio::indexed_by</name>
+    <member refid="structsysio_1_1indexed__by_a35fd7072a88f730640fada29cef91ef2_1a35fd7072a88f730640fada29cef91ef2" kind="enum"><name>constants</name></member>
+    <member refid="structsysio_1_1indexed__by_a35fd7072a88f730640fada29cef91ef2_1a35fd7072a88f730640fada29cef91ef2a262d8d15ad0b7b4d0454b2d4939a4120" kind="enumvalue"><name>index_name</name></member>
+    <member refid="structsysio_1_1indexed__by_a52c34217a6575245a1f578e212b64824_1a52c34217a6575245a1f578e212b64824" kind="typedef"><name>secondary_extractor_type</name></member>
+  </compound>
+  <compound refid="structsysio_1_1inline__dispatcher" kind="struct"><name>sysio::inline_dispatcher</name>
+  </compound>
+  <compound refid="structsysio_1_1inline__dispatcher_3_01void_07_t_1_1_5_08_07_args_8_8_8_08_00_01_name_01_4" kind="struct"><name>sysio::inline_dispatcher&lt; void(T::*)(Args...), Name &gt;</name>
+    <member refid="structsysio_1_1inline__dispatcher_3_01void_07_t_1_1_5_08_07_args_8_8_8_08_00_01_name_01_4_a0d0129c4ac5fa3cd8e3de964c25c98f8_1a0d0129c4ac5fa3cd8e3de964c25c98f8" kind="function"><name>call</name></member>
+    <member refid="structsysio_1_1inline__dispatcher_3_01void_07_t_1_1_5_08_07_args_8_8_8_08_00_01_name_01_4_a27498c0b1841f0e7243eae1fbf94ffb0_1a27498c0b1841f0e7243eae1fbf94ffb0" kind="function"><name>call</name></member>
+  </compound>
+  <compound refid="structsysio_1_1multi__index_1_1intc" kind="struct"><name>sysio::multi_index::intc</name>
+    <member refid="structsysio_1_1multi__index_1_1intc_addb38afa9b9d0704d25170e415ad02b1_1addb38afa9b9d0704d25170e415ad02b1" kind="enum"><name>e</name></member>
+    <member refid="structsysio_1_1multi__index_1_1intc_addb38afa9b9d0704d25170e415ad02b1_1addb38afa9b9d0704d25170e415ad02b1ac5ddd891dddb616d56ea6185c165ecda" kind="enumvalue"><name>value</name></member>
+    <member refid="structsysio_1_1multi__index_1_1intc_aec288e50405842dbab1efe9880f5ad1e_1aec288e50405842dbab1efe9880f5ad1e" kind="function"><name>operator uint64_t</name></member>
+  </compound>
+  <compound refid="classsysio_1_1iostream" kind="class"><name>sysio::iostream</name>
+  </compound>
+  <compound refid="structsysio_1_1__datastream__detail_1_1is__datastream" kind="struct"><name>sysio::_datastream_detail::is_datastream</name>
+    <member refid="structsysio_1_1__datastream__detail_1_1is__datastream_ac9d5c5465543e5e3871b5d0c0bc7358f_1ac9d5c5465543e5e3871b5d0c0bc7358f" kind="variable"><name>value</name></member>
+  </compound>
+  <compound refid="structsysio_1_1__datastream__detail_1_1is__datastream_3_01datastream_3_01_t_01_4_01_4" kind="struct"><name>sysio::_datastream_detail::is_datastream&lt; datastream&lt; T &gt; &gt;</name>
+    <member refid="structsysio_1_1__datastream__detail_1_1is__datastream_3_01datastream_3_01_t_01_4_01_4_a8322816d798d8d087513f45c44c6344f_1a8322816d798d8d087513f45c44c6344f" kind="variable"><name>value</name></member>
+  </compound>
+  <compound refid="structsysio_1_1multi__index_1_1item" kind="struct"><name>sysio::multi_index::item</name>
+    <member refid="structsysio_1_1multi__index_1_1item_a20b4d622f92fd28124d3c75804e173fa_1a20b4d622f92fd28124d3c75804e173fa" kind="variable"><name>__idx</name></member>
+    <member refid="structsysio_1_1multi__index_1_1item_a6dfc6e863ef3f005c22b15cdb2103c92_1a6dfc6e863ef3f005c22b15cdb2103c92" kind="variable"><name>__primary_itr</name></member>
+    <member refid="structsysio_1_1multi__index_1_1item_a6d789a25c7453500b15e260085323e2d_1a6d789a25c7453500b15e260085323e2d" kind="variable"><name>__iters</name></member>
+    <member refid="structsysio_1_1multi__index_1_1item_ad96e50c0ed8c874f95b2421844eae894_1ad96e50c0ed8c874f95b2421844eae894" kind="function"><name>item</name></member>
+  </compound>
+  <compound refid="structsysio_1_1multi__index_1_1item__ptr" kind="struct"><name>sysio::multi_index::item_ptr</name>
+    <member refid="structsysio_1_1multi__index_1_1item__ptr_a67a66de8c7f19ba1ef8564c47d309708_1a67a66de8c7f19ba1ef8564c47d309708" kind="variable"><name>_item</name></member>
+    <member refid="structsysio_1_1multi__index_1_1item__ptr_a0ada2f3b03f447ea53fbb804746f1288_1a0ada2f3b03f447ea53fbb804746f1288" kind="variable"><name>_primary_key</name></member>
+    <member refid="structsysio_1_1multi__index_1_1item__ptr_abfbb7d8e0b360beb1b6d7683544e1465_1abfbb7d8e0b360beb1b6d7683544e1465" kind="variable"><name>_primary_itr</name></member>
+    <member refid="structsysio_1_1multi__index_1_1item__ptr_a3258afc6af3e274fa92eecc7a2cf4fcc_1a3258afc6af3e274fa92eecc7a2cf4fcc" kind="function"><name>item_ptr</name></member>
+  </compound>
+  <compound refid="structsysio_1_1key__weight" kind="struct"><name>sysio::key_weight</name>
+    <member refid="structsysio_1_1key__weight_a7d60ffa30b7d3b0e57c7ef71f3255ed9_1a7d60ffa30b7d3b0e57c7ef71f3255ed9" kind="variable"><name>key</name></member>
+    <member refid="structsysio_1_1key__weight_a5626b08fcc755c348411690dc8913224_1a5626b08fcc755c348411690dc8913224" kind="variable"><name>weight</name></member>
+    <member refid="structsysio_1_1key__weight_a7b8580ea06f80e421dbc2e8eb9ec18c2_1a7b8580ea06f80e421dbc2e8eb9ec18c2" kind="function"><name>CDT_REFLECT</name></member>
+  </compound>
+  <compound refid="structsysio_1_1detail_1_1largest__power" kind="struct"><name>sysio::detail::largest_power</name>
+    <member refid="structsysio_1_1detail_1_1largest__power_1ae1b1e91b9e446610a5c2e1502d0935a3" kind="typedef"><name>helper</name></member>
+    <member refid="structsysio_1_1detail_1_1largest__power_aa315b23c45194e26f6c86f055d388f84_1aa315b23c45194e26f6c86f055d388f84" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1detail_1_1largest__power_a5edf48d6f5a94bcd2b0f4c31a797773b_1a5edf48d6f5a94bcd2b0f4c31a797773b" kind="variable"><name>exponent</name></member>
+  </compound>
+  <compound refid="structsysio_1_1detail_1_1largest__power__helper" kind="struct"><name>sysio::detail::largest_power_helper</name>
+    <member refid="structsysio_1_1detail_1_1largest__power__helper_1a59ee3645803352579ef9dd635505dbf0" kind="typedef"><name>next</name></member>
+    <member refid="structsysio_1_1detail_1_1largest__power__helper_1a74016ad681c1c080c1ab2be46d297529" kind="variable"><name>next_value</name></member>
+    <member refid="structsysio_1_1detail_1_1largest__power__helper_accc69f90822f7d5b4db9d23aeee626be_1accc69f90822f7d5b4db9d23aeee626be" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1detail_1_1largest__power__helper_ac17a2fd3dbb43c090515efb9dc713444_1ac17a2fd3dbb43c090515efb9dc713444" kind="variable"><name>exponent</name></member>
+  </compound>
+  <compound refid="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4" kind="struct"><name>sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;</name>
+    <member refid="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4_ab33ba244cd868402f8520aa18a32c2c1_1ab33ba244cd868402f8520aa18a32c2c1" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4_ac5a11f740298ec34ca89d8151270a25a_1ac5a11f740298ec34ca89d8151270a25a" kind="variable"><name>exponent</name></member>
+  </compound>
+  <compound refid="classsysio_1_1microseconds" kind="class"><name>sysio::microseconds</name>
+    <member refid="classsysio_1_1microseconds_aaba1d7b327cc33fcbaf19e870d0c1733_1aaba1d7b327cc33fcbaf19e870d0c1733" kind="friend"><name>time_point</name></member>
+    <member refid="classsysio_1_1microseconds_a48ffa6b2b0de9ec724cd2d09a14c12a9_1a48ffa6b2b0de9ec724cd2d09a14c12a9" kind="function"><name>microseconds</name></member>
+  </compound>
+  <compound refid="classsysio_1_1multi__index" kind="class"><name>sysio::multi_index</name>
+    <member refid="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4" kind="enum"><name>next_primary_key_tags</name></member>
+    <member refid="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4aaada4a1d4b56340f0a53aed8f6f10b0a" kind="enumvalue"><name>no_available_primary_key</name></member>
+    <member refid="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4a97c114b0ff3c4d7bea04ceb5b660dafa" kind="enumvalue"><name>unset_next_primary_key</name></member>
+    <member refid="classsysio_1_1multi__index_a532030cff20c0f3d7f2beb8accbc047d_1a532030cff20c0f3d7f2beb8accbc047d" kind="typedef"><name>const_reverse_iterator</name></member>
+    <member refid="classsysio_1_1multi__index_1ab3fb638ad05cbf8b4fb4934cec083c0c" kind="variable"><name>max_stack_buffer_size</name></member>
+    <member refid="classsysio_1_1multi__index_1acfd6f97c65cf01f9a8d50da4e4d2c216" kind="variable"><name>_code</name></member>
+    <member refid="classsysio_1_1multi__index_1a84fb29555aac46887dc129c3410534e2" kind="variable"><name>_scope</name></member>
+    <member refid="classsysio_1_1multi__index_1ab038b6a63824ac8d73097a65aae2689a" kind="variable"><name>_next_primary_key</name></member>
+    <member refid="classsysio_1_1multi__index_1a93cdef08521d25030427fbd77ca4f6ba" kind="variable"><name>_items_vector</name></member>
+    <member refid="classsysio_1_1multi__index_1a44f7f3af6e7886b52a82d9c1dd7a4d3a" kind="variable"><name>indices_type</name></member>
+    <member refid="classsysio_1_1multi__index_1afd582a69b7682ff18a885a7a77ba986e" kind="variable"><name>_indices</name></member>
+    <member refid="classsysio_1_1multi__index_1aba8f891f248b458ca2e89a0ba2a2ae67" kind="function"><name>validate_table_name</name></member>
+    <member refid="classsysio_1_1multi__index_1aa44e890db27e795c4382a3e2fb3f8463" kind="function"><name>transform_indices</name></member>
+    <member refid="classsysio_1_1multi__index_1a910071676bb862769f44358c41c1b684" kind="function"><name>load_object_by_primary_iterator</name></member>
+    <member refid="group__multiindex_ga95334a641c52bb1dd5091174c7191ae9_1ga95334a641c52bb1dd5091174c7191ae9" kind="function"><name>multi_index</name></member>
+    <member refid="group__multiindex_ga888fe8091f8cfdd13202543e50496bf9_1ga888fe8091f8cfdd13202543e50496bf9" kind="function"><name>get_code</name></member>
+    <member refid="group__multiindex_ga4cf5db8ffadb7a8a33790f848ee1a9aa_1ga4cf5db8ffadb7a8a33790f848ee1a9aa" kind="function"><name>get_scope</name></member>
+    <member refid="group__multiindex_ga3bee12520f92461789ac396041f83fe4_1ga3bee12520f92461789ac396041f83fe4" kind="function"><name>cbegin</name></member>
+    <member refid="group__multiindex_ga5f8d713f117163e2e8e650f7e4311afa_1ga5f8d713f117163e2e8e650f7e4311afa" kind="function"><name>begin</name></member>
+    <member refid="group__multiindex_ga9a5621617d016211f40c8a8e4c7f0c9c_1ga9a5621617d016211f40c8a8e4c7f0c9c" kind="function"><name>cend</name></member>
+    <member refid="group__multiindex_gafad1f03794294c4060be066d3c2d0bab_1gafad1f03794294c4060be066d3c2d0bab" kind="function"><name>end</name></member>
+    <member refid="group__multiindex_ga9f624a04aa347287ce4992d5eae1dbc3_1ga9f624a04aa347287ce4992d5eae1dbc3" kind="function"><name>crbegin</name></member>
+    <member refid="group__multiindex_gac438151b3f7afb8ceb385d2e9447ebe6_1gac438151b3f7afb8ceb385d2e9447ebe6" kind="function"><name>rbegin</name></member>
+    <member refid="group__multiindex_gad7fbbef0f5b74941bebd67434a8344f8_1gad7fbbef0f5b74941bebd67434a8344f8" kind="function"><name>crend</name></member>
+    <member refid="group__multiindex_ga85a853178d819521c50bcd9860f70d59_1ga85a853178d819521c50bcd9860f70d59" kind="function"><name>rend</name></member>
+    <member refid="group__multiindex_ga385d93cf277878b667a3e22264a4230a_1ga385d93cf277878b667a3e22264a4230a" kind="function"><name>lower_bound</name></member>
+    <member refid="group__multiindex_ga9c460cb3a0a25aab8c4e6f2deeb97dd3_1ga9c460cb3a0a25aab8c4e6f2deeb97dd3" kind="function"><name>upper_bound</name></member>
+    <member refid="group__multiindex_ga1eca5d070f199f2339314f2c6ceb1de0_1ga1eca5d070f199f2339314f2c6ceb1de0" kind="function"><name>available_primary_key</name></member>
+    <member refid="group__multiindex_gafdc920626da6bacc840603bd6eb30b5c_1gafdc920626da6bacc840603bd6eb30b5c" kind="function"><name>get_index</name></member>
+    <member refid="group__multiindex_gace446e93ccd2232549e753e473f62ce1_1gace446e93ccd2232549e753e473f62ce1" kind="function"><name>get_index</name></member>
+    <member refid="group__multiindex_ga96ad41ccaa25039b3abc5e40dfd6d24c_1ga96ad41ccaa25039b3abc5e40dfd6d24c" kind="function"><name>iterator_to</name></member>
+    <member refid="group__multiindex_ga8b2849d63f5d3764ff66dbf57287192a_1ga8b2849d63f5d3764ff66dbf57287192a" kind="function"><name>emplace</name></member>
+    <member refid="group__multiindex_ga50037b09faedb27a322444c238722f43_1ga50037b09faedb27a322444c238722f43" kind="function"><name>modify</name></member>
+    <member refid="group__multiindex_gaff0329e2ee02b9cac7c39150023ff48d_1gaff0329e2ee02b9cac7c39150023ff48d" kind="function"><name>modify</name></member>
+    <member refid="group__multiindex_ga1c735442b15d98dbcbf6798e59dcc192_1ga1c735442b15d98dbcbf6798e59dcc192" kind="function"><name>get</name></member>
+    <member refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" kind="function"><name>find</name></member>
+    <member refid="group__multiindex_ga9245ddf1b3177affdb3932f5d1f65ca9_1ga9245ddf1b3177affdb3932f5d1f65ca9" kind="function"><name>require_find</name></member>
+    <member refid="group__multiindex_ga9aaa4cd5f39691494d8cb7d2bb2e6a96_1ga9aaa4cd5f39691494d8cb7d2bb2e6a96" kind="function"><name>erase</name></member>
+    <member refid="group__multiindex_gab8634205229f6b142ec2eb90a9456328_1gab8634205229f6b142ec2eb90a9456328" kind="function"><name>erase</name></member>
+  </compound>
+  <compound refid="structsysio_1_1name" kind="struct"><name>sysio::name</name>
+    <member refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kind="enum"><name>raw</name></member>
+    <member refid="structsysio_1_1name_a91d96faaccdf89ab32a946284d6a7dc8_1a91d96faaccdf89ab32a946284d6a7dc8" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1name_a9805888cb099e49ee6bbff7fb15c69c6_1a9805888cb099e49ee6bbff7fb15c69c6" kind="function"><name>name</name></member>
+    <member refid="structsysio_1_1name_a8f785f25716cac0e932e3d63d1be1d2d_1a8f785f25716cac0e932e3d63d1be1d2d" kind="function"><name>name</name></member>
+    <member refid="structsysio_1_1name_abbbee023f54ee7a927466357abcbbd79_1abbbee023f54ee7a927466357abcbbd79" kind="function"><name>name</name></member>
+    <member refid="structsysio_1_1name_a1a34c34a6f5945644fe260e88ab99b81_1a1a34c34a6f5945644fe260e88ab99b81" kind="function"><name>name</name></member>
+    <member refid="structsysio_1_1name_a4b80c53ebc36b09358f2f160510d68a2_1a4b80c53ebc36b09358f2f160510d68a2" kind="function"><name>length</name></member>
+    <member refid="structsysio_1_1name_ad5f7f57d4bb7c51343912a51af607b8f_1ad5f7f57d4bb7c51343912a51af607b8f" kind="function"><name>suffix</name></member>
+    <member refid="structsysio_1_1name_ac2cfd6484c829597b8d0abe3e250c2a3_1ac2cfd6484c829597b8d0abe3e250c2a3" kind="function"><name>prefix</name></member>
+    <member refid="structsysio_1_1name_a4e24d5a6343228638fdbe3d66ffbebca_1a4e24d5a6343228638fdbe3d66ffbebca" kind="function"><name>operator raw</name></member>
+    <member refid="structsysio_1_1name_ae729a0b66eb1b5f7652a6c6c966c9a8e_1ae729a0b66eb1b5f7652a6c6c966c9a8e" kind="function"><name>operator bool</name></member>
+    <member refid="structsysio_1_1name_ac1ed34ccf041ece18d828c57226be94e_1ac1ed34ccf041ece18d828c57226be94e" kind="function"><name>write_as_string</name></member>
+    <member refid="structsysio_1_1name_a59ddbcc208bc6c1fcab18a0015bb154f_1a59ddbcc208bc6c1fcab18a0015bb154f" kind="function"><name>to_string</name></member>
+    <member refid="structsysio_1_1name_acc6c82946b760b27a27c01d6ce557e88_1acc6c82946b760b27a27c01d6ce557e88" kind="function"><name>print</name></member>
+    <member refid="structsysio_1_1name_a819df6ed7a2fbb872e08f5b1c4447337_1a819df6ed7a2fbb872e08f5b1c4447337" kind="function"><name>CDT_REFLECT</name></member>
+    <member refid="structsysio_1_1name_a4d013c1637dc26b8c6e20752b2c03067_1a4d013c1637dc26b8c6e20752b2c03067" kind="function"><name>char_to_value</name></member>
+  </compound>
+  <compound refid="structsysio_1_1onerror" kind="struct"><name>sysio::onerror</name>
+    <member refid="structsysio_1_1onerror_aba0c0729df5a1af4fdc775a4d64299b7_1aba0c0729df5a1af4fdc775a4d64299b7" kind="variable"><name>sender_id</name></member>
+    <member refid="structsysio_1_1onerror_a7a68d4086c4d58745797dffda3a8f9a2_1a7a68d4086c4d58745797dffda3a8f9a2" kind="variable"><name>sent_trx</name></member>
+    <member refid="group__transaction_gac92df793654a0b0efbe8d35fd368dc4d_1gac92df793654a0b0efbe8d35fd368dc4d" kind="function"><name>from_current_action</name></member>
+    <member refid="structsysio_1_1onerror_aed6777c6326fe28fc17270a3be470163_1aed6777c6326fe28fc17270a3be470163" kind="function"><name>unpack_sent_trx</name></member>
+  </compound>
+  <compound refid="structsysio_1_1overloaded" kind="struct"><name>sysio::overloaded</name>
+  </compound>
+  <compound refid="structsysio_1_1permission__level" kind="struct"><name>sysio::permission_level</name>
+    <member refid="structsysio_1_1permission__level_a0dcd50f25f1ceea6469d5fe5aea99234_1a0dcd50f25f1ceea6469d5fe5aea99234" kind="variable"><name>actor</name></member>
+    <member refid="structsysio_1_1permission__level_add65457ea22406a3cdd5a3c3c0d08330_1add65457ea22406a3cdd5a3c3c0d08330" kind="variable"><name>permission</name></member>
+    <member refid="structsysio_1_1permission__level_aee99c9750a965b03c44fc712856b1dad_1aee99c9750a965b03c44fc712856b1dad" kind="function"><name>permission_level</name></member>
+    <member refid="structsysio_1_1permission__level_ad3861a72e368bb0ec477a7d3ed53da86_1ad3861a72e368bb0ec477a7d3ed53da86" kind="function"><name>permission_level</name></member>
+    <member refid="structsysio_1_1permission__level_af1168e994b156251f773a9c04b4adcbe_1af1168e994b156251f773a9c04b4adcbe" kind="friend"><name>operator==</name></member>
+    <member refid="structsysio_1_1permission__level_a9b332d8c38da3e06fae0e78fb3975769_1a9b332d8c38da3e06fae0e78fb3975769" kind="friend"><name>operator&lt;</name></member>
+  </compound>
+  <compound refid="structsysio_1_1producer__authority" kind="struct"><name>sysio::producer_authority</name>
+    <member refid="structsysio_1_1producer__authority_a7e2ee493677370880aa4bc5e184b8998_1a7e2ee493677370880aa4bc5e184b8998" kind="variable"><name>producer_name</name></member>
+    <member refid="structsysio_1_1producer__authority_ac7efdc60caaaaf28f8e4f414d3af471d_1ac7efdc60caaaaf28f8e4f414d3af471d" kind="variable"><name>authority</name></member>
+    <member refid="structsysio_1_1producer__authority_ac195aa1fd3700c7a054753712abd5016_1ac195aa1fd3700c7a054753712abd5016" kind="friend"><name>operator&lt;</name></member>
+    <member refid="structsysio_1_1producer__authority_a2ca89f10fc101b688db8ccd0f2f83c67_1a2ca89f10fc101b688db8ccd0f2f83c67" kind="function"><name>CDT_REFLECT</name></member>
+  </compound>
+  <compound refid="structsysio_1_1producer__key" kind="struct"><name>sysio::producer_key</name>
+    <member refid="group__producer__key_gae42a7a26b089dce8a7caef366c050389_1gae42a7a26b089dce8a7caef366c050389" kind="variable"><name>producer_name</name></member>
+    <member refid="group__producer__key_gaf7d9571f28795037aa221ac9ee89ba9a_1gaf7d9571f28795037aa221ac9ee89ba9a" kind="variable"><name>block_signing_key</name></member>
+    <member refid="structsysio_1_1producer__key_a8d1188b39f584b03e1b0dffddada671e_1a8d1188b39f584b03e1b0dffddada671e" kind="function"><name>CDT_REFLECT</name></member>
+  </compound>
+  <compound refid="structsysio_1_1producer__schedule" kind="struct"><name>sysio::producer_schedule</name>
+    <member refid="structsysio_1_1producer__schedule_af7a12b5e73ed0a4d278d692214a74cfb_1af7a12b5e73ed0a4d278d692214a74cfb" kind="variable"><name>version</name></member>
+    <member refid="structsysio_1_1producer__schedule_a80ab9eb83f912b5a37670d640c826867_1a80ab9eb83f912b5a37670d640c826867" kind="variable"><name>producers</name></member>
+    <member refid="structsysio_1_1producer__schedule_a245e12c1aa061e9095d516a681add403_1a245e12c1aa061e9095d516a681add403" kind="function"><name>CDT_REFLECT</name></member>
+  </compound>
+  <compound refid="classsysio_1_1rope" kind="class"><name>sysio::rope</name>
+    <member refid="classsysio_1_1rope_1a103174d8aff05a5a942fbcb90f33f8e2" kind="variable"><name>root</name></member>
+    <member refid="classsysio_1_1rope_1ac3a0f9c17794bea4f0e02a335f2c36cd" kind="variable"><name>last</name></member>
+    <member refid="classsysio_1_1rope_1a95b0d6308f60c9bd485c564abe0ce26c" kind="variable"><name>size</name></member>
+    <member refid="classsysio_1_1rope_1aca156d8491553909c1d7f29f9dab69a5" kind="function"><name>strlen</name></member>
+    <member refid="classsysio_1_1rope_1a61efed31cff5bbdf124f56c9f10ba58a" kind="function"><name>c_str</name></member>
+    <member refid="classsysio_1_1rope_1ab2d1367e31810d990497313c2c5807b1" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1rope_1a240bb6c1ebe5752e68997be1e934bd95" kind="function"><name>at</name></member>
+    <member refid="classsysio_1_1rope_a8c857f29220ebcc161bc1ca5ff294867_1a8c857f29220ebcc161bc1ca5ff294867" kind="function"><name>rope</name></member>
+    <member refid="classsysio_1_1rope_a722b40f342b4e73969cf1e24b1772d1c_1a722b40f342b4e73969cf1e24b1772d1c" kind="function"><name>rope</name></member>
+    <member refid="classsysio_1_1rope_a2bb6032b80704084453a65da7b9085f4_1a2bb6032b80704084453a65da7b9085f4" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1rope_a060ba0a06a9288e3d6cf96653cb2e4d9_1a060ba0a06a9288e3d6cf96653cb2e4d9" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1rope_a23baaa93044a660db388aa79900e7050_1a23baaa93044a660db388aa79900e7050" kind="function"><name>at</name></member>
+    <member refid="classsysio_1_1rope_a9e9f67ad261ca14e2f24f000cf93d8ef_1a9e9f67ad261ca14e2f24f000cf93d8ef" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1rope_ad75d44d7cc2805543e0d3b37b3a15cf6_1ad75d44d7cc2805543e0d3b37b3a15cf6" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1rope_ab8fd8dbb8cefccca823b5cb694dc1ad0_1ab8fd8dbb8cefccca823b5cb694dc1ad0" kind="function"><name>operator[]</name></member>
+    <member refid="classsysio_1_1rope_a854ab0d4ac7b2c06aaeeab16257a59ca_1a854ab0d4ac7b2c06aaeeab16257a59ca" kind="function"><name>operator+=</name></member>
+    <member refid="classsysio_1_1rope_adfbd92c20f19cb18f401f6bc26c6064c_1adfbd92c20f19cb18f401f6bc26c6064c" kind="function"><name>operator+=</name></member>
+    <member refid="classsysio_1_1rope_a1a6caa56273d052b4b6a187844cd9a6d_1a1a6caa56273d052b4b6a187844cd9a6d" kind="function"><name>operator+=</name></member>
+    <member refid="classsysio_1_1rope_ab60ddcd7cab389dc4456c5670fccc351_1ab60ddcd7cab389dc4456c5670fccc351" kind="function"><name>length</name></member>
+    <member refid="classsysio_1_1rope_aa09b2a963bc521dbd2c4ae42e9a7424b_1aa09b2a963bc521dbd2c4ae42e9a7424b" kind="function"><name>print</name></member>
+    <member refid="classsysio_1_1rope_a3ca558dcb1a75f7df49ada4baf2969fe_1a3ca558dcb1a75f7df49ada4baf2969fe" kind="function"><name>c_str</name></member>
+    <member refid="classsysio_1_1rope_a258e0f02a597885fdbf7a8a7871a8815_1a258e0f02a597885fdbf7a8a7871a8815" kind="function"><name>sv</name></member>
+    <member refid="classsysio_1_1rope_aa882baad43917693e1f93b5e546eb4d8_1aa882baad43917693e1f93b5e546eb4d8" kind="friend"><name>operator+</name></member>
+    <member refid="classsysio_1_1rope_a36e6c3ae93eb1350bd138347edebe939_1a36e6c3ae93eb1350bd138347edebe939" kind="friend"><name>operator+</name></member>
+    <member refid="classsysio_1_1rope_a7bb3cd3347e4718e40e175d6c76a5f2a_1a7bb3cd3347e4718e40e175d6c76a5f2a" kind="friend"><name>operator+</name></member>
+  </compound>
+  <compound refid="structsysio_1_1singleton_1_1row" kind="struct"><name>sysio::singleton::row</name>
+    <member refid="structsysio_1_1singleton_1_1row_a0336461f99439d96eceeb4fc8115f6a6_1a0336461f99439d96eceeb4fc8115f6a6" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1singleton_1_1row_ac6d6392c9db2915f796226a27804ca44_1ac6d6392c9db2915f796226a27804ca44" kind="function"><name>primary_key</name></member>
+  </compound>
+  <compound refid="structsysio_1_1__multi__index__detail_1_1secondary__index__db__functions" kind="struct"><name>sysio::_multi_index_detail::secondary_index_db_functions</name>
+  </compound>
+  <compound refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits" kind="struct"><name>sysio::_multi_index_detail::secondary_key_traits</name>
+  </compound>
+  <compound refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4" kind="struct"><name>sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;</name>
+    <member refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4_afd9e21216ce5e2cd7a8c4c4de6e1950f_1afd9e21216ce5e2cd7a8c4c4de6e1950f" kind="function"><name>true_lowest</name></member>
+  </compound>
+  <compound refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01long_01double_01_4" kind="struct"><name>sysio::_multi_index_detail::secondary_key_traits&lt; long double &gt;</name>
+    <member refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01long_01double_01_4_a50e75651a85ae3081166e7fda722f9c3_1a50e75651a85ae3081166e7fda722f9c3" kind="function"><name>true_lowest</name></member>
+  </compound>
+  <compound refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01sysio_1_1fixed__bytes_3_0132_01_4_01_4" kind="struct"><name>sysio::_multi_index_detail::secondary_key_traits&lt; sysio::fixed_bytes&lt; 32 &gt; &gt;</name>
+    <member refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01sysio_1_1fixed__bytes_3_0132_01_4_01_4_afc69e0d65d6dd177866dd4a543cf4ff7_1afc69e0d65d6dd177866dd4a543cf4ff7" kind="function"><name>true_lowest</name></member>
+  </compound>
+  <compound refid="structsysio_1_1security__group" kind="struct"><name>sysio::security_group</name>
+    <member refid="structsysio_1_1security__group_a47081696843149563027fbe044f688fc_1a47081696843149563027fbe044f688fc" kind="variable"><name>version</name></member>
+    <member refid="structsysio_1_1security__group_a06373f9e5fc3b1b87b8b8ec149c362ee_1a06373f9e5fc3b1b87b8b8ec149c362ee" kind="variable"><name>participants</name></member>
+    <member refid="structsysio_1_1security__group_a9e2311a865ed2a1553394595c36859f2_1a9e2311a865ed2a1553394595c36859f2" kind="function"><name>CDT_REFLECT</name></member>
+  </compound>
+  <compound refid="structsysio_1_1signed__int" kind="struct"><name>sysio::signed_int</name>
+    <member refid="structsysio_1_1signed__int_ac6f2a1d23444bc69621bf4fae00e3dd0_1ac6f2a1d23444bc69621bf4fae00e3dd0" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1signed__int_a2b3e6f28a3321e85e951e3ec6497c38b_1a2b3e6f28a3321e85e951e3ec6497c38b" kind="function"><name>signed_int</name></member>
+  </compound>
+  <compound refid="classsysio_1_1singleton" kind="class"><name>sysio::singleton</name>
+    <member refid="classsysio_1_1singleton_1a08094578b6acc46052f67b47dd0b3ad6" kind="typedef"><name>table</name></member>
+    <member refid="classsysio_1_1singleton_1a4fafa0b9faa6321ab7fa6cafdd10e9f5" kind="variable"><name>pk_value</name></member>
+    <member refid="classsysio_1_1singleton_1abd8676da901cb30f1c46a2f3a863baf2" kind="variable"><name>_t</name></member>
+    <member refid="classsysio_1_1singleton_a44e8504cc55f0db8d1c9f55f74497d04_1a44e8504cc55f0db8d1c9f55f74497d04" kind="function"><name>singleton</name></member>
+    <member refid="classsysio_1_1singleton_adaf08658ea5c6f63ba625ef14c2adec0_1adaf08658ea5c6f63ba625ef14c2adec0" kind="function"><name>exists</name></member>
+    <member refid="classsysio_1_1singleton_aff388b46616a2768a5b896416deb7b21_1aff388b46616a2768a5b896416deb7b21" kind="function"><name>get</name></member>
+    <member refid="classsysio_1_1singleton_a885a6b8fbd03404ced7033beaab0c28e_1a885a6b8fbd03404ced7033beaab0c28e" kind="function"><name>get_or_default</name></member>
+    <member refid="classsysio_1_1singleton_a46a0a3204e04e50925ad5f6bc210c2f5_1a46a0a3204e04e50925ad5f6bc210c2f5" kind="function"><name>get_or_create</name></member>
+    <member refid="classsysio_1_1singleton_a9fd38b11bb36c05e2df88a2b2cb0329f_1a9fd38b11bb36c05e2df88a2b2cb0329f" kind="function"><name>set</name></member>
+    <member refid="classsysio_1_1singleton_a9154b8b392d383a71a4207deeb9bda5f_1a9154b8b392d383a71a4207deeb9bda5f" kind="function"><name>remove</name></member>
+  </compound>
+  <compound refid="structsysio_1_1impl_1_1str__t" kind="struct"><name>sysio::impl::str_t</name>
+    <member refid="structsysio_1_1impl_1_1str__t_a065b6b563530bc9d87af49c128728454_1a065b6b563530bc9d87af49c128728454" kind="variable"><name>c_str</name></member>
+    <member refid="structsysio_1_1impl_1_1str__t_a80acbfd280daaf1f29cf745bcf0f6e12_1a80acbfd280daaf1f29cf745bcf0f6e12" kind="variable"><name>size</name></member>
+    <member refid="structsysio_1_1impl_1_1str__t_a32aa9b2bbaf9a657eedaba36f85dbacb_1a32aa9b2bbaf9a657eedaba36f85dbacb" kind="variable"><name>temp</name></member>
+  </compound>
+  <compound refid="classsysio_1_1string" kind="class"><name>sysio::string</name>
+    <member refid="classsysio_1_1string_1acf1ed37b0e45e770d6192aff1b2739ba" kind="typedef"><name>uptr</name></member>
+    <member refid="classsysio_1_1string_1a7337f6fdd0271b1f15e841078a04d762" kind="typedef"><name>sso_str</name></member>
+    <member refid="classsysio_1_1string_aaa4afb5dc01a0d1042f84df180c55784_1aaa4afb5dc01a0d1042f84df180c55784" kind="variable"><name>npos</name></member>
+    <member refid="classsysio_1_1string_1a707debb1e687f0650dd3b4bc5b35c101" kind="variable"><name>_size</name></member>
+    <member refid="classsysio_1_1string_1ab898be25db8e93283b3a2194cc3faf72" kind="variable"><name>_capacity</name></member>
+    <member refid="classsysio_1_1string_1acc627996daa8999a5859bb268a272fef" kind="variable"><name>_begin</name></member>
+    <member refid="classsysio_1_1string_afdd8ea3566f29b1d2df582dc4ffc01e4_1afdd8ea3566f29b1d2df582dc4ffc01e4" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_aaf612b885970fffb95ea800f154e199c_1aaf612b885970fffb95ea800f154e199c" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_ab92bd03251c6796aa9cdb5629313280e_1ab92bd03251c6796aa9cdb5629313280e" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_aae7d9fcc6a98c68d22f072a1102d6432_1aae7d9fcc6a98c68d22f072a1102d6432" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_ac1d3d96fb393626217c38361eaf07a32_1ac1d3d96fb393626217c38361eaf07a32" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_a4257156c49703a24760772086c878aa1_1a4257156c49703a24760772086c878aa1" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_a87511268f83e1f4d266e20cca8766614_1a87511268f83e1f4d266e20cca8766614" kind="function"><name>string</name></member>
+    <member refid="classsysio_1_1string_ad6c0c2754461b8fa3e2c19b0f8984a24_1ad6c0c2754461b8fa3e2c19b0f8984a24" kind="function"><name>operator=</name></member>
+    <member refid="classsysio_1_1string_a905f7a9cc463abfbd73cf8a6d0372900_1a905f7a9cc463abfbd73cf8a6d0372900" kind="function"><name>operator=</name></member>
+    <member refid="classsysio_1_1string_a6c552ea0311a5088944a9cda41b81585_1a6c552ea0311a5088944a9cda41b81585" kind="function"><name>operator=</name></member>
+    <member refid="classsysio_1_1string_ac7bc648c4abb2b37c341516026f8891c_1ac7bc648c4abb2b37c341516026f8891c" kind="function"><name>operator[]</name></member>
+    <member refid="classsysio_1_1string_a821e280192d33c1f67e76a47b2f0077e_1a821e280192d33c1f67e76a47b2f0077e" kind="function"><name>operator[]</name></member>
+    <member refid="classsysio_1_1string_af9d53afddc35e25278d2be23b1589d7d_1af9d53afddc35e25278d2be23b1589d7d" kind="function"><name>at</name></member>
+    <member refid="classsysio_1_1string_a1a6c90c6c359df6aa7ed3284bf48dd5a_1a1a6c90c6c359df6aa7ed3284bf48dd5a" kind="function"><name>at</name></member>
+    <member refid="classsysio_1_1string_a26fc6cea509d045e3b3a559c7e63b599_1a26fc6cea509d045e3b3a559c7e63b599" kind="function"><name>front</name></member>
+    <member refid="classsysio_1_1string_a54c682507f6b5af7e04de09e76de447c_1a54c682507f6b5af7e04de09e76de447c" kind="function"><name>front</name></member>
+    <member refid="classsysio_1_1string_a748f3c94ae4c17b0c4c4732e06df013b_1a748f3c94ae4c17b0c4c4732e06df013b" kind="function"><name>back</name></member>
+    <member refid="classsysio_1_1string_a4b3684f1b4e58399f46bdea6e78703ff_1a4b3684f1b4e58399f46bdea6e78703ff" kind="function"><name>back</name></member>
+    <member refid="classsysio_1_1string_a35c739e4118946c9969a6178ec52816f_1a35c739e4118946c9969a6178ec52816f" kind="function"><name>data</name></member>
+    <member refid="classsysio_1_1string_ae0a48ef4589d0cabf387a29ff5629c58_1ae0a48ef4589d0cabf387a29ff5629c58" kind="function"><name>data</name></member>
+    <member refid="classsysio_1_1string_a4ffcb0e955c9cf6ca093713f37b37dd7_1a4ffcb0e955c9cf6ca093713f37b37dd7" kind="function"><name>c_str</name></member>
+    <member refid="classsysio_1_1string_ad9f28ff70878055410aaf549160b1e30_1ad9f28ff70878055410aaf549160b1e30" kind="function"><name>begin</name></member>
+    <member refid="classsysio_1_1string_aea260d3f76852e9e6d1c8b9dcead1dd0_1aea260d3f76852e9e6d1c8b9dcead1dd0" kind="function"><name>cbegin</name></member>
+    <member refid="classsysio_1_1string_a6d1c694515583435ef16b0cbc28d7901_1a6d1c694515583435ef16b0cbc28d7901" kind="function"><name>end</name></member>
+    <member refid="classsysio_1_1string_abd085dfc1a5cd1fa4322a3a485ca59c5_1abd085dfc1a5cd1fa4322a3a485ca59c5" kind="function"><name>cend</name></member>
+    <member refid="classsysio_1_1string_a018c58227e4e2e9342c8a397a97aa354_1a018c58227e4e2e9342c8a397a97aa354" kind="function"><name>empty</name></member>
+    <member refid="classsysio_1_1string_a897d01d3234496117b6bfd8711741a86_1a897d01d3234496117b6bfd8711741a86" kind="function"><name>size</name></member>
+    <member refid="classsysio_1_1string_a6be8e92f5d2b71ba0a2a9edce307208d_1a6be8e92f5d2b71ba0a2a9edce307208d" kind="function"><name>length</name></member>
+    <member refid="classsysio_1_1string_a1b3fc36ba39eebcb791c67bbe7750f85_1a1b3fc36ba39eebcb791c67bbe7750f85" kind="function"><name>capacity</name></member>
+    <member refid="classsysio_1_1string_ac1e174b238e7ea0b2f2f3e213ba44dc7_1ac1e174b238e7ea0b2f2f3e213ba44dc7" kind="function"><name>max_size</name></member>
+    <member refid="classsysio_1_1string_a67eea1b3d744e10abda448401e3eb0c5_1a67eea1b3d744e10abda448401e3eb0c5" kind="function"><name>reserve</name></member>
+    <member refid="classsysio_1_1string_abac4ba696ca0aa09d75a68bec3640bd7_1abac4ba696ca0aa09d75a68bec3640bd7" kind="function"><name>shrink_to_fit</name></member>
+    <member refid="classsysio_1_1string_a2a9e10b967b5080b1a2689cd78fa9005_1a2a9e10b967b5080b1a2689cd78fa9005" kind="function"><name>clear</name></member>
+    <member refid="classsysio_1_1string_a43ba9d2306622b8b28656b1f57bd961a_1a43ba9d2306622b8b28656b1f57bd961a" kind="function"><name>resize</name></member>
+    <member refid="classsysio_1_1string_ad32c97891581e9ef14a60c2e476d8f00_1ad32c97891581e9ef14a60c2e476d8f00" kind="function"><name>swap</name></member>
+    <member refid="classsysio_1_1string_a09f6dc815a6fcb0b677eff4a7420178c_1a09f6dc815a6fcb0b677eff4a7420178c" kind="function"><name>push_back</name></member>
+    <member refid="classsysio_1_1string_a0c60f0a9ec0a252298b4a8dac7e2042f_1a0c60f0a9ec0a252298b4a8dac7e2042f" kind="function"><name>pop_back</name></member>
+    <member refid="classsysio_1_1string_a18b0da369cb70e3cdcd6003d7764b556_1a18b0da369cb70e3cdcd6003d7764b556" kind="function"><name>substr</name></member>
+    <member refid="classsysio_1_1string_a9ed94e005844f7ebd8a605105e4b59ec_1a9ed94e005844f7ebd8a605105e4b59ec" kind="function"><name>copy</name></member>
+    <member refid="classsysio_1_1string_a491d3b2b06c8ea7498ca4672f9b8e8d7_1a491d3b2b06c8ea7498ca4672f9b8e8d7" kind="function"><name>insert</name></member>
+    <member refid="classsysio_1_1string_a3a81ad9a66c8332ecefe85cd5250441f_1a3a81ad9a66c8332ecefe85cd5250441f" kind="function"><name>insert</name></member>
+    <member refid="classsysio_1_1string_a56a9afe229a40b57c8fc31c005407d87_1a56a9afe229a40b57c8fc31c005407d87" kind="function"><name>insert</name></member>
+    <member refid="classsysio_1_1string_a34aefa533e9c847c44f083bb161bf8e9_1a34aefa533e9c847c44f083bb161bf8e9" kind="function"><name>erase</name></member>
+    <member refid="classsysio_1_1string_a4136487f4d8511c51b20357a05fece81_1a4136487f4d8511c51b20357a05fece81" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1string_aadc2e47328c342c451715d939e379bbb_1aadc2e47328c342c451715d939e379bbb" kind="function"><name>append</name></member>
+    <member refid="classsysio_1_1string_aae9266cc44ebabc427d7f337e91c2209_1aae9266cc44ebabc427d7f337e91c2209" kind="function"><name>operator+=</name></member>
+    <member refid="classsysio_1_1string_abb038f8d7ed19c186b3652fc2ef83922_1abb038f8d7ed19c186b3652fc2ef83922" kind="function"><name>operator+=</name></member>
+    <member refid="classsysio_1_1string_a52064c7565fa59e1457a904b57786cb0_1a52064c7565fa59e1457a904b57786cb0" kind="function"><name>operator+=</name></member>
+    <member refid="classsysio_1_1string_a1da15eba3abd56822f8d39beedd6cb5d_1a1da15eba3abd56822f8d39beedd6cb5d" kind="function"><name>print</name></member>
+    <member refid="classsysio_1_1string_a91fd184cf0f9333c217130cebd4d7876_1a91fd184cf0f9333c217130cebd4d7876" kind="friend"><name>operator&lt;</name></member>
+    <member refid="classsysio_1_1string_abf763aa94a8644b190f43d6b026893a2_1abf763aa94a8644b190f43d6b026893a2" kind="friend"><name>operator&gt;</name></member>
+    <member refid="classsysio_1_1string_a45321af08ebc945f2036e4208f6a3897_1a45321af08ebc945f2036e4208f6a3897" kind="friend"><name>operator&lt;=</name></member>
+    <member refid="classsysio_1_1string_a3d90c57bde93934ad912b1078a70b3e4_1a3d90c57bde93934ad912b1078a70b3e4" kind="friend"><name>operator&gt;=</name></member>
+    <member refid="classsysio_1_1string_a747feeacef8c26d89dafe7a9e32e2439_1a747feeacef8c26d89dafe7a9e32e2439" kind="friend"><name>operator==</name></member>
+    <member refid="classsysio_1_1string_ab8b27a889dc5ffef4a9cc7a1d1905b9c_1ab8b27a889dc5ffef4a9cc7a1d1905b9c" kind="friend"><name>operator!=</name></member>
+    <member refid="classsysio_1_1string_afea8d616a05e9815f57ad6b9740f846f_1afea8d616a05e9815f57ad6b9740f846f" kind="friend"><name>operator+</name></member>
+    <member refid="classsysio_1_1string_1aaf67e9de819d34a35b285af96597475d" kind="function"><name>clone</name></member>
+    <member refid="classsysio_1_1string_1a955c410298c3e6c1eb61328103ff8c9c" kind="function"><name>is_literal</name></member>
+  </compound>
+  <compound refid="classsysio_1_1symbol" kind="class"><name>sysio::symbol</name>
+    <member refid="classsysio_1_1symbol_1a4e941aa5ba8ff738fc04ed398bf3645b" kind="variable"><name>value</name></member>
+    <member refid="classsysio_1_1symbol_a7f6ea33d866890c5726f3a9691c8b97f_1a7f6ea33d866890c5726f3a9691c8b97f" kind="function"><name>symbol</name></member>
+    <member refid="classsysio_1_1symbol_a8c44e87dd310f0d4e164ee95d2cf5481_1a8c44e87dd310f0d4e164ee95d2cf5481" kind="function"><name>symbol</name></member>
+    <member refid="classsysio_1_1symbol_a4df999297f3c49723d3467bfeacb47b3_1a4df999297f3c49723d3467bfeacb47b3" kind="function"><name>symbol</name></member>
+    <member refid="classsysio_1_1symbol_abb91d4a1d30de2af3eb0d9e8cb5d0bd6_1abb91d4a1d30de2af3eb0d9e8cb5d0bd6" kind="function"><name>symbol</name></member>
+    <member refid="classsysio_1_1symbol_aca7e916a701819d61bdb8bb3a5c0dc7d_1aca7e916a701819d61bdb8bb3a5c0dc7d" kind="function"><name>is_valid</name></member>
+    <member refid="classsysio_1_1symbol_a8303e488632a36bad7698db2c246940e_1a8303e488632a36bad7698db2c246940e" kind="function"><name>precision</name></member>
+    <member refid="classsysio_1_1symbol_a6eb5445e04d799c47f1d732907185d09_1a6eb5445e04d799c47f1d732907185d09" kind="function"><name>code</name></member>
+    <member refid="classsysio_1_1symbol_ac7adc9143945adae9236b7d6d0b16395_1ac7adc9143945adae9236b7d6d0b16395" kind="function"><name>raw</name></member>
+    <member refid="classsysio_1_1symbol_a66bc3829c7ea4f27a346dc3991484bee_1a66bc3829c7ea4f27a346dc3991484bee" kind="function"><name>operator bool</name></member>
+    <member refid="classsysio_1_1symbol_a696269bfc276539a7e07e27a5718121a_1a696269bfc276539a7e07e27a5718121a" kind="function"><name>print</name></member>
+    <member refid="classsysio_1_1symbol_a06158b3ad9ea76cb86154fc1f13bb022_1a06158b3ad9ea76cb86154fc1f13bb022" kind="friend"><name>operator==</name></member>
+    <member refid="classsysio_1_1symbol_a7cc47b109fc3ba4a813599a8282697de_1a7cc47b109fc3ba4a813599a8282697de" kind="friend"><name>operator!=</name></member>
+    <member refid="classsysio_1_1symbol_ac294f798fa7a67062a34d57fb002a4a9_1ac294f798fa7a67062a34d57fb002a4a9" kind="friend"><name>operator&lt;</name></member>
+  </compound>
+  <compound refid="classsysio_1_1symbol__code" kind="class"><name>sysio::symbol_code</name>
+    <member refid="classsysio_1_1symbol__code_1a40bf44f9a09cbf5028fc14fed168b264" kind="variable"><name>value</name></member>
+    <member refid="classsysio_1_1symbol__code_a5c43c7f76b233ac43f9722f28602825c_1a5c43c7f76b233ac43f9722f28602825c" kind="function"><name>symbol_code</name></member>
+    <member refid="classsysio_1_1symbol__code_a74becedb343a7d04b5a4929b2328d753_1a74becedb343a7d04b5a4929b2328d753" kind="function"><name>symbol_code</name></member>
+    <member refid="classsysio_1_1symbol__code_af6dba654d4b0fd161112d5c10474ec9b_1af6dba654d4b0fd161112d5c10474ec9b" kind="function"><name>symbol_code</name></member>
+    <member refid="classsysio_1_1symbol__code_ad4a9ffa57efaed158c8655c05042989d_1ad4a9ffa57efaed158c8655c05042989d" kind="function"><name>is_valid</name></member>
+    <member refid="classsysio_1_1symbol__code_a606412e47e771c284545b98baad6e3ca_1a606412e47e771c284545b98baad6e3ca" kind="function"><name>length</name></member>
+    <member refid="classsysio_1_1symbol__code_acc936d74d687b70d9af776cc3c86332e_1acc936d74d687b70d9af776cc3c86332e" kind="function"><name>raw</name></member>
+    <member refid="classsysio_1_1symbol__code_a1a807ec84998c7df295c1a29056da775_1a1a807ec84998c7df295c1a29056da775" kind="function"><name>operator bool</name></member>
+    <member refid="classsysio_1_1symbol__code_aac90d782f20543b3932ea9d5272dc84f_1aac90d782f20543b3932ea9d5272dc84f" kind="function"><name>write_as_string</name></member>
+    <member refid="classsysio_1_1symbol__code_a906ff6ed7170ee03107a3040034f0eef_1a906ff6ed7170ee03107a3040034f0eef" kind="function"><name>to_string</name></member>
+    <member refid="classsysio_1_1symbol__code_a1e5440fb1800bc8de16d5254b331c7a0_1a1e5440fb1800bc8de16d5254b331c7a0" kind="function"><name>print</name></member>
+    <member refid="classsysio_1_1symbol__code_ab7fd90221f647ef128ed54f034243bf7_1ab7fd90221f647ef128ed54f034243bf7" kind="friend"><name>operator==</name></member>
+    <member refid="classsysio_1_1symbol__code_a2f9fb569cbfc7ee3be62afc7da079ac3_1a2f9fb569cbfc7ee3be62afc7da079ac3" kind="friend"><name>operator!=</name></member>
+    <member refid="classsysio_1_1symbol__code_a26da4bcdfe2987eb74d2262d480dd4dc_1a26da4bcdfe2987eb74d2262d480dd4dc" kind="friend"><name>operator&lt;</name></member>
+  </compound>
+  <compound refid="classsysio_1_1time__point" kind="class"><name>sysio::time_point</name>
+    <member refid="classsysio_1_1time__point_a6e629d7855e8c3926e0c5cf656215199_1a6e629d7855e8c3926e0c5cf656215199" kind="function"><name>time_point</name></member>
+    <member refid="classsysio_1_1time__point_a3b9dae2aaccf709fbd25f694b822ef3d_1a3b9dae2aaccf709fbd25f694b822ef3d" kind="function"><name>time_since_epoch</name></member>
+    <member refid="classsysio_1_1time__point_a534ab44380e3efe8b483dfe420984e24_1a534ab44380e3efe8b483dfe420984e24" kind="function"><name>sec_since_epoch</name></member>
+    <member refid="classsysio_1_1time__point_a47ec3b45b7d1bc459a09a5baa1eded0d_1a47ec3b45b7d1bc459a09a5baa1eded0d" kind="function"><name>to_string</name></member>
+    <member refid="classsysio_1_1time__point_a90e364b1b9a2796b62118912a884f591_1a90e364b1b9a2796b62118912a884f591" kind="function"><name>from_iso_string</name></member>
+  </compound>
+  <compound refid="classsysio_1_1time__point__sec" kind="class"><name>sysio::time_point_sec</name>
+    <member refid="classsysio_1_1time__point__sec_a20664378022ee182db61b93a802bf0b7_1a20664378022ee182db61b93a802bf0b7" kind="function"><name>time_point_sec</name></member>
+    <member refid="classsysio_1_1time__point__sec_a6596ab3c6770c3eb47957a24406ad3b0_1a6596ab3c6770c3eb47957a24406ad3b0" kind="function"><name>time_point_sec</name></member>
+    <member refid="classsysio_1_1time__point__sec_a664260a331f4907d41263553922a4d55_1a664260a331f4907d41263553922a4d55" kind="function"><name>time_point_sec</name></member>
+    <member refid="classsysio_1_1time__point__sec_a50fd60e8d02d187064500f6f5d0e8f8f_1a50fd60e8d02d187064500f6f5d0e8f8f" kind="function"><name>to_string</name></member>
+    <member refid="classsysio_1_1time__point__sec_af5333a491d7e9d9c61fec359ed6b3289_1af5333a491d7e9d9c61fec359ed6b3289" kind="function"><name>operator time_point</name></member>
+    <member refid="classsysio_1_1time__point__sec_a4217e73e33ca7810d0113151a2a229ac_1a4217e73e33ca7810d0113151a2a229ac" kind="function"><name>sec_since_epoch</name></member>
+    <member refid="classsysio_1_1time__point__sec_a6cdfad7ffcbd64cd046fee1d7cdc20c1_1a6cdfad7ffcbd64cd046fee1d7cdc20c1" kind="function"><name>maximum</name></member>
+    <member refid="classsysio_1_1time__point__sec_a8d1a65bbf1088559815840c8352566c5_1a8d1a65bbf1088559815840c8352566c5" kind="function"><name>min</name></member>
+    <member refid="classsysio_1_1time__point__sec_aadd82c1541be56465497b9a75ce932b4_1aadd82c1541be56465497b9a75ce932b4" kind="function"><name>from_iso_string</name></member>
+  </compound>
+  <compound refid="structsysio_1_1detail_1_1to__const__char__arr" kind="struct"><name>sysio::detail::to_const_char_arr</name>
+    <member refid="structsysio_1_1detail_1_1to__const__char__arr_af34d726052ac17a9c4535687c09afb0f_1af34d726052ac17a9c4535687c09afb0f" kind="variable"><name>value</name></member>
+  </compound>
+  <compound refid="classsysio_1_1transaction" kind="class"><name>sysio::transaction</name>
+    <member refid="classsysio_1_1transaction_af979abbac1807a39bfbd953b43d1cfe0_1af979abbac1807a39bfbd953b43d1cfe0" kind="variable"><name>context_free_actions</name></member>
+    <member refid="classsysio_1_1transaction_aa5aceee2071f5b6a03750e962db090e3_1aa5aceee2071f5b6a03750e962db090e3" kind="variable"><name>actions</name></member>
+    <member refid="classsysio_1_1transaction_a4922153b74b6140d199183be8e4706f4_1a4922153b74b6140d199183be8e4706f4" kind="variable"><name>transaction_extensions</name></member>
+    <member refid="classsysio_1_1transaction_abc225d1bfbe37d951d49bc1e4b4d9d35_1abc225d1bfbe37d951d49bc1e4b4d9d35" kind="function"><name>transaction</name></member>
+    <member refid="classsysio_1_1transaction_ac1cad868962d4b36a7f74325de687f2e_1ac1cad868962d4b36a7f74325de687f2e" kind="function"><name>send</name></member>
+  </compound>
+  <compound refid="classsysio_1_1transaction__header" kind="class"><name>sysio::transaction_header</name>
+    <member refid="classsysio_1_1transaction__header_a9b1ae50f94ccde761c2b1cc69cb5db8b_1a9b1ae50f94ccde761c2b1cc69cb5db8b" kind="variable"><name>expiration</name></member>
+    <member refid="classsysio_1_1transaction__header_a396ab3534edcdb4527c10df6cba2cef9_1a396ab3534edcdb4527c10df6cba2cef9" kind="variable"><name>ref_block_num</name></member>
+    <member refid="classsysio_1_1transaction__header_a5dc72a37c82cd7d14e991ba6f2d70519_1a5dc72a37c82cd7d14e991ba6f2d70519" kind="variable"><name>ref_block_prefix</name></member>
+    <member refid="classsysio_1_1transaction__header_a4a048be5a00805369b846ad49004a2e2_1a4a048be5a00805369b846ad49004a2e2" kind="variable"><name>max_net_usage_words</name></member>
+    <member refid="classsysio_1_1transaction__header_a9e57dad7fd75e1074c5703cc149367b2_1a9e57dad7fd75e1074c5703cc149367b2" kind="variable"><name>max_cpu_usage_ms</name></member>
+    <member refid="classsysio_1_1transaction__header_a9c85d3aba75e7e9cd30c19d6dfc07bbf_1a9c85d3aba75e7e9cd30c19d6dfc07bbf" kind="variable"><name>delay_sec</name></member>
+    <member refid="classsysio_1_1transaction__header_a5d22bef96f6b88a7b137185739d19f9f_1a5d22bef96f6b88a7b137185739d19f9f" kind="function"><name>transaction_header</name></member>
+  </compound>
+  <compound refid="structsysio_1_1unsigned__int" kind="struct"><name>sysio::unsigned_int</name>
+    <member refid="structsysio_1_1unsigned__int_a6a5353c1ba190ae274dfa773d38868f1_1a6a5353c1ba190ae274dfa773d38868f1" kind="variable"><name>value</name></member>
+    <member refid="structsysio_1_1unsigned__int_ae3bff21b90720c7553e7dd4c54b6343a_1ae3bff21b90720c7553e7dd4c54b6343a" kind="function"><name>unsigned_int</name></member>
+    <member refid="structsysio_1_1unsigned__int_ae9e53621b3a832aa7d242b46b6a8a0b0_1ae9e53621b3a832aa7d242b46b6a8a0b0" kind="function"><name>unsigned_int</name></member>
+    <member refid="structsysio_1_1unsigned__int_a841daca0b25f6f1a8d78b0a2726329eb_1a841daca0b25f6f1a8d78b0a2726329eb" kind="function"><name>operator T</name></member>
+  </compound>
+  <compound refid="structsysio_1_1variant__action__wrapper" kind="struct"><name>sysio::variant_action_wrapper</name>
+    <member refid="structsysio_1_1variant__action__wrapper_a85ddc43a970aa0778bc85db350567a09_1a85ddc43a970aa0778bc85db350567a09" kind="variable"><name>action_name</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_a562d19ef0f2109bf8c5f34c5ae6ad295_1a562d19ef0f2109bf8c5f34c5ae6ad295" kind="variable"><name>code_name</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_aa8ef878ab95b5993cf2fce5a8abda16c_1aa8ef878ab95b5993cf2fce5a8abda16c" kind="variable"><name>permissions</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_ae4702bf89ebc113d386226e4db4e0771_1ae4702bf89ebc113d386226e4db4e0771" kind="function"><name>variant_action_wrapper</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_a21b3d623761d0fe8d73252bf0dcf20cb_1a21b3d623761d0fe8d73252bf0dcf20cb" kind="function"><name>variant_action_wrapper</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_a15d531c025da891b740e3125322ea19d_1a15d531c025da891b740e3125322ea19d" kind="function"><name>variant_action_wrapper</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_aa9be1bcfb8ca25c53e54969a0493d69c_1aa9be1bcfb8ca25c53e54969a0493d69c" kind="function"><name>variant_action_wrapper</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_a7d0c1b4f3b0d1029ebd7c0fb654a8d6d_1a7d0c1b4f3b0d1029ebd7c0fb654a8d6d" kind="function"><name>to_action</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_ab30b6e9c427da5d5ddadc3f9c947db40_1ab30b6e9c427da5d5ddadc3f9c947db40" kind="function"><name>send</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_a1460f2212d0006be71a487a12dc2329a_1a1460f2212d0006be71a487a12dc2329a" kind="function"><name>send_context_free</name></member>
+    <member refid="structsysio_1_1variant__action__wrapper_a523f5d9dbb367ce1370c5cf1fff9befc_1a523f5d9dbb367ce1370c5cf1fff9befc" kind="function"><name>get_mem_ptr</name></member>
+  </compound>
+  <compound refid="namespacestd" kind="namespace"><name>std</name>
+  </compound>
+  <compound refid="namespacesysio" kind="namespace"><name>sysio</name>
+    <member refid="namespacesysio_a4190a754fba088fad4a22280d7186c61_1a4190a754fba088fad4a22280d7186c61" kind="typedef"><name>g1_point</name></member>
+    <member refid="namespacesysio_ae435268c469c7c5f5e66d79611407b33_1ae435268c469c7c5f5e66d79611407b33" kind="typedef"><name>g2_point</name></member>
+    <member refid="namespacesysio_a685154ac48bee2fca496891990abd818_1a685154ac48bee2fca496891990abd818" kind="typedef"><name>g1_point_view</name></member>
+    <member refid="namespacesysio_a4b8d2d781e970505adfedd6930cc59e9_1a4b8d2d781e970505adfedd6930cc59e9" kind="typedef"><name>g2_point_view</name></member>
+    <member refid="group__crypto_gaaa0ff7b84df1a55dbe973d5a039d7855_1gaaa0ff7b84df1a55dbe973d5a039d7855" kind="typedef"><name>bigint</name></member>
+    <member refid="namespacesysio_af2c4c03e101057e612a1f10082a0da14_1af2c4c03e101057e612a1f10082a0da14" kind="typedef"><name>key_type</name></member>
+    <member refid="group__time_ga1d722e6bdb1a0a2cbabf7d1f48ce6301_1ga1d722e6bdb1a0a2cbabf7d1f48ce6301" kind="typedef"><name>block_timestamp_type</name></member>
+    <member refid="group__producer__authority_ga8ac3f5039332dda52b6d41de63cda199_1ga8ac3f5039332dda52b6d41de63cda199" kind="typedef"><name>block_signing_authority</name></member>
+    <member refid="namespacesysio_a252baef5945efdf97b45a27826131e16_1a252baef5945efdf97b45a27826131e16" kind="typedef"><name>block_num_t</name></member>
+    <member refid="group__transaction_gaea468d1540eb797bbf89e247e44af21e_1gaea468d1540eb797bbf89e247e44af21e" kind="typedef"><name>extension</name></member>
+    <member refid="group__transaction_ga0e713744cc029ccaa6db4018766969a1_1ga0e713744cc029ccaa6db4018766969a1" kind="typedef"><name>extensions_type</name></member>
+    <member refid="namespacesysio_1ab594c7e3b6612e77f90212fb08dada9d" kind="variable"><name>g1_coordinate_size</name></member>
+    <member refid="namespacesysio_1a480e01b1b0a16ea9307286909e34010a" kind="variable"><name>g2_coordinate_size</name></member>
+    <member refid="namespacesysio_1a9b4b665063f190115410a5133b8e6340" kind="variable"><name>blake2f_result_size</name></member>
+    <member refid="namespacesysio_acbbfa0894fa08eef9bd94e0749612439_1acbbfa0894fa08eef9bd94e0749612439" kind="variable"><name>powers_of_base</name></member>
+    <member refid="namespacesysio_1a32c166431f7c306243a721be558df68f" kind="variable"><name>cout</name></member>
+    <member refid="namespacesysio_1a4e850ba7fcc7c2ce8257936d31873e10" kind="variable"><name>same_payer</name></member>
+    <member refid="namespacesysio_a390880d5a350574add7d3e436a8400f9_1a390880d5a350574add7d3e436a8400f9" kind="function"><name>write_decimal</name></member>
+    <member refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kind="function"><name>check</name></member>
+    <member refid="group__system_ga5fdfb5e610f149b5280bc03d3f288b81_1ga5fdfb5e610f149b5280bc03d3f288b81" kind="function"><name>check</name></member>
+    <member refid="group__system_gaa065d823ab52c8386b4931c7a540d29b_1gaa065d823ab52c8386b4931c7a540d29b" kind="function"><name>check</name></member>
+    <member refid="group__system_ga76cd9ac08b61b1cf36e8cca30cc91465_1ga76cd9ac08b61b1cf36e8cca30cc91465" kind="function"><name>check</name></member>
+    <member refid="group__system_ga9a6b000dd9f96a11b3ed20ce96724fb6_1ga9a6b000dd9f96a11b3ed20ce96724fb6" kind="function"><name>check</name></member>
+    <member refid="group__system_gae97a231e3a459b32f9c15a98f2253b55_1gae97a231e3a459b32f9c15a98f2253b55" kind="function"><name>check</name></member>
+    <member refid="group__system_gac4b2540d052e45f2e47e79daf2510860_1gac4b2540d052e45f2e47e79daf2510860" kind="function"><name>check</name></member>
+    <member refid="namespacesysio_ab4b09384fc2f1644fb962d61dc210cdb_1ab4b09384fc2f1644fb962d61dc210cdb" kind="function"><name>current_context_contract</name></member>
+    <member refid="group__crypto_ga0cd06321156dfab93ed85e67f6d6299e_1ga0cd06321156dfab93ed85e67f6d6299e" kind="function"><name>alt_bn128_add</name></member>
+    <member refid="group__crypto_gac0e8ec5424460d89710a63006fe6a893_1gac0e8ec5424460d89710a63006fe6a893" kind="function"><name>alt_bn128_add</name></member>
+    <member refid="group__crypto_gaa4f388f1f3d837a04a391337429706b9_1gaa4f388f1f3d837a04a391337429706b9" kind="function"><name>alt_bn128_mul</name></member>
+    <member refid="group__crypto_ga237fcc5e9afbb619321b4f3496c7c0c5_1ga237fcc5e9afbb619321b4f3496c7c0c5" kind="function"><name>alt_bn128_mul</name></member>
+    <member refid="group__crypto_ga0cde609525f7200ecc59467412b967ec_1ga0cde609525f7200ecc59467412b967ec" kind="function"><name>alt_bn128_pair</name></member>
+    <member refid="group__crypto_ga0437ba8953f498e91ff4265947c04ab7_1ga0437ba8953f498e91ff4265947c04ab7" kind="function"><name>alt_bn128_pair</name></member>
+    <member refid="group__crypto_gac7c345aafd080f87dd3ab935180784bf_1gac7c345aafd080f87dd3ab935180784bf" kind="function"><name>mod_exp</name></member>
+    <member refid="group__crypto_ga75b8c0115f1f8090b29f9ddf9c87e252_1ga75b8c0115f1f8090b29f9ddf9c87e252" kind="function"><name>mod_exp</name></member>
+    <member refid="group__crypto_gaba4b9c3061aa17c41431c76e584e68a8_1gaba4b9c3061aa17c41431c76e584e68a8" kind="function"><name>blake2_f</name></member>
+    <member refid="group__crypto_ga0f8f0fdac679ee9c5c4738c56398a870_1ga0f8f0fdac679ee9c5c4738c56398a870" kind="function"><name>blake2_f</name></member>
+    <member refid="group__crypto_ga3dd1f549de2c59114e866bf634400fb2_1ga3dd1f549de2c59114e866bf634400fb2" kind="function"><name>sha3</name></member>
+    <member refid="group__crypto_ga09efcdc1530259fd014b37f6e169740b_1ga09efcdc1530259fd014b37f6e169740b" kind="function"><name>assert_sha3</name></member>
+    <member refid="group__crypto_gaa1db7bb34896f194937134af2ffc129c_1gaa1db7bb34896f194937134af2ffc129c" kind="function"><name>keccak</name></member>
+    <member refid="group__crypto_gabd44ec82b1d153d2a7f1693861ea6eb3_1gabd44ec82b1d153d2a7f1693861ea6eb3" kind="function"><name>assert_keccak</name></member>
+    <member refid="group__crypto_ga593b42f3eb1e5e2368e78b3126063e67_1ga593b42f3eb1e5e2368e78b3126063e67" kind="function"><name>k1_recover</name></member>
+    <member refid="namespacesysio_ab2d13186a98ab26591d6b874d08911e1_1ab2d13186a98ab26591d6b874d08911e1" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a47a63ede5d2f044e051c62d23ade2cd3_1a47a63ede5d2f044e051c62d23ade2cd3" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_acd325143077d2d47f6480fbd9b870a99_1acd325143077d2d47f6480fbd9b870a99" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_ac694e57463377c8a4b4da209769a25b9_1ac694e57463377c8a4b4da209769a25b9" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a49f800c6c8b32537545010da02887a32_1a49f800c6c8b32537545010da02887a32" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a77af3410f2edbb364996d0dbc520dba1_1a77af3410f2edbb364996d0dbc520dba1" kind="function"><name>deserialize</name></member>
+    <member refid="namespacesysio_a7818b44fb17221989488ea20ebf7e85c_1a7818b44fb17221989488ea20ebf7e85c" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_ab7a458b3052ba20c9d0c95a74a471377_1ab7a458b3052ba20c9d0c95a74a471377" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a2acd82e7d1d061e86578233a041f7fd0_1a2acd82e7d1d061e86578233a041f7fd0" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_afcfa1e50b19cef048e8d2f12924e026b_1afcfa1e50b19cef048e8d2f12924e026b" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a3e2cdf59a674b999fc92df2b618e36cc_1a3e2cdf59a674b999fc92df2b618e36cc" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a5a377f12d26757ba0e5cc1797482c873_1a5a377f12d26757ba0e5cc1797482c873" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a1034edeb969c086242637412827566c1_1a1034edeb969c086242637412827566c1" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a44a7b32bfd75ffa72c5c6b579da03b51_1a44a7b32bfd75ffa72c5c6b579da03b51" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a4d34f8e9fffc932b99ed70050b2925fc_1a4d34f8e9fffc932b99ed70050b2925fc" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_af3252a2bb13d07ba134f45d2feb45c19_1af3252a2bb13d07ba134f45d2feb45c19" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_add3fd4ef2c1e60148457e851fb37348a_1add3fd4ef2c1e60148457e851fb37348a" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a21eeae569df996e276e8dc16b11ff014_1a21eeae569df996e276e8dc16b11ff014" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a3fe36180bbb4bf97799cd7f6da0b628d_1a3fe36180bbb4bf97799cd7f6da0b628d" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a79132cb5f6b0af6ed32dc9319d29bc63_1a79132cb5f6b0af6ed32dc9319d29bc63" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a8b8995e336e3a3fb440ec030e260453a_1a8b8995e336e3a3fb440ec030e260453a" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a589d97ad1db07d65ca1c2be09542159f_1a589d97ad1db07d65ca1c2be09542159f" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a4cbf02b10a84f2a9e6fbfa4102dfffd6_1a4cbf02b10a84f2a9e6fbfa4102dfffd6" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a1002d7da6d1a0b95414d3191cf806596_1a1002d7da6d1a0b95414d3191cf806596" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_ace8863ffa32a40cc7752484de45cfbe6_1ace8863ffa32a40cc7752484de45cfbe6" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_ac4579ea445a104b31f93ada0d7949b8a_1ac4579ea445a104b31f93ada0d7949b8a" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a1a908a3dfed36bb7375ac31f72c6aa8e_1a1a908a3dfed36bb7375ac31f72c6aa8e" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_aeb044ab1092699bbb7ffc1bbeb0b6864_1aeb044ab1092699bbb7ffc1bbeb0b6864" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a5b24516911227deded6a7fd5c33ffa69_1a5b24516911227deded6a7fd5c33ffa69" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a47351e28d32d0cdb0453e0e4b2c538de_1a47351e28d32d0cdb0453e0e4b2c538de" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_ad69cf786cbb637d517db381cb7c7fd27_1ad69cf786cbb637d517db381cb7c7fd27" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a9aa8bce60f3176c42f5105f43fddb46f_1a9aa8bce60f3176c42f5105f43fddb46f" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="group__datastream_ga82e7868634ca1502d8f06ad3b6b2886e_1ga82e7868634ca1502d8f06ad3b6b2886e" kind="function"><name>unpack</name></member>
+    <member refid="group__datastream_ga5c1f95002dd82b289fa6aa5e5f1e5334_1ga5c1f95002dd82b289fa6aa5e5f1e5334" kind="function"><name>unpack</name></member>
+    <member refid="group__datastream_ga76cbd7a75869d8cb39aeedb676ba03f0_1ga76cbd7a75869d8cb39aeedb676ba03f0" kind="function"><name>unpack</name></member>
+    <member refid="group__datastream_gabadd9ed5d5c1796250afe70557289fcc_1gabadd9ed5d5c1796250afe70557289fcc" kind="function"><name>pack_size</name></member>
+    <member refid="group__datastream_ga89649f8180db3911ea61a12981b5b142_1ga89649f8180db3911ea61a12981b5b142" kind="function"><name>pack</name></member>
+    <member refid="namespacesysio_a298156785d004aeb8849a720f72481d3_1a298156785d004aeb8849a720f72481d3" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a788b338502915718cee0f003bd5659f4_1a788b338502915718cee0f003bd5659f4" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a374b5f140062fe0e962988d7ff2ccf32_1a374b5f140062fe0e962988d7ff2ccf32" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a0d350ceac7c84da150a0791bbbb389c1_1a0d350ceac7c84da150a0791bbbb389c1" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a59ae10af43c83235cb4142f34221836d_1a59ae10af43c83235cb4142f34221836d" kind="function"><name>to_key_tuple</name></member>
+    <member refid="namespacesysio_acb69a97ed787a0f90c0f25962244e145_1acb69a97ed787a0f90c0f25962244e145" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a3d9c89450c38bc7ab5d84d2e855452fe_1a3d9c89450c38bc7ab5d84d2e855452fe" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a674ef4c0efe62ff5742204324a35354d_1a674ef4c0efe62ff5742204324a35354d" kind="function"><name>to_key_optional</name></member>
+    <member refid="namespacesysio_a2dbb92e1bbf6ad7756ec0fc22deb1856_1a2dbb92e1bbf6ad7756ec0fc22deb1856" kind="function"><name>to_key_optional</name></member>
+    <member refid="namespacesysio_a2cd20d0d0bf192d374957258e8df5365_1a2cd20d0d0bf192d374957258e8df5365" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_ae7eee0227aafae2da2b31bd4eb149825_1ae7eee0227aafae2da2b31bd4eb149825" kind="function"><name>to_key_range</name></member>
+    <member refid="namespacesysio_a57f869df3103e209b4d6f3249ae43957_1a57f869df3103e209b4d6f3249ae43957" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a40083fbba55329eb68d24598dd6cb876_1a40083fbba55329eb68d24598dd6cb876" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a07250d932f460fbfe65fc72773b7df63_1a07250d932f460fbfe65fc72773b7df63" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_ab6eb73a26f8ab106b72ea830bd9a662f_1ab6eb73a26f8ab106b72ea830bd9a662f" kind="function"><name>to_key_varuint32</name></member>
+    <member refid="namespacesysio_ae5b2566232351aae50ed642ae0f43363_1ae5b2566232351aae50ed642ae0f43363" kind="function"><name>to_key_varint32</name></member>
+    <member refid="namespacesysio_a3591649adf9b4257de1683f3a9c67ca5_1a3591649adf9b4257de1683f3a9c67ca5" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_ac5cd358c42ec168d218ea9279c503436_1ac5cd358c42ec168d218ea9279c503436" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_ae3280dda4e08a021118069952ef7cbfc_1ae3280dda4e08a021118069952ef7cbfc" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a3be1433384866bb4fcbaa50c382b69bb_1a3be1433384866bb4fcbaa50c382b69bb" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a2610576db2004b7868a3efcd6721f0de_1a2610576db2004b7868a3efcd6721f0de" kind="function"><name>to_key</name></member>
+    <member refid="namespacesysio_a14aa4b12efd1fe7c638038bfcb973e9e_1a14aa4b12efd1fe7c638038bfcb973e9e" kind="function"><name>float_to_key</name></member>
+    <member refid="namespacesysio_a60cfadf922247ab8f0589014cffda162_1a60cfadf922247ab8f0589014cffda162" kind="function"><name>convert_to_key</name></member>
+    <member refid="namespacesysio_a0f7a1d528d16261d53d9343227996cef_1a0f7a1d528d16261d53d9343227996cef" kind="function"><name>convert_to_key</name></member>
+    <member refid="namespacesysio_a0b1813ad047a6b0f37970f76f5a01ece_1a0b1813ad047a6b0f37970f76f5a01ece" kind="function"><name>pow</name></member>
+    <member refid="group__console_gabd88fded96c1630a019aac052b4e7459_1gabd88fded96c1630a019aac052b4e7459" kind="function"><name>printhex</name></member>
+    <member refid="group__console_ga5d4d10b7489ff7cdc7a7f23f247d59e2_1ga5d4d10b7489ff7cdc7a7f23f247d59e2" kind="function"><name>printl</name></member>
+    <member refid="group__console_gac994825ff7d74c284b5f0ff008208353_1gac994825ff7d74c284b5f0ff008208353" kind="function"><name>print</name></member>
+    <member refid="namespacesysio_a78c09cbcd2bb82812233e31be71f5955_1a78c09cbcd2bb82812233e31be71f5955" kind="function"><name>print</name></member>
+    <member refid="group__console_ga0126e8ec4434410b7bc09e64b7f6a90b_1ga0126e8ec4434410b7bc09e64b7f6a90b" kind="function"><name>print</name></member>
+    <member refid="group__console_ga5bb7861d851fe74f1e17a0ab6ebfa0a4_1ga5bb7861d851fe74f1e17a0ab6ebfa0a4" kind="function"><name>print</name></member>
+    <member refid="group__console_gac0ffe8e9b66c8bebd5b4c88b5cf061b0_1gac0ffe8e9b66c8bebd5b4c88b5cf061b0" kind="function"><name>print</name></member>
+    <member refid="group__console_gaf493049d7f561c79a1a0ba9d04cdcac8_1gaf493049d7f561c79a1a0ba9d04cdcac8" kind="function"><name>print</name></member>
+    <member refid="group__console_gad43a54fc19452b6b16350f44d55f5639_1gad43a54fc19452b6b16350f44d55f5639" kind="function"><name>print_f</name></member>
+    <member refid="namespacesysio_a58faacc43d7715366d8ac37ab96397c3_1a58faacc43d7715366d8ac37ab96397c3" kind="function"><name>print_f</name></member>
+    <member refid="namespacesysio_a580e41bb12b2612e14f797406c5d53f0_1a580e41bb12b2612e14f797406c5d53f0" kind="function"><name>print</name></member>
+    <member refid="namespacesysio_ab3f99e9282f78c6356b4c838338474ac_1ab3f99e9282f78c6356b4c838338474ac" kind="function"><name>overloaded</name></member>
+    <member refid="namespacesysio_a95f65eb573c66f772e429d9278853300_1a95f65eb573c66f772e429d9278853300" kind="function"><name>operator&lt;</name></member>
+    <member refid="namespacesysio_a3af967f88ab1efc24e5a94dc5631121b_1a3af967f88ab1efc24e5a94dc5631121b" kind="function"><name>operator&gt;</name></member>
+    <member refid="namespacesysio_adccae949a1a8ee215de88cf5bb16c7e6_1adccae949a1a8ee215de88cf5bb16c7e6" kind="function"><name>operator&lt;=</name></member>
+    <member refid="namespacesysio_a36486023d7c6f0834c2f6c2816ebd8b3_1a36486023d7c6f0834c2f6c2816ebd8b3" kind="function"><name>operator&gt;=</name></member>
+    <member refid="namespacesysio_ad7db4c8c617f8a7b6d09ac6f91e963c7_1ad7db4c8c617f8a7b6d09ac6f91e963c7" kind="function"><name>operator==</name></member>
+    <member refid="namespacesysio_a315c8f4742ecc3a66f4f6c155c6c5376_1a315c8f4742ecc3a66f4f6c155c6c5376" kind="function"><name>operator!=</name></member>
+    <member refid="namespacesysio_a98014d711afa0e6f971d98e1b1db0dc2_1a98014d711afa0e6f971d98e1b1db0dc2" kind="function"><name>operator+</name></member>
+    <member refid="namespacesysio_acd4c24b45bd647fef9637d5e6abf3e50_1acd4c24b45bd647fef9637d5e6abf3e50" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a58f448d7ad94027c94792859df7337ba_1a58f448d7ad94027c94792859df7337ba" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_ab5fee882e97183e8f822be4be5c415c8_1ab5fee882e97183e8f822be4be5c415c8" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_a0448d1ad1fde7c7b2b1612a33afdc823_1a0448d1ad1fde7c7b2b1612a33afdc823" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_ae6679c832f9c43228728101fb2aec23a_1ae6679c832f9c43228728101fb2aec23a" kind="function"><name>operator&lt;&lt;</name></member>
+    <member refid="namespacesysio_ad37eb3847eb30fa1b6c93d1a6fdf3f32_1ad37eb3847eb30fa1b6c93d1a6fdf3f32" kind="function"><name>operator&gt;&gt;</name></member>
+    <member refid="namespacesysio_a0ee3547e61a6da8c7ecc8fd1afdde60f_1a0ee3547e61a6da8c7ecc8fd1afdde60f" kind="function"><name>seconds</name></member>
+    <member refid="namespacesysio_a59f2e92e11e38b58c77e74c8670dced2_1a59f2e92e11e38b58c77e74c8670dced2" kind="function"><name>milliseconds</name></member>
+    <member refid="namespacesysio_a4fcd89249199a92c20b9198c7abc90e2_1a4fcd89249199a92c20b9198c7abc90e2" kind="function"><name>minutes</name></member>
+    <member refid="namespacesysio_a13181e2a8f87732297b08e70d8abedab_1a13181e2a8f87732297b08e70d8abedab" kind="function"><name>hours</name></member>
+    <member refid="namespacesysio_aabfdeadf0e3aa4bc7c6b88ae70a3c56c_1aabfdeadf0e3aa4bc7c6b88ae70a3c56c" kind="function"><name>days</name></member>
+    <member refid="group__action_ga6d5d5474d576019c6ea5194f4803d54b_1ga6d5d5474d576019c6ea5194f4803d54b" kind="function"><name>unpack_action_data</name></member>
+    <member refid="group__action_ga4050e0dcdf9d9b51bddb2d93fc9fa42f_1ga4050e0dcdf9d9b51bddb2d93fc9fa42f" kind="function"><name>require_recipient</name></member>
+    <member refid="group__action_ga7143369c772e9e75acfea1cc2cff56e3_1ga7143369c772e9e75acfea1cc2cff56e3" kind="function"><name>require_recipient</name></member>
+    <member refid="group__action_ga4fb6d5ddbc9dde4f1e19b942d317c740_1ga4fb6d5ddbc9dde4f1e19b942d317c740" kind="function"><name>require_auth</name></member>
+    <member refid="group__action_ga72357c5b27ba8bbf8b086cd852962bb6_1ga72357c5b27ba8bbf8b086cd852962bb6" kind="function"><name>publication_time</name></member>
+    <member refid="namespacesysio_a91f4b7477c361af1b1ce832bb08167b5_1a91f4b7477c361af1b1ce832bb08167b5" kind="function"><name>current_receiver</name></member>
+    <member refid="group__action_ga7c345dedb82104f0ea5215e2bfc27d4e_1ga7c345dedb82104f0ea5215e2bfc27d4e" kind="function"><name>read_action_data</name></member>
+    <member refid="namespacesysio_a326cd3a87b249c33a0d76bd0c4f93af0_1a326cd3a87b249c33a0d76bd0c4f93af0" kind="function"><name>action_data_size</name></member>
+    <member refid="group__action_gafabaee9b377c9055d162998a603e2548_1gafabaee9b377c9055d162998a603e2548" kind="function"><name>require_auth</name></member>
+    <member refid="group__action_ga5c3822fa784936636c24f53c81dd3b5e_1ga5c3822fa784936636c24f53c81dd3b5e" kind="function"><name>has_auth</name></member>
+    <member refid="group__action_gad99bd091df73a8312651e22c2b55ecca_1gad99bd091df73a8312651e22c2b55ecca" kind="function"><name>is_account</name></member>
+    <member refid="namespacesysio_a45545a7dc03fde61ef7355559bad5068_1a45545a7dc03fde61ef7355559bad5068" kind="function"><name>dispatch_inline</name></member>
+    <member refid="group__dispatcher_ga6fc508cd535786170ae5c758fe95f8f5_1ga6fc508cd535786170ae5c758fe95f8f5" kind="function"><name>dispatch</name></member>
+    <member refid="group__dispatcher_gab3c58ff85e3081360360e9aafbad227a_1gab3c58ff85e3081360360e9aafbad227a" kind="function"><name>execute_action</name></member>
+    <member refid="group__permission_gae407a710bb92d67a77658c9d7bbdda4e_1gae407a710bb92d67a77658c9d7bbdda4e" kind="function"><name>check_transaction_authorization</name></member>
+    <member refid="group__permission_ga86012e5584f3365c59543db903f12565_1ga86012e5584f3365c59543db903f12565" kind="function"><name>check_permission_authorization</name></member>
+    <member refid="group__permission_gab62a772ad6b4a4452cc9d73fbb81f908_1gab62a772ad6b4a4452cc9d73fbb81f908" kind="function"><name>check_transaction_authorization</name></member>
+    <member refid="group__permission_ga7ac15c61603221ee739ed11a0d7bbc17_1ga7ac15c61603221ee739ed11a0d7bbc17" kind="function"><name>check_permission_authorization</name></member>
+    <member refid="group__permission_ga3ebbe3eedd2dee36a776c6a3c4009d02_1ga3ebbe3eedd2dee36a776c6a3c4009d02" kind="function"><name>get_permission_last_used</name></member>
+    <member refid="group__permission_ga1d03c45e00818ab35aff8e4f9d5828e0_1ga1d03c45e00818ab35aff8e4f9d5828e0" kind="function"><name>get_account_creation_time</name></member>
+    <member refid="group__privileged_ga3e6a33d77cd0347d579a81ef4850b6c5_1ga3e6a33d77cd0347d579a81ef4850b6c5" kind="function"><name>set_blockchain_parameters</name></member>
+    <member refid="group__privileged_gaf3771599b6ee096789e8533b808186c5_1gaf3771599b6ee096789e8533b808186c5" kind="function"><name>get_blockchain_parameters</name></member>
+    <member refid="group__privileged_gaf7f07253b6b687a2a6555bc26db70552_1gaf7f07253b6b687a2a6555bc26db70552" kind="function"><name>get_resource_limits</name></member>
+    <member refid="group__privileged_ga72bf370dd88d10fe4a19d89c24986f1a_1ga72bf370dd88d10fe4a19d89c24986f1a" kind="function"><name>set_resource_limits</name></member>
+    <member refid="group__privileged_ga42818293a8d4bc85b46864814b2714c2_1ga42818293a8d4bc85b46864814b2714c2" kind="function"><name>set_proposed_producers</name></member>
+    <member refid="group__privileged_ga166f1a63ca8ccc6ff8a268978b6f2b10_1ga166f1a63ca8ccc6ff8a268978b6f2b10" kind="function"><name>set_proposed_producers</name></member>
+    <member refid="group__privileged_ga3d143655999ef472c02bf92b84174781_1ga3d143655999ef472c02bf92b84174781" kind="function"><name>is_privileged</name></member>
+    <member refid="group__privileged_ga66f12c1f562eac7fd45a7979bfa2847f_1ga66f12c1f562eac7fd45a7979bfa2847f" kind="function"><name>set_privileged</name></member>
+    <member refid="group__privileged_ga783f438d474d0f4681f7aa185fd407f4_1ga783f438d474d0f4681f7aa185fd407f4" kind="function"><name>preactivate_feature</name></member>
+    <member refid="group__producer__schedule_ga0ad2d99c379fb754447256453c728543_1ga0ad2d99c379fb754447256453c728543" kind="function"><name>get_active_producers</name></member>
+    <member refid="group__security__group_ga93fb1a1ab44dec2ef304bfaf0178072d_1ga93fb1a1ab44dec2ef304bfaf0178072d" kind="function"><name>add_security_group_participants</name></member>
+    <member refid="group__security__group_gaaa867999824dc6dc6bade8c0b9332371_1gaaa867999824dc6dc6bade8c0b9332371" kind="function"><name>remove_security_group_participants</name></member>
+    <member refid="group__security__group_ga0d4c0f09cc7f9eba177db554d9abf073_1ga0d4c0f09cc7f9eba177db554d9abf073" kind="function"><name>in_active_security_group</name></member>
+    <member refid="group__security__group_ga1543736e4e36640b83143b4a668bcf89_1ga1543736e4e36640b83143b4a668bcf89" kind="function"><name>get_active_security_group</name></member>
+    <member refid="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" kind="function"><name>sysio_exit</name></member>
+    <member refid="group__system_ga6a9fba6c93fcad4e6089f6dae813bdc7_1ga6a9fba6c93fcad4e6089f6dae813bdc7" kind="function"><name>current_time_point</name></member>
+    <member refid="group__system_ga12c423e9a5c7c036b417f4f0db2c0b98_1ga12c423e9a5c7c036b417f4f0db2c0b98" kind="function"><name>current_block_time</name></member>
+    <member refid="group__system_ga393d227e5bf35a244f435b9d212b4b0e_1ga393d227e5bf35a244f435b9d212b4b0e" kind="function"><name>current_block_number</name></member>
+    <member refid="group__system_gacab202f036dce91e3094765f9490469d_1gacab202f036dce91e3094765f9490469d" kind="function"><name>is_feature_activated</name></member>
+    <member refid="group__system_ga31252e36bebf5c09875571507d43b6af_1ga31252e36bebf5c09875571507d43b6af" kind="function"><name>get_sender</name></member>
+    <member refid="group__transaction_gaac121ad3e7c952c4b04c12f8bfcc29c3_1gaac121ad3e7c952c4b04c12f8bfcc29c3" kind="function"><name>send_deferred</name></member>
+    <member refid="group__transaction_ga5cb1f314e639ee0d5d0bd59f51b2229e_1ga5cb1f314e639ee0d5d0bd59f51b2229e" kind="function"><name>get_action</name></member>
+    <member refid="group__transaction_gadc099e4301c8682be070211a094ad66c_1gadc099e4301c8682be070211a094ad66c" kind="function"><name>read_transaction</name></member>
+    <member refid="group__transaction_gadc1dc4e5e52f1c12f37eb02d8783a47f_1gadc1dc4e5e52f1c12f37eb02d8783a47f" kind="function"><name>cancel_deferred</name></member>
+    <member refid="group__transaction_gafbd3369e48c587ede72b918fe36e2a52_1gafbd3369e48c587ede72b918fe36e2a52" kind="function"><name>transaction_size</name></member>
+    <member refid="group__transaction_gae23a5dae01630e656c5972f3812438dc_1gae23a5dae01630e656c5972f3812438dc" kind="function"><name>tapos_block_num</name></member>
+    <member refid="group__transaction_gafc9b5c3111cd62bce49b3f32942472b2_1gafc9b5c3111cd62bce49b3f32942472b2" kind="function"><name>tapos_block_prefix</name></member>
+    <member refid="group__transaction_ga9ba8258ea769264b95abd46081a501a6_1ga9ba8258ea769264b95abd46081a501a6" kind="function"><name>expiration</name></member>
+    <member refid="group__transaction_gaef211984436ac3d7d0eaabb647b0dab0_1gaef211984436ac3d7d0eaabb647b0dab0" kind="function"><name>get_context_free_data</name></member>
+  </compound>
+  <compound refid="namespacesysio_1_1__datastream__detail" kind="namespace"><name>sysio::_datastream_detail</name>
+    <member refid="namespacesysio_1_1__datastream__detail_a81eb6ae2ca24b91671e1b861b3b6511c_1a81eb6ae2ca24b91671e1b861b3b6511c" kind="function"><name>is_pointer</name></member>
+    <member refid="namespacesysio_1_1__datastream__detail_af6fc740c33d890b698258e97c0de5534_1af6fc740c33d890b698258e97c0de5534" kind="function"><name>is_primitive</name></member>
+  </compound>
+  <compound refid="namespacesysio_1_1__multi__index__detail" kind="namespace"><name>sysio::_multi_index_detail</name>
+  </compound>
+  <compound refid="namespacesysio_1_1detail" kind="namespace"><name>sysio::detail</name>
+    <member refid="namespacesysio_1_1detail_ab1e0476a557c09e076f02f6aa0857d9b_1ab1e0476a557c09e076f02f6aa0857d9b" kind="function"><name>has_bitwise_serialization</name></member>
+    <member refid="namespacesysio_1_1detail_a4fc723096135f2c1a8ce97a69fc3f29b_1a4fc723096135f2c1a8ce97a69fc3f29b" kind="function"><name>is_ranged_type</name></member>
+    <member refid="namespacesysio_1_1detail_ae275292388bb59386e67f999659995e7_1ae275292388bb59386e67f999659995e7" kind="function"><name>member_pointer_type</name></member>
+    <member refid="namespacesysio_1_1detail_ada82388a9e906013999b61b5b5dc8c32_1ada82388a9e906013999b61b5b5dc8c32" kind="function"><name>member_pointer_class</name></member>
+    <member refid="namespacesysio_1_1detail_a729432f550308e6d328003161c0d0e14_1a729432f550308e6d328003161c0d0e14" kind="function"><name>total_bytes_size</name></member>
+    <member refid="namespacesysio_1_1detail_acb050577cdacefa49ae121a72a2b4415_1acb050577cdacefa49ae121a72a2b4415" kind="function"><name>const_pack_helper</name></member>
+    <member refid="namespacesysio_1_1detail_a04e5e2acc92448c5cfedb096f6510660_1a04e5e2acc92448c5cfedb096f6510660" kind="function"><name>const_pack</name></member>
+    <member refid="namespacesysio_1_1detail_a967d0f37e223f2722a9aa8366327f344_1a967d0f37e223f2722a9aa8366327f344" kind="function"><name>generate_array_helper</name></member>
+    <member refid="namespacesysio_1_1detail_aa51cce487fb83e710e3a83ebdb28d7ee_1aa51cce487fb83e710e3a83ebdb28d7ee" kind="function"><name>generate_array</name></member>
+    <member refid="namespacesysio_1_1detail_a4015474ac79678c207117be7c8e9b59e_1a4015474ac79678c207117be7c8e9b59e" kind="function"><name>pow</name></member>
+    <member refid="namespacesysio_1_1detail_ae0f37c92ed6b3534dd2a1cf2782ff3db_1ae0f37c92ed6b3534dd2a1cf2782ff3db" kind="function"><name>pow_generator</name></member>
+  </compound>
+  <compound refid="namespacesysio_1_1impl" kind="namespace"><name>sysio::impl</name>
+    <member refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kind="typedef"><name>rope_node</name></member>
+  </compound>
+  <compound refid="namespacesysio_1_1internal__use__do__not__use" kind="namespace"><name>sysio::internal_use_do_not_use</name>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a1e9debdba1e17cf4f87e17912b9976fa_1a1e9debdba1e17cf4f87e17912b9976fa" kind="variable"><name>msg</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aa4b9fbff02f26fb7f8000cef661b8de5_1aa4b9fbff02f26fb7f8000cef661b8de5" kind="variable"><name>msg_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" kind="variable"><name>code</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a6620afefe36bfacb5da5a111ab0d907e_1a6620afefe36bfacb5da5a111ab0d907e" kind="variable"><name>sysio_contract_name</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ac481197874d253cfaf7b7ae5f96e47c3_1ac481197874d253cfaf7b7ae5f96e47c3" kind="variable"><name>op1_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a62a5952514253f54086df58631a8f2a5_1a62a5952514253f54086df58631a8f2a5" kind="variable"><name>op2</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a9efff25a733107f42929fd380b4c8372_1a9efff25a733107f42929fd380b4c8372" kind="variable"><name>op2_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_af98a113b6511e21c52fbd2f6ff60362a_1af98a113b6511e21c52fbd2f6ff60362a" kind="variable"><name>result</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a8c1962786c97be8df86610323f633fed_1a8c1962786c97be8df86610323f633fed" kind="variable"><name>result_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ac1c81dff46bb70b1337bf0c90d5a52fb_1ac1c81dff46bb70b1337bf0c90d5a52fb" kind="variable"><name>g1_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a5d823e77aa4d56467fcf4dbe021549c2_1a5d823e77aa4d56467fcf4dbe021549c2" kind="variable"><name>scalar</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a1010e710a78dcc851c2da6669ee5f797_1a1010e710a78dcc851c2da6669ee5f797" kind="variable"><name>scalar_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_accdc0099082eacc52e97c6eed1e634d4_1accdc0099082eacc52e97c6eed1e634d4" kind="variable"><name>pairs_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a321d7ee9098d7be03498afbf2f8901b9_1a321d7ee9098d7be03498afbf2f8901b9" kind="variable"><name>base_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ab8b8d1fb25728079b2b361aab1813e6e_1ab8b8d1fb25728079b2b361aab1813e6e" kind="variable"><name>exp</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aa56fc3f6653996bb40b8369e18d573b0_1aa56fc3f6653996bb40b8369e18d573b0" kind="variable"><name>exp_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a9ce147b5241e512e82655e6f250c5dc3_1a9ce147b5241e512e82655e6f250c5dc3" kind="variable"><name>mod</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a7429d6bb9a8d72782ea03355cbeb1210_1a7429d6bb9a8d72782ea03355cbeb1210" kind="variable"><name>mod_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aa9cafaf1709bec38f666a7e8e5ba370c_1aa9cafaf1709bec38f666a7e8e5ba370c" kind="variable"><name>state</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_afa0da916b7340b8c284c5d827e408308_1afa0da916b7340b8c284c5d827e408308" kind="variable"><name>state_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a2ef3ee1e961a3017fd58b28b3ca9197f_1a2ef3ee1e961a3017fd58b28b3ca9197f" kind="variable"><name>t0_offset</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a0d2b6be822855c6836d34a091977068d_1a0d2b6be822855c6836d34a091977068d" kind="variable"><name>t0_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a76888230526fc8d926fcbc04a1b726d3_1a76888230526fc8d926fcbc04a1b726d3" kind="variable"><name>t1_offset</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_accd3934d2654b697bfd2d8ed491418f2_1accd3934d2654b697bfd2d8ed491418f2" kind="variable"><name>t1_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a75d0e81bc08930ff58816bf21bfa8a15_1a75d0e81bc08930ff58816bf21bfa8a15" kind="variable"><name>final</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a1d3a88dc50e8377be82d07b91857f728_1a1d3a88dc50e8377be82d07b91857f728" kind="variable"><name>sig_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a7f5a710bda6e60de4c2cd7ed6a565af2_1a7f5a710bda6e60de4c2cd7ed6a565af2" kind="variable"><name>dig</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ab110978e414f2965a54922d18ee6b553_1ab110978e414f2965a54922d18ee6b553" kind="variable"><name>dig_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a2c13901bcbc95705e8529709522f8932_1a2c13901bcbc95705e8529709522f8932" kind="variable"><name>pub</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a5d8947332c6b7cbd8ab6a927da19df7f_1a5d8947332c6b7cbd8ab6a927da19df7f" kind="variable"><name>pub_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a69920260940746ae99ee8728a1ad8736_1a69920260940746ae99ee8728a1ad8736" kind="variable"><name>data_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a893a85a865f7e916d4a72390cf2aaa18_1a893a85a865f7e916d4a72390cf2aaa18" kind="variable"><name>hash</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a1b61d2f28d6d02ba51d13f7a7a88b965_1a1b61d2f28d6d02ba51d13f7a7a88b965" kind="variable"><name>hash_len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a763c25b48df2110fd01dfa80fc91237d_1a763c25b48df2110fd01dfa80fc91237d" kind="variable"><name>keccak</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kind="variable"><name>uint32_t</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ae82f9528dbd927004bf2a9d80dc9e9f3_1ae82f9528dbd927004bf2a9d80dc9e9f3" kind="variable"><name>len</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ae1c7f8c2e3e51895b16b242de84d4aa9_1ae1c7f8c2e3e51895b16b242de84d4aa9" kind="variable"><name>permission</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a559456a47e2a0a9cc4bf093662e53d31_1a559456a47e2a0a9cc4bf093662e53d31" kind="variable"><name>size</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a9be93b951172cf6b1d89036caa9547d2_1a9be93b951172cf6b1d89036caa9547d2" kind="variable"><name>uint64_t</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ab51175948b2ab877560ae936ba8c556d_1ab51175948b2ab877560ae936ba8c556d" kind="variable"><name>ram_bytes</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_af4f450b3fa9762f7fd3e2cc09fea60a9_1af4f450b3fa9762f7fd3e2cc09fea60a9" kind="variable"><name>net_weight</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a631eb3f5d21bb6efacb8ca8ef4b07d57_1a631eb3f5d21bb6efacb8ca8ef4b07d57" kind="variable"><name>cpu_weight</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a23f5fbe172654c3853f1009e92556cfd_1a23f5fbe172654c3853f1009e92556cfd" kind="variable"><name>is_priv</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a1d7782f1d87aa708078b1010efb256d8_1a1d7782f1d87aa708078b1010efb256d8" kind="variable"><name>datalen</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a5aabb4ccd9d1395849572305cf53748e_1a5aabb4ccd9d1395849572305cf53748e" kind="variable"><name>producer_data</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aeccb358a2fb130df01a4e60f6265e86d_1aeccb358a2fb130df01a4e60f6265e86d" kind="variable"><name>producer_data_size</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aa4e5d94d6ba2e34521adf80eea4cde4d_1aa4e5d94d6ba2e34521adf80eea4cde4d" kind="variable"><name>size_t</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aeb150c937675f95c86f27f99dd822d3b_1aeb150c937675f95c86f27f99dd822d3b" kind="function"><name>__attribute__</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_af2bce1f22c80a439f5f7b898f77901da_1af2bce1f22c80a439f5f7b898f77901da" kind="function"><name>__attribute__</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_1a72735e6cd7f8a91f5fd058e19c803daf" kind="function"><name>sha3_helper</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_aa8a81a92659015e1aebb17f47221f06b_1aa8a81a92659015e1aebb17f47221f06b" kind="function"><name>__attribute</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_ae2d1abc23c1f63d943a8870888b16892_1ae2d1abc23c1f63d943a8870888b16892" kind="function"><name>__attribute__</name></member>
+    <member refid="namespacesysio_1_1internal__use__do__not__use_a63ec55f8d63df2e8dff29c87d6372986_1a63ec55f8d63df2e8dff29c87d6372986" kind="function"><name>__attribute__</name></member>
+  </compound>
+  <compound refid="action_8hpp" kind="file"><name>action.hpp</name>
+    <member refid="action_8hpp_a20c19e0f931fad16c4db6d29480acddf_1a20c19e0f931fad16c4db6d29480acddf" kind="define"><name>INLINE_ACTION_SENDER3</name></member>
+    <member refid="action_8hpp_abeecc07548f70308a4aab9fcdb2d22f1_1abeecc07548f70308a4aab9fcdb2d22f1" kind="define"><name>INLINE_ACTION_SENDER2</name></member>
+    <member refid="action_8hpp_a1bb288791cd436d07bddf3d43f4740d4_1a1bb288791cd436d07bddf3d43f4740d4" kind="define"><name>INLINE_ACTION_SENDER</name></member>
+    <member refid="action_8hpp_a7c267f408db88d60ce0a5c74845596ee_1a7c267f408db88d60ce0a5c74845596ee" kind="define"><name>SEND_INLINE_ACTION</name></member>
+  </compound>
+  <compound refid="contract_8hpp" kind="file"><name>contract.hpp</name>
+    <member refid="group__contract_ga3dd8a1be2fbf980ee66578476244d85f_1ga3dd8a1be2fbf980ee66578476244d85f" kind="define"><name>CONTRACT</name></member>
+    <member refid="contract_8hpp_abeb73dfe8d6e8c280ebce28d84190c7e_1abeb73dfe8d6e8c280ebce28d84190c7e" kind="define"><name>ACTION</name></member>
+    <member refid="contract_8hpp_acadaccd8321f8569f31a11bdad1829da_1acadaccd8321f8569f31a11bdad1829da" kind="define"><name>TABLE</name></member>
+  </compound>
+  <compound refid="dispatcher_8hpp" kind="file"><name>dispatcher.hpp</name>
+    <member refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kind="define"><name>SYSIO_DISPATCH</name></member>
+  </compound>
+  <compound refid="multi__index_8hpp" kind="file"><name>multi_index.hpp</name>
+    <member refid="multi__index_8hpp_a44e11d95000af02139eda2f0dd62f965_1a44e11d95000af02139eda2f0dd62f965" kind="define"><name>WRAP_SECONDARY_SIMPLE_TYPE</name></member>
+    <member refid="multi__index_8hpp_a522b8927626c841da1e6cc3a292d5913_1a522b8927626c841da1e6cc3a292d5913" kind="define"><name>WRAP_SECONDARY_ARRAY_TYPE</name></member>
+    <member refid="multi__index_8hpp_aab2b11a88b267a1ad4009fed8dc5e778_1aab2b11a88b267a1ad4009fed8dc5e778" kind="define"><name>MAKE_TRAITS_FOR_ARITHMETIC_SECONDARY_KEY</name></member>
+  </compound>
+  <compound refid="permission_8hpp" kind="file"><name>permission.hpp</name>
+  </compound>
+  <compound refid="privileged_8hpp" kind="file"><name>privileged.hpp</name>
+  </compound>
+  <compound refid="producer__schedule_8hpp" kind="file"><name>producer_schedule.hpp</name>
+  </compound>
+  <compound refid="security__group_8hpp" kind="file"><name>security_group.hpp</name>
+  </compound>
+  <compound refid="singleton_8hpp" kind="file"><name>singleton.hpp</name>
+  </compound>
+  <compound refid="sysio_8hpp" kind="file"><name>sysio.hpp</name>
+  </compound>
+  <compound refid="system_8hpp" kind="file"><name>system.hpp</name>
+  </compound>
+  <compound refid="transaction_8hpp" kind="file"><name>transaction.hpp</name>
+  </compound>
+  <compound refid="asset_8hpp" kind="file"><name>asset.hpp</name>
+  </compound>
+  <compound refid="binary__extension_8hpp" kind="file"><name>binary_extension.hpp</name>
+  </compound>
+  <compound refid="check_8hpp" kind="file"><name>check.hpp</name>
+  </compound>
+  <compound refid="context_8hpp" kind="file"><name>context.hpp</name>
+  </compound>
+  <compound refid="crypto_8hpp" kind="file"><name>crypto.hpp</name>
+  </compound>
+  <compound refid="crypto__ext_8hpp" kind="file"><name>crypto_ext.hpp</name>
+  </compound>
+  <compound refid="datastream_8hpp" kind="file"><name>datastream.hpp</name>
+  </compound>
+  <compound refid="fixed__bytes_8hpp" kind="file"><name>fixed_bytes.hpp</name>
+  </compound>
+  <compound refid="ignore_8hpp" kind="file"><name>ignore.hpp</name>
+  </compound>
+  <compound refid="key__utils_8hpp" kind="file"><name>key_utils.hpp</name>
+  </compound>
+  <compound refid="name_8hpp" kind="file"><name>name.hpp</name>
+    <member refid="group__name_ga8fc03261789a28fa9d8c89fa4cbb463a_1ga8fc03261789a28fa9d8c89fa4cbb463a" kind="function"><name>operator&quot;&quot;_n</name></member>
+  </compound>
+  <compound refid="powers_8hpp" kind="file"><name>powers.hpp</name>
+  </compound>
+  <compound refid="print_8hpp" kind="file"><name>print.hpp</name>
+  </compound>
+  <compound refid="reflect_8hpp" kind="file"><name>reflect.hpp</name>
+  </compound>
+  <compound refid="rope_8hpp" kind="file"><name>rope.hpp</name>
+  </compound>
+  <compound refid="serialize_8hpp" kind="file"><name>serialize.hpp</name>
+    <member refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kind="define"><name>SYSLIB_REFLECT_MEMBER_OP</name></member>
+    <member refid="group__serialize_ga93471969d3fbf0b324316ca2530c6d8a_1ga93471969d3fbf0b324316ca2530c6d8a" kind="define"><name>SYSLIB_SERIALIZE</name></member>
+    <member refid="group__serialize_gac270bd4ed2158457a457cb321b480327_1gac270bd4ed2158457a457cb321b480327" kind="define"><name>SYSLIB_SERIALIZE_DERIVED</name></member>
+  </compound>
+  <compound refid="string_8hpp" kind="file"><name>string.hpp</name>
+  </compound>
+  <compound refid="symbol_8hpp" kind="file"><name>symbol.hpp</name>
+  </compound>
+  <compound refid="time_8hpp" kind="file"><name>time.hpp</name>
+  </compound>
+  <compound refid="varint_8hpp" kind="file"><name>varint.hpp</name>
+  </compound>
+  <compound refid="group__asset" kind="group"><name>asset</name>
+  </compound>
+  <compound refid="group__binary__extension" kind="group"><name>binary_extension</name>
+  </compound>
+  <compound refid="group__system" kind="group"><name>system</name>
+    <member refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kind="function"><name>check</name></member>
+    <member refid="group__system_ga5fdfb5e610f149b5280bc03d3f288b81_1ga5fdfb5e610f149b5280bc03d3f288b81" kind="function"><name>check</name></member>
+    <member refid="group__system_gaa065d823ab52c8386b4931c7a540d29b_1gaa065d823ab52c8386b4931c7a540d29b" kind="function"><name>check</name></member>
+    <member refid="group__system_ga76cd9ac08b61b1cf36e8cca30cc91465_1ga76cd9ac08b61b1cf36e8cca30cc91465" kind="function"><name>check</name></member>
+    <member refid="group__system_ga9a6b000dd9f96a11b3ed20ce96724fb6_1ga9a6b000dd9f96a11b3ed20ce96724fb6" kind="function"><name>check</name></member>
+    <member refid="group__system_gae97a231e3a459b32f9c15a98f2253b55_1gae97a231e3a459b32f9c15a98f2253b55" kind="function"><name>check</name></member>
+    <member refid="group__system_gac4b2540d052e45f2e47e79daf2510860_1gac4b2540d052e45f2e47e79daf2510860" kind="function"><name>check</name></member>
+    <member refid="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" kind="function"><name>sysio_exit</name></member>
+    <member refid="group__system_ga6a9fba6c93fcad4e6089f6dae813bdc7_1ga6a9fba6c93fcad4e6089f6dae813bdc7" kind="function"><name>current_time_point</name></member>
+    <member refid="group__system_ga12c423e9a5c7c036b417f4f0db2c0b98_1ga12c423e9a5c7c036b417f4f0db2c0b98" kind="function"><name>current_block_time</name></member>
+    <member refid="group__system_ga393d227e5bf35a244f435b9d212b4b0e_1ga393d227e5bf35a244f435b9d212b4b0e" kind="function"><name>current_block_number</name></member>
+    <member refid="group__system_gacab202f036dce91e3094765f9490469d_1gacab202f036dce91e3094765f9490469d" kind="function"><name>is_feature_activated</name></member>
+    <member refid="group__system_ga31252e36bebf5c09875571507d43b6af_1ga31252e36bebf5c09875571507d43b6af" kind="function"><name>get_sender</name></member>
+  </compound>
+  <compound refid="group__crypto" kind="group"><name>crypto</name>
+    <member refid="group__crypto_gaaa0ff7b84df1a55dbe973d5a039d7855_1gaaa0ff7b84df1a55dbe973d5a039d7855" kind="typedef"><name>bigint</name></member>
+    <member refid="group__crypto_ga0cd06321156dfab93ed85e67f6d6299e_1ga0cd06321156dfab93ed85e67f6d6299e" kind="function"><name>alt_bn128_add</name></member>
+    <member refid="group__crypto_gac0e8ec5424460d89710a63006fe6a893_1gac0e8ec5424460d89710a63006fe6a893" kind="function"><name>alt_bn128_add</name></member>
+    <member refid="group__crypto_gaa4f388f1f3d837a04a391337429706b9_1gaa4f388f1f3d837a04a391337429706b9" kind="function"><name>alt_bn128_mul</name></member>
+    <member refid="group__crypto_ga237fcc5e9afbb619321b4f3496c7c0c5_1ga237fcc5e9afbb619321b4f3496c7c0c5" kind="function"><name>alt_bn128_mul</name></member>
+    <member refid="group__crypto_ga0cde609525f7200ecc59467412b967ec_1ga0cde609525f7200ecc59467412b967ec" kind="function"><name>alt_bn128_pair</name></member>
+    <member refid="group__crypto_ga0437ba8953f498e91ff4265947c04ab7_1ga0437ba8953f498e91ff4265947c04ab7" kind="function"><name>alt_bn128_pair</name></member>
+    <member refid="group__crypto_gac7c345aafd080f87dd3ab935180784bf_1gac7c345aafd080f87dd3ab935180784bf" kind="function"><name>mod_exp</name></member>
+    <member refid="group__crypto_ga75b8c0115f1f8090b29f9ddf9c87e252_1ga75b8c0115f1f8090b29f9ddf9c87e252" kind="function"><name>mod_exp</name></member>
+    <member refid="group__crypto_gaba4b9c3061aa17c41431c76e584e68a8_1gaba4b9c3061aa17c41431c76e584e68a8" kind="function"><name>blake2_f</name></member>
+    <member refid="group__crypto_ga0f8f0fdac679ee9c5c4738c56398a870_1ga0f8f0fdac679ee9c5c4738c56398a870" kind="function"><name>blake2_f</name></member>
+    <member refid="group__crypto_ga3dd1f549de2c59114e866bf634400fb2_1ga3dd1f549de2c59114e866bf634400fb2" kind="function"><name>sha3</name></member>
+    <member refid="group__crypto_ga09efcdc1530259fd014b37f6e169740b_1ga09efcdc1530259fd014b37f6e169740b" kind="function"><name>assert_sha3</name></member>
+    <member refid="group__crypto_gaa1db7bb34896f194937134af2ffc129c_1gaa1db7bb34896f194937134af2ffc129c" kind="function"><name>keccak</name></member>
+    <member refid="group__crypto_gabd44ec82b1d153d2a7f1693861ea6eb3_1gabd44ec82b1d153d2a7f1693861ea6eb3" kind="function"><name>assert_keccak</name></member>
+    <member refid="group__crypto_ga593b42f3eb1e5e2368e78b3126063e67_1ga593b42f3eb1e5e2368e78b3126063e67" kind="function"><name>k1_recover</name></member>
+  </compound>
+  <compound refid="group__datastream" kind="group"><name>datastream</name>
+    <member refid="group__datastream_ga82e7868634ca1502d8f06ad3b6b2886e_1ga82e7868634ca1502d8f06ad3b6b2886e" kind="function"><name>unpack</name></member>
+    <member refid="group__datastream_ga5c1f95002dd82b289fa6aa5e5f1e5334_1ga5c1f95002dd82b289fa6aa5e5f1e5334" kind="function"><name>unpack</name></member>
+    <member refid="group__datastream_ga76cbd7a75869d8cb39aeedb676ba03f0_1ga76cbd7a75869d8cb39aeedb676ba03f0" kind="function"><name>unpack</name></member>
+    <member refid="group__datastream_gabadd9ed5d5c1796250afe70557289fcc_1gabadd9ed5d5c1796250afe70557289fcc" kind="function"><name>pack_size</name></member>
+    <member refid="group__datastream_ga89649f8180db3911ea61a12981b5b142_1ga89649f8180db3911ea61a12981b5b142" kind="function"><name>pack</name></member>
+  </compound>
+  <compound refid="group__fixed__bytes" kind="group"><name>fixed_bytes</name>
+  </compound>
+  <compound refid="group__ignore" kind="group"><name>ignore</name>
+  </compound>
+  <compound refid="group__name" kind="group"><name>name</name>
+    <member refid="group__name_ga8fc03261789a28fa9d8c89fa4cbb463a_1ga8fc03261789a28fa9d8c89fa4cbb463a" kind="function"><name>operator&quot;&quot;_n</name></member>
+  </compound>
+  <compound refid="group__console" kind="group"><name>console</name>
+    <member refid="group__console_gabd88fded96c1630a019aac052b4e7459_1gabd88fded96c1630a019aac052b4e7459" kind="function"><name>printhex</name></member>
+    <member refid="group__console_ga5d4d10b7489ff7cdc7a7f23f247d59e2_1ga5d4d10b7489ff7cdc7a7f23f247d59e2" kind="function"><name>printl</name></member>
+    <member refid="group__console_gac994825ff7d74c284b5f0ff008208353_1gac994825ff7d74c284b5f0ff008208353" kind="function"><name>print</name></member>
+    <member refid="group__console_ga0126e8ec4434410b7bc09e64b7f6a90b_1ga0126e8ec4434410b7bc09e64b7f6a90b" kind="function"><name>print</name></member>
+    <member refid="group__console_ga5bb7861d851fe74f1e17a0ab6ebfa0a4_1ga5bb7861d851fe74f1e17a0ab6ebfa0a4" kind="function"><name>print</name></member>
+    <member refid="group__console_gac0ffe8e9b66c8bebd5b4c88b5cf061b0_1gac0ffe8e9b66c8bebd5b4c88b5cf061b0" kind="function"><name>print</name></member>
+    <member refid="group__console_gaf493049d7f561c79a1a0ba9d04cdcac8_1gaf493049d7f561c79a1a0ba9d04cdcac8" kind="function"><name>print</name></member>
+    <member refid="group__console_gad43a54fc19452b6b16350f44d55f5639_1gad43a54fc19452b6b16350f44d55f5639" kind="function"><name>print_f</name></member>
+  </compound>
+  <compound refid="group__serialize" kind="group"><name>serialize</name>
+    <member refid="group__serialize_ga93471969d3fbf0b324316ca2530c6d8a_1ga93471969d3fbf0b324316ca2530c6d8a" kind="define"><name>SYSLIB_SERIALIZE</name></member>
+    <member refid="group__serialize_gac270bd4ed2158457a457cb321b480327_1gac270bd4ed2158457a457cb321b480327" kind="define"><name>SYSLIB_SERIALIZE_DERIVED</name></member>
+  </compound>
+  <compound refid="group__symbol" kind="group"><name>symbol</name>
+  </compound>
+  <compound refid="group__time" kind="group"><name>time</name>
+    <member refid="group__time_ga1d722e6bdb1a0a2cbabf7d1f48ce6301_1ga1d722e6bdb1a0a2cbabf7d1f48ce6301" kind="typedef"><name>block_timestamp_type</name></member>
+  </compound>
+  <compound refid="group__varint" kind="group"><name>varint</name>
+  </compound>
+  <compound refid="group__action" kind="group"><name>action</name>
+    <member refid="group__action_ga6d5d5474d576019c6ea5194f4803d54b_1ga6d5d5474d576019c6ea5194f4803d54b" kind="function"><name>unpack_action_data</name></member>
+    <member refid="group__action_ga4050e0dcdf9d9b51bddb2d93fc9fa42f_1ga4050e0dcdf9d9b51bddb2d93fc9fa42f" kind="function"><name>require_recipient</name></member>
+    <member refid="group__action_ga7143369c772e9e75acfea1cc2cff56e3_1ga7143369c772e9e75acfea1cc2cff56e3" kind="function"><name>require_recipient</name></member>
+    <member refid="group__action_ga4fb6d5ddbc9dde4f1e19b942d317c740_1ga4fb6d5ddbc9dde4f1e19b942d317c740" kind="function"><name>require_auth</name></member>
+    <member refid="group__action_ga72357c5b27ba8bbf8b086cd852962bb6_1ga72357c5b27ba8bbf8b086cd852962bb6" kind="function"><name>publication_time</name></member>
+    <member refid="group__action_ga7c345dedb82104f0ea5215e2bfc27d4e_1ga7c345dedb82104f0ea5215e2bfc27d4e" kind="function"><name>read_action_data</name></member>
+    <member refid="group__action_gafabaee9b377c9055d162998a603e2548_1gafabaee9b377c9055d162998a603e2548" kind="function"><name>require_auth</name></member>
+    <member refid="group__action_ga5c3822fa784936636c24f53c81dd3b5e_1ga5c3822fa784936636c24f53c81dd3b5e" kind="function"><name>has_auth</name></member>
+    <member refid="group__action_gad99bd091df73a8312651e22c2b55ecca_1gad99bd091df73a8312651e22c2b55ecca" kind="function"><name>is_account</name></member>
+  </compound>
+  <compound refid="group__contract" kind="group"><name>contract</name>
+    <member refid="group__contract_ga3dd8a1be2fbf980ee66578476244d85f_1ga3dd8a1be2fbf980ee66578476244d85f" kind="define"><name>CONTRACT</name></member>
+  </compound>
+  <compound refid="group__dispatcher" kind="group"><name>dispatcher</name>
+    <member refid="group__dispatcher_ga6fc508cd535786170ae5c758fe95f8f5_1ga6fc508cd535786170ae5c758fe95f8f5" kind="function"><name>dispatch</name></member>
+    <member refid="group__dispatcher_gab3c58ff85e3081360360e9aafbad227a_1gab3c58ff85e3081360360e9aafbad227a" kind="function"><name>execute_action</name></member>
+    <member refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kind="define"><name>SYSIO_DISPATCH</name></member>
+  </compound>
+  <compound refid="group__multiindex" kind="group"><name>multiindex</name>
+    <member refid="group__multiindex_ga95334a641c52bb1dd5091174c7191ae9_1ga95334a641c52bb1dd5091174c7191ae9" kind="function"><name>multi_index</name></member>
+    <member refid="group__multiindex_ga888fe8091f8cfdd13202543e50496bf9_1ga888fe8091f8cfdd13202543e50496bf9" kind="function"><name>get_code</name></member>
+    <member refid="group__multiindex_ga4cf5db8ffadb7a8a33790f848ee1a9aa_1ga4cf5db8ffadb7a8a33790f848ee1a9aa" kind="function"><name>get_scope</name></member>
+    <member refid="group__multiindex_ga3bee12520f92461789ac396041f83fe4_1ga3bee12520f92461789ac396041f83fe4" kind="function"><name>cbegin</name></member>
+    <member refid="group__multiindex_ga5f8d713f117163e2e8e650f7e4311afa_1ga5f8d713f117163e2e8e650f7e4311afa" kind="function"><name>begin</name></member>
+    <member refid="group__multiindex_ga9a5621617d016211f40c8a8e4c7f0c9c_1ga9a5621617d016211f40c8a8e4c7f0c9c" kind="function"><name>cend</name></member>
+    <member refid="group__multiindex_gafad1f03794294c4060be066d3c2d0bab_1gafad1f03794294c4060be066d3c2d0bab" kind="function"><name>end</name></member>
+    <member refid="group__multiindex_ga9f624a04aa347287ce4992d5eae1dbc3_1ga9f624a04aa347287ce4992d5eae1dbc3" kind="function"><name>crbegin</name></member>
+    <member refid="group__multiindex_gac438151b3f7afb8ceb385d2e9447ebe6_1gac438151b3f7afb8ceb385d2e9447ebe6" kind="function"><name>rbegin</name></member>
+    <member refid="group__multiindex_gad7fbbef0f5b74941bebd67434a8344f8_1gad7fbbef0f5b74941bebd67434a8344f8" kind="function"><name>crend</name></member>
+    <member refid="group__multiindex_ga85a853178d819521c50bcd9860f70d59_1ga85a853178d819521c50bcd9860f70d59" kind="function"><name>rend</name></member>
+    <member refid="group__multiindex_ga385d93cf277878b667a3e22264a4230a_1ga385d93cf277878b667a3e22264a4230a" kind="function"><name>lower_bound</name></member>
+    <member refid="group__multiindex_ga9c460cb3a0a25aab8c4e6f2deeb97dd3_1ga9c460cb3a0a25aab8c4e6f2deeb97dd3" kind="function"><name>upper_bound</name></member>
+    <member refid="group__multiindex_ga1eca5d070f199f2339314f2c6ceb1de0_1ga1eca5d070f199f2339314f2c6ceb1de0" kind="function"><name>available_primary_key</name></member>
+    <member refid="group__multiindex_gafdc920626da6bacc840603bd6eb30b5c_1gafdc920626da6bacc840603bd6eb30b5c" kind="function"><name>get_index</name></member>
+    <member refid="group__multiindex_gace446e93ccd2232549e753e473f62ce1_1gace446e93ccd2232549e753e473f62ce1" kind="function"><name>get_index</name></member>
+    <member refid="group__multiindex_ga96ad41ccaa25039b3abc5e40dfd6d24c_1ga96ad41ccaa25039b3abc5e40dfd6d24c" kind="function"><name>iterator_to</name></member>
+    <member refid="group__multiindex_ga8b2849d63f5d3764ff66dbf57287192a_1ga8b2849d63f5d3764ff66dbf57287192a" kind="function"><name>emplace</name></member>
+    <member refid="group__multiindex_ga50037b09faedb27a322444c238722f43_1ga50037b09faedb27a322444c238722f43" kind="function"><name>modify</name></member>
+    <member refid="group__multiindex_gaff0329e2ee02b9cac7c39150023ff48d_1gaff0329e2ee02b9cac7c39150023ff48d" kind="function"><name>modify</name></member>
+    <member refid="group__multiindex_ga1c735442b15d98dbcbf6798e59dcc192_1ga1c735442b15d98dbcbf6798e59dcc192" kind="function"><name>get</name></member>
+    <member refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" kind="function"><name>find</name></member>
+    <member refid="group__multiindex_ga9245ddf1b3177affdb3932f5d1f65ca9_1ga9245ddf1b3177affdb3932f5d1f65ca9" kind="function"><name>require_find</name></member>
+    <member refid="group__multiindex_ga9aaa4cd5f39691494d8cb7d2bb2e6a96_1ga9aaa4cd5f39691494d8cb7d2bb2e6a96" kind="function"><name>erase</name></member>
+    <member refid="group__multiindex_gab8634205229f6b142ec2eb90a9456328_1gab8634205229f6b142ec2eb90a9456328" kind="function"><name>erase</name></member>
+  </compound>
+  <compound refid="group__permission" kind="group"><name>permission</name>
+    <member refid="group__permission_gae407a710bb92d67a77658c9d7bbdda4e_1gae407a710bb92d67a77658c9d7bbdda4e" kind="function"><name>check_transaction_authorization</name></member>
+    <member refid="group__permission_ga86012e5584f3365c59543db903f12565_1ga86012e5584f3365c59543db903f12565" kind="function"><name>check_permission_authorization</name></member>
+    <member refid="group__permission_gab62a772ad6b4a4452cc9d73fbb81f908_1gab62a772ad6b4a4452cc9d73fbb81f908" kind="function"><name>check_transaction_authorization</name></member>
+    <member refid="group__permission_ga7ac15c61603221ee739ed11a0d7bbc17_1ga7ac15c61603221ee739ed11a0d7bbc17" kind="function"><name>check_permission_authorization</name></member>
+    <member refid="group__permission_ga3ebbe3eedd2dee36a776c6a3c4009d02_1ga3ebbe3eedd2dee36a776c6a3c4009d02" kind="function"><name>get_permission_last_used</name></member>
+    <member refid="group__permission_ga1d03c45e00818ab35aff8e4f9d5828e0_1ga1d03c45e00818ab35aff8e4f9d5828e0" kind="function"><name>get_account_creation_time</name></member>
+  </compound>
+  <compound refid="group__privileged" kind="group"><name>privileged</name>
+    <member refid="group__privileged_ga3e6a33d77cd0347d579a81ef4850b6c5_1ga3e6a33d77cd0347d579a81ef4850b6c5" kind="function"><name>set_blockchain_parameters</name></member>
+    <member refid="group__privileged_gaf3771599b6ee096789e8533b808186c5_1gaf3771599b6ee096789e8533b808186c5" kind="function"><name>get_blockchain_parameters</name></member>
+    <member refid="group__privileged_gaf7f07253b6b687a2a6555bc26db70552_1gaf7f07253b6b687a2a6555bc26db70552" kind="function"><name>get_resource_limits</name></member>
+    <member refid="group__privileged_ga72bf370dd88d10fe4a19d89c24986f1a_1ga72bf370dd88d10fe4a19d89c24986f1a" kind="function"><name>set_resource_limits</name></member>
+    <member refid="group__privileged_ga42818293a8d4bc85b46864814b2714c2_1ga42818293a8d4bc85b46864814b2714c2" kind="function"><name>set_proposed_producers</name></member>
+    <member refid="group__privileged_ga166f1a63ca8ccc6ff8a268978b6f2b10_1ga166f1a63ca8ccc6ff8a268978b6f2b10" kind="function"><name>set_proposed_producers</name></member>
+    <member refid="group__privileged_ga3d143655999ef472c02bf92b84174781_1ga3d143655999ef472c02bf92b84174781" kind="function"><name>is_privileged</name></member>
+    <member refid="group__privileged_ga66f12c1f562eac7fd45a7979bfa2847f_1ga66f12c1f562eac7fd45a7979bfa2847f" kind="function"><name>set_privileged</name></member>
+    <member refid="group__privileged_ga783f438d474d0f4681f7aa185fd407f4_1ga783f438d474d0f4681f7aa185fd407f4" kind="function"><name>preactivate_feature</name></member>
+  </compound>
+  <compound refid="group__producer__key" kind="group"><name>producer_key</name>
+    <member refid="group__producer__key_gae42a7a26b089dce8a7caef366c050389_1gae42a7a26b089dce8a7caef366c050389" kind="variable"><name>producer_name</name></member>
+    <member refid="group__producer__key_gaf7d9571f28795037aa221ac9ee89ba9a_1gaf7d9571f28795037aa221ac9ee89ba9a" kind="variable"><name>block_signing_key</name></member>
+  </compound>
+  <compound refid="group__producer__schedule" kind="group"><name>producer_schedule</name>
+    <member refid="group__producer__schedule_ga0ad2d99c379fb754447256453c728543_1ga0ad2d99c379fb754447256453c728543" kind="function"><name>get_active_producers</name></member>
+  </compound>
+  <compound refid="group__producer__authority" kind="group"><name>producer_authority</name>
+    <member refid="group__producer__authority_ga8ac3f5039332dda52b6d41de63cda199_1ga8ac3f5039332dda52b6d41de63cda199" kind="typedef"><name>block_signing_authority</name></member>
+  </compound>
+  <compound refid="group__security__group" kind="group"><name>security_group</name>
+    <member refid="group__security__group_ga93fb1a1ab44dec2ef304bfaf0178072d_1ga93fb1a1ab44dec2ef304bfaf0178072d" kind="function"><name>add_security_group_participants</name></member>
+    <member refid="group__security__group_gaaa867999824dc6dc6bade8c0b9332371_1gaaa867999824dc6dc6bade8c0b9332371" kind="function"><name>remove_security_group_participants</name></member>
+    <member refid="group__security__group_ga0d4c0f09cc7f9eba177db554d9abf073_1ga0d4c0f09cc7f9eba177db554d9abf073" kind="function"><name>in_active_security_group</name></member>
+    <member refid="group__security__group_ga1543736e4e36640b83143b4a668bcf89_1ga1543736e4e36640b83143b4a668bcf89" kind="function"><name>get_active_security_group</name></member>
+  </compound>
+  <compound refid="group__singleton" kind="group"><name>singleton</name>
+  </compound>
+  <compound refid="group__core" kind="group"><name>core</name>
+  </compound>
+  <compound refid="group__contracts" kind="group"><name>contracts</name>
+  </compound>
+  <compound refid="group__types" kind="group"><name>types</name>
+  </compound>
+  <compound refid="group__transaction" kind="group"><name>transaction</name>
+    <member refid="group__transaction_gaea468d1540eb797bbf89e247e44af21e_1gaea468d1540eb797bbf89e247e44af21e" kind="typedef"><name>extension</name></member>
+    <member refid="group__transaction_ga0e713744cc029ccaa6db4018766969a1_1ga0e713744cc029ccaa6db4018766969a1" kind="typedef"><name>extensions_type</name></member>
+    <member refid="group__transaction_gac92df793654a0b0efbe8d35fd368dc4d_1gac92df793654a0b0efbe8d35fd368dc4d" kind="function"><name>from_current_action</name></member>
+    <member refid="group__transaction_gaac121ad3e7c952c4b04c12f8bfcc29c3_1gaac121ad3e7c952c4b04c12f8bfcc29c3" kind="function"><name>send_deferred</name></member>
+    <member refid="group__transaction_ga5cb1f314e639ee0d5d0bd59f51b2229e_1ga5cb1f314e639ee0d5d0bd59f51b2229e" kind="function"><name>get_action</name></member>
+    <member refid="group__transaction_gadc099e4301c8682be070211a094ad66c_1gadc099e4301c8682be070211a094ad66c" kind="function"><name>read_transaction</name></member>
+    <member refid="group__transaction_gadc1dc4e5e52f1c12f37eb02d8783a47f_1gadc1dc4e5e52f1c12f37eb02d8783a47f" kind="function"><name>cancel_deferred</name></member>
+    <member refid="group__transaction_gafbd3369e48c587ede72b918fe36e2a52_1gafbd3369e48c587ede72b918fe36e2a52" kind="function"><name>transaction_size</name></member>
+    <member refid="group__transaction_gae23a5dae01630e656c5972f3812438dc_1gae23a5dae01630e656c5972f3812438dc" kind="function"><name>tapos_block_num</name></member>
+    <member refid="group__transaction_gafc9b5c3111cd62bce49b3f32942472b2_1gafc9b5c3111cd62bce49b3f32942472b2" kind="function"><name>tapos_block_prefix</name></member>
+    <member refid="group__transaction_ga9ba8258ea769264b95abd46081a501a6_1ga9ba8258ea769264b95abd46081a501a6" kind="function"><name>expiration</name></member>
+    <member refid="group__transaction_gaef211984436ac3d7d0eaabb647b0dab0_1gaef211984436ac3d7d0eaabb647b0dab0" kind="function"><name>get_context_free_data</name></member>
+  </compound>
+  <compound refid="dir_045d9ce8c81eb20abdfe47832097891b" kind="dir"><name>libraries/sysiolib/contracts</name>
+  </compound>
+  <compound refid="dir_feee2a546b193058287448e248ebdcef" kind="dir"><name>libraries/sysiolib/core</name>
+  </compound>
+  <compound refid="dir_bc0718b08fb2015b8e59c47b2805f60c" kind="dir"><name>libraries</name>
+  </compound>
+  <compound refid="dir_ddeaafa9c8f9a580e68a365ebb6aa21a" kind="dir"><name>libraries/sysiolib/contracts/sysio</name>
+  </compound>
+  <compound refid="dir_4fcf0470d40039dc006e3d6b6ddd59b3" kind="dir"><name>libraries/sysiolib/core/sysio</name>
+  </compound>
+  <compound refid="dir_bc5e279e9eced4f1e01ab7856f3701ba" kind="dir"><name>libraries/sysiolib</name>
+  </compound>
+</doxygenindex>

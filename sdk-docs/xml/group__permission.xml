@@ -1,0 +1,413 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__permission" kind="group">
+    <compoundname>permission</compoundname>
+    <title>Permission</title>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__permission_1gae407a710bb92d67a77658c9d7bbdda4e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::check_transaction_authorization</definition>
+        <argsstring>(const char *trx_data, uint32_t trx_size, const char *pubkeys_data, uint32_t pubkeys_size, const char *perms_data, uint32_t perms_size)</argsstring>
+        <name>check_transaction_authorization</name>
+        <param>
+          <type>const char *</type>
+          <declname>trx_data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>trx_size</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>pubkeys_data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>pubkeys_size</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>perms_data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>perms_size</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Checks if a transaction is authorized by a provided set of keys and permissions</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>trx_data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- pointer to the start of the serialized transaction </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>trx_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size (in bytes) of the serialized transaction </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pubkeys_data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- pointer to the start of the serialized vector of provided public keys </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pubkeys_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size (in bytes) of serialized vector of provided public keys (can be 0 if no public keys are to be provided) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>perms_data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- pointer to the start of the serialized vector of provided permissions (empty permission name acts as wildcard) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>perms_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size (in bytes) of the serialized vector of provided permissions</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>1 if the transaction is authorized, 0 otherwise </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/permission.hpp" line="49" column="4" bodyfile="libraries/sysiolib/contracts/sysio/permission.hpp" bodystart="49" bodyend="53"/>
+      </memberdef>
+      <memberdef kind="function" id="group__permission_1ga86012e5584f3365c59543db903f12565" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::check_permission_authorization</definition>
+        <argsstring>(name account, name permission, const char *pubkeys_data, uint32_t pubkeys_size, const char *perms_data, uint32_t perms_size, microseconds delay)</argsstring>
+        <name>check_permission_authorization</name>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <param>
+          <type>name</type>
+          <declname>permission</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>pubkeys_data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>pubkeys_size</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>perms_data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>perms_size</declname>
+        </param>
+        <param>
+          <type>microseconds</type>
+          <declname>delay</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Checks if a permission is authorized by a provided delay and a provided set of keys and permissions</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the account owner of the permission </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>permission</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the name of the permission to check for authorization </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pubkeys_data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- pointer to the start of the serialized vector of provided public keys </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pubkeys_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size (in bytes) of serialized vector of provided public keys (can be 0 if no public keys are to be provided) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>perms_data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- pointer to the start of the serialized vector of provided permissions (empty permission name acts as wildcard) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>perms_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size (in bytes) of the serialized vector of provided permissions </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>delay</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the provided delay in microseconds (cannot exceed INT64_MAX)</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>1 if the permission is authorized, 0 otherwise </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/permission.hpp" line="70" column="4" bodyfile="libraries/sysiolib/contracts/sysio/permission.hpp" bodystart="70" bodyend="78"/>
+      </memberdef>
+      <memberdef kind="function" id="group__permission_1gab62a772ad6b4a4452cc9d73fbb81f908" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::check_transaction_authorization</definition>
+        <argsstring>(const transaction &amp;trx, const std::set&lt; permission_level &gt; &amp;provided_permissions, const std::set&lt; public_key &gt; &amp;provided_keys=std::set&lt; public_key &gt;())</argsstring>
+        <name>check_transaction_authorization</name>
+        <param>
+          <type>const transaction &amp;</type>
+          <declname>trx</declname>
+        </param>
+        <param>
+          <type>const std::set&lt; permission_level &gt; &amp;</type>
+          <declname>provided_permissions</declname>
+        </param>
+        <param>
+          <type>const std::set&lt; public_key &gt; &amp;</type>
+          <declname>provided_keys</declname>
+          <defval>std::set&lt; public_key &gt;()</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Checks if a transaction is authorized by a provided set of keys and permissions</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>trx</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the transaction for which to check authorizations </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>provided_permissions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the set of permissions which have authorized the transaction (empty permission name acts as wildcard) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>provided_keys</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the set of public keys which have authorized the transaction</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>whether the transaction was authorized by provided keys and permissions </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/permission.hpp" line="99" column="4" bodyfile="libraries/sysiolib/contracts/sysio/permission.hpp" bodystart="99" bodyend="127"/>
+      </memberdef>
+      <memberdef kind="function" id="group__permission_1ga7ac15c61603221ee739ed11a0d7bbc17" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::check_permission_authorization</definition>
+        <argsstring>(name account, name permission, const std::set&lt; public_key &gt; &amp;provided_keys, const std::set&lt; permission_level &gt; &amp;provided_permissions=std::set&lt; permission_level &gt;(), microseconds provided_delay=microseconds{std::numeric_limits&lt; int64_t &gt;::max()})</argsstring>
+        <name>check_permission_authorization</name>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <param>
+          <type>name</type>
+          <declname>permission</declname>
+        </param>
+        <param>
+          <type>const std::set&lt; public_key &gt; &amp;</type>
+          <declname>provided_keys</declname>
+        </param>
+        <param>
+          <type>const std::set&lt; permission_level &gt; &amp;</type>
+          <declname>provided_permissions</declname>
+          <defval>std::set&lt; permission_level &gt;()</defval>
+        </param>
+        <param>
+          <type>microseconds</type>
+          <declname>provided_delay</declname>
+          <defval>microseconds{std::numeric_limits&lt; int64_t &gt;::max()}</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Checks if a permission is authorized by a provided delay and a provided set of keys and permissions</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the account owner of the permission </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>permission</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the permission name to check for authorization </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>provided_keys</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the set of public keys which have authorized the transaction </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>provided_permissions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the set of permissions which have authorized the transaction (empty permission name acts as wildcard) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>provided_delay_us</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the provided delay in microseconds (cannot exceed INT64_MAX)</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>whether the permission was authorized by provided delay, keys, and permissions </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/permission.hpp" line="143" column="4" bodyfile="libraries/sysiolib/contracts/sysio/permission.hpp" bodystart="143" bodyend="174"/>
+      </memberdef>
+      <memberdef kind="function" id="group__permission_1ga3ebbe3eedd2dee36a776c6a3c4009d02" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>time_point</type>
+        <definition>time_point sysio::get_permission_last_used</definition>
+        <argsstring>(name account, name permission)</argsstring>
+        <name>get_permission_last_used</name>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <param>
+          <type>name</type>
+          <declname>permission</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the last used time of a permission</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the account owner of the permission </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>permission</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the name of the permission</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the last used time (in microseconds since Unix epoch) of the permission </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/permission.hpp" line="186" column="15" bodyfile="libraries/sysiolib/contracts/sysio/permission.hpp" bodystart="186" bodyend="191"/>
+      </memberdef>
+      <memberdef kind="function" id="group__permission_1ga1d03c45e00818ab35aff8e4f9d5828e0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>time_point</type>
+        <definition>time_point sysio::get_account_creation_time</definition>
+        <argsstring>(name account)</argsstring>
+        <name>get_account_creation_time</name>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the creation time of an account</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the account</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the creation time (in microseconds since Unix epoch) of the account </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/permission.hpp" line="202" column="15" bodyfile="libraries/sysiolib/contracts/sysio/permission.hpp" bodystart="202" bodyend="207"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Defines C++ API functions for validating authorization of keys and permissions. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

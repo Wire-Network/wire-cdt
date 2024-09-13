@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__name" kind="group">
+    <compoundname>name</compoundname>
+    <title>Name</title>
+    <innerclass refid="structsysio_1_1name" prot="public">sysio::name</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__name_1ga8fc03261789a28fa9d8c89fa4cbb463a" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>T...</type>
+            <declname>Str</declname>
+            <defname>Str</defname>
+          </param>
+        </templateparamlist>
+        <type>constexpr <ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+        <definition>constexpr sysio::name operator&quot;&quot;_n</definition>
+        <argsstring>()</argsstring>
+        <name>operator&quot;&quot;_n</name>
+        <briefdescription>
+<para>namespace sysio </para>
+        </briefdescription>
+        <detaileddescription>
+<para>&quot;foo&quot;_n is a shortcut for name(&quot;foo&quot;) </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="323" column="30" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="323" bodyend="326"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>SYSIO Name Type. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

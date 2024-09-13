@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1detail_1_1to__const__char__arr" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::detail::to_const_char_arr</compoundname>
+    <includes refid="name_8hpp" local="no">name.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>char...</type>
+        <declname>Str</declname>
+        <defname>Str</defname>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1to__const__char__arr_af34d726052ac17a9c4535687c09afb0f_1af34d726052ac17a9c4535687c09afb0f" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>constexpr const char</type>
+        <definition>constexpr const char sysio::detail::to_const_char_arr&lt; Str &gt;::value[]</definition>
+        <argsstring>[]</argsstring>
+        <name>value</name>
+        <initializer>= {Str...}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="311" column="38" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="311" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/name.hpp" line="310" column="7" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="310" bodyend="312"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1detail_1_1to__const__char__arr_af34d726052ac17a9c4535687c09afb0f_1af34d726052ac17a9c4535687c09afb0f" prot="public" virt="non-virtual"><scope>sysio::detail::to_const_char_arr</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__binary__extension" kind="group">
+    <compoundname>binary_extension</compoundname>
+    <title>Binary Extension</title>
+    <innerclass refid="classsysio_1_1binary__extension" prot="public">sysio::binary_extension</innerclass>
+    <briefdescription>
+<para>Container to hold a binary payload for an extension. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1detail_1_1largest__power__helper" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::detail::largest_power_helper</compoundname>
+    <includes refid="powers_8hpp" local="no">powers.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+      <param>
+        <type>T</type>
+        <declname>Base</declname>
+        <defname>Base</defname>
+      </param>
+      <param>
+        <type>uint8_t</type>
+        <declname>Exponent</declname>
+        <defname>Exponent</defname>
+      </param>
+      <param>
+        <type>uint64_t</type>
+        <declname>Value</declname>
+        <defname>Value</defname>
+      </param>
+      <param>
+        <type>bool</type>
+        <declname>Overflow</declname>
+        <defname>Overflow</defname>
+        <defval>(Value * Base &lt; Value)</defval>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="private-type">
+      <memberdef kind="typedef" id="structsysio_1_1detail_1_1largest__power__helper_1a59ee3645803352579ef9dd635505dbf0" prot="private" static="no">
+        <type><ref refid="structsysio_1_1detail_1_1largest__power__helper" kindref="compound">largest_power_helper</ref>&lt; T, Base, Exponent+1, next_value &gt;</type>
+        <definition>using sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, Overflow &gt;::next =  largest_power_helper&lt;T, Base, Exponent+1, next_value&gt;</definition>
+        <argsstring></argsstring>
+        <name>next</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="31" column="10" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power__helper_1a74016ad681c1c080c1ab2be46d297529" prot="private" static="yes" constexpr="yes" mutable="no">
+        <type>constexpr static T</type>
+        <definition>constexpr static T sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, Overflow &gt;::next_value</definition>
+        <argsstring></argsstring>
+        <name>next_value</name>
+        <initializer>= Value * Base</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="30" column="29" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="30" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power__helper_accc69f90822f7d5b4db9d23aeee626be_1accc69f90822f7d5b4db9d23aeee626be" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>constexpr static T</type>
+        <definition>constexpr static T sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, Overflow &gt;::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <initializer>= next::value</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="33" column="35" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="33" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power__helper_ac17a2fd3dbb43c090515efb9dc713444_1ac17a2fd3dbb43c090515efb9dc713444" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>constexpr static uint8_t</type>
+        <definition>constexpr static uint8_t sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, Overflow &gt;::exponent</definition>
+        <argsstring></argsstring>
+        <name>exponent</name>
+        <initializer>= next::exponent</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="34" column="35" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/powers.hpp" line="26" column="7" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="26" bodyend="35"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1detail_1_1largest__power__helper_ac17a2fd3dbb43c090515efb9dc713444_1ac17a2fd3dbb43c090515efb9dc713444" prot="public" virt="non-virtual"><scope>sysio::detail::largest_power_helper</scope><name>exponent</name></member>
+      <member refid="structsysio_1_1detail_1_1largest__power__helper_1a59ee3645803352579ef9dd635505dbf0" prot="private" virt="non-virtual"><scope>sysio::detail::largest_power_helper</scope><name>next</name></member>
+      <member refid="structsysio_1_1detail_1_1largest__power__helper_1a74016ad681c1c080c1ab2be46d297529" prot="private" virt="non-virtual"><scope>sysio::detail::largest_power_helper</scope><name>next_value</name></member>
+      <member refid="structsysio_1_1detail_1_1largest__power__helper_accc69f90822f7d5b4db9d23aeee626be_1accc69f90822f7d5b4db9d23aeee626be" prot="public" virt="non-virtual"><scope>sysio::detail::largest_power_helper</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

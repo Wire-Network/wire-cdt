@@ -1,0 +1,305 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__action" kind="group">
+    <compoundname>action</compoundname>
+    <title>Action</title>
+    <innerclass refid="structsysio_1_1permission__level" prot="public">sysio::permission_level</innerclass>
+    <innerclass refid="structsysio_1_1action" prot="public">sysio::action</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__action_1ga6d5d5474d576019c6ea5194f4803d54b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>T</type>
+        <definition>T sysio::unpack_action_data</definition>
+        <argsstring>()</argsstring>
+        <name>unpack_action_data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>Unpacked action data casted as T.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="normal">struct<sp/>dummy_action<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>char<sp/>a;<sp/>//1</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>unsigned<sp/>long<sp/>long<sp/>b;<sp/>//8</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>int<sp/><sp/>c;<sp/>//4</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal"><sp/><sp/>SYSLIB_SERIALIZE(<sp/>dummy_action,<sp/>(a)(b)(c)<sp/>)</highlight></codeline>
+<codeline><highlight class="normal">};</highlight></codeline>
+<codeline><highlight class="normal">dummy_action<sp/>msg<sp/>=<sp/>unpack_action_data&lt;dummy_action&gt;();</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="83" column="6" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="83" bodyend="89"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1ga4050e0dcdf9d9b51bddb2d93fc9fa42f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::require_recipient</definition>
+        <argsstring>(name notify_account)</argsstring>
+        <name>require_recipient</name>
+        <param>
+          <type>name</type>
+          <declname>notify_account</declname>
+        </param>
+        <briefdescription>
+<para>Add the specified account to set of accounts to be notified. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Add the specified account to set of accounts to be notified</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>notify_account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account to be verified </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="98" column="16" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="98" bodyend="100"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1ga7143369c772e9e75acfea1cc2cff56e3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename...</type>
+            <declname>accounts</declname>
+            <defname>accounts</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::require_recipient</definition>
+        <argsstring>(name notify_account, accounts... remaining_accounts)</argsstring>
+        <name>require_recipient</name>
+        <param>
+          <type>name</type>
+          <declname>notify_account</declname>
+        </param>
+        <param>
+          <type>accounts...</type>
+          <declname>remaining_accounts</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>All of the listed accounts will be added to the set of accounts to be notified</para>
+<para>This helper method enables you to add multiple accounts to accounts to be notified list with a single call rather than having to call the similar C API multiple times.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>notify_account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>account to be notified </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>remaining_accounts</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>accounts to be notified </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="note"><para>action.code is also considered as part of the set of notified accounts</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="normal">require_recipient(&quot;Account1&quot;_n,<sp/>&quot;Account2&quot;_n,<sp/>&quot;Account3&quot;_n);<sp/>//<sp/>throws<sp/>exception<sp/>if<sp/>any<sp/>of<sp/>them<sp/>not<sp/>in<sp/>set.</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="120" column="9" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="120" bodyend="123"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1ga4fb6d5ddbc9dde4f1e19b942d317c740" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::require_auth</definition>
+        <argsstring>(name n)</argsstring>
+        <name>require_auth</name>
+        <param>
+          <type>name</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Verifies that <ref refid="group__name" kindref="compound">Name</ref> exists in the set of provided auths on a action. Fails if not found.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>name</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account to be verified </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="131" column="16" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="131" bodyend="133"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1ga72357c5b27ba8bbf8b086cd852962bb6" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>time_point</type>
+        <definition>time_point sysio::publication_time</definition>
+        <argsstring>()</argsstring>
+        <name>publication_time</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the time in microseconds from 1970 of the publication_time</para>
+<para><simplesect kind="return"><para>the time in microseconds from 1970 of the publication_time </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="141" column="23" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="141" bodyend="143"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1ga7c345dedb82104f0ea5215e2bfc27d4e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::read_action_data</definition>
+        <argsstring>(void *msg, uint32_t len)</argsstring>
+        <name>read_action_data</name>
+        <param>
+          <type>void *</type>
+          <declname>msg</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Copy up to length bytes of current action data to the specified location</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>msg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a pointer where up to length bytes of the current action data will be copied </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- len of the current action data to be copied, 0 to report required size </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the number of bytes copied to msg, or number of bytes that can be copied if len==0 passed </para>
+</simplesect>
+<simplesect kind="pre"><para><computeroutput>msg</computeroutput> is a valid pointer to a range of memory at least <computeroutput>len</computeroutput> bytes long </para>
+</simplesect>
+<simplesect kind="post"><para><computeroutput>msg</computeroutput> is filled with packed action data </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="163" column="20" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="163" bodyend="165"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1gafabaee9b377c9055d162998a603e2548" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::require_auth</definition>
+        <argsstring>(const permission_level &amp;level)</argsstring>
+        <name>require_auth</name>
+        <param>
+          <type>const permission_level &amp;</type>
+          <declname>level</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Require the specified authorization for this action. If this action doesn&apos;t contain the specified auth, it will fail.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>level</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Authorization to be required </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="237" column="16" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="237" bodyend="239"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1ga5c3822fa784936636c24f53c81dd3b5e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::has_auth</definition>
+        <argsstring>(name n)</argsstring>
+        <name>has_auth</name>
+        <param>
+          <type>name</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Verifies that n has auth.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>n</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account to be verified </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="247" column="16" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="247" bodyend="249"/>
+      </memberdef>
+      <memberdef kind="function" id="group__action_1gad99bd091df73a8312651e22c2b55ecca" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::is_account</definition>
+        <argsstring>(name n)</argsstring>
+        <name>is_account</name>
+        <param>
+          <type>name</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Verifies that n is an existing account.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>n</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account to check </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="257" column="16" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="257" bodyend="259"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Defines type-safe C++ wrappers for querying action and sending action. </para>
+    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="note"><para>There are some methods from the <ref refid="group__action" kindref="compound">Action</ref> that can be used directly from C++ </para>
+</simplesect>
+</para>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

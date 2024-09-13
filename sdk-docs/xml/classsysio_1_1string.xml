@@ -1,0 +1,1167 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classsysio_1_1string" kind="class" language="C++" prot="public">
+    <compoundname>sysio::string</compoundname>
+    <includes refid="string_8hpp" local="no">string.hpp</includes>
+      <sectiondef kind="private-type">
+      <memberdef kind="typedef" id="classsysio_1_1string_1acf1ed37b0e45e770d6192aff1b2739ba" prot="private" static="no">
+        <type>std::unique_ptr&lt; char[]&gt;</type>
+        <definition>using sysio::string::uptr =  std::unique_ptr&lt;char[]&gt;</definition>
+        <argsstring></argsstring>
+        <name>uptr</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="406" column="7" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="406" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="classsysio_1_1string_1a7337f6fdd0271b1f15e841078a04d762" prot="private" static="no">
+        <type>std::variant&lt; const char *, uptr &gt;</type>
+        <definition>using sysio::string::sso_str =  std::variant&lt;const char*, uptr&gt;</definition>
+        <argsstring></argsstring>
+        <name>sso_str</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="407" column="7" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="407" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="classsysio_1_1string_aaa4afb5dc01a0d1042f84df180c55784_1aaa4afb5dc01a0d1042f84df180c55784" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>constexpr size_t</type>
+        <definition>constexpr size_t sysio::string::npos</definition>
+        <argsstring></argsstring>
+        <name>npos</name>
+        <initializer>= -1</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="21" column="31" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="21" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classsysio_1_1string_1a707debb1e687f0650dd3b4bc5b35c101" prot="private" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::string::_size</definition>
+        <argsstring></argsstring>
+        <name>_size</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="409" column="15" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="409" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1string_1ab898be25db8e93283b3a2194cc3faf72" prot="private" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::string::_capacity</definition>
+        <argsstring></argsstring>
+        <name>_capacity</name>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="410" column="15" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="410" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1string_1acc627996daa8999a5859bb268a272fef" prot="private" static="no" mutable="no">
+        <type>sso_str</type>
+        <definition>sso_str sysio::string::_begin</definition>
+        <argsstring></argsstring>
+        <name>_begin</name>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="411" column="15" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="411" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1string_afdd8ea3566f29b1d2df582dc4ffc01e4_1afdd8ea3566f29b1d2df582dc4ffc01e4" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+        </templateparamlist>
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>(const char(&amp;str)[N])</argsstring>
+        <name>string</name>
+        <param>
+          <type>const char(&amp;)</type>
+          <declname>str</declname>
+          <array>[N]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="24" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="24" bodyend="29"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_aaf612b885970fffb95ea800f154e199c_1aaf612b885970fffb95ea800f154e199c" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>()</argsstring>
+        <name>string</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="31" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="31" bodyend="36"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ab92bd03251c6796aa9cdb5629313280e_1ab92bd03251c6796aa9cdb5629313280e" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>(const char *str, const size_t n)</argsstring>
+        <name>string</name>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="38" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="38" bodyend="45"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_aae7d9fcc6a98c68d22f072a1102d6432_1aae7d9fcc6a98c68d22f072a1102d6432" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>(const size_t n, const char c)</argsstring>
+        <name>string</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>const char</type>
+          <declname>c</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="47" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="47" bodyend="54"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ac1d3d96fb393626217c38361eaf07a32_1ac1d3d96fb393626217c38361eaf07a32" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>(const string &amp;str, const size_t pos, const size_t n)</argsstring>
+        <name>string</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="56" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="56" bodyend="66"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a4257156c49703a24760772086c878aa1_1a4257156c49703a24760772086c878aa1" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>(const string &amp;str)</argsstring>
+        <name>string</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="68" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="68" bodyend="76"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a87511268f83e1f4d266e20cca8766614_1a87511268f83e1f4d266e20cca8766614" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::string::string</definition>
+        <argsstring>(string &amp;&amp;str)</argsstring>
+        <name>string</name>
+        <param>
+          <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;&amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="78" column="17" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="78" bodyend="86"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ad6c0c2754461b8fa3e2c19b0f8984a24_1ad6c0c2754461b8fa3e2c19b0f8984a24" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::operator=</definition>
+        <argsstring>(const string &amp;str)</argsstring>
+        <name>operator=</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="88" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="88" bodyend="101"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a905f7a9cc463abfbd73cf8a6d0372900_1a905f7a9cc463abfbd73cf8a6d0372900" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::operator=</definition>
+        <argsstring>(string &amp;&amp;str)</argsstring>
+        <name>operator=</name>
+        <param>
+          <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;&amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="103" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="103" bodyend="116"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a6c552ea0311a5088944a9cda41b81585_1a6c552ea0311a5088944a9cda41b81585" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::operator=</definition>
+        <argsstring>(const char *str)</argsstring>
+        <name>operator=</name>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="118" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="118" bodyend="124"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ac7bc648c4abb2b37c341516026f8891c_1ac7bc648c4abb2b37c341516026f8891c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char &amp;</type>
+        <definition>char&amp; sysio::string::operator[]</definition>
+        <argsstring>(const size_t n)</argsstring>
+        <name>operator[]</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="126" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="126" bodyend="130"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a821e280192d33c1f67e76a47b2f0077e_1a821e280192d33c1f67e76a47b2f0077e" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char</type>
+        <definition>const char sysio::string::operator[]</definition>
+        <argsstring>(const size_t n) const</argsstring>
+        <name>operator[]</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="132" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="132" bodyend="134"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_af9d53afddc35e25278d2be23b1589d7d_1af9d53afddc35e25278d2be23b1589d7d" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char &amp;</type>
+        <definition>char&amp; sysio::string::at</definition>
+        <argsstring>(const size_t n)</argsstring>
+        <name>at</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="136" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="136" bodyend="139"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a1a6c90c6c359df6aa7ed3284bf48dd5a_1a1a6c90c6c359df6aa7ed3284bf48dd5a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char</type>
+        <definition>const char sysio::string::at</definition>
+        <argsstring>(const size_t n) const</argsstring>
+        <name>at</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="141" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="141" bodyend="144"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a26fc6cea509d045e3b3a559c7e63b599_1a26fc6cea509d045e3b3a559c7e63b599" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char &amp;</type>
+        <definition>char&amp; sysio::string::front</definition>
+        <argsstring>()</argsstring>
+        <name>front</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="146" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="146" bodyend="148"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a54c682507f6b5af7e04de09e76de447c_1a54c682507f6b5af7e04de09e76de447c" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char</type>
+        <definition>const char sysio::string::front</definition>
+        <argsstring>() const</argsstring>
+        <name>front</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="150" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="150" bodyend="152"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a748f3c94ae4c17b0c4c4732e06df013b_1a748f3c94ae4c17b0c4c4732e06df013b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char &amp;</type>
+        <definition>char&amp; sysio::string::back</definition>
+        <argsstring>()</argsstring>
+        <name>back</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="154" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="154" bodyend="156"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a4b3684f1b4e58399f46bdea6e78703ff_1a4b3684f1b4e58399f46bdea6e78703ff" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char</type>
+        <definition>const char sysio::string::back</definition>
+        <argsstring>() const</argsstring>
+        <name>back</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="158" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="158" bodyend="160"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a35c739e4118946c9969a6178ec52816f_1a35c739e4118946c9969a6178ec52816f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char *</type>
+        <definition>char* sysio::string::data</definition>
+        <argsstring>()</argsstring>
+        <name>data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="162" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="162" bodyend="164"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ae0a48ef4589d0cabf387a29ff5629c58_1ae0a48ef4589d0cabf387a29ff5629c58" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char *</type>
+        <definition>const char* sysio::string::data</definition>
+        <argsstring>() const</argsstring>
+        <name>data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="166" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="166" bodyend="168"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a4ffcb0e955c9cf6ca093713f37b37dd7_1a4ffcb0e955c9cf6ca093713f37b37dd7" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char *</type>
+        <definition>const char* sysio::string::c_str</definition>
+        <argsstring>() const</argsstring>
+        <name>c_str</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="170" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="170" bodyend="190"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ad9f28ff70878055410aaf549160b1e30_1ad9f28ff70878055410aaf549160b1e30" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char *</type>
+        <definition>char* sysio::string::begin</definition>
+        <argsstring>()</argsstring>
+        <name>begin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="192" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="192" bodyend="199"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_aea260d3f76852e9e6d1c8b9dcead1dd0_1aea260d3f76852e9e6d1c8b9dcead1dd0" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char *</type>
+        <definition>const char* sysio::string::cbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>cbegin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="201" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="201" bodyend="203"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a6d1c694515583435ef16b0cbc28d7901_1a6d1c694515583435ef16b0cbc28d7901" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char *</type>
+        <definition>char* sysio::string::end</definition>
+        <argsstring>()</argsstring>
+        <name>end</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="205" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="205" bodyend="207"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_abd085dfc1a5cd1fa4322a3a485ca59c5_1abd085dfc1a5cd1fa4322a3a485ca59c5" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const char *</type>
+        <definition>const char* sysio::string::cend</definition>
+        <argsstring>() const</argsstring>
+        <name>cend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="209" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="209" bodyend="211"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a018c58227e4e2e9342c8a397a97aa354_1a018c58227e4e2e9342c8a397a97aa354" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::string::empty</definition>
+        <argsstring>() const</argsstring>
+        <name>empty</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="213" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="213" bodyend="215"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a897d01d3234496117b6bfd8711741a86_1a897d01d3234496117b6bfd8711741a86" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::string::size</definition>
+        <argsstring>() const</argsstring>
+        <name>size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="217" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="217" bodyend="219"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a6be8e92f5d2b71ba0a2a9edce307208d_1a6be8e92f5d2b71ba0a2a9edce307208d" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::string::length</definition>
+        <argsstring>() const</argsstring>
+        <name>length</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="221" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="221" bodyend="223"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a1b3fc36ba39eebcb791c67bbe7750f85_1a1b3fc36ba39eebcb791c67bbe7750f85" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::string::capacity</definition>
+        <argsstring>() const</argsstring>
+        <name>capacity</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="225" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="225" bodyend="227"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ac1e174b238e7ea0b2f2f3e213ba44dc7_1ac1e174b238e7ea0b2f2f3e213ba44dc7" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::string::max_size</definition>
+        <argsstring>() const</argsstring>
+        <name>max_size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="229" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="229" bodyend="231"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a67eea1b3d744e10abda448401e3eb0c5_1a67eea1b3d744e10abda448401e3eb0c5" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::reserve</definition>
+        <argsstring>(const size_t n)</argsstring>
+        <name>reserve</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="233" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="233" bodyend="242"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_abac4ba696ca0aa09d75a68bec3640bd7_1abac4ba696ca0aa09d75a68bec3640bd7" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::shrink_to_fit</definition>
+        <argsstring>()</argsstring>
+        <name>shrink_to_fit</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="244" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="244" bodyend="246"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a2a9e10b967b5080b1a2689cd78fa9005_1a2a9e10b967b5080b1a2689cd78fa9005" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::clear</definition>
+        <argsstring>()</argsstring>
+        <name>clear</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="248" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="248" bodyend="254"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a43ba9d2306622b8b28656b1f57bd961a_1a43ba9d2306622b8b28656b1f57bd961a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::resize</definition>
+        <argsstring>(const size_t n)</argsstring>
+        <name>resize</name>
+        <param>
+          <type>const size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="256" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="256" bodyend="268"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_ad32c97891581e9ef14a60c2e476d8f00_1ad32c97891581e9ef14a60c2e476d8f00" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::swap</definition>
+        <argsstring>(string &amp;str)</argsstring>
+        <name>swap</name>
+        <param>
+          <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="270" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="270" bodyend="272"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a09f6dc815a6fcb0b677eff4a7420178c_1a09f6dc815a6fcb0b677eff4a7420178c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::push_back</definition>
+        <argsstring>(const char c)</argsstring>
+        <name>push_back</name>
+        <param>
+          <type>const char</type>
+          <declname>c</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="274" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="274" bodyend="276"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a0c60f0a9ec0a252298b4a8dac7e2042f_1a0c60f0a9ec0a252298b4a8dac7e2042f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::pop_back</definition>
+        <argsstring>()</argsstring>
+        <name>pop_back</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="278" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="278" bodyend="282"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a18b0da369cb70e3cdcd6003d7764b556_1a18b0da369cb70e3cdcd6003d7764b556" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref></type>
+        <definition>string sysio::string::substr</definition>
+        <argsstring>(size_t pos=0, size_t len=npos) const</argsstring>
+        <name>substr</name>
+        <param>
+          <type>size_t</type>
+          <declname>pos</declname>
+          <defval>0</defval>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len</declname>
+          <defval><ref refid="classsysio_1_1string_aaa4afb5dc01a0d1042f84df180c55784_1aaa4afb5dc01a0d1042f84df180c55784" kindref="member">npos</ref></defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="284" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="284" bodyend="286"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a9ed94e005844f7ebd8a605105e4b59ec_1a9ed94e005844f7ebd8a605105e4b59ec" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::string::copy</definition>
+        <argsstring>(char *s, size_t len, size_t pos=0) const</argsstring>
+        <name>copy</name>
+        <param>
+          <type>char *</type>
+          <declname>s</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>pos</declname>
+          <defval>0</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="288" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="288" bodyend="296"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a491d3b2b06c8ea7498ca4672f9b8e8d7_1a491d3b2b06c8ea7498ca4672f9b8e8d7" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::insert</definition>
+        <argsstring>(const size_t pos, const char *str)</argsstring>
+        <name>insert</name>
+        <param>
+          <type>const size_t</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="298" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="298" bodyend="300"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a3a81ad9a66c8332ecefe85cd5250441f_1a3a81ad9a66c8332ecefe85cd5250441f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::insert</definition>
+        <argsstring>(const size_t pos, const char *str, const size_t len)</argsstring>
+        <name>insert</name>
+        <param>
+          <type>const size_t</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="302" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="302" bodyend="327"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a56a9afe229a40b57c8fc31c005407d87_1a56a9afe229a40b57c8fc31c005407d87" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::insert</definition>
+        <argsstring>(const size_t pos, const string &amp;str)</argsstring>
+        <name>insert</name>
+        <param>
+          <type>const size_t</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="329" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="329" bodyend="332"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a34aefa533e9c847c44f083bb161bf8e9_1a34aefa533e9c847c44f083bb161bf8e9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::erase</definition>
+        <argsstring>(size_t pos=0, size_t len=npos)</argsstring>
+        <name>erase</name>
+        <param>
+          <type>size_t</type>
+          <declname>pos</declname>
+          <defval>0</defval>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len</declname>
+          <defval><ref refid="classsysio_1_1string_aaa4afb5dc01a0d1042f84df180c55784_1aaa4afb5dc01a0d1042f84df180c55784" kindref="member">npos</ref></defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="334" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="334" bodyend="348"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a4136487f4d8511c51b20357a05fece81_1a4136487f4d8511c51b20357a05fece81" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::append</definition>
+        <argsstring>(const char *str)</argsstring>
+        <name>append</name>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="350" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="350" bodyend="355"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_aadc2e47328c342c451715d939e379bbb_1aadc2e47328c342c451715d939e379bbb" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::append</definition>
+        <argsstring>(const string &amp;str)</argsstring>
+        <name>append</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="357" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="357" bodyend="360"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_aae9266cc44ebabc427d7f337e91c2209_1aae9266cc44ebabc427d7f337e91c2209" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::operator+=</definition>
+        <argsstring>(const char c)</argsstring>
+        <name>operator+=</name>
+        <param>
+          <type>const char</type>
+          <declname>c</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="362" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="362" bodyend="379"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_abb038f8d7ed19c186b3652fc2ef83922_1abb038f8d7ed19c186b3652fc2ef83922" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::operator+=</definition>
+        <argsstring>(const char *rhs)</argsstring>
+        <name>operator+=</name>
+        <param>
+          <type>const char *</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="381" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="381" bodyend="384"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a52064c7565fa59e1457a904b57786cb0_1a52064c7565fa59e1457a904b57786cb0" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+        <definition>string&amp; sysio::string::operator+=</definition>
+        <argsstring>(const string &amp;rhs)</argsstring>
+        <name>operator+=</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="386" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="386" bodyend="389"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_a1da15eba3abd56822f8d39beedd6cb5d_1a1da15eba3abd56822f8d39beedd6cb5d" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::print</definition>
+        <argsstring>() const</argsstring>
+        <name>print</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="391" column="19" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="391" bodyend="394"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="classsysio_1_1string_a91fd184cf0f9333c217130cebd4d7876_1a91fd184cf0f9333c217130cebd4d7876" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator&lt;</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&lt;</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="396" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="427" bodyend="439"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1string_abf763aa94a8644b190f43d6b026893a2_1abf763aa94a8644b190f43d6b026893a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator&gt;</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&gt;</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="397" column="19" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="441" bodyend="443"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1string_a45321af08ebc945f2036e4208f6a3897_1a45321af08ebc945f2036e4208f6a3897" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator&lt;=</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&lt;=</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="398" column="14" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="445" bodyend="447"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1string_a3d90c57bde93934ad912b1078a70b3e4_1a3d90c57bde93934ad912b1078a70b3e4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator&gt;=</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&gt;=</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="399" column="19" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="449" bodyend="451"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1string_a747feeacef8c26d89dafe7a9e32e2439_1a747feeacef8c26d89dafe7a9e32e2439" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator==</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator==</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="400" column="19" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="453" bodyend="455"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1string_ab8b27a889dc5ffef4a9cc7a1d1905b9c_1ab8b27a889dc5ffef4a9cc7a1d1905b9c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator!=</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator!=</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="401" column="19" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="457" bodyend="459"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1string_afea8d616a05e9815f57ad6b9740f846f_1afea8d616a05e9815f57ad6b9740f846f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref></type>
+        <definition>string operator+</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator+</name>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="403" column="21" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="461" bodyend="465"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-func">
+      <memberdef kind="function" id="classsysio_1_1string_1aaf67e9de819d34a35b285af96597475d" prot="private" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::string::clone</definition>
+        <argsstring>(size_t size, size_t capacity, const char *str)</argsstring>
+        <name>clone</name>
+        <param>
+          <type>size_t</type>
+          <declname>size</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>capacity</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="413" column="12" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="413" bodyend="420"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1string_1a955c410298c3e6c1eb61328103ff8c9c" prot="private" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr bool</type>
+        <definition>constexpr bool sysio::string::is_literal</definition>
+        <argsstring>() const</argsstring>
+        <name>is_literal</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="422" column="22" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="422" bodyend="424"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/string.hpp" line="19" column="4" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="19" bodyend="425"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1string_1acc627996daa8999a5859bb268a272fef" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>_begin</name></member>
+      <member refid="classsysio_1_1string_1ab898be25db8e93283b3a2194cc3faf72" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>_capacity</name></member>
+      <member refid="classsysio_1_1string_1a707debb1e687f0650dd3b4bc5b35c101" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>_size</name></member>
+      <member refid="classsysio_1_1string_a4136487f4d8511c51b20357a05fece81_1a4136487f4d8511c51b20357a05fece81" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>append</name></member>
+      <member refid="classsysio_1_1string_aadc2e47328c342c451715d939e379bbb_1aadc2e47328c342c451715d939e379bbb" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>append</name></member>
+      <member refid="classsysio_1_1string_af9d53afddc35e25278d2be23b1589d7d_1af9d53afddc35e25278d2be23b1589d7d" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>at</name></member>
+      <member refid="classsysio_1_1string_a1a6c90c6c359df6aa7ed3284bf48dd5a_1a1a6c90c6c359df6aa7ed3284bf48dd5a" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>at</name></member>
+      <member refid="classsysio_1_1string_a748f3c94ae4c17b0c4c4732e06df013b_1a748f3c94ae4c17b0c4c4732e06df013b" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>back</name></member>
+      <member refid="classsysio_1_1string_a4b3684f1b4e58399f46bdea6e78703ff_1a4b3684f1b4e58399f46bdea6e78703ff" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>back</name></member>
+      <member refid="classsysio_1_1string_ad9f28ff70878055410aaf549160b1e30_1ad9f28ff70878055410aaf549160b1e30" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>begin</name></member>
+      <member refid="classsysio_1_1string_a4ffcb0e955c9cf6ca093713f37b37dd7_1a4ffcb0e955c9cf6ca093713f37b37dd7" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>c_str</name></member>
+      <member refid="classsysio_1_1string_a1b3fc36ba39eebcb791c67bbe7750f85_1a1b3fc36ba39eebcb791c67bbe7750f85" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>capacity</name></member>
+      <member refid="classsysio_1_1string_aea260d3f76852e9e6d1c8b9dcead1dd0_1aea260d3f76852e9e6d1c8b9dcead1dd0" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>cbegin</name></member>
+      <member refid="classsysio_1_1string_abd085dfc1a5cd1fa4322a3a485ca59c5_1abd085dfc1a5cd1fa4322a3a485ca59c5" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>cend</name></member>
+      <member refid="classsysio_1_1string_a2a9e10b967b5080b1a2689cd78fa9005_1a2a9e10b967b5080b1a2689cd78fa9005" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>clear</name></member>
+      <member refid="classsysio_1_1string_1aaf67e9de819d34a35b285af96597475d" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>clone</name></member>
+      <member refid="classsysio_1_1string_a9ed94e005844f7ebd8a605105e4b59ec_1a9ed94e005844f7ebd8a605105e4b59ec" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>copy</name></member>
+      <member refid="classsysio_1_1string_a35c739e4118946c9969a6178ec52816f_1a35c739e4118946c9969a6178ec52816f" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>data</name></member>
+      <member refid="classsysio_1_1string_ae0a48ef4589d0cabf387a29ff5629c58_1ae0a48ef4589d0cabf387a29ff5629c58" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>data</name></member>
+      <member refid="classsysio_1_1string_a018c58227e4e2e9342c8a397a97aa354_1a018c58227e4e2e9342c8a397a97aa354" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>empty</name></member>
+      <member refid="classsysio_1_1string_a6d1c694515583435ef16b0cbc28d7901_1a6d1c694515583435ef16b0cbc28d7901" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>end</name></member>
+      <member refid="classsysio_1_1string_a34aefa533e9c847c44f083bb161bf8e9_1a34aefa533e9c847c44f083bb161bf8e9" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>erase</name></member>
+      <member refid="classsysio_1_1string_a26fc6cea509d045e3b3a559c7e63b599_1a26fc6cea509d045e3b3a559c7e63b599" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>front</name></member>
+      <member refid="classsysio_1_1string_a54c682507f6b5af7e04de09e76de447c_1a54c682507f6b5af7e04de09e76de447c" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>front</name></member>
+      <member refid="classsysio_1_1string_a491d3b2b06c8ea7498ca4672f9b8e8d7_1a491d3b2b06c8ea7498ca4672f9b8e8d7" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>insert</name></member>
+      <member refid="classsysio_1_1string_a3a81ad9a66c8332ecefe85cd5250441f_1a3a81ad9a66c8332ecefe85cd5250441f" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>insert</name></member>
+      <member refid="classsysio_1_1string_a56a9afe229a40b57c8fc31c005407d87_1a56a9afe229a40b57c8fc31c005407d87" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>insert</name></member>
+      <member refid="classsysio_1_1string_1a955c410298c3e6c1eb61328103ff8c9c" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>is_literal</name></member>
+      <member refid="classsysio_1_1string_a6be8e92f5d2b71ba0a2a9edce307208d_1a6be8e92f5d2b71ba0a2a9edce307208d" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>length</name></member>
+      <member refid="classsysio_1_1string_ac1e174b238e7ea0b2f2f3e213ba44dc7_1ac1e174b238e7ea0b2f2f3e213ba44dc7" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>max_size</name></member>
+      <member refid="classsysio_1_1string_aaa4afb5dc01a0d1042f84df180c55784_1aaa4afb5dc01a0d1042f84df180c55784" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>npos</name></member>
+      <member refid="classsysio_1_1string_ab8b27a889dc5ffef4a9cc7a1d1905b9c_1ab8b27a889dc5ffef4a9cc7a1d1905b9c" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator!=</name></member>
+      <member refid="classsysio_1_1string_afea8d616a05e9815f57ad6b9740f846f_1afea8d616a05e9815f57ad6b9740f846f" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator+</name></member>
+      <member refid="classsysio_1_1string_aae9266cc44ebabc427d7f337e91c2209_1aae9266cc44ebabc427d7f337e91c2209" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator+=</name></member>
+      <member refid="classsysio_1_1string_abb038f8d7ed19c186b3652fc2ef83922_1abb038f8d7ed19c186b3652fc2ef83922" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator+=</name></member>
+      <member refid="classsysio_1_1string_a52064c7565fa59e1457a904b57786cb0_1a52064c7565fa59e1457a904b57786cb0" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator+=</name></member>
+      <member refid="classsysio_1_1string_a91fd184cf0f9333c217130cebd4d7876_1a91fd184cf0f9333c217130cebd4d7876" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator&lt;</name></member>
+      <member refid="classsysio_1_1string_a45321af08ebc945f2036e4208f6a3897_1a45321af08ebc945f2036e4208f6a3897" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator&lt;=</name></member>
+      <member refid="classsysio_1_1string_ad6c0c2754461b8fa3e2c19b0f8984a24_1ad6c0c2754461b8fa3e2c19b0f8984a24" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator=</name></member>
+      <member refid="classsysio_1_1string_a905f7a9cc463abfbd73cf8a6d0372900_1a905f7a9cc463abfbd73cf8a6d0372900" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator=</name></member>
+      <member refid="classsysio_1_1string_a6c552ea0311a5088944a9cda41b81585_1a6c552ea0311a5088944a9cda41b81585" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator=</name></member>
+      <member refid="classsysio_1_1string_a747feeacef8c26d89dafe7a9e32e2439_1a747feeacef8c26d89dafe7a9e32e2439" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator==</name></member>
+      <member refid="classsysio_1_1string_abf763aa94a8644b190f43d6b026893a2_1abf763aa94a8644b190f43d6b026893a2" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator&gt;</name></member>
+      <member refid="classsysio_1_1string_a3d90c57bde93934ad912b1078a70b3e4_1a3d90c57bde93934ad912b1078a70b3e4" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator&gt;=</name></member>
+      <member refid="classsysio_1_1string_ac7bc648c4abb2b37c341516026f8891c_1ac7bc648c4abb2b37c341516026f8891c" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator[]</name></member>
+      <member refid="classsysio_1_1string_a821e280192d33c1f67e76a47b2f0077e_1a821e280192d33c1f67e76a47b2f0077e" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>operator[]</name></member>
+      <member refid="classsysio_1_1string_a0c60f0a9ec0a252298b4a8dac7e2042f_1a0c60f0a9ec0a252298b4a8dac7e2042f" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>pop_back</name></member>
+      <member refid="classsysio_1_1string_a1da15eba3abd56822f8d39beedd6cb5d_1a1da15eba3abd56822f8d39beedd6cb5d" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>print</name></member>
+      <member refid="classsysio_1_1string_a09f6dc815a6fcb0b677eff4a7420178c_1a09f6dc815a6fcb0b677eff4a7420178c" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>push_back</name></member>
+      <member refid="classsysio_1_1string_a67eea1b3d744e10abda448401e3eb0c5_1a67eea1b3d744e10abda448401e3eb0c5" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>reserve</name></member>
+      <member refid="classsysio_1_1string_a43ba9d2306622b8b28656b1f57bd961a_1a43ba9d2306622b8b28656b1f57bd961a" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>resize</name></member>
+      <member refid="classsysio_1_1string_abac4ba696ca0aa09d75a68bec3640bd7_1abac4ba696ca0aa09d75a68bec3640bd7" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>shrink_to_fit</name></member>
+      <member refid="classsysio_1_1string_a897d01d3234496117b6bfd8711741a86_1a897d01d3234496117b6bfd8711741a86" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>size</name></member>
+      <member refid="classsysio_1_1string_1a7337f6fdd0271b1f15e841078a04d762" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>sso_str</name></member>
+      <member refid="classsysio_1_1string_afdd8ea3566f29b1d2df582dc4ffc01e4_1afdd8ea3566f29b1d2df582dc4ffc01e4" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_aaf612b885970fffb95ea800f154e199c_1aaf612b885970fffb95ea800f154e199c" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_ab92bd03251c6796aa9cdb5629313280e_1ab92bd03251c6796aa9cdb5629313280e" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_aae7d9fcc6a98c68d22f072a1102d6432_1aae7d9fcc6a98c68d22f072a1102d6432" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_ac1d3d96fb393626217c38361eaf07a32_1ac1d3d96fb393626217c38361eaf07a32" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_a4257156c49703a24760772086c878aa1_1a4257156c49703a24760772086c878aa1" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_a87511268f83e1f4d266e20cca8766614_1a87511268f83e1f4d266e20cca8766614" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>string</name></member>
+      <member refid="classsysio_1_1string_a18b0da369cb70e3cdcd6003d7764b556_1a18b0da369cb70e3cdcd6003d7764b556" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>substr</name></member>
+      <member refid="classsysio_1_1string_ad32c97891581e9ef14a60c2e476d8f00_1ad32c97891581e9ef14a60c2e476d8f00" prot="public" virt="non-virtual"><scope>sysio::string</scope><name>swap</name></member>
+      <member refid="classsysio_1_1string_1acf1ed37b0e45e770d6192aff1b2739ba" prot="private" virt="non-virtual"><scope>sysio::string</scope><name>uptr</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

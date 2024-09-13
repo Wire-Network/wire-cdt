@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1ignore__wrapper" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::ignore_wrapper</compoundname>
+    <includes refid="ignore_8hpp" local="no">ignore.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1ignore__wrapper_a3266ad427b28180e16901309c6b5818b_1a3266ad427b28180e16901309c6b5818b" prot="public" static="no" mutable="no">
+        <type>T</type>
+        <definition>T sysio::ignore_wrapper&lt; T &gt;::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="33" column="9" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="33" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1ignore__wrapper_abda68d986b6a9faf66485eec75e4c598_1abda68d986b6a9faf66485eec75e4c598" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::ignore_wrapper&lt; T &gt;::ignore_wrapper</definition>
+        <argsstring>()</argsstring>
+        <name>ignore_wrapper</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="27" column="17" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="27" bodyend="27"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ignore__wrapper_a57135a00fadd2ae8fa49988e02f2b5c3_1a57135a00fadd2ae8fa49988e02f2b5c3" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::ignore_wrapper&lt; T &gt;::ignore_wrapper</definition>
+        <argsstring>(T val)</argsstring>
+        <name>ignore_wrapper</name>
+        <param>
+          <type>T</type>
+          <declname>val</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="28" column="17" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="28" bodyend="28"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ignore__wrapper_abb2dd9bed012456e7a82ec363a1f2309_1abb2dd9bed012456e7a82ec363a1f2309" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::ignore_wrapper&lt; T &gt;::ignore_wrapper</definition>
+        <argsstring>(ignore&lt; T &gt; val)</argsstring>
+        <name>ignore_wrapper</name>
+        <param>
+          <type><ref refid="structsysio_1_1ignore" kindref="compound">ignore</ref>&lt; T &gt;</type>
+          <declname>val</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="29" column="17" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="29" bodyend="29"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ignore__wrapper_a42bf22f0b0404151300f7fd2529334fc_1a42bf22f0b0404151300f7fd2529334fc" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr T</type>
+        <definition>constexpr T sysio::ignore_wrapper&lt; T &gt;::get</definition>
+        <argsstring>()</argsstring>
+        <name>get</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="30" column="26" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="30" bodyend="30"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ignore__wrapper_aa726de7bd12d61264f71ac963cbb15b5_1aa726de7bd12d61264f71ac963cbb15b5" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::ignore_wrapper&lt; T &gt;::operator T</definition>
+        <argsstring>()</argsstring>
+        <name>operator T</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="31" column="17" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="31" bodyend="31"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ignore__wrapper_acefbfb9b2560568f9fbb8a80d4939f69_1acefbfb9b2560568f9fbb8a80d4939f69" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>constexpr sysio::ignore_wrapper&lt; T &gt;::operator ignore&lt; T &gt;</definition>
+        <argsstring>()</argsstring>
+        <name>operator ignore&lt; T &gt;</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="32" column="17" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="32" bodyend="32"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Wrapper class to allow sending inline actions with the correct payload </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="26" column="4" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="26" bodyend="34"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1ignore__wrapper_a42bf22f0b0404151300f7fd2529334fc_1a42bf22f0b0404151300f7fd2529334fc" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>get</name></member>
+      <member refid="structsysio_1_1ignore__wrapper_abda68d986b6a9faf66485eec75e4c598_1abda68d986b6a9faf66485eec75e4c598" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>ignore_wrapper</name></member>
+      <member refid="structsysio_1_1ignore__wrapper_a57135a00fadd2ae8fa49988e02f2b5c3_1a57135a00fadd2ae8fa49988e02f2b5c3" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>ignore_wrapper</name></member>
+      <member refid="structsysio_1_1ignore__wrapper_abb2dd9bed012456e7a82ec363a1f2309_1abb2dd9bed012456e7a82ec363a1f2309" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>ignore_wrapper</name></member>
+      <member refid="structsysio_1_1ignore__wrapper_acefbfb9b2560568f9fbb8a80d4939f69_1acefbfb9b2560568f9fbb8a80d4939f69" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>operator ignore&lt; T &gt;</name></member>
+      <member refid="structsysio_1_1ignore__wrapper_aa726de7bd12d61264f71ac963cbb15b5_1aa726de7bd12d61264f71ac963cbb15b5" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>operator T</name></member>
+      <member refid="structsysio_1_1ignore__wrapper_a3266ad427b28180e16901309c6b5818b_1a3266ad427b28180e16901309c6b5818b" prot="public" virt="non-virtual"><scope>sysio::ignore_wrapper</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="dir_bc5e279e9eced4f1e01ab7856f3701ba" kind="dir">
+    <compoundname>libraries/sysiolib</compoundname>
+    <innerdir refid="dir_045d9ce8c81eb20abdfe47832097891b">libraries/sysiolib/contracts</innerdir>
+    <innerdir refid="dir_feee2a546b193058287448e248ebdcef">libraries/sysiolib/core</innerdir>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/"/>
+  </compounddef>
+</doxygen>

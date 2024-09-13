@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__core" kind="group">
+    <compoundname>core</compoundname>
+    <title>Core API</title>
+    <innergroup refid="group__asset">Asset</innergroup>
+    <innergroup refid="group__binary__extension">Binary Extension</innergroup>
+    <innergroup refid="group__system">System</innergroup>
+    <innergroup refid="group__crypto">Crypto</innergroup>
+    <innergroup refid="group__datastream">Data Stream</innergroup>
+    <innergroup refid="group__fixed__bytes">Fixed Size Byte Array</innergroup>
+    <innergroup refid="group__ignore">Ignore</innergroup>
+    <innergroup refid="group__name">Name</innergroup>
+    <innergroup refid="group__console">Console</innergroup>
+    <innergroup refid="group__serialize">Serialize</innergroup>
+    <innergroup refid="group__symbol">Symbol</innergroup>
+    <innergroup refid="group__time">Time</innergroup>
+    <innergroup refid="group__varint">Variable Length Integer Type</innergroup>
+    <briefdescription>
+<para>C++ Core API for chain-agnostic smart-contract functionality. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

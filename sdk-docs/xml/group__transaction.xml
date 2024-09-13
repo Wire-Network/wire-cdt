@@ -1,0 +1,372 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="group__transaction" kind="group">
+    <compoundname>transaction</compoundname>
+    <title>Transaction</title>
+    <innerclass refid="classsysio_1_1transaction__header" prot="public">sysio::transaction_header</innerclass>
+    <innerclass refid="classsysio_1_1transaction" prot="public">sysio::transaction</innerclass>
+    <innerclass refid="structsysio_1_1onerror" prot="public">sysio::onerror</innerclass>
+      <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="group__transaction_1gaea468d1540eb797bbf89e247e44af21e" prot="public" static="no">
+        <type>std::tuple&lt; uint16_t, std::vector&lt; char &gt; &gt;</type>
+        <definition>typedef std::tuple&lt;uint16_t, std::vector&lt;char&gt; &gt; sysio::extension</definition>
+        <argsstring></argsstring>
+        <name>extension</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="68" column="23" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="68" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="group__transaction_1ga0e713744cc029ccaa6db4018766969a1" prot="public" static="no">
+        <type>std::vector&lt; extension &gt;</type>
+        <definition>typedef std::vector&lt;extension&gt; sysio::extensions_type</definition>
+        <argsstring></argsstring>
+        <name>extensions_type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="73" column="24" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="73" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__transaction_1gac92df793654a0b0efbe8d35fd368dc4d" prot="public" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>onerror</type>
+        <definition>static onerror sysio::onerror::from_current_action</definition>
+        <argsstring>()</argsstring>
+        <name>from_current_action</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>from_current_action unpacks and returns a onerror struct </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="151" column="22" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="151" bodyend="153"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gaac121ad3e7c952c4b04c12f8bfcc29c3" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::send_deferred</definition>
+        <argsstring>(const uint128_t &amp;sender_id, name payer, const char *serialized_transaction, size_t size, bool replace=false)</argsstring>
+        <name>send_deferred</name>
+        <param>
+          <type>const uint128_t &amp;</type>
+          <declname>sender_id</declname>
+        </param>
+        <param>
+          <type>name</type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>serialized_transaction</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>size</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>replace</declname>
+          <defval>false</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Send a deferred transaction</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>sender_id</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Account name of the sender of this deferred transaction </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>payer</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Account name responsible for paying the RAM for this deferred transaction </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>serialized_transaction</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The packed transaction to be deferred </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The size of the packed transaction, required for persistence. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>replace</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- If true, will replace an existing transaction. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="175" column="16" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="175" bodyend="177"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1ga5cb1f314e639ee0d5d0bd59f51b2229e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>action</type>
+        <definition>action sysio::get_action</definition>
+        <argsstring>(uint32_t type, uint32_t index)</argsstring>
+        <name>get_action</name>
+        <param>
+          <type>uint32_t</type>
+          <declname>type</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>index</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Retrieve the indicated action from the active transaction.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>type</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- 0 for context free action, 1 for action </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>index</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the index of the requested action </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the indicated action </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="186" column="18" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="186" bodyend="195"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gadc099e4301c8682be070211a094ad66c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::read_transaction</definition>
+        <argsstring>(char *ptr, size_t sz)</argsstring>
+        <name>read_transaction</name>
+        <param>
+          <type>char *</type>
+          <declname>ptr</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>sz</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Access a copy of the currently executing transaction.</para>
+<para><simplesect kind="return"><para>the currently executing transaction </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="203" column="18" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="203" bodyend="205"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gadc1dc4e5e52f1c12f37eb02d8783a47f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int</type>
+        <definition>int sysio::cancel_deferred</definition>
+        <argsstring>(const uint128_t &amp;sender_id)</argsstring>
+        <name>cancel_deferred</name>
+        <param>
+          <type>const uint128_t &amp;</type>
+          <declname>sender_id</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Cancels a deferred transaction.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>sender_id</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The id of the sender</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>The deferred transaction ID exists. </para>
+</simplesect>
+<simplesect kind="pre"><para>The deferred transaction ID has not yet been published. </para>
+</simplesect>
+<simplesect kind="post"><para>Deferred transaction canceled.</para>
+</simplesect>
+<simplesect kind="return"><para>1 if transaction was canceled, 0 if transaction was not found</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="normal">id<sp/>=<sp/>0xffffffffffffffff</highlight></codeline>
+<codeline><highlight class="normal">cancel_deferred(<sp/>id<sp/>);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="226" column="15" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="226" bodyend="228"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gafbd3369e48c587ede72b918fe36e2a52" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::transaction_size</definition>
+        <argsstring>()</argsstring>
+        <name>transaction_size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Gets the size of the currently executing transaction.</para>
+<para><simplesect kind="return"><para>size of the currently executing transaction </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="236" column="18" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="236" bodyend="238"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gae23a5dae01630e656c5972f3812438dc" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int</type>
+        <definition>int sysio::tapos_block_num</definition>
+        <argsstring>()</argsstring>
+        <name>tapos_block_num</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Gets the block number used for TAPOS on the currently executing transaction.</para>
+<para><simplesect kind="return"><para>block number used for TAPOS on the currently executing transaction Example: <programlisting><codeline><highlight class="normal">int<sp/>tbn<sp/>=<sp/>tapos_block_num();</highlight></codeline>
+</programlisting> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="250" column="15" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="250" bodyend="252"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gafc9b5c3111cd62bce49b3f32942472b2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int</type>
+        <definition>int sysio::tapos_block_prefix</definition>
+        <argsstring>()</argsstring>
+        <name>tapos_block_prefix</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Gets the block prefix used for TAPOS on the currently executing transaction.</para>
+<para><simplesect kind="return"><para>block prefix used for TAPOS on the currently executing transaction Example: <programlisting><codeline><highlight class="normal">int<sp/>tbp<sp/>=<sp/>tapos_block_prefix();</highlight></codeline>
+</programlisting> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="264" column="15" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="264" bodyend="266"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1ga9ba8258ea769264b95abd46081a501a6" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::expiration</definition>
+        <argsstring>()</argsstring>
+        <name>expiration</name>
+        <briefdescription>
+<para>Gets the expiration of the currently executing transaction. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Gets the expiration of the currently executing transaction.</para>
+<para><simplesect kind="return"><para>expiration of the currently executing transaction in seconds since Unix epoch </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="275" column="20" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="275" bodyend="277"/>
+      </memberdef>
+      <memberdef kind="function" id="group__transaction_1gaef211984436ac3d7d0eaabb647b0dab0" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int</type>
+        <definition>int sysio::get_context_free_data</definition>
+        <argsstring>(uint32_t index, char *buff, size_t size)</argsstring>
+        <name>get_context_free_data</name>
+        <param>
+          <type>uint32_t</type>
+          <declname>index</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>buff</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>size</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Retrieve the signed_transaction.context_free_data[index].</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>index</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the index of the context_free_data entry to retrieve </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>buff</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- output buff of the context_free_data entry </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- amount of context_free_data[index] to retrieve into buff, 0 to report required size </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>size copied, or context_free_data[index].<ref refid="namespacesysio_1_1internal__use__do__not__use_a559456a47e2a0a9cc4bf093662e53d31_1a559456a47e2a0a9cc4bf093662e53d31" kindref="member">size()</ref> if 0 passed for size, or -1 if index not valid </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="288" column="15" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="288" bodyend="290"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Type-safe C++ wrappers for transaction C API. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>An inline message allows one contract to send another contract a message which is processed immediately after the current message&apos;s processing ends such that the success or failure of the parent transaction is dependent on the success of the message. If an inline message fails in processing then the whole tree of transactions and actions rooted in the block will me marked as failing and none of effects on the database will persist.</para>
+<para>Inline actions and Deferred transactions must adhere to the permissions available to the parent transaction or, in the future, delegated to the contract account for future use.</para>
+<para><simplesect kind="note"><para>There are some methods from the transactioncapi that can be used directly from C++ </para>
+</simplesect>
+</para>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

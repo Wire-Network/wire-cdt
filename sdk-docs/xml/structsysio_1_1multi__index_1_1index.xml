@@ -1,0 +1,694 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1multi__index_1_1index" kind="struct" language="C++" prot="private">
+    <compoundname>sysio::multi_index::index</compoundname>
+    <innerclass refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" prot="public">sysio::multi_index::index::const_iterator</innerclass>
+    <templateparamlist>
+      <param>
+        <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+        <declname>IndexName</declname>
+        <defname>IndexName</defname>
+      </param>
+      <param>
+        <type>typename Extractor</type>
+      </param>
+      <param>
+        <type>uint64_t</type>
+        <declname>Number</declname>
+        <defname>Number</defname>
+      </param>
+      <param>
+        <type>bool</type>
+        <declname>IsConst</declname>
+        <defname>IsConst</defname>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="public-type">
+      <memberdef kind="enum" id="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312" prot="public" static="no" strong="no">
+        <type></type>
+        <name>constants</name>
+        <enumvalue id="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ae1591537c219343eaf605fbb0035628d" prot="public">
+          <name>table_name</name>
+          <initializer>= static_cast&lt;uint64_t&gt;(TableName)</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ab8e7b01cf8ea74d8c1b41311e5498188" prot="public">
+          <name>index_name</name>
+          <initializer>= static_cast&lt;uint64_t&gt;(IndexName)</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ae093d80a48b28722540883bd866848ca" prot="public">
+          <name>index_number</name>
+          <initializer>= Number</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312a0f1e0709b468bc40dcae27b0a8998eab" prot="public">
+          <name>index_table_name</name>
+          <initializer>= (static_cast&lt;uint64_t&gt;(TableName) &amp; 0xFFFFFFFFFFFFFFF0ULL)
+                                    | (Number &amp; 0x000000000000000FULL)</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="497" column="13" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="497" bodyend="503"/>
+      </memberdef>
+      <memberdef kind="typedef" id="structsysio_1_1multi__index_1_1index_a98409e5bf6c5fea84ac773c18bd98006_1a98409e5bf6c5fea84ac773c18bd98006" prot="public" static="no">
+        <type>Extractor</type>
+        <definition>typedef Extractor sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::secondary_extractor_type</definition>
+        <argsstring></argsstring>
+        <name>secondary_extractor_type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="488" column="32" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="488" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="structsysio_1_1multi__index_1_1index_a51418af730662b740c109efdbbe9a10c_1a51418af730662b740c109efdbbe9a10c" prot="public" static="no">
+        <type>std::decay&lt; decltype(Extractor()(nullptr))&gt;::type</type>
+        <definition>typedef std::decay&lt;decltype( Extractor()(nullptr) )&gt;::type sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::secondary_key_type</definition>
+        <argsstring></argsstring>
+        <name>secondary_key_type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="489" column="48" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="489" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="structsysio_1_1multi__index_1_1index_a7676f9318ba61b6d002e65153b9e88ba_1a7676f9318ba61b6d002e65153b9e88ba" prot="public" static="no">
+        <type>std::reverse_iterator&lt; <ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref> &gt;</type>
+        <definition>typedef std::reverse_iterator&lt;const_iterator&gt; sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::const_reverse_iterator</definition>
+        <argsstring></argsstring>
+        <name>const_reverse_iterator</name>
+        <briefdescription>
+<para>struct <ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">multi_index::index::const_iterator</ref> </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="599" column="43" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="599" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="structsysio_1_1multi__index_1_1index_a474ad2ee1333aa717a29bb55a9d5fc44_1a474ad2ee1333aa717a29bb55a9d5fc44" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class multi_index</definition>
+        <argsstring></argsstring>
+        <name>multi_index</name>
+        <param>
+          <type><ref refid="classsysio_1_1multi__index" kindref="compound">multi_index</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="752" column="13" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="752" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="structsysio_1_1multi__index_1_1index_1a22e672bd7a993ae1f1d968d872e5e49d" prot="private" static="no" mutable="no">
+        <type>std::conditional&lt; IsConst, const <ref refid="classsysio_1_1multi__index" kindref="compound">multi_index</ref> *, <ref refid="classsysio_1_1multi__index" kindref="compound">multi_index</ref> * &gt;::type</type>
+        <definition>std::conditional&lt;IsConst, const multi_index*, multi_index*&gt;::type sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::_multidx</definition>
+        <argsstring></argsstring>
+        <name>_multidx</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="757" column="46" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="757" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a70155c2b001c422111af0dbc8e13b2f3_1a70155c2b001c422111af0dbc8e13b2f3" prot="public" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr static bool</type>
+        <definition>constexpr static bool sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::validate_index_name</definition>
+        <argsstring>(sysio::name n)</argsstring>
+        <name>validate_index_name</name>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="491" column="35" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="491" bodyend="493"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a5b510beb4f1fb9ac3ee3e020df2806b9_1a5b510beb4f1fb9ac3ee3e020df2806b9" prot="public" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr static uint64_t</type>
+        <definition>constexpr static uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::name</definition>
+        <argsstring>()</argsstring>
+        <name>name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="505" column="39" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="505" bodyend="505"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_acfb2dd237ee5e6e76894159a199fd617_1acfb2dd237ee5e6e76894159a199fd617" prot="public" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr static uint64_t</type>
+        <definition>constexpr static uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::number</definition>
+        <argsstring>()</argsstring>
+        <name>number</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="506" column="39" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="506" bodyend="506"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a61228c36c637079f63ae83c3dba20454_1a61228c36c637079f63ae83c3dba20454" prot="public" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>auto</type>
+        <definition>static auto sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::extract_secondary_key</definition>
+        <argsstring>(const T &amp;obj)</argsstring>
+        <name>extract_secondary_key</name>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="749" column="25" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="749" bodyend="749"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_aa2be3cc1f208e3d24fbd73df9916236f_1aa2be3cc1f208e3d24fbd73df9916236f" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::cbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>cbegin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="601" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="601" bodyend="604"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a2d95954ec3f07d4f981356d9bedf4842_1a2d95954ec3f07d4f981356d9bedf4842" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::begin</definition>
+        <argsstring>() const</argsstring>
+        <name>begin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="605" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="605" bodyend="605"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_aae3652f49e9f5c744d51c67869161cc2_1aae3652f49e9f5c744d51c67869161cc2" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::cend</definition>
+        <argsstring>() const</argsstring>
+        <name>cend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="607" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="607" bodyend="607"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a7a26156399f193bdeb55f652f6492831_1a7a26156399f193bdeb55f652f6492831" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::end</definition>
+        <argsstring>() const</argsstring>
+        <name>end</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="608" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="608" bodyend="608"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a57c62c7f79ce7daa8950a18cf6480ce9_1a57c62c7f79ce7daa8950a18cf6480ce9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1multi__index_a532030cff20c0f3d7f2beb8accbc047d_1a532030cff20c0f3d7f2beb8accbc047d" kindref="member">const_reverse_iterator</ref></type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::crbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>crbegin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="610" column="36" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="610" bodyend="610"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a326f64c0ea8465b26892e3bf772ad66d_1a326f64c0ea8465b26892e3bf772ad66d" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1multi__index_a532030cff20c0f3d7f2beb8accbc047d_1a532030cff20c0f3d7f2beb8accbc047d" kindref="member">const_reverse_iterator</ref></type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::rbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>rbegin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="611" column="36" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="611" bodyend="611"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a407fe8bf106adfd870a49317a5598249_1a407fe8bf106adfd870a49317a5598249" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1multi__index_a532030cff20c0f3d7f2beb8accbc047d_1a532030cff20c0f3d7f2beb8accbc047d" kindref="member">const_reverse_iterator</ref></type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::crend</definition>
+        <argsstring>() const</argsstring>
+        <name>crend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="613" column="36" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="613" bodyend="613"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a612eb999d4bfd8b28d6b681e715abf05_1a612eb999d4bfd8b28d6b681e715abf05" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1multi__index_a532030cff20c0f3d7f2beb8accbc047d_1a532030cff20c0f3d7f2beb8accbc047d" kindref="member">const_reverse_iterator</ref></type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::rend</definition>
+        <argsstring>() const</argsstring>
+        <name>rend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="614" column="36" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="614" bodyend="614"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_aa0c2d4dc636cb514461b98060601c28d_1aa0c2d4dc636cb514461b98060601c28d" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::find</definition>
+        <argsstring>(secondary_key_type &amp;&amp;secondary) const</argsstring>
+        <name>find</name>
+        <param>
+          <type>secondary_key_type &amp;&amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="616" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="616" bodyend="618"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_ade2af5e6387b8bf90a8d9228df2be118_1ade2af5e6387b8bf90a8d9228df2be118" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::find</definition>
+        <argsstring>(const secondary_key_type &amp;secondary) const</argsstring>
+        <name>find</name>
+        <param>
+          <type>const secondary_key_type &amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="620" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="620" bodyend="628"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a8b869f1fd50fdb2abc9c23a43b33c8c7_1a8b869f1fd50fdb2abc9c23a43b33c8c7" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::require_find</definition>
+        <argsstring>(secondary_key_type &amp;&amp;secondary, const char *error_msg=&quot;unable to find secondary key&quot;) const</argsstring>
+        <name>require_find</name>
+        <param>
+          <type>secondary_key_type &amp;&amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>error_msg</declname>
+          <defval>&quot;unable to <ref refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" kindref="member">find</ref> secondary key&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="630" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="630" bodyend="632"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a9184a62d273a84ebf3501a390e45a280_1a9184a62d273a84ebf3501a390e45a280" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::require_find</definition>
+        <argsstring>(const secondary_key_type &amp;secondary, const char *error_msg=&quot;unable to find secondary key&quot;) const</argsstring>
+        <name>require_find</name>
+        <param>
+          <type>const secondary_key_type &amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>error_msg</declname>
+          <defval>&quot;unable to <ref refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" kindref="member">find</ref> secondary key&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="634" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="634" bodyend="639"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a29d5fabf8b8c6fc401967143bcefe5e7_1a29d5fabf8b8c6fc401967143bcefe5e7" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const T &amp;</type>
+        <definition>const T&amp; sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::get</definition>
+        <argsstring>(secondary_key_type &amp;&amp;secondary, const char *error_msg=&quot;unable to find secondary key&quot;) const</argsstring>
+        <name>get</name>
+        <param>
+          <type>secondary_key_type &amp;&amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>error_msg</declname>
+          <defval>&quot;unable to <ref refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" kindref="member">find</ref> secondary key&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Gets the object with the smallest primary key in the case where the secondary key is not unique.</para>
+<para>Avoid the common pitfall of copy-assigning the T&amp; reference returned to a stack-allocated local variable and then passing that into modify of the multi-index. The most common mistake is when the local variable is defined as auto typename, instead it should be of type auto&amp; or decltype(auto). </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="649" column="21" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="649" bodyend="651"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_af774cb3588d673f538ba4fd45623adc6_1af774cb3588d673f538ba4fd45623adc6" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const T &amp;</type>
+        <definition>const T&amp; sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::get</definition>
+        <argsstring>(const secondary_key_type &amp;secondary, const char *error_msg=&quot;unable to find secondary key&quot;) const</argsstring>
+        <name>get</name>
+        <param>
+          <type>const secondary_key_type &amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>error_msg</declname>
+          <defval>&quot;unable to <ref refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" kindref="member">find</ref> secondary key&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Gets the object with the smallest primary key in the case where the secondary key is not unique.</para>
+<para>Avoid the common pitfall of copy-assigning the T&amp; reference returned to a stack-allocated local variable and then passing that into modify of the multi-index. The most common mistake is when the local variable is defined as auto typename, instead it should be of type auto&amp; or decltype(auto). </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="661" column="21" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="661" bodyend="665"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_acd74f85da2ec37bc9c10d2f502cc1c61_1acd74f85da2ec37bc9c10d2f502cc1c61" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::lower_bound</definition>
+        <argsstring>(secondary_key_type &amp;&amp;secondary) const</argsstring>
+        <name>lower_bound</name>
+        <param>
+          <type>secondary_key_type &amp;&amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="667" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="667" bodyend="669"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a1dcbd9dfcebeae20413446f85766ec24_1a1dcbd9dfcebeae20413446f85766ec24" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::lower_bound</definition>
+        <argsstring>(const secondary_key_type &amp;secondary) const</argsstring>
+        <name>lower_bound</name>
+        <param>
+          <type>const secondary_key_type &amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="670" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="670" bodyend="683"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_aa0e0765307d930126e041e4517816fe8_1aa0e0765307d930126e041e4517816fe8" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::upper_bound</definition>
+        <argsstring>(secondary_key_type &amp;&amp;secondary) const</argsstring>
+        <name>upper_bound</name>
+        <param>
+          <type>secondary_key_type &amp;&amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="685" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="685" bodyend="687"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a1962d3724962dc8b3a5d1f9436f43e04_1a1962d3724962dc8b3a5d1f9436f43e04" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::upper_bound</definition>
+        <argsstring>(const secondary_key_type &amp;secondary) const</argsstring>
+        <name>upper_bound</name>
+        <param>
+          <type>const secondary_key_type &amp;</type>
+          <declname>secondary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="688" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="688" bodyend="701"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a2072b55e641a2647d3f8e4b2b8c85f00_1a2072b55e641a2647d3f8e4b2b8c85f00" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::iterator_to</definition>
+        <argsstring>(const T &amp;obj)</argsstring>
+        <name>iterator_to</name>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Warning: the interator_to can have undefined behavior if the caller passes in a reference to a stack-allocated object rather than the reference returned by get or by dereferencing a <ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref>. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="707" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="707" bodyend="721"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a61714828302ae7bc7de95731e6f7a125_1a61714828302ae7bc7de95731e6f7a125" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Lambda</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::modify</definition>
+        <argsstring>(const_iterator itr, sysio::name payer, Lambda &amp;&amp;updater)</argsstring>
+        <name>modify</name>
+        <param>
+          <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+          <declname>itr</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>Lambda &amp;&amp;</type>
+          <declname>updater</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="724" column="18" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="724" bodyend="728"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a9529858acdd20a18d6a701b2733694b4_1a9529858acdd20a18d6a701b2733694b4" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Lambda</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::modify</definition>
+        <argsstring>(const T &amp;obj, sysio::name payer, Lambda &amp;&amp;updater)</argsstring>
+        <name>modify</name>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>Lambda &amp;&amp;</type>
+          <declname>updater</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="731" column="18" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="731" bodyend="733"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a25e03e204081638720167ec4591f9c2b_1a25e03e204081638720167ec4591f9c2b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::erase</definition>
+        <argsstring>(const_iterator itr)</argsstring>
+        <name>erase</name>
+        <param>
+          <type><ref refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" kindref="compound">const_iterator</ref></type>
+          <declname>itr</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="735" column="28" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="735" bodyend="744"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_acc4b886f69d1a4bddd24f1f7047fa5a9_1acc4b886f69d1a4bddd24f1f7047fa5a9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+        <definition>sysio::name sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::get_code</definition>
+        <argsstring>() const</argsstring>
+        <name>get_code</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="746" column="25" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="746" bodyend="746"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_a8a8fa2358897d2052e359ccef58c0f42_1a8a8fa2358897d2052e359ccef58c0f42" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::get_scope</definition>
+        <argsstring>() const</argsstring>
+        <name>get_scope</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="747" column="25" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="747" bodyend="747"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-func">
+      <memberdef kind="function" id="structsysio_1_1multi__index_1_1index_1a105ab85ccb30d647a6102166af37968d" prot="private" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::multi_index&lt; TableName, T, Indices &gt;::index&lt; IndexName, Extractor, Number, IsConst &gt;::index</definition>
+        <argsstring>(typename std::conditional&lt; IsConst, const multi_index *, multi_index * &gt;::type midx)</argsstring>
+        <name>index</name>
+        <param>
+          <type>typename std::conditional&lt; IsConst, const <ref refid="classsysio_1_1multi__index" kindref="compound">multi_index</ref> *, <ref refid="classsysio_1_1multi__index" kindref="compound">multi_index</ref> * &gt;::type</type>
+          <declname>midx</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="754" column="13" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="754" bodyend="755"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="486" column="7" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="486" bodyend="758"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1multi__index_1_1index_1a22e672bd7a993ae1f1d968d872e5e49d" prot="private" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>_multidx</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a2d95954ec3f07d4f981356d9bedf4842_1a2d95954ec3f07d4f981356d9bedf4842" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>begin</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_aa2be3cc1f208e3d24fbd73df9916236f_1aa2be3cc1f208e3d24fbd73df9916236f" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>cbegin</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_aae3652f49e9f5c744d51c67869161cc2_1aae3652f49e9f5c744d51c67869161cc2" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>cend</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a7676f9318ba61b6d002e65153b9e88ba_1a7676f9318ba61b6d002e65153b9e88ba" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>const_reverse_iterator</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>constants</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a57c62c7f79ce7daa8950a18cf6480ce9_1a57c62c7f79ce7daa8950a18cf6480ce9" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>crbegin</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a407fe8bf106adfd870a49317a5598249_1a407fe8bf106adfd870a49317a5598249" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>crend</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a7a26156399f193bdeb55f652f6492831_1a7a26156399f193bdeb55f652f6492831" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>end</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a25e03e204081638720167ec4591f9c2b_1a25e03e204081638720167ec4591f9c2b" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>erase</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a61228c36c637079f63ae83c3dba20454_1a61228c36c637079f63ae83c3dba20454" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>extract_secondary_key</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_aa0c2d4dc636cb514461b98060601c28d_1aa0c2d4dc636cb514461b98060601c28d" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>find</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_ade2af5e6387b8bf90a8d9228df2be118_1ade2af5e6387b8bf90a8d9228df2be118" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>find</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a29d5fabf8b8c6fc401967143bcefe5e7_1a29d5fabf8b8c6fc401967143bcefe5e7" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>get</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_af774cb3588d673f538ba4fd45623adc6_1af774cb3588d673f538ba4fd45623adc6" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>get</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_acc4b886f69d1a4bddd24f1f7047fa5a9_1acc4b886f69d1a4bddd24f1f7047fa5a9" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>get_code</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a8a8fa2358897d2052e359ccef58c0f42_1a8a8fa2358897d2052e359ccef58c0f42" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>get_scope</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_1a105ab85ccb30d647a6102166af37968d" prot="private" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>index</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ab8e7b01cf8ea74d8c1b41311e5498188" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>index_name</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ae093d80a48b28722540883bd866848ca" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>index_number</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312a0f1e0709b468bc40dcae27b0a8998eab" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>index_table_name</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a2072b55e641a2647d3f8e4b2b8c85f00_1a2072b55e641a2647d3f8e4b2b8c85f00" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>iterator_to</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_acd74f85da2ec37bc9c10d2f502cc1c61_1acd74f85da2ec37bc9c10d2f502cc1c61" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>lower_bound</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a1dcbd9dfcebeae20413446f85766ec24_1a1dcbd9dfcebeae20413446f85766ec24" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>lower_bound</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a61714828302ae7bc7de95731e6f7a125_1a61714828302ae7bc7de95731e6f7a125" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>modify</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a9529858acdd20a18d6a701b2733694b4_1a9529858acdd20a18d6a701b2733694b4" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>modify</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a474ad2ee1333aa717a29bb55a9d5fc44_1a474ad2ee1333aa717a29bb55a9d5fc44" prot="private" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>multi_index</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a5b510beb4f1fb9ac3ee3e020df2806b9_1a5b510beb4f1fb9ac3ee3e020df2806b9" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>name</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_acfb2dd237ee5e6e76894159a199fd617_1acfb2dd237ee5e6e76894159a199fd617" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>number</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a326f64c0ea8465b26892e3bf772ad66d_1a326f64c0ea8465b26892e3bf772ad66d" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>rbegin</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a612eb999d4bfd8b28d6b681e715abf05_1a612eb999d4bfd8b28d6b681e715abf05" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>rend</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a8b869f1fd50fdb2abc9c23a43b33c8c7_1a8b869f1fd50fdb2abc9c23a43b33c8c7" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>require_find</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a9184a62d273a84ebf3501a390e45a280_1a9184a62d273a84ebf3501a390e45a280" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>require_find</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a98409e5bf6c5fea84ac773c18bd98006_1a98409e5bf6c5fea84ac773c18bd98006" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>secondary_extractor_type</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a51418af730662b740c109efdbbe9a10c_1a51418af730662b740c109efdbbe9a10c" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>secondary_key_type</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a3e5afa4dd2425c73f9249114745b3312_1a3e5afa4dd2425c73f9249114745b3312ae1591537c219343eaf605fbb0035628d" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>table_name</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_aa0e0765307d930126e041e4517816fe8_1aa0e0765307d930126e041e4517816fe8" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>upper_bound</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a1962d3724962dc8b3a5d1f9436f43e04_1a1962d3724962dc8b3a5d1f9436f43e04" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>upper_bound</name></member>
+      <member refid="structsysio_1_1multi__index_1_1index_a70155c2b001c422111af0dbc8e13b2f3_1a70155c2b001c422111af0dbc8e13b2f3" prot="public" virt="non-virtual"><scope>sysio::multi_index::index</scope><name>validate_index_name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1block__signing__authority__v0" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::block_signing_authority_v0</compoundname>
+    <includes refid="producer__schedule_8hpp" local="no">producer_schedule.hpp</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1block__signing__authority__v0_afb5a95f90b2f14444816c2135f05da13_1afb5a95f90b2f14444816c2135f05da13" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::block_signing_authority_v0::threshold</definition>
+        <argsstring></argsstring>
+        <name>threshold</name>
+        <briefdescription>
+<para>minimum threshold of accumulated weights from component keys that satisfies this authority </para>
+        </briefdescription>
+        <detaileddescription>
+<para>minimum threshold of accumulated weights from component keys that satisfies this authority </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="117" column="35" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="117" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1block__signing__authority__v0_a34f4e76133b73e9e3ce128a5817a3ab3_1a34f4e76133b73e9e3ce128a5817a3ab3" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; <ref refid="structsysio_1_1key__weight" kindref="compound">key_weight</ref> &gt;</type>
+        <definition>std::vector&lt;key_weight&gt; sysio::block_signing_authority_v0::keys</definition>
+        <argsstring></argsstring>
+        <name>keys</name>
+        <briefdescription>
+<para>component keys and their associated weights </para>
+        </briefdescription>
+        <detaileddescription>
+<para>component keys and their associated weights </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="124" column="23" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="124" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1block__signing__authority__v0_a04fcdbfce87ce0f33bbbd3f906605e9d_1a04fcdbfce87ce0f33bbbd3f906605e9d" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::block_signing_authority_v0::is_valid</definition>
+        <argsstring>() const</argsstring>
+        <name>is_valid</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="126" column="12"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1block__signing__authority__v0_a733a5cc8381ddd2c39a87bdcb5d2042d_1a733a5cc8381ddd2c39a87bdcb5d2042d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::block_signing_authority_v0::CDT_REFLECT</definition>
+        <argsstring>(threshold, keys)</argsstring>
+        <name>CDT_REFLECT</name>
+        <param>
+          <type><ref refid="structsysio_1_1block__signing__authority__v0_afb5a95f90b2f14444816c2135f05da13_1afb5a95f90b2f14444816c2135f05da13" kindref="member">threshold</ref></type>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1block__signing__authority__v0_a34f4e76133b73e9e3ce128a5817a3ab3_1a34f4e76133b73e9e3ce128a5817a3ab3" kindref="member">keys</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="128" column="7"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>weighted threshold multi-sig authority </para>
+    </briefdescription>
+    <detaileddescription>
+<para>block signing authority version 0 this authority allows for a weighted threshold multi-sig per-producer </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="111" column="4" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="111" bodyend="129"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1block__signing__authority__v0_a733a5cc8381ddd2c39a87bdcb5d2042d_1a733a5cc8381ddd2c39a87bdcb5d2042d" prot="public" virt="non-virtual"><scope>sysio::block_signing_authority_v0</scope><name>CDT_REFLECT</name></member>
+      <member refid="structsysio_1_1block__signing__authority__v0_a04fcdbfce87ce0f33bbbd3f906605e9d_1a04fcdbfce87ce0f33bbbd3f906605e9d" prot="public" virt="non-virtual"><scope>sysio::block_signing_authority_v0</scope><name>is_valid</name></member>
+      <member refid="structsysio_1_1block__signing__authority__v0_a34f4e76133b73e9e3ce128a5817a3ab3_1a34f4e76133b73e9e3ce128a5817a3ab3" prot="public" virt="non-virtual"><scope>sysio::block_signing_authority_v0</scope><name>keys</name></member>
+      <member refid="structsysio_1_1block__signing__authority__v0_afb5a95f90b2f14444816c2135f05da13_1afb5a95f90b2f14444816c2135f05da13" prot="public" virt="non-virtual"><scope>sysio::block_signing_authority_v0</scope><name>threshold</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

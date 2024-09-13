@@ -1,0 +1,211 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structsysio_1_1permission__level" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::permission_level</compoundname>
+    <includes refid="action_8hpp" local="no">action.hpp</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1permission__level_a0dcd50f25f1ceea6469d5fe5aea99234_1a0dcd50f25f1ceea6469d5fe5aea99234" prot="public" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::permission_level::actor</definition>
+        <argsstring></argsstring>
+        <name>actor</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Name of the account who owns this permission </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="198" column="15" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="198" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1permission__level_add65457ea22406a3cdd5a3c3c0d08330_1add65457ea22406a3cdd5a3c3c0d08330" prot="public" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::permission_level::permission</definition>
+        <argsstring></argsstring>
+        <name>permission</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Name of the permission </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="202" column="15" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="202" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1permission__level_aee99c9750a965b03c44fc712856b1dad_1aee99c9750a965b03c44fc712856b1dad" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::permission_level::permission_level</definition>
+        <argsstring>(name a, name p)</argsstring>
+        <name>permission_level</name>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>p</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new permission level object with actor name and permission name</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>a</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Name of the account who owns this authorization </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>p</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Name of the permission </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="187" column="7" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="187" bodyend="187"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1permission__level_ad3861a72e368bb0ec477a7d3ed53da86_1ad3861a72e368bb0ec477a7d3ed53da86" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::permission_level::permission_level</definition>
+        <argsstring>()</argsstring>
+        <name>permission_level</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Default Constructor </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="193" column="7" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="193" bodyend="193"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="structsysio_1_1permission__level_af1168e994b156251f773a9c04b4adcbe_1af1168e994b156251f773a9c04b4adcbe" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr friend bool</type>
+        <definition>constexpr friend bool operator==</definition>
+        <argsstring>(const permission_level &amp;a, const permission_level &amp;b)</argsstring>
+        <name>operator==</name>
+        <param>
+          <type>const <ref refid="structsysio_1_1permission__level" kindref="compound">permission_level</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structsysio_1_1permission__level" kindref="compound">permission_level</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Check equality of two permissions</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>a</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- first permission to compare </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>b</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- second permission to compare </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if equal </para>
+</simplesect>
+<simplesect kind="return"><para>false if unequal </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="212" column="29" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="212" bodyend="214"/>
+      </memberdef>
+      <memberdef kind="friend" id="structsysio_1_1permission__level_a9b332d8c38da3e06fae0e78fb3975769_1a9b332d8c38da3e06fae0e78fb3975769" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr friend bool</type>
+        <definition>constexpr friend bool operator&lt;</definition>
+        <argsstring>(const permission_level &amp;a, const permission_level &amp;b)</argsstring>
+        <name>operator&lt;</name>
+        <param>
+          <type>const <ref refid="structsysio_1_1permission__level" kindref="compound">permission_level</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structsysio_1_1permission__level" kindref="compound">permission_level</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Lexicographically compares two permissions</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>a</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- first permission to compare </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>b</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- second permission to compare </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if a &lt; b </para>
+</simplesect>
+<simplesect kind="return"><para>false if a &gt;= b </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="224" column="24" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="224" bodyend="226"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Packed representation of a permission level (Authorization) </para>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="1">
+        <label>sysio::permission_level</label>
+        <link refid="structsysio_1_1permission__level"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>actor</edgelabel>
+          <edgelabel>permission</edgelabel>
+        </childnode>
+      </node>
+      <node id="2">
+        <label>sysio::name</label>
+        <link refid="structsysio_1_1name"/>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="180" column="4" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="180" bodyend="229"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1permission__level_a0dcd50f25f1ceea6469d5fe5aea99234_1a0dcd50f25f1ceea6469d5fe5aea99234" prot="public" virt="non-virtual"><scope>sysio::permission_level</scope><name>actor</name></member>
+      <member refid="structsysio_1_1permission__level_a9b332d8c38da3e06fae0e78fb3975769_1a9b332d8c38da3e06fae0e78fb3975769" prot="public" virt="non-virtual"><scope>sysio::permission_level</scope><name>operator&lt;</name></member>
+      <member refid="structsysio_1_1permission__level_af1168e994b156251f773a9c04b4adcbe_1af1168e994b156251f773a9c04b4adcbe" prot="public" virt="non-virtual"><scope>sysio::permission_level</scope><name>operator==</name></member>
+      <member refid="structsysio_1_1permission__level_add65457ea22406a3cdd5a3c3c0d08330_1add65457ea22406a3cdd5a3c3c0d08330" prot="public" virt="non-virtual"><scope>sysio::permission_level</scope><name>permission</name></member>
+      <member refid="structsysio_1_1permission__level_aee99c9750a965b03c44fc712856b1dad_1aee99c9750a965b03c44fc712856b1dad" prot="public" virt="non-virtual"><scope>sysio::permission_level</scope><name>permission_level</name></member>
+      <member refid="structsysio_1_1permission__level_ad3861a72e368bb0ec477a7d3ed53da86_1ad3861a72e368bb0ec477a7d3ed53da86" prot="public" virt="non-virtual"><scope>sysio::permission_level</scope><name>permission_level</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
