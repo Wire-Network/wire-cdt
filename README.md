@@ -5,7 +5,7 @@ Wire Contract Development Toolkit (CDT) is a C/C++ toolchain targeting WebAssemb
 
 ## Branches
 
-The `main` branch is the latest stable branch. 
+The `master` branch is the latest stable branch. 
 
 
 
