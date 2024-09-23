@@ -1,0 +1,372 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1multi__index" kind="class" language="C++" prot="public">
+    <compoundname>sysio::multi_index</compoundname>
+    <includes refid="multi__index_8hpp" local="no">multi_index.hpp</includes>
+    <innerclass refid="structsysio_1_1multi__index_1_1const__iterator" prot="public">sysio::multi_index::const_iterator</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1index" prot="private">sysio::multi_index::index</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1intc" prot="private">sysio::multi_index::intc</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1item" prot="private">sysio::multi_index::item</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1item__ptr" prot="private">sysio::multi_index::item_ptr</innerclass>
+    <templateparamlist>
+      <param>
+        <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+        <declname>TableName</declname>
+        <defname>TableName</defname>
+      </param>
+      <param>
+        <type>typename T</type>
+      </param>
+      <param>
+        <type>typename...</type>
+        <declname>Indices</declname>
+        <defname>Indices</defname>
+      </param>
+    </templateparamlist>
+    <sectiondef kind="private-type">
+      <memberdef kind="enum" id="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4" prot="private" static="no" strong="no">
+        <type>uint64_t</type>
+        <name>next_primary_key_tags</name>
+        <qualifiedname>sysio::multi_index::next_primary_key_tags</qualifiedname>
+        <enumvalue id="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4aaada4a1d4b56340f0a53aed8f6f10b0a" prot="private">
+          <name>no_available_primary_key</name>
+          <initializer>= static_cast&lt;uint64_t&gt;(-2)</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4a97c114b0ff3c4d7bea04ceb5b660dafa" prot="private">
+          <name>unset_next_primary_key</name>
+          <initializer>= static_cast&lt;uint64_t&gt;(-1)</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="455" column="7" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="455" bodyend="458"/>
+      </memberdef>
+      <memberdef kind="typedef" id="classsysio_1_1multi__index_1a4960f3bcbcf61aa42edfbeaaea120dde" prot="private" static="no">
+        <type>decltype(multi_index::transform_indices())</type>
+        <definition>decltype( multi_index::transform_indices() ) sysio::multi_index&lt; TableName, T, Indices &gt;::indices_type</definition>
+        <argsstring></argsstring>
+        <name>indices_type</name>
+        <qualifiedname>sysio::multi_index::indices_type</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="785" column="24" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="785" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-type">
+      <memberdef kind="typedef" id="classsysio_1_1multi__index_a57dd8e3f0079c89eeacb9e86eb40b2e7_1a57dd8e3f0079c89eeacb9e86eb40b2e7" prot="public" static="no">
+        <type>std::reverse_iterator&lt; <ref refid="structsysio_1_1multi__index_1_1const__iterator" kindref="compound">const_iterator</ref> &gt;</type>
+        <definition>std::reverse_iterator&lt;const_iterator&gt; sysio::multi_index&lt; TableName, T, Indices &gt;::const_reverse_iterator</definition>
+        <argsstring></argsstring>
+        <name>const_reverse_iterator</name>
+        <qualifiedname>sysio::multi_index::const_reverse_iterator</qualifiedname>
+        <briefdescription>
+<para>struct <ref refid="structsysio_1_1multi__index_1_1const__iterator" kindref="compound">multi_index::const_iterator</ref> </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="988" column="37" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="988" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-static-attrib">
+      <memberdef kind="variable" id="classsysio_1_1multi__index_1a5610d314ac8d302fde6b8b2647574dcd" prot="private" static="yes" constexpr="yes" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::multi_index&lt; TableName, T, Indices &gt;::max_stack_buffer_size</definition>
+        <argsstring></argsstring>
+        <name>max_stack_buffer_size</name>
+        <qualifiedname>sysio::multi_index::max_stack_buffer_size</qualifiedname>
+        <initializer>= 512</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="446" column="31" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="446" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classsysio_1_1multi__index_1acfd6f97c65cf01f9a8d50da4e4d2c216" prot="private" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::multi_index&lt; TableName, T, Indices &gt;::_code</definition>
+        <argsstring></argsstring>
+        <name>_code</name>
+        <qualifiedname>sysio::multi_index::_code</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="450" column="16" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="450" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1multi__index_1a84fb29555aac46887dc129c3410534e2" prot="private" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::_scope</definition>
+        <argsstring></argsstring>
+        <name>_scope</name>
+        <qualifiedname>sysio::multi_index::_scope</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="451" column="16" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="451" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1multi__index_1ab038b6a63824ac8d73097a65aae2689a" prot="private" static="no" mutable="yes">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::_next_primary_key</definition>
+        <argsstring></argsstring>
+        <name>_next_primary_key</name>
+        <qualifiedname>sysio::multi_index::_next_primary_key</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="453" column="24" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="453" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1multi__index_1a93cdef08521d25030427fbd77ca4f6ba" prot="private" static="no" mutable="yes">
+        <type>std::vector&lt; item_ptr &gt;</type>
+        <definition>std::vector&lt;item_ptr&gt; sysio::multi_index&lt; TableName, T, Indices &gt;::_items_vector</definition>
+        <argsstring></argsstring>
+        <name>_items_vector</name>
+        <qualifiedname>sysio::multi_index::_items_vector</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="483" column="27" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="483" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1multi__index_1afd582a69b7682ff18a885a7a77ba986e" prot="private" static="no" mutable="no">
+        <type>indices_type</type>
+        <definition>indices_type sysio::multi_index&lt; TableName, T, Indices &gt;::_indices</definition>
+        <argsstring></argsstring>
+        <name>_indices</name>
+        <qualifiedname>sysio::multi_index::_indices</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="787" column="20" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="787" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-static-func">
+      <memberdef kind="function" id="classsysio_1_1multi__index_1af69374eb12cabc835bfccaa3fc913af9" prot="private" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>static constexpr bool sysio::multi_index&lt; TableName, T, Indices &gt;::validate_table_name</definition>
+        <argsstring>(name n)</argsstring>
+        <name>validate_table_name</name>
+        <qualifiedname>sysio::multi_index::validate_table_name</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="441" column="29" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="441" bodyend="444"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1multi__index_1aa44e890db27e795c4382a3e2fb3f8463" prot="private" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>auto</type>
+        <definition>static constexpr auto sysio::multi_index&lt; TableName, T, Indices &gt;::transform_indices</definition>
+        <argsstring>()</argsstring>
+        <name>transform_indices</name>
+        <qualifiedname>sysio::multi_index::transform_indices</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="763" column="29" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="763" bodyend="783"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-func">
+      <memberdef kind="function" id="classsysio_1_1multi__index_1a8121af1782df44cf9623fed4e5be5eb9" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const item &amp;</type>
+        <definition>const item &amp; sysio::multi_index&lt; TableName, T, Indices &gt;::load_object_by_primary_iterator</definition>
+        <argsstring>(int32_t itr) const</argsstring>
+        <name>load_object_by_primary_iterator</name>
+        <qualifiedname>sysio::multi_index::load_object_by_primary_iterator</qualifiedname>
+        <param>
+          <type>int32_t</type>
+          <declname>itr</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="789" column="18" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="789" bodyend="831"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <member refid="group__multiindex_1ga95334a641c52bb1dd5091174c7191ae9" kind="function"><name>multi_index</name></member>
+      <member refid="group__multiindex_1ga888fe8091f8cfdd13202543e50496bf9" kind="function"><name>get_code</name></member>
+      <member refid="group__multiindex_1ga4cf5db8ffadb7a8a33790f848ee1a9aa" kind="function"><name>get_scope</name></member>
+      <member refid="group__multiindex_1ga3bee12520f92461789ac396041f83fe4" kind="function"><name>cbegin</name></member>
+      <member refid="group__multiindex_1ga5f8d713f117163e2e8e650f7e4311afa" kind="function"><name>begin</name></member>
+      <member refid="group__multiindex_1ga9a5621617d016211f40c8a8e4c7f0c9c" kind="function"><name>cend</name></member>
+      <member refid="group__multiindex_1gafad1f03794294c4060be066d3c2d0bab" kind="function"><name>end</name></member>
+      <member refid="group__multiindex_1ga9f624a04aa347287ce4992d5eae1dbc3" kind="function"><name>crbegin</name></member>
+      <member refid="group__multiindex_1gac438151b3f7afb8ceb385d2e9447ebe6" kind="function"><name>rbegin</name></member>
+      <member refid="group__multiindex_1gad7fbbef0f5b74941bebd67434a8344f8" kind="function"><name>crend</name></member>
+      <member refid="group__multiindex_1ga85a853178d819521c50bcd9860f70d59" kind="function"><name>rend</name></member>
+      <member refid="group__multiindex_1ga385d93cf277878b667a3e22264a4230a" kind="function"><name>lower_bound</name></member>
+      <member refid="group__multiindex_1ga9c460cb3a0a25aab8c4e6f2deeb97dd3" kind="function"><name>upper_bound</name></member>
+      <member refid="group__multiindex_1ga1eca5d070f199f2339314f2c6ceb1de0" kind="function"><name>available_primary_key</name></member>
+      <member refid="group__multiindex_1gafdc920626da6bacc840603bd6eb30b5c" kind="function"><name>get_index</name></member>
+      <member refid="group__multiindex_1gace446e93ccd2232549e753e473f62ce1" kind="function"><name>get_index</name></member>
+      <member refid="group__multiindex_1ga96ad41ccaa25039b3abc5e40dfd6d24c" kind="function"><name>iterator_to</name></member>
+      <member refid="group__multiindex_1ga8b2849d63f5d3764ff66dbf57287192a" kind="function"><name>emplace</name></member>
+      <member refid="group__multiindex_1ga50037b09faedb27a322444c238722f43" kind="function"><name>modify</name></member>
+      <member refid="group__multiindex_1gaff0329e2ee02b9cac7c39150023ff48d" kind="function"><name>modify</name></member>
+      <member refid="group__multiindex_1gacec9d7e96fed1c1633898e498664242f" kind="function"><name>get</name></member>
+      <member refid="group__multiindex_1ga1349af85de36d7ef0a7a790f94516348" kind="function"><name>find</name></member>
+      <member refid="group__multiindex_1ga9245ddf1b3177affdb3932f5d1f65ca9" kind="function"><name>require_find</name></member>
+      <member refid="group__multiindex_1ga9aaa4cd5f39691494d8cb7d2bb2e6a96" kind="function"><name>erase</name></member>
+      <member refid="group__multiindex_1gab8634205229f6b142ec2eb90a9456328" kind="function"><name>erase</name></member>
+    </sectiondef>
+    <briefdescription>
+<para>Defines SYSIO Multi Index Table. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>SYSIO Multi-Index API provides a C++ interface to the SYSIO database. It is patterned after Boost Multi Index Container. SYSIO Multi-Index table requires exactly a uint64_t primary key. For the table to be able to retrieve the primary key, the object stored inside the table is required to have a const member function called primary_key() that returns uint64_t. SYSIO Multi-Index table also supports up to 16 secondary indices. The type of the secondary indices could be any of:<itemizedlist>
+<listitem><para>uint64_t</para>
+</listitem><listitem><para>uint128_t</para>
+</listitem><listitem><para>double</para>
+</listitem><listitem><para>long double</para>
+</listitem><listitem><para>sysio::checksum256</para>
+</listitem></itemizedlist>
+</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>TableName</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the table </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- type of the data stored inside the table </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Indices</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- secondary indices for the table, up to 16 indices is supported here</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+Example:</para>
+<para><programlisting><codeline><highlight class="preprocessor">#include<sp/>&lt;sysiolib/sysio.hpp&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal"><ref refid="namespacesysio" kindref="compound">sysio</ref>;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">mycontract:<sp/><ref refid="classsysio_1_1contract" kindref="compound">contract</ref><sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">record<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/><sp/><sp/><sp/>primary;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/><sp/><sp/><sp/>secondary_1;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>uint128_t<sp/><sp/><sp/>secondary_2;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>checksum256<sp/>secondary_3;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>secondary_4;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>secondary_5;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>primary_key()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>primary;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>get_secondary_1()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>secondary_1;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>uint128_t<sp/>get_secondary_2()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>secondary_2;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>checksum256<sp/>get_secondary_3()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>secondary_3;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>get_secondary_4()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>secondary_4;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>get_secondary_5()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>secondary_5;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>mycontract(<ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>receiver,<sp/><ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>code,<sp/><ref refid="classsysio_1_1datastream" kindref="compound">datastream&lt;const char*&gt;</ref><sp/>ds):<ref refid="classsysio_1_1contract" kindref="compound">contract</ref>(receiver,<sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" kindref="member">code</ref>,<sp/>ds){}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" kindref="member">code</ref><sp/>=<sp/>_self;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>scope<sp/>=<sp/>_self;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classsysio_1_1multi__index" kindref="compound" tooltip="Defines SYSIO Multi Index Table.">multi_index</ref>&lt;</highlight><highlight class="stringliteral">&quot;mytable&quot;</highlight><highlight class="normal">_n,<sp/>record,</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;bysecondary1&quot;</highlight><highlight class="normal">_n,<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;record, uint64_t, &amp;record::get_secondary_1&gt;</ref><sp/>&gt;,</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;bysecondary2&quot;</highlight><highlight class="normal">_n,<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;record, uint128_t, &amp;record::get_secondary_2&gt;</ref><sp/>&gt;,</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;bysecondary3&quot;</highlight><highlight class="normal">_n,<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;record, checksum256, &amp;record::get_secondary_3&gt;</ref><sp/>&gt;,</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;bysecondary4&quot;</highlight><highlight class="normal">_n,<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;record, double, &amp;record::get_secondary_4&gt;</ref><sp/>&gt;,</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;bysecondary5&quot;</highlight><highlight class="normal">_n,<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;record, long double, &amp;record::get_secondary_5&gt;</ref><sp/>&gt;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>&gt;<sp/>table(<sp/>code,<sp/>scope);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>mycontract,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="435" column="1" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="436" bodyend="1953"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1multi__index_1acfd6f97c65cf01f9a8d50da4e4d2c216" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>_code</name></member>
+      <member refid="classsysio_1_1multi__index_1afd582a69b7682ff18a885a7a77ba986e" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>_indices</name></member>
+      <member refid="classsysio_1_1multi__index_1a93cdef08521d25030427fbd77ca4f6ba" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>_items_vector</name></member>
+      <member refid="classsysio_1_1multi__index_1ab038b6a63824ac8d73097a65aae2689a" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>_next_primary_key</name></member>
+      <member refid="classsysio_1_1multi__index_1a84fb29555aac46887dc129c3410534e2" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>_scope</name></member>
+      <member refid="group__multiindex_ga1eca5d070f199f2339314f2c6ceb1de0_1ga1eca5d070f199f2339314f2c6ceb1de0" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>available_primary_key</name></member>
+      <member refid="group__multiindex_ga5f8d713f117163e2e8e650f7e4311afa_1ga5f8d713f117163e2e8e650f7e4311afa" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>begin</name></member>
+      <member refid="group__multiindex_ga3bee12520f92461789ac396041f83fe4_1ga3bee12520f92461789ac396041f83fe4" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>cbegin</name></member>
+      <member refid="group__multiindex_ga9a5621617d016211f40c8a8e4c7f0c9c_1ga9a5621617d016211f40c8a8e4c7f0c9c" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>cend</name></member>
+      <member refid="classsysio_1_1multi__index_a57dd8e3f0079c89eeacb9e86eb40b2e7_1a57dd8e3f0079c89eeacb9e86eb40b2e7" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>const_reverse_iterator</name></member>
+      <member refid="group__multiindex_ga9f624a04aa347287ce4992d5eae1dbc3_1ga9f624a04aa347287ce4992d5eae1dbc3" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>crbegin</name></member>
+      <member refid="group__multiindex_gad7fbbef0f5b74941bebd67434a8344f8_1gad7fbbef0f5b74941bebd67434a8344f8" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>crend</name></member>
+      <member refid="group__multiindex_ga8b2849d63f5d3764ff66dbf57287192a_1ga8b2849d63f5d3764ff66dbf57287192a" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>emplace</name></member>
+      <member refid="group__multiindex_gafad1f03794294c4060be066d3c2d0bab_1gafad1f03794294c4060be066d3c2d0bab" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>end</name></member>
+      <member refid="group__multiindex_ga9aaa4cd5f39691494d8cb7d2bb2e6a96_1ga9aaa4cd5f39691494d8cb7d2bb2e6a96" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>erase</name></member>
+      <member refid="group__multiindex_gab8634205229f6b142ec2eb90a9456328_1gab8634205229f6b142ec2eb90a9456328" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>erase</name></member>
+      <member refid="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>find</name></member>
+      <member refid="group__multiindex_gacec9d7e96fed1c1633898e498664242f_1gacec9d7e96fed1c1633898e498664242f" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>get</name></member>
+      <member refid="group__multiindex_ga888fe8091f8cfdd13202543e50496bf9_1ga888fe8091f8cfdd13202543e50496bf9" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>get_code</name></member>
+      <member refid="group__multiindex_gafdc920626da6bacc840603bd6eb30b5c_1gafdc920626da6bacc840603bd6eb30b5c" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>get_index</name></member>
+      <member refid="group__multiindex_gace446e93ccd2232549e753e473f62ce1_1gace446e93ccd2232549e753e473f62ce1" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>get_index</name></member>
+      <member refid="group__multiindex_ga4cf5db8ffadb7a8a33790f848ee1a9aa_1ga4cf5db8ffadb7a8a33790f848ee1a9aa" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>get_scope</name></member>
+      <member refid="classsysio_1_1multi__index_1a4960f3bcbcf61aa42edfbeaaea120dde" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>indices_type</name></member>
+      <member refid="group__multiindex_ga96ad41ccaa25039b3abc5e40dfd6d24c_1ga96ad41ccaa25039b3abc5e40dfd6d24c" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>iterator_to</name></member>
+      <member refid="classsysio_1_1multi__index_1a8121af1782df44cf9623fed4e5be5eb9" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>load_object_by_primary_iterator</name></member>
+      <member refid="group__multiindex_ga385d93cf277878b667a3e22264a4230a_1ga385d93cf277878b667a3e22264a4230a" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>lower_bound</name></member>
+      <member refid="classsysio_1_1multi__index_1a5610d314ac8d302fde6b8b2647574dcd" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>max_stack_buffer_size</name></member>
+      <member refid="group__multiindex_ga50037b09faedb27a322444c238722f43_1ga50037b09faedb27a322444c238722f43" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>modify</name></member>
+      <member refid="group__multiindex_gaff0329e2ee02b9cac7c39150023ff48d_1gaff0329e2ee02b9cac7c39150023ff48d" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>modify</name></member>
+      <member refid="group__multiindex_ga95334a641c52bb1dd5091174c7191ae9_1ga95334a641c52bb1dd5091174c7191ae9" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>multi_index</name></member>
+      <member refid="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>next_primary_key_tags</name></member>
+      <member refid="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4aaada4a1d4b56340f0a53aed8f6f10b0a" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>no_available_primary_key</name></member>
+      <member refid="group__multiindex_gac438151b3f7afb8ceb385d2e9447ebe6_1gac438151b3f7afb8ceb385d2e9447ebe6" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>rbegin</name></member>
+      <member refid="group__multiindex_ga85a853178d819521c50bcd9860f70d59_1ga85a853178d819521c50bcd9860f70d59" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>rend</name></member>
+      <member refid="group__multiindex_ga9245ddf1b3177affdb3932f5d1f65ca9_1ga9245ddf1b3177affdb3932f5d1f65ca9" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>require_find</name></member>
+      <member refid="classsysio_1_1multi__index_1aa44e890db27e795c4382a3e2fb3f8463" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>transform_indices</name></member>
+      <member refid="classsysio_1_1multi__index_1a3e56e1f6617a90f061694fdd227c54d4a97c114b0ff3c4d7bea04ceb5b660dafa" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>unset_next_primary_key</name></member>
+      <member refid="group__multiindex_ga9c460cb3a0a25aab8c4e6f2deeb97dd3_1ga9c460cb3a0a25aab8c4e6f2deeb97dd3" prot="public" virt="non-virtual"><scope>sysio::multi_index</scope><name>upper_bound</name></member>
+      <member refid="classsysio_1_1multi__index_1af69374eb12cabc835bfccaa3fc913af9" prot="private" virt="non-virtual"><scope>sysio::multi_index</scope><name>validate_table_name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,4341 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="namespacesysio" kind="namespace" language="C++">
+    <compoundname>sysio</compoundname>
+    <innerclass refid="structsysio_1_1action" prot="public">sysio::action</innerclass>
+    <innerclass refid="structsysio_1_1action__wrapper" prot="public">sysio::action_wrapper</innerclass>
+    <innerclass refid="structsysio_1_1asset" prot="public">sysio::asset</innerclass>
+    <innerclass refid="structsysio_1_1block__signing__authority__v0" prot="public">sysio::block_signing_authority_v0</innerclass>
+    <innerclass refid="classsysio_1_1block__timestamp" prot="public">sysio::block_timestamp</innerclass>
+    <innerclass refid="structsysio_1_1blockchain__parameters" prot="public">sysio::blockchain_parameters</innerclass>
+    <innerclass refid="structsysio_1_1const__mem__fun" prot="public">sysio::const_mem_fun</innerclass>
+    <innerclass refid="classsysio_1_1contract" prot="public">sysio::contract</innerclass>
+    <innerclass refid="classsysio_1_1datastream" prot="public">sysio::datastream</innerclass>
+    <innerclass refid="classsysio_1_1datastream_3_01size__t_01_4" prot="public">sysio::datastream&lt; size_t &gt;</innerclass>
+    <innerclass refid="structsysio_1_1ec__point" prot="public">sysio::ec_point</innerclass>
+    <innerclass refid="structsysio_1_1ec__point__view" prot="public">sysio::ec_point_view</innerclass>
+    <innerclass refid="structsysio_1_1extended__asset" prot="public">sysio::extended_asset</innerclass>
+    <innerclass refid="classsysio_1_1extended__symbol" prot="public">sysio::extended_symbol</innerclass>
+    <innerclass refid="classsysio_1_1fixed__bytes" prot="public">sysio::fixed_bytes</innerclass>
+    <innerclass refid="structsysio_1_1ignore" prot="public">sysio::ignore</innerclass>
+    <innerclass refid="structsysio_1_1ignore__wrapper" prot="public">sysio::ignore_wrapper</innerclass>
+    <innerclass refid="structsysio_1_1indexed__by" prot="public">sysio::indexed_by</innerclass>
+    <innerclass refid="structsysio_1_1inline__dispatcher" prot="public">sysio::inline_dispatcher</innerclass>
+    <innerclass refid="structsysio_1_1inline__dispatcher_3_01void_07_t_1_1_5_08_07_args_8_8_8_08_00_01_name_01_4" prot="public">sysio::inline_dispatcher&lt; void(T::*)(Args...), Name &gt;</innerclass>
+    <innerclass refid="classsysio_1_1iostream" prot="public">sysio::iostream</innerclass>
+    <innerclass refid="structsysio_1_1key__weight" prot="public">sysio::key_weight</innerclass>
+    <innerclass refid="classsysio_1_1microseconds" prot="public">sysio::microseconds</innerclass>
+    <innerclass refid="classsysio_1_1multi__index" prot="public">sysio::multi_index</innerclass>
+    <innerclass refid="structsysio_1_1name" prot="public">sysio::name</innerclass>
+    <innerclass refid="structsysio_1_1onerror" prot="public">sysio::onerror</innerclass>
+    <innerclass refid="structsysio_1_1overloaded" prot="public">sysio::overloaded</innerclass>
+    <innerclass refid="structsysio_1_1permission__level" prot="public">sysio::permission_level</innerclass>
+    <innerclass refid="structsysio_1_1producer__authority" prot="public">sysio::producer_authority</innerclass>
+    <innerclass refid="structsysio_1_1producer__key" prot="public">sysio::producer_key</innerclass>
+    <innerclass refid="structsysio_1_1producer__schedule" prot="public">sysio::producer_schedule</innerclass>
+    <innerclass refid="classsysio_1_1rope" prot="public">sysio::rope</innerclass>
+    <innerclass refid="structsysio_1_1security__group" prot="public">sysio::security_group</innerclass>
+    <innerclass refid="structsysio_1_1signed__int" prot="public">sysio::signed_int</innerclass>
+    <innerclass refid="classsysio_1_1singleton" prot="public">sysio::singleton</innerclass>
+    <innerclass refid="classsysio_1_1string" prot="public">sysio::string</innerclass>
+    <innerclass refid="classsysio_1_1symbol" prot="public">sysio::symbol</innerclass>
+    <innerclass refid="classsysio_1_1symbol__code" prot="public">sysio::symbol_code</innerclass>
+    <innerclass refid="classsysio_1_1time__point" prot="public">sysio::time_point</innerclass>
+    <innerclass refid="classsysio_1_1time__point__sec" prot="public">sysio::time_point_sec</innerclass>
+    <innerclass refid="classsysio_1_1transaction" prot="public">sysio::transaction</innerclass>
+    <innerclass refid="classsysio_1_1transaction__header" prot="public">sysio::transaction_header</innerclass>
+    <innerclass refid="structsysio_1_1unsigned__int" prot="public">sysio::unsigned_int</innerclass>
+    <innerclass refid="structsysio_1_1variant__action__wrapper" prot="public">sysio::variant_action_wrapper</innerclass>
+    <innernamespace refid="namespacesysio_1_1__datastream__detail">sysio::_datastream_detail</innernamespace>
+    <innernamespace refid="namespacesysio_1_1__multi__index__detail">sysio::_multi_index_detail</innernamespace>
+    <innernamespace refid="namespacesysio_1_1detail">sysio::detail</innernamespace>
+    <innernamespace refid="namespacesysio_1_1impl">sysio::impl</innernamespace>
+    <innernamespace refid="namespacesysio_1_1internal__use__do__not__use">sysio::internal_use_do_not_use</innernamespace>
+    <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="namespacesysio_a35d41650d3e8e688dec90c0ecd6c578c_1a35d41650d3e8e688dec90c0ecd6c578c" prot="public" static="no">
+        <type><ref refid="structsysio_1_1ec__point" kindref="compound">ec_point</ref>&lt; g1_coordinate_size &gt;</type>
+        <definition>using sysio::g1_point =  ec_point&lt;g1_coordinate_size&gt;</definition>
+        <argsstring></argsstring>
+        <name>g1_point</name>
+        <qualifiedname>sysio::g1_point</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="182" column="4" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="182" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacesysio_a0184046a8cfe9916e499ef46ad437be2_1a0184046a8cfe9916e499ef46ad437be2" prot="public" static="no">
+        <type><ref refid="structsysio_1_1ec__point" kindref="compound">ec_point</ref>&lt; g2_coordinate_size &gt;</type>
+        <definition>using sysio::g2_point =  ec_point&lt;g2_coordinate_size&gt;</definition>
+        <argsstring></argsstring>
+        <name>g2_point</name>
+        <qualifiedname>sysio::g2_point</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="183" column="4" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="183" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacesysio_a4919d787a9314d27da454a72f0ac6b24_1a4919d787a9314d27da454a72f0ac6b24" prot="public" static="no">
+        <type><ref refid="structsysio_1_1ec__point__view" kindref="compound">ec_point_view</ref>&lt; g1_coordinate_size &gt;</type>
+        <definition>using sysio::g1_point_view =  ec_point_view&lt;g1_coordinate_size&gt;</definition>
+        <argsstring></argsstring>
+        <name>g1_point_view</name>
+        <qualifiedname>sysio::g1_point_view</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="184" column="4" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="184" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacesysio_a9f2446daf2142b85bf13a395bc23c80a_1a9f2446daf2142b85bf13a395bc23c80a" prot="public" static="no">
+        <type><ref refid="structsysio_1_1ec__point__view" kindref="compound">ec_point_view</ref>&lt; g2_coordinate_size &gt;</type>
+        <definition>using sysio::g2_point_view =  ec_point_view&lt;g2_coordinate_size&gt;</definition>
+        <argsstring></argsstring>
+        <name>g2_point_view</name>
+        <qualifiedname>sysio::g2_point_view</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="185" column="4" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="185" bodyend="-1"/>
+      </memberdef>
+      <member refid="group__crypto_1ga682eab95daed840a596ced53f8f00f82" kind="typedef"><name>bigint</name></member>
+      <memberdef kind="typedef" id="namespacesysio_a54a9a73f6a36495a16de37723fe0b999_1a54a9a73f6a36495a16de37723fe0b999" prot="public" static="no">
+        <type>std::string</type>
+        <definition>using sysio::key_type =  std::string</definition>
+        <argsstring></argsstring>
+        <name>key_type</name>
+        <qualifiedname>sysio::key_type</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="74" column="1" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="74" bodyend="-1"/>
+      </memberdef>
+      <member refid="group__time_1ga1d722e6bdb1a0a2cbabf7d1f48ce6301" kind="typedef"><name>block_timestamp_type</name></member>
+      <member refid="group__producer__authority_1ga9c7f243af7ec394ec7b8a838fbe085f7" kind="typedef"><name>block_signing_authority</name></member>
+      <memberdef kind="typedef" id="namespacesysio_a6c7dbb1fb87b115a725fd0faf1583ab0_1a6c7dbb1fb87b115a725fd0faf1583ab0" prot="public" static="no">
+        <type>uint32_t</type>
+        <definition>using sysio::block_num_t =  uint32_t</definition>
+        <argsstring></argsstring>
+        <name>block_num_t</name>
+        <qualifiedname>sysio::block_num_t</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="82" column="4" bodyfile="libraries/sysiolib/contracts/sysio/system.hpp" bodystart="82" bodyend="-1"/>
+      </memberdef>
+      <member refid="group__transaction_1gaea468d1540eb797bbf89e247e44af21e" kind="typedef"><name>extension</name></member>
+      <member refid="group__transaction_1ga0e713744cc029ccaa6db4018766969a1" kind="typedef"><name>extensions_type</name></member>
+    </sectiondef>
+    <sectiondef kind="var">
+      <memberdef kind="variable" id="namespacesysio_1ab594c7e3b6612e77f90212fb08dada9d" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::g1_coordinate_size</definition>
+        <argsstring></argsstring>
+        <name>g1_coordinate_size</name>
+        <qualifiedname>sysio::g1_coordinate_size</qualifiedname>
+        <initializer>= 32</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="179" column="28" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="179" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1a480e01b1b0a16ea9307286909e34010a" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::g2_coordinate_size</definition>
+        <argsstring></argsstring>
+        <name>g2_coordinate_size</name>
+        <qualifiedname>sysio::g2_coordinate_size</qualifiedname>
+        <initializer>= 64</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="180" column="28" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="180" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1a9b4b665063f190115410a5133b8e6340" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::blake2f_result_size</definition>
+        <argsstring></argsstring>
+        <name>blake2f_result_size</name>
+        <qualifiedname>sysio::blake2f_result_size</qualifiedname>
+        <initializer>= 64</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="330" column="28" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="330" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_acbbfa0894fa08eef9bd94e0749612439_1acbbfa0894fa08eef9bd94e0749612439" prot="public" static="no" constexpr="yes" mutable="no">
+        <templateparamlist>
+          <param>
+            <type>uint8_t</type>
+            <declname>Base</declname>
+            <defname>Base</defname>
+          </param>
+          <param>
+            <type>typename T</type>
+            <defval>uint64_t</defval>
+          </param>
+        </templateparamlist>
+        <type>auto</type>
+        <definition>auto sysio::powers_of_base</definition>
+        <argsstring></argsstring>
+        <name>powers_of_base</name>
+        <qualifiedname>sysio::powers_of_base</qualifiedname>
+        <initializer>= <ref refid="namespacesysio_1_1detail_aa51cce487fb83e710e3a83ebdb28d7ee_1aa51cce487fb83e710e3a83ebdb28d7ee" kindref="member">detail::generate_array</ref>&lt;<ref refid="structsysio_1_1detail_1_1largest__power" kindref="compound">detail::largest_power</ref>&lt;T, Base&gt;::exponent + 1&gt;( <ref refid="namespacesysio_1_1detail_ae0f37c92ed6b3534dd2a1cf2782ff3db_1ae0f37c92ed6b3534dd2a1cf2782ff3db" kindref="member">detail::pow_generator</ref>&lt;T, Base&gt; )</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="77" column="26" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="77" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1a32c166431f7c306243a721be558df68f" prot="public" static="yes" mutable="no">
+        <type><ref refid="classsysio_1_1iostream" kindref="compound">iostream</ref></type>
+        <definition>iostream sysio::cout</definition>
+        <argsstring></argsstring>
+        <name>cout</name>
+        <qualifiedname>sysio::cout</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="274" column="20" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="274" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacesysio_1ae13f0f0f992da4f261a6281fa736f46a" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::same_payer</definition>
+        <argsstring></argsstring>
+        <name>same_payer</name>
+        <qualifiedname>sysio::same_payer</qualifiedname>
+        <initializer>{}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="213" column="30" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="213" bodyend="213"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="namespacesysio_a782ce1027f8ab3ef0b9f9dae5f077043_1a782ce1027f8ab3ef0b9f9dae5f077043" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>char *</type>
+        <definition>char * sysio::write_decimal</definition>
+        <argsstring>(char *begin, char *end, bool dry_run, uint64_t number, uint8_t num_decimal_places, bool negative)</argsstring>
+        <name>write_decimal</name>
+        <qualifiedname>sysio::write_decimal</qualifiedname>
+        <param>
+          <type>char *</type>
+          <declname>begin</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>end</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>dry_run</declname>
+        </param>
+        <param>
+          <type>uint64_t</type>
+          <declname>number</declname>
+        </param>
+        <param>
+          <type>uint8_t</type>
+          <declname>num_decimal_places</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>negative</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/asset.hpp" line="13" column="9" declfile="libraries/sysiolib/core/sysio/asset.hpp" declline="13" declcolumn="9"/>
+      </memberdef>
+      <member refid="group__system_1ga8f44fb02ae19a86ba7bcaa5672580334" kind="function"><name>check</name></member>
+      <member refid="group__system_1ga5fdfb5e610f149b5280bc03d3f288b81" kind="function"><name>check</name></member>
+      <member refid="group__system_1gaa065d823ab52c8386b4931c7a540d29b" kind="function"><name>check</name></member>
+      <member refid="group__system_1ga76cd9ac08b61b1cf36e8cca30cc91465" kind="function"><name>check</name></member>
+      <member refid="group__system_1ga9a6b000dd9f96a11b3ed20ce96724fb6" kind="function"><name>check</name></member>
+      <member refid="group__system_1gae97a231e3a459b32f9c15a98f2253b55" kind="function"><name>check</name></member>
+      <member refid="group__system_1gac4b2540d052e45f2e47e79daf2510860" kind="function"><name>check</name></member>
+      <memberdef kind="function" id="namespacesysio_ab4b09384fc2f1644fb962d61dc210cdb_1ab4b09384fc2f1644fb962d61dc210cdb" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::current_context_contract</definition>
+        <argsstring>()</argsstring>
+        <name>current_context_contract</name>
+        <qualifiedname>sysio::current_context_contract</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/context.hpp" line="10" column="16" bodyfile="libraries/sysiolib/core/sysio/context.hpp" bodystart="10" bodyend="10"/>
+      </memberdef>
+      <member refid="group__crypto_1ga0cd06321156dfab93ed85e67f6d6299e" kind="function"><name>alt_bn128_add</name></member>
+      <member refid="group__crypto_1gac0e8ec5424460d89710a63006fe6a893" kind="function"><name>alt_bn128_add</name></member>
+      <member refid="group__crypto_1gaa4f388f1f3d837a04a391337429706b9" kind="function"><name>alt_bn128_mul</name></member>
+      <member refid="group__crypto_1ga237fcc5e9afbb619321b4f3496c7c0c5" kind="function"><name>alt_bn128_mul</name></member>
+      <member refid="group__crypto_1gab098ff8db4bac752f88cdebb9b30bb73" kind="function"><name>alt_bn128_pair</name></member>
+      <member refid="group__crypto_1ga0437ba8953f498e91ff4265947c04ab7" kind="function"><name>alt_bn128_pair</name></member>
+      <member refid="group__crypto_1gac7c345aafd080f87dd3ab935180784bf" kind="function"><name>mod_exp</name></member>
+      <member refid="group__crypto_1ga75b8c0115f1f8090b29f9ddf9c87e252" kind="function"><name>mod_exp</name></member>
+      <member refid="group__crypto_1gaba4b9c3061aa17c41431c76e584e68a8" kind="function"><name>blake2_f</name></member>
+      <member refid="group__crypto_1ga0f8f0fdac679ee9c5c4738c56398a870" kind="function"><name>blake2_f</name></member>
+      <member refid="group__crypto_1ga3dd1f549de2c59114e866bf634400fb2" kind="function"><name>sha3</name></member>
+      <member refid="group__crypto_1ga09efcdc1530259fd014b37f6e169740b" kind="function"><name>assert_sha3</name></member>
+      <member refid="group__crypto_1gaa1db7bb34896f194937134af2ffc129c" kind="function"><name>keccak</name></member>
+      <member refid="group__crypto_1gabd44ec82b1d153d2a7f1693861ea6eb3" kind="function"><name>assert_keccak</name></member>
+      <member refid="group__crypto_1ga593b42f3eb1e5e2368e78b3126063e67" kind="function"><name>k1_recover</name></member>
+      <memberdef kind="function" id="namespacesysio_a0c8c8079b041f4d6ca571993ff7d0198_1a0c8c8079b041f4d6ca571993ff7d0198" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::list&lt; T &gt; &amp;l)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::list&lt; T &gt; &amp;</type>
+          <declname>l</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an std::list into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="1" column="0" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="290" bodyend="295"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_afcc8022b8ef1379c665ebe45f5c49825_1afcc8022b8ef1379c665ebe45f5c49825" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::list&lt; T &gt; &amp;l)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::list&lt; T &gt; &amp;</type>
+          <declname>l</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize an std::list from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="306" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="306" bodyend="313"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ab193f0f9175c433f26fa9b5a98b30c2b_1ab193f0f9175c433f26fa9b5a98b30c2b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::deque&lt; T &gt; &amp;d)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::deque&lt; T &gt; &amp;</type>
+          <declname>d</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an std::deque into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="306" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="324" bodyend="329"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ad06e4b2bddfcc70aa243c270b127b8bc_1ad06e4b2bddfcc70aa243c270b127b8bc" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::deque&lt; T &gt; &amp;d)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::deque&lt; T &gt; &amp;</type>
+          <declname>d</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize an std::deque from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="340" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="340" bodyend="347"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ae2df6094563d207af07fe9624b8e470a_1ae2df6094563d207af07fe9624b8e470a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::variant&lt; Ts... &gt; &amp;var)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::variant&lt; Ts... &gt; &amp;</type>
+          <declname>var</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an std::variant into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="340" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="358" bodyend="363"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a77af3410f2edbb364996d0dbc520dba1_1a77af3410f2edbb364996d0dbc520dba1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>int</type>
+            <declname>I</declname>
+            <defname>I</defname>
+          </param>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::deserialize</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::variant&lt; Ts... &gt; &amp;var, int i)</argsstring>
+        <name>deserialize</name>
+        <qualifiedname>sysio::deserialize</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::variant&lt; Ts... &gt; &amp;</type>
+          <declname>var</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>i</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="366" column="6" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="366" bodyend="378"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_afd0a8beeeab48f25e9cdbc4c6564103e_1afd0a8beeeab48f25e9cdbc4c6564103e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::variant&lt; Ts... &gt; &amp;var)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::variant&lt; Ts... &gt; &amp;</type>
+          <declname>var</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize an std::variant from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="389" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="389" bodyend="394"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_aad52122e6921f82a5260c73aadb49330_1aad52122e6921f82a5260c73aadb49330" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T1</type>
+          </param>
+          <param>
+            <type>typename T2</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::pair&lt; T1, T2 &gt; &amp;t)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::pair&lt; T1, T2 &gt; &amp;</type>
+          <declname>t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an std::pair</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the objects contained in the tuple </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="389" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="406" bodyend="410"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ad5ea7a0992c61e38149729164d66ed2f_1ad5ea7a0992c61e38149729164d66ed2f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T1</type>
+          </param>
+          <param>
+            <type>typename T2</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::pair&lt; T1, T2 &gt; &amp;t)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::pair&lt; T1, T2 &gt; &amp;</type>
+          <declname>t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize an std::pair</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the objects contained in the tuple </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="422" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="422" bodyend="429"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a1e6adf20b6eda443fe8a4db4f439499a_1a1e6adf20b6eda443fe8a4db4f439499a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::optional&lt; T &gt; &amp;opt)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::optional&lt; T &gt; &amp;</type>
+          <declname>opt</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an optional into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="422" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="440" bodyend="446"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a0b17398b24412be4461468e6a49198a4_1a0b17398b24412be4461468e6a49198a4" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::optional&lt; T &gt; &amp;opt)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::optional&lt; T &gt; &amp;</type>
+          <declname>opt</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize an optional from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>opt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="457" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="457" bodyend="466"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a04c711be7208b428bafc030b84868c28_1a04c711be7208b428bafc030b84868c28" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const bool &amp;d)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const bool &amp;</type>
+          <declname>d</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a bool into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>d</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="457" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="478" bodyend="480"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_aaeda521485f0268e315dc50f51f423f4_1aaeda521485f0268e315dc50f51f423f4" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, bool &amp;d)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>bool &amp;</type>
+          <declname>d</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a bool from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>d</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="491" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="491" bodyend="496"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ac25ef42cf459b0e40230f5dbbc433893_1ac25ef42cf459b0e40230f5dbbc433893" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::string &amp;v)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a string into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="491" column="19" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="507" bodyend="512"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a33012ad919ef7c2a2fe83e59c932eda1_1a33012ad919ef7c2a2fe83e59c932eda1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::string &amp;v)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::string &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a string from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="523" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="523" bodyend="531"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_aca67fee90cfe4f9bf4b00e60346db6c4_1aca67fee90cfe4f9bf4b00e60346db6c4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::array&lt; T, N &gt; &amp;v)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::array&lt; T, N &gt; &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a fixed size std::array</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the array </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>N</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Size of the array </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="523" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="544" bodyend="548"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a6cc4df65d0e2e93aab84b57ac5416633_1a6cc4df65d0e2e93aab84b57ac5416633" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::array&lt; T, N &gt; &amp;v)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::array&lt; T, N &gt; &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a fixed size std::array</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the array </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>N</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Size of the array </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="562" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="562" bodyend="566"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ad3496e98eb387063641de8b2e2242009_1ad3496e98eb387063641de8b2e2242009" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; _datastream_detail::is_pointer&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, T)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>T</type>
+        </param>
+        <briefdescription>
+<para>Pointer should not be serialized, so this function will always throws an error. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a pointer</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the pointer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+<simplesect kind="post"><para>Throw an exception if it is a pointer </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="618" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="618" bodyend="621"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3fe36180bbb4bf97799cd7f6da0b628d_1a3fe36180bbb4bf97799cd7f6da0b628d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt;!_datastream_detail::is_primitive&lt; T &gt;() &amp;&amp;!_datastream_detail::is_pointer&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const T(&amp;v)[N])</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const T(&amp;)</type>
+          <declname>v</declname>
+          <array>[N]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a fixed size C array of non-primitive and non-pointer type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the pointer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream</para>
+</simplesect>
+Serialize a fixed size C array of primitive type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the pointer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="618" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="635" bodyend="640"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a79132cb5f6b0af6ed32dc9319d29bc63_1a79132cb5f6b0af6ed32dc9319d29bc63" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt;!_datastream_detail::is_primitive&lt; T &gt;() &amp;&amp;!_datastream_detail::is_pointer&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, T(&amp;v)[N])</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>T(&amp;)</type>
+          <declname>v</declname>
+          <array>[N]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a fixed size C array of non-primitive and non-pointer type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the array </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>N</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Size of the array </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream</para>
+</simplesect>
+Deserialize a fixed size C array of primitive type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the array </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>N</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Size of the array </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="672" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="672" bodyend="679"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a8b8995e336e3a3fb440ec030e260453a_1a8b8995e336e3a3fb440ec030e260453a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; _datastream_detail::is_primitive&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::vector&lt; T &gt; &amp;v)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; T &gt; &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a vector of T, where T is a primitive data type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream</para>
+</simplesect>
+Serialize a vector</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the vector </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="693" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="711" bodyend="715"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a589d97ad1db07d65ca1c2be09542159f_1a589d97ad1db07d65ca1c2be09542159f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; _datastream_detail::is_primitive&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::vector&lt; T &gt; &amp;v)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; T &gt; &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a vector of T, where T is a primitive data type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream</para>
+</simplesect>
+Deserialize a vector</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the vector </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="745" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="745" bodyend="751"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a7f1fec045777898486e7ed82f1e0be38_1a7f1fec045777898486e7ed82f1e0be38" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::set&lt; T &gt; &amp;s)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::set&lt; T &gt; &amp;</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a set</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>s</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the set </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="764" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="783" bodyend="789"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a716a54a1f7e28ac763e0917421efef95_1a716a54a1f7e28ac763e0917421efef95" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::set&lt; T &gt; &amp;s)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::set&lt; T &gt; &amp;</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a set</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>s</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the object contained in the set </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="802" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="802" bodyend="812"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a4b7ac0077b5e53b34534e25b015d60f6_1a4b7ac0077b5e53b34534e25b015d60f6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename K</type>
+          </param>
+          <param>
+            <type>typename V</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::map&lt; K, V &gt; &amp;m)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::map&lt; K, V &gt; &amp;</type>
+          <declname>m</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a map</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>m</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>K</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the key contained in the map </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>V</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the value contained in the map </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="802" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="825" bodyend="831"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a71a119c8d27660f04e93a71b738e0d98_1a71a119c8d27660f04e93a71b738e0d98" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename K</type>
+          </param>
+          <param>
+            <type>typename V</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::map&lt; K, V &gt; &amp;m)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::map&lt; K, V &gt; &amp;</type>
+          <declname>m</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a map</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>m</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>K</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the key contained in the map </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>V</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the value contained in the map </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="844" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="844" bodyend="854"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a4858d0a3922677e21c538deda4e57f09_1a4858d0a3922677e21c538deda4e57f09" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const std::tuple&lt; Args... &gt; &amp;t)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const std::tuple&lt; Args... &gt; &amp;</type>
+          <declname>t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a tuple</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the objects contained in the tuple </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="844" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="866" bodyend="871"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a03bbaf486398c59e4f8cb59127bbd79a_1a03bbaf486398c59e4f8cb59127bbd79a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, std::tuple&lt; Args... &gt; &amp;t)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>std::tuple&lt; Args... &gt; &amp;</type>
+          <declname>t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a tuple</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the objects contained in the tuple </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="883" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="883" bodyend="888"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a42f64562e2e133db3376b0f4e6442c95_1a42f64562e2e133db3376b0f4e6442c95" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; std::is_class&lt; T &gt;::value &amp;&amp;_datastream_detail::is_datastream&lt; DataStream &gt;::value &gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(DataStream &amp;ds, const T &amp;v)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const T &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a class</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of class </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="900" column="1" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="900" bodyend="905"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3d4cc55025d2c33449437311af486a5d_1a3d4cc55025d2c33449437311af486a5d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; std::is_class&lt; T &gt;::value &amp;&amp;_datastream_detail::is_datastream&lt; DataStream &gt;::value &gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(DataStream &amp;ds, T &amp;v)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>T &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a class</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of class </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="917" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="917" bodyend="922"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ad91706ce22cf96e2ad739af3a0249d65_1ad91706ce22cf96e2ad739af3a0249d65" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; _datastream_detail::is_primitive&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, const T &amp;v)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const T &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a primitive type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the primitive type </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="917" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="934" bodyend="937"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3f7da2a7fd8bab218155c0f2bd862802_1a3f7da2a7fd8bab218155c0f2bd862802" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Stream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; _datastream_detail::is_primitive&lt; T &gt;()&gt; *</type>
+            <defval>nullptr</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+        <definition>datastream&lt; Stream &gt; &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(datastream&lt; Stream &gt; &amp;ds, T &amp;v)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; Stream &gt; &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>T &amp;</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a primitive type</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Stream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the primitive type </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>datastream&lt;Stream&gt;&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/datastream.hpp" line="949" column="12" bodyfile="libraries/sysiolib/core/sysio/datastream.hpp" bodystart="949" bodyend="952"/>
+      </memberdef>
+      <member refid="group__datastream_1ga82e7868634ca1502d8f06ad3b6b2886e" kind="function"><name>unpack</name></member>
+      <member refid="group__datastream_1ga5c1f95002dd82b289fa6aa5e5f1e5334" kind="function"><name>unpack</name></member>
+      <member refid="group__datastream_1ga76cbd7a75869d8cb39aeedb676ba03f0" kind="function"><name>unpack</name></member>
+      <member refid="group__datastream_1gabadd9ed5d5c1796250afe70557289fcc" kind="function"><name>pack_size</name></member>
+      <member refid="group__datastream_1ga07fb7732ea8735fba65c824772f1380d" kind="function"><name>pack</name></member>
+      <memberdef kind="function" id="namespacesysio_adefdb5accc7adf31e405a6826cbbbbc0_1adefdb5accc7adf31e405a6826cbbbbc0" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(DataStream &amp;ds, const ::sysio::ignore_wrapper&lt; T &gt; &amp;val)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structsysio_1_1ignore__wrapper" kindref="compound">::sysio::ignore_wrapper</ref>&lt; T &gt; &amp;</type>
+          <declname>val</declname>
+        </param>
+        <briefdescription>
+<para>Serialize ignored_wrapper&lt;T&gt;&apos;s T value. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an ignored_wrapper type into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>val</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="46" column="11" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="46" bodyend="49"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a056f3fc9eb5766ae7b81be7eb65f1280_1a056f3fc9eb5766ae7b81be7eb65f1280" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(DataStream &amp;ds, const ::sysio::ignore&lt; T &gt; &amp;val)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structsysio_1_1ignore" kindref="compound">::sysio::ignore</ref>&lt; T &gt; &amp;</type>
+          <declname>val</declname>
+        </param>
+        <briefdescription>
+<para>Serialize an ignored type. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize an ignored type into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ignore</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="61" column="11" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="61" bodyend="63"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a2c6c8ff5a606214d5ad6a4ee5714432a_1a2c6c8ff5a606214d5ad6a4ee5714432a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(DataStream &amp;ds, ::sysio::ignore&lt; T &gt; &amp;)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1ignore" kindref="compound">::sysio::ignore</ref>&lt; T &gt; &amp;</type>
+        </param>
+        <briefdescription>
+<para>Deserialize an ignored type. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize an ignored type from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ignored</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/ignore.hpp" line="75" column="22" bodyfile="libraries/sysiolib/core/sysio/ignore.hpp" bodystart="75" bodyend="77"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a0d350ceac7c84da150a0791bbbb389c1_1a0d350ceac7c84da150a0791bbbb389c1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const T &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="302" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="302" bodyend="324" declfile="libraries/sysiolib/core/sysio/key_utils.hpp" declline="98" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a59ae10af43c83235cb4142f34221836d_1a59ae10af43c83235cb4142f34221836d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>int</type>
+            <declname>I</declname>
+            <defname>I</defname>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key_tuple</definition>
+        <argsstring>(const T &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key_tuple</name>
+        <qualifiedname>sysio::to_key_tuple</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="101" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="101" bodyend="106"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_acb69a97ed787a0f90c0f25962244e145_1acb69a97ed787a0f90c0f25962244e145" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::tuple&lt; Ts... &gt; &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::tuple&lt; Ts... &gt; &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="109" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="109" bodyend="111"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3d9c89450c38bc7ab5d84d2e855452fe_1a3d9c89450c38bc7ab5d84d2e855452fe" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::array&lt; T, N &gt; &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::array&lt; T, N &gt; &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="114" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="114" bodyend="116"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a674ef4c0efe62ff5742204324a35354d_1a674ef4c0efe62ff5742204324a35354d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key_optional</definition>
+        <argsstring>(const bool *obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key_optional</name>
+        <qualifiedname>sysio::to_key_optional</qualifiedname>
+        <param>
+          <type>const bool *</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="119" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="119" bodyend="127"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a2dbb92e1bbf6ad7756ec0fc22deb1856_1a2dbb92e1bbf6ad7756ec0fc22deb1856" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key_optional</definition>
+        <argsstring>(const T *obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key_optional</name>
+        <qualifiedname>sysio::to_key_optional</qualifiedname>
+        <param>
+          <type>const T *</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="130" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="130" bodyend="150"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a2cd20d0d0bf192d374957258e8df5365_1a2cd20d0d0bf192d374957258e8df5365" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename U</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::pair&lt; T, U &gt; &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::pair&lt; T, U &gt; &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="153" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="153" bodyend="156"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ae7eee0227aafae2da2b31bd4eb149825_1ae7eee0227aafae2da2b31bd4eb149825" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key_range</definition>
+        <argsstring>(const T &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key_range</name>
+        <qualifiedname>sysio::to_key_range</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="159" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="159" bodyend="162"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a57f869df3103e209b4d6f3249ae43957_1a57f869df3103e209b4d6f3249ae43957" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>std::enable_if_t&lt; is_ranged_type(std::declval&lt; T &gt;()), void &gt;</type>
+        <definition>std::enable_if_t&lt; is_ranged_type(std::declval&lt; T &gt;()), void &gt; sysio::to_key</definition>
+        <argsstring>(const T &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="165" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="165" bodyend="167"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a40083fbba55329eb68d24598dd6cb876_1a40083fbba55329eb68d24598dd6cb876" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename U</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::map&lt; T, U &gt; &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::map&lt; T, U &gt; &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="170" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="170" bodyend="172"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a07250d932f460fbfe65fc72773b7df63_1a07250d932f460fbfe65fc72773b7df63" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::optional&lt; T &gt; &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::optional&lt; T &gt; &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="175" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="175" bodyend="177"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ab6eb73a26f8ab106b72ea830bd9a662f_1ab6eb73a26f8ab106b72ea830bd9a662f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key_varuint32</definition>
+        <argsstring>(std::uint32_t obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key_varuint32</name>
+        <qualifiedname>sysio::to_key_varuint32</qualifiedname>
+        <param>
+          <type>std::uint32_t</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="189" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="189" bodyend="206"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ae5b2566232351aae50ed642ae0f43363_1ae5b2566232351aae50ed642ae0f43363" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key_varint32</definition>
+        <argsstring>(std::int32_t obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key_varint32</name>
+        <qualifiedname>sysio::to_key_varint32</qualifiedname>
+        <param>
+          <type>std::int32_t</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="226" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="226" bodyend="253"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3591649adf9b4257de1683f3a9c67ca5_1a3591649adf9b4257de1683f3a9c67ca5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::variant&lt; Ts... &gt; &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::variant&lt; Ts... &gt; &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="256" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="256" bodyend="259"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ac5cd358c42ec168d218ea9279c503436_1ac5cd358c42ec168d218ea9279c503436" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>std::size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const char(&amp;str)[N], datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const char(&amp;)</type>
+          <declname>str</declname>
+          <array>[N]</array>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="262" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="262" bodyend="264"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ae3280dda4e08a021118069952ef7cbfc_1ae3280dda4e08a021118069952ef7cbfc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(std::string_view obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>std::string_view</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="267" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="267" bodyend="275"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3be1433384866bb4fcbaa50c382b69bb_1a3be1433384866bb4fcbaa50c382b69bb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(const std::string &amp;obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="278" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="278" bodyend="280"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a2610576db2004b7868a3efcd6721f0de_1a2610576db2004b7868a3efcd6721f0de" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename S</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::to_key</definition>
+        <argsstring>(bool obj, datastream&lt; S &gt; &amp;stream)</argsstring>
+        <name>to_key</name>
+        <qualifiedname>sysio::to_key</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; S &gt; &amp;</type>
+          <declname>stream</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="283" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="283" bodyend="285"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a14aa4b12efd1fe7c638038bfcb973e9e_1a14aa4b12efd1fe7c638038bfcb973e9e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename UInt</type>
+          </param>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>UInt</type>
+        <definition>UInt sysio::float_to_key</definition>
+        <argsstring>(T value)</argsstring>
+        <name>float_to_key</name>
+        <qualifiedname>sysio::float_to_key</qualifiedname>
+        <param>
+          <type>T</type>
+          <declname>value</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="288" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="288" bodyend="299"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a60cfadf922247ab8f0589014cffda162_1a60cfadf922247ab8f0589014cffda162" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::convert_to_key</definition>
+        <argsstring>(const T &amp;t, key_type &amp;bin)</argsstring>
+        <name>convert_to_key</name>
+        <qualifiedname>sysio::convert_to_key</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>t</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacesysio_a54a9a73f6a36495a16de37723fe0b999_1a54a9a73f6a36495a16de37723fe0b999" kindref="member">key_type</ref> &amp;</type>
+          <declname>bin</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="327" column="6" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="327" bodyend="335"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a0f7a1d528d16261d53d9343227996cef_1a0f7a1d528d16261d53d9343227996cef" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="namespacesysio_a54a9a73f6a36495a16de37723fe0b999_1a54a9a73f6a36495a16de37723fe0b999" kindref="member">key_type</ref></type>
+        <definition>key_type sysio::convert_to_key</definition>
+        <argsstring>(const T &amp;t)</argsstring>
+        <name>convert_to_key</name>
+        <qualifiedname>sysio::convert_to_key</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/key_utils.hpp" line="338" column="10" bodyfile="libraries/sysiolib/core/sysio/key_utils.hpp" bodystart="338" bodyend="342"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a0b1813ad047a6b0f37970f76f5a01ece_1a0b1813ad047a6b0f37970f76f5a01ece" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>uint8_t</type>
+            <declname>Base</declname>
+            <defname>Base</defname>
+          </param>
+          <param>
+            <type>typename T</type>
+            <defval>uint64_t</defval>
+          </param>
+        </templateparamlist>
+        <type>T</type>
+        <definition>T sysio::pow</definition>
+        <argsstring>(uint8_t exponent)</argsstring>
+        <name>pow</name>
+        <qualifiedname>sysio::pow</qualifiedname>
+        <param>
+          <type>uint8_t</type>
+          <declname>exponent</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>Base^exponent </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="81" column="16" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="81" bodyend="86"/>
+      </memberdef>
+      <member refid="group__console_1gabd88fded96c1630a019aac052b4e7459" kind="function"><name>printhex</name></member>
+      <member refid="group__console_1ga5d4d10b7489ff7cdc7a7f23f247d59e2" kind="function"><name>printl</name></member>
+      <member refid="group__console_1gac994825ff7d74c284b5f0ff008208353" kind="function"><name>print</name></member>
+      <memberdef kind="function" id="namespacesysio_a78c09cbcd2bb82812233e31be71f5955_1a78c09cbcd2bb82812233e31be71f5955" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>std::enable_if_t&lt; std::is_integral&lt; std::decay_t&lt; T &gt; &gt;::value &amp;&amp;std::is_signed&lt; std::decay_t&lt; T &gt; &gt;::value, int &gt;</type>
+            <defval>0</defval>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(T num)</argsstring>
+        <name>print</name>
+        <qualifiedname>sysio::print</qualifiedname>
+        <param>
+          <type>T</type>
+          <declname>num</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints 8-128 bit signed integer</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>num</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+Prints 8-128 bit unsigned integer</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>num</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="109" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="109" bodyend="116"/>
+      </memberdef>
+      <member refid="group__console_1ga0126e8ec4434410b7bc09e64b7f6a90b" kind="function"><name>print</name></member>
+      <member refid="group__console_1ga5bb7861d851fe74f1e17a0ab6ebfa0a4" kind="function"><name>print</name></member>
+      <member refid="group__console_1gac0ffe8e9b66c8bebd5b4c88b5cf061b0" kind="function"><name>print</name></member>
+      <member refid="group__console_1gaf493049d7f561c79a1a0ba9d04cdcac8" kind="function"><name>print</name></member>
+      <member refid="group__console_1gad43a54fc19452b6b16350f44d55f5639" kind="function"><name>print_f</name></member>
+      <memberdef kind="function" id="namespacesysio_a58faacc43d7715366d8ac37ab96397c3_1a58faacc43d7715366d8ac37ab96397c3" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Arg</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::print_f</definition>
+        <argsstring>(const char *s, Arg val, Args... rest)</argsstring>
+        <name>print_f</name>
+        <qualifiedname>sysio::print_f</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>s</declname>
+        </param>
+        <param>
+          <type>Arg</type>
+          <declname>val</declname>
+        </param>
+        <param>
+          <type>Args...</type>
+          <declname>rest</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints formatted string. It behaves similar to C printf/</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Arg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the value used to replace the format specifier </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the value used to replace the format specifier </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>s</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Null terminated string with to be printed (it can contains format specifier) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>val</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value used to replace the format specifier </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>rest</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The values used to replace the format specifier</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+Example: <programlisting><codeline><highlight class="normal"><ref refid="group__console_gad43a54fc19452b6b16350f44d55f5639_1gad43a54fc19452b6b16350f44d55f5639" kindref="member">print_f</ref>(</highlight><highlight class="stringliteral">&quot;Number<sp/>of<sp/>apples:<sp/>%&quot;</highlight><highlight class="normal">,<sp/>10);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="200" column="16" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="200" bodyend="210"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a580e41bb12b2612e14f797406c5d53f0_1a580e41bb12b2612e14f797406c5d53f0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Arg</type>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::print</definition>
+        <argsstring>(Arg &amp;&amp;a, Args &amp;&amp;... args)</argsstring>
+        <name>print</name>
+        <qualifiedname>sysio::print</qualifiedname>
+        <param>
+          <type>Arg &amp;&amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>Args &amp;&amp;...</type>
+          <declname>args</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Print out value / list of values</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Arg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the value used to replace the format specifier </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of the value used to replace the format specifier </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>a</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to be printed </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>args</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The other values to be printed</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+Example:</para>
+<para><programlisting><codeline><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*s<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hello<sp/>World!&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal">uint64_t<sp/>unsigned_64_bit_int<sp/>=<sp/>1e+18;</highlight></codeline>
+<codeline><highlight class="normal">uint128_t<sp/>unsigned_128_bit_int<sp/>(87654323456);</highlight></codeline>
+<codeline><highlight class="normal">uint64_t<sp/>string_as_unsigned_64_bit<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;abcde&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__console_gac994825ff7d74c284b5f0ff008208353_1gac994825ff7d74c284b5f0ff008208353" kindref="member">print</ref>(s<sp/>,<sp/>unsigned_64_bit_int,<sp/>unsigned_128_bit_int,<sp/>string_as_unsigned_64_bit);</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">//<sp/>Ouput:<sp/>Hello<sp/>World!100000000000000000087654323456abcde</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/print.hpp" line="232" column="9" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="232" bodyend="235"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ab3f99e9282f78c6356b4c838338474ac_1ab3f99e9282f78c6356b4c838338474ac" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+        </templateparamlist>
+        <type></type>
+        <definition>sysio::overloaded</definition>
+        <argsstring>(Ts...) -&gt; overloaded&lt; Ts... &gt;</argsstring>
+        <name>overloaded</name>
+        <qualifiedname>sysio::overloaded</qualifiedname>
+        <param>
+          <type>Ts...</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="12" column="15" declfile="libraries/sysiolib/core/sysio/rope.hpp" declline="12" declcolumn="15"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a95f65eb573c66f772e429d9278853300_1a95f65eb573c66f772e429d9278853300" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::operator&lt;</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&lt;</name>
+        <qualifiedname>sysio::operator&lt;</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="427" column="11" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="427" bodyend="439"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a3af967f88ab1efc24e5a94dc5631121b_1a3af967f88ab1efc24e5a94dc5631121b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::operator&gt;</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&gt;</name>
+        <qualifiedname>sysio::operator&gt;</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="441" column="16" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="441" bodyend="443"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_adccae949a1a8ee215de88cf5bb16c7e6_1adccae949a1a8ee215de88cf5bb16c7e6" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::operator&lt;=</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&lt;=</name>
+        <qualifiedname>sysio::operator&lt;=</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="445" column="11" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="445" bodyend="447"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a36486023d7c6f0834c2f6c2816ebd8b3_1a36486023d7c6f0834c2f6c2816ebd8b3" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::operator&gt;=</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator&gt;=</name>
+        <qualifiedname>sysio::operator&gt;=</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="449" column="16" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="449" bodyend="451"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ad7db4c8c617f8a7b6d09ac6f91e963c7_1ad7db4c8c617f8a7b6d09ac6f91e963c7" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::operator==</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator==</name>
+        <qualifiedname>sysio::operator==</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="453" column="16" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="453" bodyend="455"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a315c8f4742ecc3a66f4f6c155c6c5376_1a315c8f4742ecc3a66f4f6c155c6c5376" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::operator!=</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator!=</name>
+        <qualifiedname>sysio::operator!=</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="457" column="16" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="457" bodyend="459"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a98014d711afa0e6f971d98e1b1db0dc2_1a98014d711afa0e6f971d98e1b1db0dc2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1string" kindref="compound">string</ref></type>
+        <definition>string sysio::operator+</definition>
+        <argsstring>(const string &amp;lhs, const string &amp;rhs)</argsstring>
+        <name>operator+</name>
+        <qualifiedname>sysio::operator+</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="461" column="18" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="461" bodyend="465"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a4d459a7e7f4fe234e532fb59fc3a5c45_1a4d459a7e7f4fe234e532fb59fc3a5c45" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(DataStream &amp;ds, const string &amp;str)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="468" column="4" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="468" bodyend="473"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_af7bf8635cd7313668b7b3f5f7d75d75d_1af7bf8635cd7313668b7b3f5f7d75d75d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(DataStream &amp;ds, string &amp;str)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1string" kindref="compound">string</ref> &amp;</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/string.hpp" line="476" column="15" bodyfile="libraries/sysiolib/core/sysio/string.hpp" bodystart="476" bodyend="481"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ad9b9f93e38baefc99a30776dbdddd018_1ad9b9f93e38baefc99a30776dbdddd018" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(DataStream &amp;ds, const sysio::symbol_code sym_code)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol__code" kindref="compound">sysio::symbol_code</ref></type>
+          <declname>sym_code</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref> into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sym</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="216" column="11" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="216" bodyend="220"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a83a423eea89866b1eeb91df68a70d1f9_1a83a423eea89866b1eeb91df68a70d1f9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(DataStream &amp;ds, sysio::symbol_code &amp;sym_code)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1symbol__code" kindref="compound">sysio::symbol_code</ref> &amp;</type>
+          <declname>sym_code</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref> from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>symbol</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="231" column="22" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="231" bodyend="236"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_ab4f2b9cc45129e62a33185f4c60652c4_1ab4f2b9cc45129e62a33185f4c60652c4" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&lt;&lt;</definition>
+        <argsstring>(DataStream &amp;ds, const sysio::symbol sym)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <qualifiedname>sysio::operator&lt;&lt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1symbol" kindref="compound">sysio::symbol</ref></type>
+          <declname>sym</declname>
+        </param>
+        <briefdescription>
+<para>Serialize a symbol. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Serialize a symbol into a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to write </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sym</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The value to serialize </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="353" column="11" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="353" bodyend="357"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_aa25a1d7e529dda702ecd4892524513e7_1aa25a1d7e529dda702ecd4892524513e7" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename DataStream</type>
+          </param>
+        </templateparamlist>
+        <type>DataStream &amp;</type>
+        <definition>DataStream &amp; sysio::operator&gt;&gt;</definition>
+        <argsstring>(DataStream &amp;ds, sysio::symbol &amp;sym)</argsstring>
+        <name>operator&gt;&gt;</name>
+        <qualifiedname>sysio::operator&gt;&gt;</qualifiedname>
+        <param>
+          <type>DataStream &amp;</type>
+          <declname>ds</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1symbol" kindref="compound">sysio::symbol</ref> &amp;</type>
+          <declname>sym</declname>
+        </param>
+        <briefdescription>
+<para>Deserialize a symbol. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Deserialize a symbol from a stream</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The stream to read </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>symbol</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The destination for deserialized value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>DataStream</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Type of datastream buffer </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>DataStream&amp; - Reference to the datastream </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="369" column="22" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="369" bodyend="374"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a0ee3547e61a6da8c7ecc8fd1afdde60f_1a0ee3547e61a6da8c7ecc8fd1afdde60f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref></type>
+        <definition>microseconds sysio::seconds</definition>
+        <argsstring>(int64_t s)</argsstring>
+        <name>seconds</name>
+        <qualifiedname>sysio::seconds</qualifiedname>
+        <param>
+          <type>int64_t</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="47" column="23" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="47" bodyend="47"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a59f2e92e11e38b58c77e74c8670dced2_1a59f2e92e11e38b58c77e74c8670dced2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref></type>
+        <definition>microseconds sysio::milliseconds</definition>
+        <argsstring>(int64_t s)</argsstring>
+        <name>milliseconds</name>
+        <qualifiedname>sysio::milliseconds</qualifiedname>
+        <param>
+          <type>int64_t</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="48" column="23" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="48" bodyend="48"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a4fcd89249199a92c20b9198c7abc90e2_1a4fcd89249199a92c20b9198c7abc90e2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref></type>
+        <definition>microseconds sysio::minutes</definition>
+        <argsstring>(int64_t m)</argsstring>
+        <name>minutes</name>
+        <qualifiedname>sysio::minutes</qualifiedname>
+        <param>
+          <type>int64_t</type>
+          <declname>m</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="49" column="23" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="49" bodyend="49"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_a13181e2a8f87732297b08e70d8abedab_1a13181e2a8f87732297b08e70d8abedab" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref></type>
+        <definition>microseconds sysio::hours</definition>
+        <argsstring>(int64_t h)</argsstring>
+        <name>hours</name>
+        <qualifiedname>sysio::hours</qualifiedname>
+        <param>
+          <type>int64_t</type>
+          <declname>h</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="50" column="23" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="50" bodyend="50"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacesysio_aabfdeadf0e3aa4bc7c6b88ae70a3c56c_1aabfdeadf0e3aa4bc7c6b88ae70a3c56c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref></type>
+        <definition>microseconds sysio::days</definition>
+        <argsstring>(int64_t d)</argsstring>
+        <name>days</name>
+        <qualifiedname>sysio::days</qualifiedname>
+        <param>
+          <type>int64_t</type>
+          <declname>d</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="51" column="23" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="51" bodyend="51"/>
+      </memberdef>
+      <member refid="group__action_1ga6d5d5474d576019c6ea5194f4803d54b" kind="function"><name>unpack_action_data</name></member>
+      <member refid="group__action_1ga4050e0dcdf9d9b51bddb2d93fc9fa42f" kind="function"><name>require_recipient</name></member>
+      <member refid="group__action_1ga7143369c772e9e75acfea1cc2cff56e3" kind="function"><name>require_recipient</name></member>
+      <member refid="group__action_1ga4fb6d5ddbc9dde4f1e19b942d317c740" kind="function"><name>require_auth</name></member>
+      <member refid="group__action_1ga72357c5b27ba8bbf8b086cd852962bb6" kind="function"><name>publication_time</name></member>
+      <memberdef kind="function" id="namespacesysio_a91f4b7477c361af1b1ce832bb08167b5_1a91f4b7477c361af1b1ce832bb08167b5" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::current_receiver</definition>
+        <argsstring>()</argsstring>
+        <name>current_receiver</name>
+        <qualifiedname>sysio::current_receiver</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get the current receiver of the action <simplesect kind="return"><para>the account which specifies the current receiver of the action </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="149" column="16" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="149" bodyend="151"/>
+      </memberdef>
+      <member refid="group__action_1ga7c345dedb82104f0ea5215e2bfc27d4e" kind="function"><name>read_action_data</name></member>
+      <memberdef kind="function" id="namespacesysio_a326cd3a87b249c33a0d76bd0c4f93af0_1a326cd3a87b249c33a0d76bd0c4f93af0" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::action_data_size</definition>
+        <argsstring>()</argsstring>
+        <name>action_data_size</name>
+        <qualifiedname>sysio::action_data_size</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get the length of the current action&apos;s data field. This method is useful for dynamically sized actions</para>
+<para><simplesect kind="return"><para>the length of the current action&apos;s data field </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="172" column="20" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="172" bodyend="174"/>
+      </memberdef>
+      <member refid="group__action_1gafabaee9b377c9055d162998a603e2548" kind="function"><name>require_auth</name></member>
+      <member refid="group__action_1ga5c3822fa784936636c24f53c81dd3b5e" kind="function"><name>has_auth</name></member>
+      <member refid="group__action_1gad99bd091df73a8312651e22c2b55ecca" kind="function"><name>is_account</name></member>
+      <memberdef kind="function" id="namespacesysio_a45545a7dc03fde61ef7355559bad5068_1a45545a7dc03fde61ef7355559bad5068" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::dispatch_inline</definition>
+        <argsstring>(name code, name act, std::vector&lt; permission_level &gt; perms, std::tuple&lt; Args... &gt; args)</argsstring>
+        <name>dispatch_inline</name>
+        <qualifiedname>sysio::dispatch_inline</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>code</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>act</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; <ref refid="structsysio_1_1permission__level" kindref="compound">permission_level</ref> &gt;</type>
+          <declname>perms</declname>
+        </param>
+        <param>
+          <type>std::tuple&lt; Args... &gt;</type>
+          <declname>args</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="545" column="9" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="545" bodyend="549"/>
+      </memberdef>
+      <member refid="group__dispatcher_1ga6fc508cd535786170ae5c758fe95f8f5" kind="function"><name>dispatch</name></member>
+      <member refid="group__dispatcher_1gab3c58ff85e3081360360e9aafbad227a" kind="function"><name>execute_action</name></member>
+      <member refid="group__privileged_1ga3e6a33d77cd0347d579a81ef4850b6c5" kind="function"><name>set_blockchain_parameters</name></member>
+      <member refid="group__privileged_1gaf3771599b6ee096789e8533b808186c5" kind="function"><name>get_blockchain_parameters</name></member>
+      <member refid="group__privileged_1gaf7f07253b6b687a2a6555bc26db70552" kind="function"><name>get_resource_limits</name></member>
+      <member refid="group__privileged_1ga72bf370dd88d10fe4a19d89c24986f1a" kind="function"><name>set_resource_limits</name></member>
+      <member refid="group__privileged_1ga5f1f8e488781cea9dd48318169b537db" kind="function"><name>set_proposed_producers</name></member>
+      <member refid="group__privileged_1gaf6696bcae7fc0d1225b4431ce355ab33" kind="function"><name>set_proposed_producers</name></member>
+      <member refid="group__privileged_1ga3d143655999ef472c02bf92b84174781" kind="function"><name>is_privileged</name></member>
+      <member refid="group__privileged_1ga66f12c1f562eac7fd45a7979bfa2847f" kind="function"><name>set_privileged</name></member>
+      <member refid="group__privileged_1ga783f438d474d0f4681f7aa185fd407f4" kind="function"><name>preactivate_feature</name></member>
+      <member refid="group__producer__schedule_1gacebec7736799062a5885a054cd1763ea" kind="function"><name>get_active_producers</name></member>
+      <member refid="group__security__group_1ga93fb1a1ab44dec2ef304bfaf0178072d" kind="function"><name>add_security_group_participants</name></member>
+      <member refid="group__security__group_1gaaa867999824dc6dc6bade8c0b9332371" kind="function"><name>remove_security_group_participants</name></member>
+      <member refid="group__security__group_1ga0d4c0f09cc7f9eba177db554d9abf073" kind="function"><name>in_active_security_group</name></member>
+      <member refid="group__security__group_1ga1543736e4e36640b83143b4a668bcf89" kind="function"><name>get_active_security_group</name></member>
+      <member refid="group__system_1gae987dd898961af1231142a37a4461611" kind="function"><name>sysio_exit</name></member>
+      <member refid="group__system_1ga6a9fba6c93fcad4e6089f6dae813bdc7" kind="function"><name>current_time_point</name></member>
+      <member refid="group__system_1ga12c423e9a5c7c036b417f4f0db2c0b98" kind="function"><name>current_block_time</name></member>
+      <member refid="group__system_1ga393d227e5bf35a244f435b9d212b4b0e" kind="function"><name>current_block_number</name></member>
+      <member refid="group__system_1gacab202f036dce91e3094765f9490469d" kind="function"><name>is_feature_activated</name></member>
+      <member refid="group__system_1ga31252e36bebf5c09875571507d43b6af" kind="function"><name>get_sender</name></member>
+      <member refid="group__transaction_1gaac121ad3e7c952c4b04c12f8bfcc29c3" kind="function"><name>send_deferred</name></member>
+      <member refid="group__transaction_1ga5cb1f314e639ee0d5d0bd59f51b2229e" kind="function"><name>get_action</name></member>
+      <member refid="group__transaction_1gadc099e4301c8682be070211a094ad66c" kind="function"><name>read_transaction</name></member>
+      <member refid="group__transaction_1gadc1dc4e5e52f1c12f37eb02d8783a47f" kind="function"><name>cancel_deferred</name></member>
+      <member refid="group__transaction_1gafbd3369e48c587ede72b918fe36e2a52" kind="function"><name>transaction_size</name></member>
+      <member refid="group__transaction_1gae23a5dae01630e656c5972f3812438dc" kind="function"><name>tapos_block_num</name></member>
+      <member refid="group__transaction_1gafc9b5c3111cd62bce49b3f32942472b2" kind="function"><name>tapos_block_prefix</name></member>
+      <member refid="group__transaction_1ga9ba8258ea769264b95abd46081a501a6" kind="function"><name>expiration</name></member>
+      <member refid="group__transaction_1gaef211984436ac3d7d0eaabb647b0dab0" kind="function"><name>get_context_free_data</name></member>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/asset.hpp" line="11" column="1"/>
+  </compounddef>
+</doxygen>

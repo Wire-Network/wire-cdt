@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="namespacesysio_1_1__multi__index__detail" kind="namespace" language="C++">
+    <compoundname>sysio::_multi_index_detail</compoundname>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__index__db__functions" prot="public">sysio::_multi_index_detail::secondary_index_db_functions</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits" prot="public">sysio::_multi_index_detail::secondary_key_traits</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4" prot="public">sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01long_01double_01_4" prot="public">sysio::_multi_index_detail::secondary_key_traits&lt; long double &gt;</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01sysio_1_1fixed__bytes_3_0132_01_4_01_4" prot="public">sysio::_multi_index_detail::secondary_key_traits&lt; sysio::fixed_bytes&lt; 32 &gt; &gt;</innerclass>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="304" column="1"/>
+  </compounddef>
+</doxygen>

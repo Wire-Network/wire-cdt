@@ -1,0 +1,1155 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__crypto" kind="group">
+    <compoundname>crypto</compoundname>
+    <title>Crypto</title>
+    <innerclass refid="structsysio_1_1ec__point" prot="public">sysio::ec_point</innerclass>
+    <innerclass refid="structsysio_1_1ec__point__view" prot="public">sysio::ec_point_view</innerclass>
+    <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="group__crypto_ga682eab95daed840a596ced53f8f00f82_1ga682eab95daed840a596ced53f8f00f82" prot="public" static="no">
+        <type>std::vector&lt; char &gt;</type>
+        <definition>using sysio::bigint =  std::vector&lt;char&gt;</definition>
+        <argsstring></argsstring>
+        <name>bigint</name>
+        <qualifiedname>sysio::bigint</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Big integer. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="192" column="4" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="192" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="group__crypto_ga0cd06321156dfab93ed85e67f6d6299e_1ga0cd06321156dfab93ed85e67f6d6299e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>g1_point</type>
+        <definition>g1_point sysio::alt_bn128_add</definition>
+        <argsstring>(const T &amp;op1, const T &amp;op2)</argsstring>
+        <name>alt_bn128_add</name>
+        <qualifiedname>sysio::alt_bn128_add</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>op1</declname>
+        </param>
+        <param>
+          <type>const T &amp;</type>
+          <declname>op2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Addition operation on the elliptic curve <computeroutput>alt_bn128</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>op1</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- operand 1 </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>op2</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- operand 2 </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>result of the addition operation; throw if error </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="203" column="20" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="203" bodyend="210"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gac0e8ec5424460d89710a63006fe6a893_1gac0e8ec5424460d89710a63006fe6a893" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::alt_bn128_add</definition>
+        <argsstring>(const char *op1, uint32_t op1_len, const char *op2, uint32_t op2_len, char *result, uint32_t result_len)</argsstring>
+        <name>alt_bn128_add</name>
+        <qualifiedname>sysio::alt_bn128_add</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>op1</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>op1_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>op2</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>op2_len</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>result</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>result_len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Addition operation on the elliptic curve <computeroutput>alt_bn128</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>op1</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- operand 1 </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>op1_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of operand 1 </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>op2</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- operand 2 </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>op2_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of operand 2 </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- result of the addition operation </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of result </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error otherwise 0 </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="224" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="224" bodyend="226"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gaa4f388f1f3d837a04a391337429706b9_1gaa4f388f1f3d837a04a391337429706b9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>g1_point</type>
+        <definition>g1_point sysio::alt_bn128_mul</definition>
+        <argsstring>(const T &amp;g1, const bigint &amp;scalar)</argsstring>
+        <name>alt_bn128_mul</name>
+        <qualifiedname>sysio::alt_bn128_mul</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>g1</declname>
+        </param>
+        <param>
+          <type>const bigint &amp;</type>
+          <declname>scalar</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Scalar multiplication operation on the elliptic curve <computeroutput>alt_bn128</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>g1</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- G1 point </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>scalar</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- scalar factor </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>result of the scalar multiplication operation; throw if error </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="237" column="20" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="237" bodyend="243"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga237fcc5e9afbb619321b4f3496c7c0c5_1ga237fcc5e9afbb619321b4f3496c7c0c5" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::alt_bn128_mul</definition>
+        <argsstring>(const char *g1, uint32_t g1_len, const char *scalar, uint32_t scalar_len, char *result, uint32_t result_len)</argsstring>
+        <name>alt_bn128_mul</name>
+        <qualifiedname>sysio::alt_bn128_mul</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>g1</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>g1_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>scalar</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>scalar_len</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>result</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>result_len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Scalar multiplication operation on the elliptic curve <computeroutput>alt_bn128</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>g1</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- G1 point </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>g1_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of G1 point </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>scalar</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- scalar factor </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>scalar_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of scalar </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- result of the scalar multiplication operation </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of result </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error otherwise 0 </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="257" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="257" bodyend="259"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gab098ff8db4bac752f88cdebb9b30bb73_1gab098ff8db4bac752f88cdebb9b30bb73" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename G1_T</type>
+          </param>
+          <param>
+            <type>typename G2_T</type>
+          </param>
+        </templateparamlist>
+        <type>int32_t</type>
+        <definition>int32_t sysio::alt_bn128_pair</definition>
+        <argsstring>(const std::vector&lt; std::pair&lt; G1_T, G2_T &gt; &gt; &amp;pairs)</argsstring>
+        <name>alt_bn128_pair</name>
+        <qualifiedname>sysio::alt_bn128_pair</qualifiedname>
+        <param>
+          <type>const std::vector&lt; std::pair&lt; G1_T, G2_T &gt; &gt; &amp;</type>
+          <declname>pairs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Optimal-Ate pairing check elliptic curve <computeroutput>alt_bn128</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pairs</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- g1 and g2 pairs </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error, 1 if false and 0 if true and successful </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="269" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="269" bodyend="278"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga0437ba8953f498e91ff4265947c04ab7_1ga0437ba8953f498e91ff4265947c04ab7" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::alt_bn128_pair</definition>
+        <argsstring>(const char *pairs, uint32_t pairs_len)</argsstring>
+        <name>alt_bn128_pair</name>
+        <qualifiedname>sysio::alt_bn128_pair</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>pairs</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>pairs_len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Optimal-Ate pairing check elliptic curve <computeroutput>alt_bn128</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pairs</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- g1 and g2 pairs </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pairs_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of pairs </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error, 1 if false and 0 if true and successful </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="288" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="288" bodyend="290"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gac7c345aafd080f87dd3ab935180784bf_1gac7c345aafd080f87dd3ab935180784bf" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::mod_exp</definition>
+        <argsstring>(const bigint &amp;base, const bigint &amp;exp, const bigint &amp;mod, bigint &amp;result)</argsstring>
+        <name>mod_exp</name>
+        <qualifiedname>sysio::mod_exp</qualifiedname>
+        <param>
+          <type>const bigint &amp;</type>
+          <declname>base</declname>
+        </param>
+        <param>
+          <type>const bigint &amp;</type>
+          <declname>exp</declname>
+        </param>
+        <param>
+          <type>const bigint &amp;</type>
+          <declname>mod</declname>
+        </param>
+        <param>
+          <type>bigint &amp;</type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Big integer modular exponentiation returns an output ( BASE^EXP ) % MOD</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>base</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- base of the exponentiation (BASE) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>exp</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- exponent to raise to that power (EXP) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>mod</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- modulus (MOD) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- result of the modular exponentiation </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error otherwise 0 </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="304" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="304" bodyend="308"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga75b8c0115f1f8090b29f9ddf9c87e252_1ga75b8c0115f1f8090b29f9ddf9c87e252" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::mod_exp</definition>
+        <argsstring>(const char *base, uint32_t base_len, const char *exp, uint32_t exp_len, const char *mod, uint32_t mod_len, char *result, uint32_t result_len)</argsstring>
+        <name>mod_exp</name>
+        <qualifiedname>sysio::mod_exp</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>base</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>base_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>exp</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>exp_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>mod</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>mod_len</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>result</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>result_len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Big integer modular exponentiation returns an output ( BASE^EXP ) % MOD</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>base</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- base of the exponentiation (BASE) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>base_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of base </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>exp</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- exponent to raise to that power (EXP) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>exp_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of exp </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>mod</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- modulus (MOD) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>mod_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of mod </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- result of the modular exponentiation </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of result </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error otherwise 0 </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="326" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="326" bodyend="328"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gaba4b9c3061aa17c41431c76e584e68a8_1gaba4b9c3061aa17c41431c76e584e68a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::blake2_f</definition>
+        <argsstring>(uint32_t rounds, const std::vector&lt; char &gt; &amp;state, const std::vector&lt; char &gt; &amp;msg, const std::vector&lt; char &gt; &amp;t0_offset, const std::vector&lt; char &gt; &amp;t1_offset, bool final, std::vector&lt; char &gt; &amp;result)</argsstring>
+        <name>blake2_f</name>
+        <qualifiedname>sysio::blake2_f</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>rounds</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; char &gt; &amp;</type>
+          <declname>state</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; char &gt; &amp;</type>
+          <declname>msg</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; char &gt; &amp;</type>
+          <declname>t0_offset</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; char &gt; &amp;</type>
+          <declname>t1_offset</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>final</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; char &gt; &amp;</type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>BLAKE2 compression function &quot;F&quot; <ulink url="https://eips.ethereum.org/EIPS/eip-152">https://eips.ethereum.org/EIPS/eip-152</ulink></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>rounds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the number of rounds </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>state</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- state vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>msg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- message block vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t0_offset</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- offset counters </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t1_offset</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- offset counters </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>final</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- final block flag </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the result of the compression </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error otherwise 0 </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="346" column="12" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="346" bodyend="349"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga0f8f0fdac679ee9c5c4738c56398a870_1ga0f8f0fdac679ee9c5c4738c56398a870" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::blake2_f</definition>
+        <argsstring>(uint32_t rounds, const char *state, uint32_t state_len, const char *msg, uint32_t msg_len, const char *t0_offset, uint32_t t0_len, const char *t1_offset, uint32_t t1_len, int32_t final, char *result, uint32_t result_len)</argsstring>
+        <name>blake2_f</name>
+        <qualifiedname>sysio::blake2_f</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>rounds</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>state</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>state_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>msg</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>msg_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>t0_offset</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>t0_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>t1_offset</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>t1_len</declname>
+        </param>
+        <param>
+          <type>int32_t</type>
+          <declname>final</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>result</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>result_len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>BLAKE2 compression function &quot;F&quot; <ulink url="https://eips.ethereum.org/EIPS/eip-152">https://eips.ethereum.org/EIPS/eip-152</ulink></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>rounds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the number of rounds </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>state</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- state vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>state_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of state vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>msg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- message block vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>msg_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of message block vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t0_offset</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- offset counters </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t0_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of t0_offset </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t1_offset</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- offset counters </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>t1_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of t1_offset </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>final</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- final block flag </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the result of the compression </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>result_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of result </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there is an error otherwise 0 </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="370" column="12" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="370" bodyend="373"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga3dd1f549de2c59114e866bf634400fb2_1ga3dd1f549de2c59114e866bf634400fb2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>sysio::checksum256</type>
+        <definition>sysio::checksum256 sysio::sha3</definition>
+        <argsstring>(const char *data, uint32_t length)</argsstring>
+        <name>sha3</name>
+        <qualifiedname>sysio::sha3</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>length</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Hashes <computeroutput>data</computeroutput> using <computeroutput>sha3</computeroutput></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- data you want to hash </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>length</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of data </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>keccak</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- whether to use <computeroutput>keccak</computeroutput> or NIST variant; keccak = 1 and NIST == 0 </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>sysio::checksum256 - Computed digest Hashes <computeroutput>data</computeroutput> using SHA3 NIST.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data you want to hash </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>length</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data length </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>sysio::checksum256 - Computed digest </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="393" column="30" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="393" bodyend="395"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga09efcdc1530259fd014b37f6e169740b_1ga09efcdc1530259fd014b37f6e169740b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::assert_sha3</definition>
+        <argsstring>(const char *data, uint32_t length, const sysio::checksum256 &amp;hash)</argsstring>
+        <name>assert_sha3</name>
+        <qualifiedname>sysio::assert_sha3</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>length</declname>
+        </param>
+        <param>
+          <type>const sysio::checksum256 &amp;</type>
+          <declname>hash</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Tests if the SHA3 hash generated from data matches the provided digest.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data you want to hash </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>length</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data length </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>hash</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- digest to compare to </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="note"><para>!This method is not optimized away during replay </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="406" column="16" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="406" bodyend="409"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gaa1db7bb34896f194937134af2ffc129c_1gaa1db7bb34896f194937134af2ffc129c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>sysio::checksum256</type>
+        <definition>sysio::checksum256 sysio::keccak</definition>
+        <argsstring>(const char *data, uint32_t length)</argsstring>
+        <name>keccak</name>
+        <qualifiedname>sysio::keccak</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>length</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Hashes <computeroutput>data</computeroutput> using SHA3 Keccak.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data you want to hash </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>length</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data length </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>sysio::checksum256 - Computed digest </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="419" column="30" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="419" bodyend="421"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_gabd44ec82b1d153d2a7f1693861ea6eb3_1gabd44ec82b1d153d2a7f1693861ea6eb3" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::assert_keccak</definition>
+        <argsstring>(const char *data, uint32_t length, const sysio::checksum256 &amp;hash)</argsstring>
+        <name>assert_keccak</name>
+        <qualifiedname>sysio::assert_keccak</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>length</declname>
+        </param>
+        <param>
+          <type>const sysio::checksum256 &amp;</type>
+          <declname>hash</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Tests if the SHA3 keccak hash generated from data matches the provided digest.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data you want to hash </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>length</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Data length </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>hash</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- digest to compare to </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="note"><para>!This method is not optimized away during replay </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="432" column="16" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="432" bodyend="435"/>
+      </memberdef>
+      <memberdef kind="function" id="group__crypto_ga593b42f3eb1e5e2368e78b3126063e67_1ga593b42f3eb1e5e2368e78b3126063e67" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>int32_t</type>
+        <definition>int32_t sysio::k1_recover</definition>
+        <argsstring>(const char *sig, uint32_t sig_len, const char *dig, uint32_t dig_len, char *pub, uint32_t pub_len)</argsstring>
+        <name>k1_recover</name>
+        <qualifiedname>sysio::k1_recover</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>sig</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>sig_len</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>dig</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>dig_len</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>pub</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>pub_len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Calculates the uncompressed public key used for a given signature on a given digest.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>sig</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- signature. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sig_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of signature </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>dig</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- digest of the message that was signed. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>dig_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of digest </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pub</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- public key result </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pub_len</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- size of public key result</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>-1 if there was an error 0 otherwise. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="450" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="450" bodyend="452"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Defines API for calculating and checking hashes which require activating crypto protocol feature. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

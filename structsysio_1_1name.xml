@@ -1,0 +1,402 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1name" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::name</compoundname>
+    <includes refid="name_8hpp" local="no">name.hpp</includes>
+    <sectiondef kind="public-type">
+      <memberdef kind="enum" id="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" prot="public" static="no" strong="yes">
+        <type>uint64_t</type>
+        <name>raw</name>
+        <qualifiedname>sysio::name::raw</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="38" column="7" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="38" bodyend="38"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1name_a91d96faaccdf89ab32a946284d6a7dc8_1a91d96faaccdf89ab32a946284d6a7dc8" prot="public" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::name::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <qualifiedname>sysio::name::value</qualifiedname>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="302" column="16" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="302" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1name_a9805888cb099e49ee6bbff7fb15c69c6_1a9805888cb099e49ee6bbff7fb15c69c6" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::name::name</definition>
+        <argsstring>()</argsstring>
+        <name>name</name>
+        <qualifiedname>sysio::name::name</qualifiedname>
+        <briefdescription>
+<para>Construct a new name object defaulting to a value of 0. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new name</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="46" column="17" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="46" bodyend="46"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a8f785f25716cac0e932e3d63d1be1d2d_1a8f785f25716cac0e932e3d63d1be1d2d" prot="public" static="no" constexpr="yes" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::name::name</definition>
+        <argsstring>(uint64_t v)</argsstring>
+        <name>name</name>
+        <qualifiedname>sysio::name::name</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>v</declname>
+        </param>
+        <briefdescription>
+<para>Construct a new name object initialising value with v. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new name given a unit64_t value</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>v</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The unit64_t value </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="55" column="26" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="55" bodyend="57"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_abbbee023f54ee7a927466357abcbbd79_1abbbee023f54ee7a927466357abcbbd79" prot="public" static="no" constexpr="yes" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::name::name</definition>
+        <argsstring>(name::raw r)</argsstring>
+        <name>name</name>
+        <qualifiedname>sysio::name::name</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+          <declname>r</declname>
+        </param>
+        <briefdescription>
+<para>Construct a new name object initialising value with r. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new name given a scoped enumerated type of raw (uint64_t).</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>r</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The raw value which is a scoped enumerated type of unit64_t </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="66" column="26" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="66" bodyend="68"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a1a34c34a6f5945644fe260e88ab99b81_1a1a34c34a6f5945644fe260e88ab99b81" prot="public" static="no" constexpr="yes" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::name::name</definition>
+        <argsstring>(std::string_view str)</argsstring>
+        <name>name</name>
+        <qualifiedname>sysio::name::name</qualifiedname>
+        <param>
+          <type>std::string_view</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+<para>Construct a new name object initialising value with str. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new name given an string.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>str</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The string value which validated then converted to unit64_t </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="77" column="26" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="77" bodyend="100"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a4b80c53ebc36b09358f2f160510d68a2_1a4b80c53ebc36b09358f2f160510d68a2" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint8_t</type>
+        <definition>uint8_t sysio::name::length</definition>
+        <argsstring>() const</argsstring>
+        <name>length</name>
+        <qualifiedname>sysio::name::length</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the length of the name </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="124" column="25" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="124" bodyend="139"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_ad5f7f57d4bb7c51343912a51af607b8f_1ad5f7f57d4bb7c51343912a51af607b8f" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::name::suffix</definition>
+        <argsstring>() const</argsstring>
+        <name>suffix</name>
+        <qualifiedname>sysio::name::suffix</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the suffix of the name </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="144" column="22" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="144" bodyend="172"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_ac2cfd6484c829597b8d0abe3e250c2a3_1ac2cfd6484c829597b8d0abe3e250c2a3" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::name::prefix</definition>
+        <argsstring>() const</argsstring>
+        <name>prefix</name>
+        <qualifiedname>sysio::name::prefix</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the prefix of the name </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="177" column="22" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="177" bodyend="204"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a4e24d5a6343228638fdbe3d66ffbebca_1a4e24d5a6343228638fdbe3d66ffbebca" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::name::operator raw</definition>
+        <argsstring>() const</argsstring>
+        <name>operator raw</name>
+        <qualifiedname>sysio::name::operator raw</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Casts a name to raw</para>
+<para><simplesect kind="return"><para>Returns an instance of raw based on the value of a name </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="211" column="17" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="211" bodyend="211"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_ae729a0b66eb1b5f7652a6c6c966c9a8e_1ae729a0b66eb1b5f7652a6c6c966c9a8e" prot="public" static="no" constexpr="yes" const="yes" explicit="yes" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::name::operator bool</definition>
+        <argsstring>() const</argsstring>
+        <name>operator bool</name>
+        <qualifiedname>sysio::name::operator bool</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Explicit cast to bool of the uint64_t value of the name</para>
+<para><simplesect kind="return"><para>Returns true if the name is set to the default value of 0 else true. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="218" column="26" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="218" bodyend="218"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a4f23490627d9c8ea76413863c010bf55_1a4f23490627d9c8ea76413863c010bf55" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>char *</type>
+        <definition>char * sysio::name::write_as_string</definition>
+        <argsstring>(char *begin, char *end, bool dry_run=false) const</argsstring>
+        <name>write_as_string</name>
+        <qualifiedname>sysio::name::write_as_string</qualifiedname>
+        <param>
+          <type>char *</type>
+          <declname>begin</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>end</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>dry_run</declname>
+          <defval>false</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Writes the name as a string to the provided char buffer</para>
+<para><simplesect kind="pre"><para>The range [begin, end) must be a valid range of memory to write to. </para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>begin</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The start of the char buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>end</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Just past the end of the char buffer </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>dry_run</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- If true, do not actually write anything into the range. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>char* - Just past the end of the last character that would be written assuming dry_run == false and end was large enough to provide sufficient space. (Meaning only applies if returned pointer &gt;= begin.) </para>
+</simplesect>
+<simplesect kind="post"><para>If the output string fits within the range [begin, end) and dry_run == false, the range [begin, returned pointer) contains the string representation of the name. Nothing is written if dry_run == true or returned pointer &gt; end (insufficient space) or if returned pointer &lt; begin (overflow in calculating desired end). </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="230" column="12" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="230" bodyend="249"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a59ddbcc208bc6c1fcab18a0015bb154f_1a59ddbcc208bc6c1fcab18a0015bb154f" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string sysio::name::to_string</definition>
+        <argsstring>() const</argsstring>
+        <name>to_string</name>
+        <qualifiedname>sysio::name::to_string</qualifiedname>
+        <briefdescription>
+<para>Returns the name value as a string by calling <ref refid="structsysio_1_1name_a4f23490627d9c8ea76413863c010bf55_1a4f23490627d9c8ea76413863c010bf55" kindref="member">write_as_string()</ref> and returning the buffer produced by <ref refid="structsysio_1_1name_a4f23490627d9c8ea76413863c010bf55_1a4f23490627d9c8ea76413863c010bf55" kindref="member">write_as_string()</ref> </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the name as a string. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="256" column="19" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="256" bodyend="260"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_acc6c82946b760b27a27c01d6ce557e88_1acc6c82946b760b27a27c01d6ce557e88" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::name::print</definition>
+        <argsstring>() const</argsstring>
+        <name>print</name>
+        <qualifiedname>sysio::name::print</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Prints an names as base32 encoded string</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>name</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>to be printed </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="267" column="19" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="267" bodyend="269"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1name_a819df6ed7a2fbb872e08f5b1c4447337_1a819df6ed7a2fbb872e08f5b1c4447337" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::name::CDT_REFLECT</definition>
+        <argsstring>(value)</argsstring>
+        <name>CDT_REFLECT</name>
+        <qualifiedname>sysio::name::CDT_REFLECT</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1name_a91d96faaccdf89ab32a946284d6a7dc8_1a91d96faaccdf89ab32a946284d6a7dc8" kindref="member">value</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="304" column="7"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="structsysio_1_1name_a4d013c1637dc26b8c6e20752b2c03067_1a4d013c1637dc26b8c6e20752b2c03067" prot="public" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint8_t</type>
+        <definition>static constexpr uint8_t sysio::name::char_to_value</definition>
+        <argsstring>(char c)</argsstring>
+        <name>char_to_value</name>
+        <qualifiedname>sysio::name::char_to_value</qualifiedname>
+        <param>
+          <type>char</type>
+          <declname>c</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Converts a name Base32 symbol into its corresponding value</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>c</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Character to be converted </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>constexpr char - Converted value </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/name.hpp" line="108" column="32" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="108" bodyend="119"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Wraps a uint64_t to ensure it is only passed to methods that expect a name. Ensures value is only passed to methods that expect a name and that no mathematical operations occur. Also enables specialization of print </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/name.hpp" line="36" column="4" bodyfile="libraries/sysiolib/core/sysio/name.hpp" bodystart="36" bodyend="306"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1name_a819df6ed7a2fbb872e08f5b1c4447337_1a819df6ed7a2fbb872e08f5b1c4447337" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>CDT_REFLECT</name></member>
+      <member refid="structsysio_1_1name_a4d013c1637dc26b8c6e20752b2c03067_1a4d013c1637dc26b8c6e20752b2c03067" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>char_to_value</name></member>
+      <member refid="structsysio_1_1name_a4b80c53ebc36b09358f2f160510d68a2_1a4b80c53ebc36b09358f2f160510d68a2" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>length</name></member>
+      <member refid="structsysio_1_1name_a9805888cb099e49ee6bbff7fb15c69c6_1a9805888cb099e49ee6bbff7fb15c69c6" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>name</name></member>
+      <member refid="structsysio_1_1name_a8f785f25716cac0e932e3d63d1be1d2d_1a8f785f25716cac0e932e3d63d1be1d2d" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>name</name></member>
+      <member refid="structsysio_1_1name_abbbee023f54ee7a927466357abcbbd79_1abbbee023f54ee7a927466357abcbbd79" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>name</name></member>
+      <member refid="structsysio_1_1name_a1a34c34a6f5945644fe260e88ab99b81_1a1a34c34a6f5945644fe260e88ab99b81" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>name</name></member>
+      <member refid="structsysio_1_1name_ae729a0b66eb1b5f7652a6c6c966c9a8e_1ae729a0b66eb1b5f7652a6c6c966c9a8e" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>operator bool</name></member>
+      <member refid="structsysio_1_1name_a4e24d5a6343228638fdbe3d66ffbebca_1a4e24d5a6343228638fdbe3d66ffbebca" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>operator raw</name></member>
+      <member refid="structsysio_1_1name_ac2cfd6484c829597b8d0abe3e250c2a3_1ac2cfd6484c829597b8d0abe3e250c2a3" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>prefix</name></member>
+      <member refid="structsysio_1_1name_acc6c82946b760b27a27c01d6ce557e88_1acc6c82946b760b27a27c01d6ce557e88" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>print</name></member>
+      <member refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>raw</name></member>
+      <member refid="structsysio_1_1name_ad5f7f57d4bb7c51343912a51af607b8f_1ad5f7f57d4bb7c51343912a51af607b8f" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>suffix</name></member>
+      <member refid="structsysio_1_1name_a59ddbcc208bc6c1fcab18a0015bb154f_1a59ddbcc208bc6c1fcab18a0015bb154f" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>to_string</name></member>
+      <member refid="structsysio_1_1name_a91d96faaccdf89ab32a946284d6a7dc8_1a91d96faaccdf89ab32a946284d6a7dc8" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>value</name></member>
+      <member refid="structsysio_1_1name_a4f23490627d9c8ea76413863c010bf55_1a4f23490627d9c8ea76413863c010bf55" prot="public" virt="non-virtual"><scope>sysio::name</scope><name>write_as_string</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

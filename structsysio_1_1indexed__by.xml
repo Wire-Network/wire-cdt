@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1indexed__by" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::indexed_by</compoundname>
+    <includes refid="multi__index_8hpp" local="no">multi_index.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+        <declname>IndexName</declname>
+        <defname>IndexName</defname>
+      </param>
+      <param>
+        <type>typename Extractor</type>
+      </param>
+    </templateparamlist>
+    <sectiondef kind="public-type">
+      <memberdef kind="enum" id="structsysio_1_1indexed__by_a35fd7072a88f730640fada29cef91ef2_1a35fd7072a88f730640fada29cef91ef2" prot="public" static="no" strong="no">
+        <type></type>
+        <name>constants</name>
+        <qualifiedname>sysio::indexed_by::constants</qualifiedname>
+        <enumvalue id="structsysio_1_1indexed__by_a35fd7072a88f730640fada29cef91ef2_1a35fd7072a88f730640fada29cef91ef2a262d8d15ad0b7b4d0454b2d4939a4120" prot="public">
+          <name>index_name</name>
+          <initializer>= static_cast&lt;uint64_t&gt;(IndexName)</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="374" column="4" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="374" bodyend="374"/>
+      </memberdef>
+      <memberdef kind="typedef" id="structsysio_1_1indexed__by_af7c4bba5838635a6a333f9fa7cabaf91_1af7c4bba5838635a6a333f9fa7cabaf91" prot="public" static="no">
+        <type>Extractor</type>
+        <definition>Extractor sysio::indexed_by&lt; IndexName, Extractor &gt;::secondary_extractor_type</definition>
+        <argsstring></argsstring>
+        <name>secondary_extractor_type</name>
+        <qualifiedname>sysio::indexed_by::secondary_extractor_type</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="375" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="375" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>The <ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref> struct is used to instantiate the indices for the Multi-Index table. In SYSIO, up to 16 secondary indices can be specified.</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>IndexName</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- is the name of the index. The name must be provided as an SYSIO base32 encoded 64-bit integer and must conform to the SYSIO naming requirements of a maximum of 13 characters, the first twelve from the lowercase characters a-z, digits 1-5, and &quot;.&quot;, and if there is a 13th character, it is restricted to lowercase characters a-p and &quot;.&quot;. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>Extractor</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- is a function call operator that takes a const reference to the table object type and returns either a secondary key type or a reference to a secondary key type. It is recommended to use the <computeroutput><ref refid="structsysio_1_1const__mem__fun" kindref="compound">sysio::const_mem_fun</ref></computeroutput> template, which is a type alias to the <computeroutput>boost::multi_index::const_mem_fun</computeroutput>. See the documentation for the Boost <computeroutput><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun</ref></computeroutput> key extractor for more details.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+Example:</para>
+<para><programlisting><codeline><highlight class="preprocessor">#include<sp/>&lt;sysiolib/sysio.hpp&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal"><ref refid="namespacesysio" kindref="compound">sysio</ref>;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">mycontract:<sp/><ref refid="classsysio_1_1contract" kindref="compound">sysio::contract</ref><sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">record<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/><sp/><sp/><sp/>primary;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>uint128_t<sp/><sp/><sp/>secondary;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>primary_key()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>primary;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>uint128_t<sp/>get_secondary()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>secondary;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/>};</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>mycontract(<ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>receiver,<sp/><ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>code,<sp/><ref refid="classsysio_1_1datastream" kindref="compound">datastream&lt;const char*&gt;</ref><sp/>ds):<ref refid="classsysio_1_1contract" kindref="compound">contract</ref>(receiver,<sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" kindref="member">code</ref>,<sp/>ds){}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" kindref="member">code</ref><sp/>=<sp/><ref refid="classsysio_1_1contract_a3359b2c117b9e45458351a98774f2d0e_1a3359b2c117b9e45458351a98774f2d0e" kindref="member">_self</ref>;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>scope<sp/>=<sp/><ref refid="classsysio_1_1contract_a3359b2c117b9e45458351a98774f2d0e_1a3359b2c117b9e45458351a98774f2d0e" kindref="member">_self</ref>;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classsysio_1_1multi__index" kindref="compound" tooltip="Defines SYSIO Multi Index Table.">multi_index</ref>&lt;</highlight><highlight class="stringliteral">&quot;mytable&quot;</highlight><highlight class="normal">_n,<sp/>record,</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;bysecondary&quot;</highlight><highlight class="normal">_n,<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;record, uint128_t, &amp;record::get_secondary&gt;</ref><sp/>&gt;<sp/>&gt;<sp/>table(<sp/>code,<sp/>scope);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>mycontract,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="373" column="1" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="373" bodyend="376"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1indexed__by_a35fd7072a88f730640fada29cef91ef2_1a35fd7072a88f730640fada29cef91ef2" prot="public" virt="non-virtual"><scope>sysio::indexed_by</scope><name>constants</name></member>
+      <member refid="structsysio_1_1indexed__by_a35fd7072a88f730640fada29cef91ef2_1a35fd7072a88f730640fada29cef91ef2a262d8d15ad0b7b4d0454b2d4939a4120" prot="public" virt="non-virtual"><scope>sysio::indexed_by</scope><name>index_name</name></member>
+      <member refid="structsysio_1_1indexed__by_af7c4bba5838635a6a333f9fa7cabaf91_1af7c4bba5838635a6a333f9fa7cabaf91" prot="public" virt="non-virtual"><scope>sysio::indexed_by</scope><name>secondary_extractor_type</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

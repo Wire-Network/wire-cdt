@@ -1,0 +1,239 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1contract" kind="class" language="C++" prot="public">
+    <compoundname>sysio::contract</compoundname>
+    <includes refid="contract_8hpp" local="no">contract.hpp</includes>
+    <sectiondef kind="protected-attrib">
+      <memberdef kind="variable" id="classsysio_1_1contract_a3359b2c117b9e45458351a98774f2d0e_1a3359b2c117b9e45458351a98774f2d0e" prot="protected" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::contract::_self</definition>
+        <argsstring></argsstring>
+        <name>_self</name>
+        <qualifiedname>sysio::contract::_self</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The name of the account this contract is deployed on. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="82" column="12" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="82" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1contract_a3b4aa681b696a4d862e1d0a5076eeca3_1a3b4aa681b696a4d862e1d0a5076eeca3" prot="protected" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::contract::_first_receiver</definition>
+        <argsstring></argsstring>
+        <name>_first_receiver</name>
+        <qualifiedname>sysio::contract::_first_receiver</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The account the incoming action was first received at. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="87" column="12" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="87" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1contract_aa2391f9f3366aec514d156305867c220_1aa2391f9f3366aec514d156305867c220" prot="protected" static="no" mutable="no">
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; const char * &gt;</type>
+        <definition>datastream&lt;const char*&gt; sysio::contract::_ds</definition>
+        <argsstring></argsstring>
+        <name>_ds</name>
+        <qualifiedname>sysio::contract::_ds</qualifiedname>
+        <initializer>= <ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt;const char*&gt;(nullptr, 0)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The datastream for this contract </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="92" column="18" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="92" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1contract_afff5d15c6d184455045f4525f4edd866_1afff5d15c6d184455045f4525f4edd866" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::contract::contract</definition>
+        <argsstring>(name self, name first_receiver, datastream&lt; const char * &gt; ds)</argsstring>
+        <name>contract</name>
+        <qualifiedname>sysio::contract::contract</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>self</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>first_receiver</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; const char * &gt;</type>
+          <declname>ds</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new contract given the contract name</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>self</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The name of the account this contract is deployed on </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>first_receiver</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The account the incoming action was first received at. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The datastream used </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="39" column="7" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="39" bodyend="39"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1contract_afcf159ee1e7df486dd1a087e3fe0793f_1afcf159ee1e7df486dd1a087e3fe0793f" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::contract::get_self</definition>
+        <argsstring>() const</argsstring>
+        <name>get_self</name>
+        <qualifiedname>sysio::contract::get_self</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get this contract name</para>
+<para><simplesect kind="return"><para>name - The name of this contract </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="47" column="19" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="47" bodyend="47"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1contract_ab2db64e88f7e235107ab4d24c5d337ec_1ab2db64e88f7e235107ab4d24c5d337ec" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::contract::get_code</definition>
+        <argsstring>() const</argsstring>
+        <name>get_code</name>
+        <qualifiedname>sysio::contract::get_code</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The first_receiver name of the action this contract is processing.</para>
+<para><simplesect kind="return"><para>name - The first_receiver name of the action this contract is processing. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="55" column="19" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="55" bodyend="55"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1contract_a094c0663758d7687ad3a08b4bb3650c5_1a094c0663758d7687ad3a08b4bb3650c5" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::contract::get_first_receiver</definition>
+        <argsstring>() const</argsstring>
+        <name>get_first_receiver</name>
+        <qualifiedname>sysio::contract::get_first_receiver</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The account the incoming action was first received at.</para>
+<para><simplesect kind="return"><para>name - The first_receiver name of the action this contract is processing. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="62" column="19" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="62" bodyend="62"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1contract_a3b4206c6c7fc4a18d7bca858f954940b_1a3b4206c6c7fc4a18d7bca858f954940b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; const char * &gt; &amp;</type>
+        <definition>datastream&lt; const char * &gt; &amp; sysio::contract::get_datastream</definition>
+        <argsstring>()</argsstring>
+        <name>get_datastream</name>
+        <qualifiedname>sysio::contract::get_datastream</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get the datastream for this contract</para>
+<para><simplesect kind="return"><para><ref refid="classsysio_1_1datastream" kindref="compound">datastream&lt;const char*&gt;</ref> - The datastream for this contract </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="69" column="25" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="69" bodyend="69"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1contract_a714f00aaa70434053a541667a638fba5_1a714f00aaa70434053a541667a638fba5" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const <ref refid="classsysio_1_1datastream" kindref="compound">datastream</ref>&lt; const char * &gt; &amp;</type>
+        <definition>const datastream&lt; const char * &gt; &amp; sysio::contract::get_datastream</definition>
+        <argsstring>() const</argsstring>
+        <name>get_datastream</name>
+        <qualifiedname>sysio::contract::get_datastream</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get the datastream for this contract</para>
+<para><simplesect kind="return"><para><ref refid="classsysio_1_1datastream" kindref="compound">datastream&lt;const char*&gt;</ref> - The datastream for this contract </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="76" column="31" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="76" bodyend="76"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Base class for SYSIO contract.</para>
+<para>A new contract should derive from this class, so it can make use of SYSIO_ABI macro. </para>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="1">
+        <label>sysio::contract</label>
+        <link refid="classsysio_1_1contract"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>_first_receiver</edgelabel>
+          <edgelabel>_self</edgelabel>
+        </childnode>
+        <childnode refid="3" relation="usage">
+          <edgelabel>_ds</edgelabel>
+        </childnode>
+      </node>
+      <node id="3">
+        <label>sysio::datastream&lt; const char * &gt;</label>
+        <link refid="classsysio_1_1datastream"/>
+      </node>
+      <node id="2">
+        <label>sysio::name</label>
+        <link refid="structsysio_1_1name"/>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="30" column="1" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="30" bodyend="93"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1contract_aa2391f9f3366aec514d156305867c220_1aa2391f9f3366aec514d156305867c220" prot="protected" virt="non-virtual"><scope>sysio::contract</scope><name>_ds</name></member>
+      <member refid="classsysio_1_1contract_a3b4aa681b696a4d862e1d0a5076eeca3_1a3b4aa681b696a4d862e1d0a5076eeca3" prot="protected" virt="non-virtual"><scope>sysio::contract</scope><name>_first_receiver</name></member>
+      <member refid="classsysio_1_1contract_a3359b2c117b9e45458351a98774f2d0e_1a3359b2c117b9e45458351a98774f2d0e" prot="protected" virt="non-virtual"><scope>sysio::contract</scope><name>_self</name></member>
+      <member refid="classsysio_1_1contract_afff5d15c6d184455045f4525f4edd866_1afff5d15c6d184455045f4525f4edd866" prot="public" virt="non-virtual"><scope>sysio::contract</scope><name>contract</name></member>
+      <member refid="classsysio_1_1contract_ab2db64e88f7e235107ab4d24c5d337ec_1ab2db64e88f7e235107ab4d24c5d337ec" prot="public" virt="non-virtual"><scope>sysio::contract</scope><name>get_code</name></member>
+      <member refid="classsysio_1_1contract_a3b4206c6c7fc4a18d7bca858f954940b_1a3b4206c6c7fc4a18d7bca858f954940b" prot="public" virt="non-virtual"><scope>sysio::contract</scope><name>get_datastream</name></member>
+      <member refid="classsysio_1_1contract_a714f00aaa70434053a541667a638fba5_1a714f00aaa70434053a541667a638fba5" prot="public" virt="non-virtual"><scope>sysio::contract</scope><name>get_datastream</name></member>
+      <member refid="classsysio_1_1contract_a094c0663758d7687ad3a08b4bb3650c5_1a094c0663758d7687ad3a08b4bb3650c5" prot="public" virt="non-virtual"><scope>sysio::contract</scope><name>get_first_receiver</name></member>
+      <member refid="classsysio_1_1contract_afcf159ee1e7df486dd1a087e3fe0793f_1afcf159ee1e7df486dd1a087e3fe0793f" prot="public" virt="non-virtual"><scope>sysio::contract</scope><name>get_self</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

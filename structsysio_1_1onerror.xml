@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1onerror" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::onerror</compoundname>
+    <includes refid="transaction_8hpp" local="no">transaction.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1onerror_aba0c0729df5a1af4fdc775a4d64299b7_1aba0c0729df5a1af4fdc775a4d64299b7" prot="public" static="no" mutable="no">
+        <type>uint128_t</type>
+        <definition>uint128_t sysio::onerror::sender_id</definition>
+        <argsstring></argsstring>
+        <name>sender_id</name>
+        <qualifiedname>sysio::onerror::sender_id</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="143" column="26" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="143" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1onerror_a7a68d4086c4d58745797dffda3a8f9a2_1a7a68d4086c4d58745797dffda3a8f9a2" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; char &gt;</type>
+        <definition>std::vector&lt;char&gt; sysio::onerror::sent_trx</definition>
+        <argsstring></argsstring>
+        <name>sent_trx</name>
+        <qualifiedname>sysio::onerror::sent_trx</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="144" column="19" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="144" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-static-func">
+      <member refid="group__transaction_1gac92df793654a0b0efbe8d35fd368dc4d" kind="function"><name>from_current_action</name></member>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1onerror_aed6777c6326fe28fc17270a3be470163_1aed6777c6326fe28fc17270a3be470163" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1transaction" kindref="compound">transaction</ref></type>
+        <definition>transaction sysio::onerror::unpack_sent_trx</definition>
+        <argsstring>() const</argsstring>
+        <name>unpack_sent_trx</name>
+        <qualifiedname>sysio::onerror::unpack_sent_trx</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Unpacks and returns a transaction </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="158" column="19" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="158" bodyend="160"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Struct onerror contains and sender id and packed transaction </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="142" column="4" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="142" bodyend="163"/>
+    <listofallmembers>
+      <member refid="group__transaction_gac92df793654a0b0efbe8d35fd368dc4d_1gac92df793654a0b0efbe8d35fd368dc4d" prot="public" virt="non-virtual"><scope>sysio::onerror</scope><name>from_current_action</name></member>
+      <member refid="structsysio_1_1onerror_aba0c0729df5a1af4fdc775a4d64299b7_1aba0c0729df5a1af4fdc775a4d64299b7" prot="public" virt="non-virtual"><scope>sysio::onerror</scope><name>sender_id</name></member>
+      <member refid="structsysio_1_1onerror_a7a68d4086c4d58745797dffda3a8f9a2_1a7a68d4086c4d58745797dffda3a8f9a2" prot="public" virt="non-virtual"><scope>sysio::onerror</scope><name>sent_trx</name></member>
+      <member refid="structsysio_1_1onerror_aed6777c6326fe28fc17270a3be470163_1aed6777c6326fe28fc17270a3be470163" prot="public" virt="non-virtual"><scope>sysio::onerror</scope><name>unpack_sent_trx</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

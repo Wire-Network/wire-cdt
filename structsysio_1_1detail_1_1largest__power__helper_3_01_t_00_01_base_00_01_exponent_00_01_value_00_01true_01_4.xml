@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;</compoundname>
+    <includes refid="powers_8hpp" local="no">powers.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+      <param>
+        <type>T</type>
+        <declname>Base</declname>
+        <defname>Base</defname>
+      </param>
+      <param>
+        <type>uint8_t</type>
+        <declname>Exponent</declname>
+        <defname>Exponent</defname>
+      </param>
+      <param>
+        <type>uint64_t</type>
+        <declname>Value</declname>
+        <defname>Value</defname>
+      </param>
+    </templateparamlist>
+    <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4_abe70bc7653862cab673afe1e00cdc7ff_1abe70bc7653862cab673afe1e00cdc7ff" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>T</type>
+        <definition>T sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <qualifiedname>sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;::value</qualifiedname>
+        <initializer>= Value</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="44" column="35" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4_a171fcf5efc656bdd2c37a161121dd387_1a171fcf5efc656bdd2c37a161121dd387" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>uint8_t</type>
+        <definition>uint8_t sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;::exponent</definition>
+        <argsstring></argsstring>
+        <name>exponent</name>
+        <qualifiedname>sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;::exponent</qualifiedname>
+        <initializer>= Exponent</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="45" column="35" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/powers.hpp" line="38" column="7" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="38" bodyend="46"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4_a171fcf5efc656bdd2c37a161121dd387_1a171fcf5efc656bdd2c37a161121dd387" prot="public" virt="non-virtual"><scope>sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;</scope><name>exponent</name></member>
+      <member refid="structsysio_1_1detail_1_1largest__power__helper_3_01_t_00_01_base_00_01_exponent_00_01_value_00_01true_01_4_abe70bc7653862cab673afe1e00cdc7ff_1abe70bc7653862cab673afe1e00cdc7ff" prot="public" virt="non-virtual"><scope>sysio::detail::largest_power_helper&lt; T, Base, Exponent, Value, true &gt;</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="namespacesysio_1_1impl" kind="namespace" language="C++">
+    <compoundname>sysio::impl</compoundname>
+    <innerclass refid="structsysio_1_1impl_1_1concat__t" prot="public">sysio::impl::concat_t</innerclass>
+    <innerclass refid="structsysio_1_1impl_1_1str__t" prot="public">sysio::impl::str_t</innerclass>
+    <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" prot="public" static="no">
+        <type>std::variant&lt; <ref refid="structsysio_1_1impl_1_1concat__t" kindref="compound">concat_t</ref>, <ref refid="structsysio_1_1impl_1_1str__t" kindref="compound">str_t</ref> &gt;</type>
+        <definition>typedef std::variant&lt;concat_t, str_t&gt; sysio::impl::rope_node</definition>
+        <argsstring></argsstring>
+        <name>rope_node</name>
+        <qualifiedname>sysio::impl::rope_node</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="17" column="28" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="17" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/rope.hpp" line="14" column="4"/>
+  </compounddef>
+</doxygen>

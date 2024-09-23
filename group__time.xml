@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__time" kind="group">
+    <compoundname>time</compoundname>
+    <title>Time</title>
+    <innerclass refid="classsysio_1_1time__point" prot="public">sysio::time_point</innerclass>
+    <innerclass refid="classsysio_1_1time__point__sec" prot="public">sysio::time_point_sec</innerclass>
+    <innerclass refid="classsysio_1_1block__timestamp" prot="public">sysio::block_timestamp</innerclass>
+    <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="group__time_ga1d722e6bdb1a0a2cbabf7d1f48ce6301_1ga1d722e6bdb1a0a2cbabf7d1f48ce6301" prot="public" static="no">
+        <type>block_timestamp</type>
+        <definition>typedef block_timestamp sysio::block_timestamp_type</definition>
+        <argsstring></argsstring>
+        <name>block_timestamp_type</name>
+        <qualifiedname>sysio::block_timestamp_type</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="248" column="28" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="248" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Classes for working with time. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;</compoundname>
+    <includes refid="multi__index_8hpp" local="no">multi_index.hpp</includes>
+    <templateparamlist>
+    </templateparamlist>
+    <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4_afd9e21216ce5e2cd7a8c4c4de6e1950f_1afd9e21216ce5e2cd7a8c4c4de6e1950f" prot="public" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>double</type>
+        <definition>static constexpr double sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;::true_lowest</definition>
+        <argsstring>()</argsstring>
+        <name>true_lowest</name>
+        <qualifiedname>sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;::true_lowest</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="323" column="31" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="323" bodyend="323"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="322" column="4" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="322" bodyend="324"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4_afd9e21216ce5e2cd7a8c4c4de6e1950f_1afd9e21216ce5e2cd7a8c4c4de6e1950f" prot="public" virt="non-virtual"><scope>sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;</scope><name>true_lowest</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

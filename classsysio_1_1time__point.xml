@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1time__point" kind="class" language="C++" prot="public">
+    <compoundname>sysio::time_point</compoundname>
+    <includes refid="time_8hpp" local="no">time.hpp</includes>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1time__point_a6e629d7855e8c3926e0c5cf656215199_1a6e629d7855e8c3926e0c5cf656215199" prot="public" static="no" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::time_point::time_point</definition>
+        <argsstring>(microseconds e=microseconds())</argsstring>
+        <name>time_point</name>
+        <qualifiedname>sysio::time_point::time_point</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref></type>
+          <declname>e</declname>
+          <defval><ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref>()</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="60" column="18" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="60" bodyend="60"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1time__point_a3915e59d95693838313eb1a581304a48_1a3915e59d95693838313eb1a581304a48" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const <ref refid="classsysio_1_1microseconds" kindref="compound">microseconds</ref> &amp;</type>
+        <definition>const microseconds &amp; sysio::time_point::time_since_epoch</definition>
+        <argsstring>() const</argsstring>
+        <name>time_since_epoch</name>
+        <qualifiedname>sysio::time_point::time_since_epoch</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="61" column="28" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="61" bodyend="61"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1time__point_a534ab44380e3efe8b483dfe420984e24_1a534ab44380e3efe8b483dfe420984e24" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::time_point::sec_since_epoch</definition>
+        <argsstring>() const</argsstring>
+        <name>sec_since_epoch</name>
+        <qualifiedname>sysio::time_point::sec_since_epoch</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="62" column="29" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="62" bodyend="62"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1time__point_a47ec3b45b7d1bc459a09a5baa1eded0d_1a47ec3b45b7d1bc459a09a5baa1eded0d" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string sysio::time_point::to_string</definition>
+        <argsstring>() const</argsstring>
+        <name>to_string</name>
+        <qualifiedname>sysio::time_point::to_string</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="73" column="21" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="73" bodyend="80"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="classsysio_1_1time__point_a90e364b1b9a2796b62118912a884f591_1a90e364b1b9a2796b62118912a884f591" prot="public" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1time__point" kindref="compound">time_point</ref></type>
+        <definition>static time_point sysio::time_point::from_iso_string</definition>
+        <argsstring>(const std::string &amp;date_str)</argsstring>
+        <name>from_iso_string</name>
+        <qualifiedname>sysio::time_point::from_iso_string</qualifiedname>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>date_str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="64" column="27" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="64" bodyend="71"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>High resolution time point in microseconds </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/time.hpp" line="58" column="3" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="58" bodyend="99"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1time__point_a90e364b1b9a2796b62118912a884f591_1a90e364b1b9a2796b62118912a884f591" prot="public" virt="non-virtual"><scope>sysio::time_point</scope><name>from_iso_string</name></member>
+      <member refid="classsysio_1_1time__point_a534ab44380e3efe8b483dfe420984e24_1a534ab44380e3efe8b483dfe420984e24" prot="public" virt="non-virtual"><scope>sysio::time_point</scope><name>sec_since_epoch</name></member>
+      <member refid="classsysio_1_1time__point_a6e629d7855e8c3926e0c5cf656215199_1a6e629d7855e8c3926e0c5cf656215199" prot="public" virt="non-virtual"><scope>sysio::time_point</scope><name>time_point</name></member>
+      <member refid="classsysio_1_1time__point_a3915e59d95693838313eb1a581304a48_1a3915e59d95693838313eb1a581304a48" prot="public" virt="non-virtual"><scope>sysio::time_point</scope><name>time_since_epoch</name></member>
+      <member refid="classsysio_1_1time__point_a47ec3b45b7d1bc459a09a5baa1eded0d_1a47ec3b45b7d1bc459a09a5baa1eded0d" prot="public" virt="non-virtual"><scope>sysio::time_point</scope><name>to_string</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

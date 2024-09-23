@@ -1,0 +1,217 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1ec__point__view" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::ec_point_view</compoundname>
+    <includes refid="crypto__ext_8hpp" local="no">crypto_ext.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>std::size_t</type>
+        <declname>Size</declname>
+        <defname>Size</defname>
+        <defval>32</defval>
+      </param>
+    </templateparamlist>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1ec__point__view_a43ca579694f296abce5411095794be81_1a43ca579694f296abce5411095794be81" prot="public" static="no" mutable="no">
+        <type>const char *</type>
+        <definition>const char* sysio::ec_point_view&lt; Size &gt;::x</definition>
+        <argsstring></argsstring>
+        <name>x</name>
+        <qualifiedname>sysio::ec_point_view::x</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Pointer to the x coordinate </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="121" column="18" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="121" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1ec__point__view_a49cb8c409963cca56a5d2a6e6211392d_1a49cb8c409963cca56a5d2a6e6211392d" prot="public" static="no" mutable="no">
+        <type>const char *</type>
+        <definition>const char* sysio::ec_point_view&lt; Size &gt;::y</definition>
+        <argsstring></argsstring>
+        <name>y</name>
+        <qualifiedname>sysio::ec_point_view::y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Pointer to the y coordinate </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="126" column="18" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="126" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1ec__point__view_acff6b8d242a93a105afde653ef8b4665_1acff6b8d242a93a105afde653ef8b4665" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::ec_point_view&lt; Size &gt;::size</definition>
+        <argsstring></argsstring>
+        <name>size</name>
+        <qualifiedname>sysio::ec_point_view::size</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Number of bytes in each of x and y </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="131" column="16" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="131" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1ec__point__view_a300f186c31980bb22434ca5678c3b813_1a300f186c31980bb22434ca5678c3b813" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::ec_point_view&lt; Size &gt;::ec_point_view</definition>
+        <argsstring>(const char *x_, uint32_t x_size, const char *y_, uint32_t y_size)</argsstring>
+        <name>ec_point_view</name>
+        <qualifiedname>sysio::ec_point_view::ec_point_view</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>x_</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>x_size</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>y_</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>y_size</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a point view from x and y</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>x_</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The x coordinate, poiter to chars </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>x_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- x&apos;s size </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>y_</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The y coordinate, poiter to chars </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>y_size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- y&apos;s size </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="141" column="7" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="141" bodyend="146"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ec__point__view_a9b8cca3f34d282c19645c90099850e06_1a9b8cca3f34d282c19645c90099850e06" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::ec_point_view&lt; Size &gt;::ec_point_view</definition>
+        <argsstring>(const std::vector&lt; char &gt; &amp;p)</argsstring>
+        <name>ec_point_view</name>
+        <qualifiedname>sysio::ec_point_view::ec_point_view</qualifiedname>
+        <param>
+          <type>const std::vector&lt; char &gt; &amp;</type>
+          <declname>p</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a point view from a serialized point</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>p</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The serialized point </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="153" column="7" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="153" bodyend="157"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ec__point__view_a61e94d79127f61163a256fc4f8f0f789_1a61e94d79127f61163a256fc4f8f0f789" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::ec_point_view&lt; Size &gt;::ec_point_view</definition>
+        <argsstring>(const ec_point&lt; Size &gt; &amp;p)</argsstring>
+        <name>ec_point_view</name>
+        <qualifiedname>sysio::ec_point_view::ec_point_view</qualifiedname>
+        <param>
+          <type>const <ref refid="structsysio_1_1ec__point" kindref="compound">ec_point</ref>&lt; Size &gt; &amp;</type>
+          <declname>p</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a point view from a point</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>p</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The point </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="164" column="7" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="164" bodyend="167"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1ec__point__view_ae6cd9782750ed4a0ba48c49979957dd9_1ae6cd9782750ed4a0ba48c49979957dd9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::vector&lt; char &gt;</type>
+        <definition>std::vector&lt; char &gt; sysio::ec_point_view&lt; Size &gt;::serialized</definition>
+        <argsstring>() const</argsstring>
+        <name>serialized</name>
+        <qualifiedname>sysio::ec_point_view::serialized</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Return serialzed point containing only x and y </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="172" column="19" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="172" bodyend="176"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Abstracts read-only G1 and G2 points </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/crypto_ext.hpp" line="117" column="4" bodyfile="libraries/sysiolib/core/sysio/crypto_ext.hpp" bodystart="117" bodyend="177"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1ec__point__view_a300f186c31980bb22434ca5678c3b813_1a300f186c31980bb22434ca5678c3b813" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>ec_point_view</name></member>
+      <member refid="structsysio_1_1ec__point__view_a9b8cca3f34d282c19645c90099850e06_1a9b8cca3f34d282c19645c90099850e06" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>ec_point_view</name></member>
+      <member refid="structsysio_1_1ec__point__view_a61e94d79127f61163a256fc4f8f0f789_1a61e94d79127f61163a256fc4f8f0f789" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>ec_point_view</name></member>
+      <member refid="structsysio_1_1ec__point__view_ae6cd9782750ed4a0ba48c49979957dd9_1ae6cd9782750ed4a0ba48c49979957dd9" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>serialized</name></member>
+      <member refid="structsysio_1_1ec__point__view_acff6b8d242a93a105afde653ef8b4665_1acff6b8d242a93a105afde653ef8b4665" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>size</name></member>
+      <member refid="structsysio_1_1ec__point__view_a43ca579694f296abce5411095794be81_1a43ca579694f296abce5411095794be81" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>x</name></member>
+      <member refid="structsysio_1_1ec__point__view_a49cb8c409963cca56a5d2a6e6211392d_1a49cb8c409963cca56a5d2a6e6211392d" prot="public" virt="non-virtual"><scope>sysio::ec_point_view</scope><name>y</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

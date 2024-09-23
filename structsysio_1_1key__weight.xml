@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1key__weight" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::key_weight</compoundname>
+    <includes refid="producer__schedule_8hpp" local="no">producer_schedule.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1key__weight_a7d60ffa30b7d3b0e57c7ef71f3255ed9_1a7d60ffa30b7d3b0e57c7ef71f3255ed9" prot="public" static="no" mutable="no">
+        <type>public_key</type>
+        <definition>public_key sysio::key_weight::key</definition>
+        <argsstring></argsstring>
+        <name>key</name>
+        <qualifiedname>sysio::key_weight::key</qualifiedname>
+        <briefdescription>
+<para>public key used in a weighted threshold multi-sig authority </para>
+        </briefdescription>
+        <detaileddescription>
+<para>public key used in a weighted threshold multi-sig authority </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="91" column="18" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="91" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1key__weight_a5626b08fcc755c348411690dc8913224_1a5626b08fcc755c348411690dc8913224" prot="public" static="no" mutable="no">
+        <type>uint16_t</type>
+        <definition>uint16_t sysio::key_weight::weight</definition>
+        <argsstring></argsstring>
+        <name>weight</name>
+        <qualifiedname>sysio::key_weight::weight</qualifiedname>
+        <briefdescription>
+<para>weight of the public key </para>
+        </briefdescription>
+        <detaileddescription>
+<para>weight associated with a signature from the private key associated with the accompanying public key </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="98" column="18" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="98" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1key__weight_a7b8580ea06f80e421dbc2e8eb9ec18c2_1a7b8580ea06f80e421dbc2e8eb9ec18c2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::key_weight::CDT_REFLECT</definition>
+        <argsstring>(key, weight)</argsstring>
+        <name>CDT_REFLECT</name>
+        <qualifiedname>sysio::key_weight::CDT_REFLECT</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1key__weight_a7d60ffa30b7d3b0e57c7ef71f3255ed9_1a7d60ffa30b7d3b0e57c7ef71f3255ed9" kindref="member">key</ref></type>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1key__weight_a5626b08fcc755c348411690dc8913224_1a5626b08fcc755c348411690dc8913224" kindref="member">weight</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="100" column="7"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>pairs a public key with an integer weight </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="85" column="4" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="85" bodyend="101"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1key__weight_a7b8580ea06f80e421dbc2e8eb9ec18c2_1a7b8580ea06f80e421dbc2e8eb9ec18c2" prot="public" virt="non-virtual"><scope>sysio::key_weight</scope><name>CDT_REFLECT</name></member>
+      <member refid="structsysio_1_1key__weight_a7d60ffa30b7d3b0e57c7ef71f3255ed9_1a7d60ffa30b7d3b0e57c7ef71f3255ed9" prot="public" virt="non-virtual"><scope>sysio::key_weight</scope><name>key</name></member>
+      <member refid="structsysio_1_1key__weight_a5626b08fcc755c348411690dc8913224_1a5626b08fcc755c348411690dc8913224" prot="public" virt="non-virtual"><scope>sysio::key_weight</scope><name>weight</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

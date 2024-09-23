@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1singleton_1_1row" kind="struct" language="C++" prot="private">
+    <compoundname>sysio::singleton::row</compoundname>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1singleton_1_1row_a0336461f99439d96eceeb4fc8115f6a6_1a0336461f99439d96eceeb4fc8115f6a6" prot="public" static="no" mutable="no">
+        <type>T</type>
+        <definition>T sysio::singleton&lt; SingletonName, T &gt;::row::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <qualifiedname>sysio::singleton::row::value</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Value to be stored inside the singleton table </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/singleton.hpp" line="35" column="12" bodyfile="libraries/sysiolib/contracts/sysio/singleton.hpp" bodystart="35" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1singleton_1_1row_ac6d6392c9db2915f796226a27804ca44_1ac6d6392c9db2915f796226a27804ca44" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::singleton&lt; SingletonName, T &gt;::row::primary_key</definition>
+        <argsstring>() const</argsstring>
+        <name>primary_key</name>
+        <qualifiedname>sysio::singleton::row::primary_key</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get primary key of the data</para>
+<para><simplesect kind="return"><para>uint64_t - Primary Key </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/singleton.hpp" line="42" column="19" bodyfile="libraries/sysiolib/contracts/sysio/singleton.hpp" bodystart="42" bodyend="42"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Structure of data inside the singleton table </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/singleton.hpp" line="31" column="7" bodyfile="libraries/sysiolib/contracts/sysio/singleton.hpp" bodystart="31" bodyend="45"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1singleton_1_1row_ac6d6392c9db2915f796226a27804ca44_1ac6d6392c9db2915f796226a27804ca44" prot="public" virt="non-virtual"><scope>sysio::singleton::row</scope><name>primary_key</name></member>
+      <member refid="structsysio_1_1singleton_1_1row_a0336461f99439d96eceeb4fc8115f6a6_1a0336461f99439d96eceeb4fc8115f6a6" prot="public" virt="non-virtual"><scope>sysio::singleton::row</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,187 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1transaction" kind="class" language="C++" prot="public">
+    <compoundname>sysio::transaction</compoundname>
+    <basecompoundref refid="classsysio_1_1transaction__header" prot="public" virt="non-virtual">sysio::transaction_header</basecompoundref>
+    <includes refid="transaction_8hpp" local="no">transaction.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classsysio_1_1transaction_af979abbac1807a39bfbd953b43d1cfe0_1af979abbac1807a39bfbd953b43d1cfe0" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; <ref refid="structsysio_1_1action" kindref="compound">action</ref> &gt;</type>
+        <definition>std::vector&lt;action&gt; sysio::transaction::context_free_actions</definition>
+        <argsstring></argsstring>
+        <name>context_free_actions</name>
+        <qualifiedname>sysio::transaction::context_free_actions</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="130" column="20" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="130" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction_aa5aceee2071f5b6a03750e962db090e3_1aa5aceee2071f5b6a03750e962db090e3" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; <ref refid="structsysio_1_1action" kindref="compound">action</ref> &gt;</type>
+        <definition>std::vector&lt;action&gt; sysio::transaction::actions</definition>
+        <argsstring></argsstring>
+        <name>actions</name>
+        <qualifiedname>sysio::transaction::actions</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="131" column="20" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="131" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1transaction_a4922153b74b6140d199183be8e4706f4_1a4922153b74b6140d199183be8e4706f4" prot="public" static="no" mutable="no">
+        <type><ref refid="group__transaction_ga0e713744cc029ccaa6db4018766969a1_1ga0e713744cc029ccaa6db4018766969a1" kindref="member">extensions_type</ref></type>
+        <definition>extensions_type sysio::transaction::transaction_extensions</definition>
+        <argsstring></argsstring>
+        <name>transaction_extensions</name>
+        <qualifiedname>sysio::transaction::transaction_extensions</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="132" column="28" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="132" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1transaction_abc225d1bfbe37d951d49bc1e4b4d9d35_1abc225d1bfbe37d951d49bc1e4b4d9d35" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::transaction::transaction</definition>
+        <argsstring>(time_point_sec exp=time_point_sec(current_time_point())+60)</argsstring>
+        <name>transaction</name>
+        <qualifiedname>sysio::transaction::transaction</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1time__point__sec" kindref="compound">time_point_sec</ref></type>
+          <declname>exp</declname>
+          <defval><ref refid="classsysio_1_1time__point__sec" kindref="compound">time_point_sec</ref>(<ref refid="group__system_ga6a9fba6c93fcad4e6089f6dae813bdc7_1ga6a9fba6c93fcad4e6089f6dae813bdc7" kindref="member">current_time_point</ref>())+60</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new transaction with an expiration of now + 60 seconds. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="115" column="7" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="115" bodyend="115"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1transaction_ac1cad868962d4b36a7f74325de687f2e_1ac1cad868962d4b36a7f74325de687f2e" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::transaction::send</definition>
+        <argsstring>(const uint128_t &amp;sender_id, name payer, bool replace_existing=false) const</argsstring>
+        <name>send</name>
+        <qualifiedname>sysio::transaction::send</qualifiedname>
+        <param>
+          <type>const uint128_t &amp;</type>
+          <declname>sender_id</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>replace_existing</declname>
+          <defval>false</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Sends this transaction, packs the transaction then sends it as a deferred transaction</para>
+<para>Writes the <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref> as a string to the provided char buffer <parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>sender_id</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- ID of sender </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>payer</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Account paying for RAM </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>replace_existing</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Defaults to false, if this is <computeroutput>0</computeroutput>/false then if the provided sender_id is already in use by an in-flight transaction from this contract, which will be a failing assert. If <computeroutput>1</computeroutput> then transaction will atomically cancel/replace the inflight transaction </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="125" column="12" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="125" bodyend="128"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Class transaction contains the actions, context_free_actions and extensions type for a transaction </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>sysio::transaction</label>
+        <link refid="classsysio_1_1transaction"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>sysio::transaction_header</label>
+        <link refid="classsysio_1_1transaction__header"/>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="3">
+        <label>sysio::time_point_sec</label>
+        <link refid="classsysio_1_1time__point__sec"/>
+      </node>
+      <node id="1">
+        <label>sysio::transaction</label>
+        <link refid="classsysio_1_1transaction"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>sysio::transaction_header</label>
+        <link refid="classsysio_1_1transaction__header"/>
+        <childnode refid="3" relation="usage">
+          <edgelabel>expiration</edgelabel>
+        </childnode>
+        <childnode refid="4" relation="usage">
+          <edgelabel>delay_sec</edgelabel>
+          <edgelabel>max_net_usage_words</edgelabel>
+        </childnode>
+      </node>
+      <node id="4">
+        <label>sysio::unsigned_int</label>
+        <link refid="structsysio_1_1unsigned__int"/>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/transaction.hpp" line="109" column="4" bodyfile="libraries/sysiolib/contracts/sysio/transaction.hpp" bodystart="109" bodyend="135"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1transaction_aa5aceee2071f5b6a03750e962db090e3_1aa5aceee2071f5b6a03750e962db090e3" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>actions</name></member>
+      <member refid="classsysio_1_1transaction_af979abbac1807a39bfbd953b43d1cfe0_1af979abbac1807a39bfbd953b43d1cfe0" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>context_free_actions</name></member>
+      <member refid="classsysio_1_1transaction__header_a9c85d3aba75e7e9cd30c19d6dfc07bbf_1a9c85d3aba75e7e9cd30c19d6dfc07bbf" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>delay_sec</name></member>
+      <member refid="classsysio_1_1transaction__header_a9b1ae50f94ccde761c2b1cc69cb5db8b_1a9b1ae50f94ccde761c2b1cc69cb5db8b" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>expiration</name></member>
+      <member refid="classsysio_1_1transaction__header_a9e57dad7fd75e1074c5703cc149367b2_1a9e57dad7fd75e1074c5703cc149367b2" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>max_cpu_usage_ms</name></member>
+      <member refid="classsysio_1_1transaction__header_a4a048be5a00805369b846ad49004a2e2_1a4a048be5a00805369b846ad49004a2e2" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>max_net_usage_words</name></member>
+      <member refid="classsysio_1_1transaction__header_a396ab3534edcdb4527c10df6cba2cef9_1a396ab3534edcdb4527c10df6cba2cef9" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>ref_block_num</name></member>
+      <member refid="classsysio_1_1transaction__header_a5dc72a37c82cd7d14e991ba6f2d70519_1a5dc72a37c82cd7d14e991ba6f2d70519" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>ref_block_prefix</name></member>
+      <member refid="classsysio_1_1transaction_ac1cad868962d4b36a7f74325de687f2e_1ac1cad868962d4b36a7f74325de687f2e" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>send</name></member>
+      <member refid="classsysio_1_1transaction_abc225d1bfbe37d951d49bc1e4b4d9d35_1abc225d1bfbe37d951d49bc1e4b4d9d35" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>transaction</name></member>
+      <member refid="classsysio_1_1transaction_a4922153b74b6140d199183be8e4706f4_1a4922153b74b6140d199183be8e4706f4" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>transaction_extensions</name></member>
+      <member refid="classsysio_1_1transaction__header_a5d22bef96f6b88a7b137185739d19f9f_1a5d22bef96f6b88a7b137185739d19f9f" prot="public" virt="non-virtual"><scope>sysio::transaction</scope><name>transaction_header</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

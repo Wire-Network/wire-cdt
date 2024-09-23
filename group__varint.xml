@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__varint" kind="group">
+    <compoundname>varint</compoundname>
+    <title>Variable Length Integer Type</title>
+    <innerclass refid="structsysio_1_1unsigned__int" prot="public">sysio::unsigned_int</innerclass>
+    <innerclass refid="structsysio_1_1signed__int" prot="public">sysio::signed_int</innerclass>
+    <briefdescription>
+<para>Defines variable length integer type which provides more efficient serialization. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

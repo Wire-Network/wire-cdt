@@ -1,0 +1,455 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="multi__index_8hpp" kind="file" language="C++">
+    <compoundname>multi_index.hpp</compoundname>
+    <includes refid="action_8hpp" local="yes">../../contracts/sysio/action.hpp</includes>
+    <includes refid="name_8hpp" local="yes">../../core/sysio/name.hpp</includes>
+    <includes refid="serialize_8hpp" local="yes">../../core/sysio/serialize.hpp</includes>
+    <includes refid="fixed__bytes_8hpp" local="yes">../../core/sysio/fixed_bytes.hpp</includes>
+    <includes local="no">vector</includes>
+    <includes local="no">tuple</includes>
+    <includes local="no">boost/hana.hpp</includes>
+    <includes local="no">functional</includes>
+    <includes local="no">utility</includes>
+    <includes local="no">type_traits</includes>
+    <includes local="no">iterator</includes>
+    <includes local="no">limits</includes>
+    <includes local="no">algorithm</includes>
+    <includes local="no">memory</includes>
+    <includedby refid="singleton_8hpp" local="yes">libraries/sysiolib/contracts/sysio/singleton.hpp</includedby>
+    <includedby refid="sysio_8hpp" local="yes">libraries/sysiolib/contracts/sysio/sysio.hpp</includedby>
+    <incdepgraph>
+      <node id="2">
+        <label>../../contracts/sysio/action.hpp</label>
+        <link refid="action_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+        <childnode refid="32" relation="include">
+        </childnode>
+        <childnode refid="33" relation="include">
+        </childnode>
+        <childnode refid="38" relation="include">
+        </childnode>
+        <childnode refid="39" relation="include">
+        </childnode>
+        <childnode refid="40" relation="include">
+        </childnode>
+        <childnode refid="41" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>libraries/sysiolib/contracts/sysio/multi_index.hpp</label>
+        <link refid="multi__index_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="42" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="46" relation="include">
+        </childnode>
+        <childnode refid="47" relation="include">
+        </childnode>
+        <childnode refid="44" relation="include">
+        </childnode>
+        <childnode refid="48" relation="include">
+        </childnode>
+        <childnode refid="45" relation="include">
+        </childnode>
+        <childnode refid="49" relation="include">
+        </childnode>
+        <childnode refid="50" relation="include">
+        </childnode>
+        <childnode refid="43" relation="include">
+        </childnode>
+        <childnode refid="51" relation="include">
+        </childnode>
+      </node>
+      <node id="11">
+        <label>check.hpp</label>
+        <link refid="check_8hpp"/>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>../../core/sysio/datastream.hpp</label>
+        <link refid="datastream_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
+        </childnode>
+        <childnode refid="22" relation="include">
+        </childnode>
+        <childnode refid="23" relation="include">
+        </childnode>
+        <childnode refid="24" relation="include">
+        </childnode>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="26" relation="include">
+        </childnode>
+        <childnode refid="27" relation="include">
+        </childnode>
+        <childnode refid="28" relation="include">
+        </childnode>
+      </node>
+      <node id="42">
+        <label>../../core/sysio/fixed_bytes.hpp</label>
+        <link refid="fixed__bytes_8hpp"/>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="43" relation="include">
+        </childnode>
+        <childnode refid="44" relation="include">
+        </childnode>
+        <childnode refid="45" relation="include">
+        </childnode>
+      </node>
+      <node id="32">
+        <label>../../core/sysio/ignore.hpp</label>
+        <link refid="ignore_8hpp"/>
+        <childnode refid="10" relation="include">
+        </childnode>
+      </node>
+      <node id="29">
+        <label>../../core/sysio/name.hpp</label>
+        <link refid="name_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="30" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="30">
+        <label>reflect.hpp</label>
+        <link refid="reflect_8hpp"/>
+        <childnode refid="31" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>../../core/sysio/serialize.hpp</label>
+        <link refid="serialize_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+      </node>
+      <node id="33">
+        <label>../../core/sysio/time.hpp</label>
+        <link refid="time_8hpp"/>
+        <childnode refid="34" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+        <childnode refid="36" relation="include">
+        </childnode>
+        <childnode refid="37" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="14">
+        <label>varint.hpp</label>
+        <link refid="varint_8hpp"/>
+      </node>
+      <node id="43">
+        <label>algorithm</label>
+      </node>
+      <node id="18">
+        <label>array</label>
+      </node>
+      <node id="31">
+        <label>bluegrass/meta/refl.hpp</label>
+      </node>
+      <node id="25">
+        <label>boost/fusion/adapted/std_tuple.hpp</label>
+      </node>
+      <node id="23">
+        <label>boost/fusion/algorithm/iteration/for_each.hpp</label>
+      </node>
+      <node id="24">
+        <label>boost/fusion/include/for_each.hpp</label>
+      </node>
+      <node id="26">
+        <label>boost/fusion/include/std_tuple.hpp</label>
+      </node>
+      <node id="47">
+        <label>boost/hana.hpp</label>
+      </node>
+      <node id="27">
+        <label>boost/mp11/tuple.hpp</label>
+      </node>
+      <node id="28">
+        <label>boost/pfr.hpp</label>
+      </node>
+      <node id="41">
+        <label>boost/preprocessor/facilities/overload.hpp</label>
+      </node>
+      <node id="6">
+        <label>boost/preprocessor/seq/enum.hpp</label>
+      </node>
+      <node id="5">
+        <label>boost/preprocessor/seq/for_each.hpp</label>
+      </node>
+      <node id="8">
+        <label>boost/preprocessor/seq/seq.hpp</label>
+      </node>
+      <node id="7">
+        <label>boost/preprocessor/seq/size.hpp</label>
+      </node>
+      <node id="9">
+        <label>boost/preprocessor/stringize.hpp</label>
+      </node>
+      <node id="40">
+        <label>boost/preprocessor/tuple/enum.hpp</label>
+      </node>
+      <node id="38">
+        <label>boost/preprocessor/variadic/size.hpp</label>
+      </node>
+      <node id="39">
+        <label>boost/preprocessor/variadic/to_tuple.hpp</label>
+      </node>
+      <node id="35">
+        <label>chrono</label>
+      </node>
+      <node id="37">
+        <label>cstdio</label>
+      </node>
+      <node id="3">
+        <label>cstdlib</label>
+      </node>
+      <node id="36">
+        <label>ctime</label>
+      </node>
+      <node id="44">
+        <label>functional</label>
+      </node>
+      <node id="49">
+        <label>iterator</label>
+      </node>
+      <node id="50">
+        <label>limits</label>
+      </node>
+      <node id="15">
+        <label>list</label>
+      </node>
+      <node id="20">
+        <label>map</label>
+      </node>
+      <node id="51">
+        <label>memory</label>
+      </node>
+      <node id="21">
+        <label>optional</label>
+      </node>
+      <node id="16">
+        <label>queue</label>
+      </node>
+      <node id="19">
+        <label>set</label>
+      </node>
+      <node id="34">
+        <label>stdint.h</label>
+      </node>
+      <node id="12">
+        <label>string</label>
+      </node>
+      <node id="13">
+        <label>string_view</label>
+      </node>
+      <node id="46">
+        <label>tuple</label>
+      </node>
+      <node id="45">
+        <label>type_traits</label>
+      </node>
+      <node id="48">
+        <label>utility</label>
+      </node>
+      <node id="22">
+        <label>variant</label>
+      </node>
+      <node id="17">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="1">
+        <label>libraries/sysiolib/contracts/sysio/multi_index.hpp</label>
+        <link refid="multi__index_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>libraries/sysiolib/contracts/sysio/singleton.hpp</label>
+        <link refid="singleton_8hpp"/>
+      </node>
+      <node id="3">
+        <label>libraries/sysiolib/contracts/sysio/sysio.hpp</label>
+        <link refid="sysio_8hpp"/>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="structsysio_1_1const__mem__fun" prot="public">sysio::const_mem_fun</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01double_01_4" prot="public">sysio::_multi_index_detail::secondary_key_traits&lt; double &gt;</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01long_01double_01_4" prot="public">sysio::_multi_index_detail::secondary_key_traits&lt; long double &gt;</innerclass>
+    <innerclass refid="structsysio_1_1__multi__index__detail_1_1secondary__key__traits_3_01sysio_1_1fixed__bytes_3_0132_01_4_01_4" prot="public">sysio::_multi_index_detail::secondary_key_traits&lt; sysio::fixed_bytes&lt; 32 &gt; &gt;</innerclass>
+    <innerclass refid="structsysio_1_1indexed__by" prot="public">sysio::indexed_by</innerclass>
+    <innerclass refid="classsysio_1_1multi__index" prot="public">sysio::multi_index</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1item" prot="private">sysio::multi_index::item</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1item__ptr" prot="private">sysio::multi_index::item_ptr</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1index" prot="private">sysio::multi_index::index</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1index_1_1const__iterator" prot="public">sysio::multi_index::index::const_iterator</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1intc" prot="private">sysio::multi_index::intc</innerclass>
+    <innerclass refid="structsysio_1_1multi__index_1_1const__iterator" prot="public">sysio::multi_index::const_iterator</innerclass>
+    <innernamespace refid="namespacesysio">sysio</innernamespace>
+    <innernamespace refid="namespacesysio_1_1internal__use__do__not__use">sysio::internal_use_do_not_use</innernamespace>
+    <innernamespace refid="namespacesysio_1_1__multi__index__detail">sysio::_multi_index_detail</innernamespace>
+    <sectiondef kind="define">
+      <memberdef kind="define" id="multi__index_8hpp_a44e11d95000af02139eda2f0dd62f965_1a44e11d95000af02139eda2f0dd62f965" prot="public" static="no">
+        <name>WRAP_SECONDARY_SIMPLE_TYPE</name>
+        <param><defname>IDX</defname></param>
+        <param><defname>TYPE</defname></param>
+        <initializer>template&lt;&gt;\
+struct secondary_index_db_functions&lt;TYPE&gt; {\
+   static int32_t db_idx_next( int32_t iterator, uint64_t* primary )          { return internal_use_do_not_use::db_##IDX##_next( iterator, primary ); } \
+   static int32_t db_idx_previous( int32_t iterator, uint64_t* primary )      { return internal_use_do_not_use::db_##IDX##_previous( iterator, primary ); } \
+   static void    db_idx_remove( int32_t iterator  )                          { internal_use_do_not_use::db_##IDX##_remove( iterator ); } \
+   static int32_t db_idx_end( uint64_t code, uint64_t scope, uint64_t table ) { return internal_use_do_not_use::db_##IDX##_end( code, scope, table ); } \
+   static int32_t db_idx_store( uint64_t scope, uint64_t table, uint64_t payer, uint64_t id, const TYPE&amp; secondary ) {\
+     return internal_use_do_not_use::db_##IDX##_store( scope, table, payer, id, &amp;secondary ); \
+   }\
+   static void    db_idx_update( int32_t iterator, uint64_t payer, const TYPE&amp; secondary ) {\
+     internal_use_do_not_use::db_##IDX##_update( iterator, payer, &amp;secondary ); \
+   }\
+   static int32_t db_idx_find_primary( uint64_t code, uint64_t scope, uint64_t table, uint64_t primary, TYPE&amp; secondary ) {\
+     return internal_use_do_not_use::db_##IDX##_find_primary( code, scope, table, &amp;secondary, primary ); \
+   }\
+   static int32_t db_idx_find_secondary( uint64_t code, uint64_t scope, uint64_t table, const TYPE&amp; secondary, uint64_t&amp; primary ) {\
+     return internal_use_do_not_use::db_##IDX##_find_secondary( code, scope, table, &amp;secondary, &amp;primary ); \
+   }\
+   static int32_t db_idx_lowerbound( uint64_t code, uint64_t scope, uint64_t table, TYPE&amp; secondary, uint64_t&amp; primary ) {\
+     return internal_use_do_not_use::db_##IDX##_lowerbound( code, scope, table, &amp;secondary, &amp;primary ); \
+   }\
+   static int32_t db_idx_upperbound( uint64_t code, uint64_t scope, uint64_t table, TYPE&amp; secondary, uint64_t&amp; primary ) {\
+     return internal_use_do_not_use::db_##IDX##_upperbound( code, scope, table, &amp;secondary, &amp;primary ); \
+   }\
+};</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="243" column="9" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="243" bodyend="268"/>
+      </memberdef>
+      <memberdef kind="define" id="multi__index_8hpp_a522b8927626c841da1e6cc3a292d5913_1a522b8927626c841da1e6cc3a292d5913" prot="public" static="no">
+        <name>WRAP_SECONDARY_ARRAY_TYPE</name>
+        <param><defname>IDX</defname></param>
+        <param><defname>TYPE</defname></param>
+        <initializer>template&lt;&gt;\
+struct secondary_index_db_functions&lt;TYPE&gt; {\
+   static int32_t db_idx_next( int32_t iterator, uint64_t* primary )          { return internal_use_do_not_use::db_##IDX##_next( iterator, primary ); } \
+   static int32_t db_idx_previous( int32_t iterator, uint64_t* primary )      { return internal_use_do_not_use::db_##IDX##_previous( iterator, primary ); } \
+   static void    db_idx_remove( int32_t iterator )                           { internal_use_do_not_use::db_##IDX##_remove( iterator ); } \
+   static int32_t db_idx_end( uint64_t code, uint64_t scope, uint64_t table ) { return internal_use_do_not_use::db_##IDX##_end( code, scope, table ); } \
+   static int32_t db_idx_store( uint64_t scope, uint64_t table, uint64_t payer, uint64_t id, const TYPE&amp; secondary ) {\
+     return internal_use_do_not_use::db_##IDX##_store( scope, table, payer, id, secondary.data(), TYPE::num_words() ); \
+   }\
+   static void    db_idx_update( int32_t iterator, uint64_t payer, const TYPE&amp; secondary ) {\
+     internal_use_do_not_use::db_##IDX##_update( iterator, payer, secondary.data(), TYPE::num_words() ); \
+   }\
+   static int32_t db_idx_find_primary( uint64_t code, uint64_t scope, uint64_t table, uint64_t primary, TYPE&amp; secondary ) {\
+     return internal_use_do_not_use::db_##IDX##_find_primary( code, scope, table, secondary.data(), TYPE::num_words(), primary ); \
+   }\
+   static int32_t db_idx_find_secondary( uint64_t code, uint64_t scope, uint64_t table, const TYPE&amp; secondary, uint64_t&amp; primary ) {\
+     return internal_use_do_not_use::db_##IDX##_find_secondary( code, scope, table, secondary.data(), TYPE::num_words(), &amp;primary ); \
+   }\
+   static int32_t db_idx_lowerbound( uint64_t code, uint64_t scope, uint64_t table, TYPE&amp; secondary, uint64_t&amp; primary ) {\
+     return internal_use_do_not_use::db_##IDX##_lowerbound( code, scope, table, secondary.data(), TYPE::num_words(), &amp;primary ); \
+   }\
+   static int32_t db_idx_upperbound( uint64_t code, uint64_t scope, uint64_t table, TYPE&amp; secondary, uint64_t&amp; primary ) {\
+     return internal_use_do_not_use::db_##IDX##_upperbound( code, scope, table, secondary.data(), TYPE::num_words(), &amp;primary ); \
+   }\
+};</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="270" column="9" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="270" bodyend="295"/>
+      </memberdef>
+      <memberdef kind="define" id="multi__index_8hpp_aab2b11a88b267a1ad4009fed8dc5e778_1aab2b11a88b267a1ad4009fed8dc5e778" prot="public" static="no">
+        <name>MAKE_TRAITS_FOR_ARITHMETIC_SECONDARY_KEY</name>
+        <param><defname>TYPE</defname></param>
+        <initializer>template&lt;&gt;\
+struct secondary_key_traits&lt;TYPE&gt; {\
+   static_assert( std::numeric_limits&lt;TYPE&gt;::is_specialized, &quot;TYPE does not have specialized numeric_limits&quot; );\
+   static constexpr TYPE true_lowest() { return std::numeric_limits&lt;TYPE&gt;::lowest(); }\
+};</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="297" column="9" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="297" bodyend="302"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="copyright"><para>defined in eos/LICENSE </para>
+</simplesect>
+</para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp"/>
+  </compounddef>
+</doxygen>

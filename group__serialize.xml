@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__serialize" kind="group">
+    <compoundname>serialize</compoundname>
+    <title>Serialize</title>
+    <sectiondef kind="define">
+      <memberdef kind="define" id="group__serialize_ga93471969d3fbf0b324316ca2530c6d8a_1ga93471969d3fbf0b324316ca2530c6d8a" prot="public" static="no">
+        <name>SYSLIB_SERIALIZE</name>
+        <param><defname>TYPE</defname></param>
+        <param><defname>MEMBERS</defname></param>
+        <initializer> template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &lt;&lt; ( DataStream&amp; ds, const TYPE&amp; t ){ \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &lt;&lt;, MEMBERS );\
+ }\
+ template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &gt;&gt; ( DataStream&amp; ds, TYPE&amp; t ){ \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &gt;&gt;, MEMBERS );\
+ }</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Defines serialization and deserialization for a class</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>TYPE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the class to have its serialization and deserialization defined </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>MEMBERS</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a sequence of member names. (field1)(field2)(field3) </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/serialize.hpp" line="23" column="9" bodyfile="libraries/sysiolib/core/sysio/serialize.hpp" bodystart="23" bodyend="31"/>
+      </memberdef>
+      <memberdef kind="define" id="group__serialize_gac270bd4ed2158457a457cb321b480327_1gac270bd4ed2158457a457cb321b480327" prot="public" static="no">
+        <name>SYSLIB_SERIALIZE_DERIVED</name>
+        <param><defname>TYPE</defname></param>
+        <param><defname>BASE</defname></param>
+        <param><defname>MEMBERS</defname></param>
+        <initializer> template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &lt;&lt; ( DataStream&amp; ds, const TYPE&amp; t ){ \
+    ds &lt;&lt; static_cast&lt;const BASE&amp;&gt;(t); \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &lt;&lt;, MEMBERS );\
+ }\
+ template&lt;typename DataStream&gt; \
+ friend DataStream&amp; operator &gt;&gt; ( DataStream&amp; ds, TYPE&amp; t ){ \
+    ds &gt;&gt; static_cast&lt;BASE&amp;&gt;(t); \
+    return ds BOOST_PP_SEQ_FOR_EACH( <ref refid="serialize_8hpp_a511ee7857f3e98a2467e438c16e719ae_1a511ee7857f3e98a2467e438c16e719ae" kindref="member">SYSLIB_REFLECT_MEMBER_OP</ref>, &gt;&gt;, MEMBERS );\
+ }</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Defines serialization and deserialization for a class which inherits from other classes that have their serialization and deserialization defined</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>TYPE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the class to have its serialization and deserialization defined </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>BASE</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a sequence of base class names (basea)(baseb)(basec) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>MEMBERS</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a sequence of member names. (field1)(field2)(field3) </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/serialize.hpp" line="42" column="9" bodyfile="libraries/sysiolib/core/sysio/serialize.hpp" bodystart="42" bodyend="52"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Defines C++ API to serialize and deserialize object. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

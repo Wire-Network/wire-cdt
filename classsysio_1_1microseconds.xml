@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1microseconds" kind="class" language="C++" prot="public">
+    <compoundname>sysio::microseconds</compoundname>
+    <includes refid="time_8hpp" local="no">time.hpp</includes>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="classsysio_1_1microseconds_aaba1d7b327cc33fcbaf19e870d0c1733_1aaba1d7b327cc33fcbaf19e870d0c1733" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class time_point</definition>
+        <argsstring></argsstring>
+        <name>time_point</name>
+        <qualifiedname>sysio::microseconds::time_point</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1time__point" kindref="compound">time_point</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="44" column="22" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="44" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1microseconds_a48ffa6b2b0de9ec724cd2d09a14c12a9_1a48ffa6b2b0de9ec724cd2d09a14c12a9" prot="public" static="no" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::microseconds::microseconds</definition>
+        <argsstring>(int64_t c=0)</argsstring>
+        <name>microseconds</name>
+        <qualifiedname>sysio::microseconds::microseconds</qualifiedname>
+        <param>
+          <type>int64_t</type>
+          <declname>c</declname>
+          <defval>0</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/time.hpp" line="21" column="18" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="21" bodyend="21"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/time.hpp" line="19" column="3" bodyfile="libraries/sysiolib/core/sysio/time.hpp" bodystart="19" bodyend="45"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1microseconds_a48ffa6b2b0de9ec724cd2d09a14c12a9_1a48ffa6b2b0de9ec724cd2d09a14c12a9" prot="public" virt="non-virtual"><scope>sysio::microseconds</scope><name>microseconds</name></member>
+      <member refid="classsysio_1_1microseconds_aaba1d7b327cc33fcbaf19e870d0c1733_1aaba1d7b327cc33fcbaf19e870d0c1733" prot="private" virt="non-virtual"><scope>sysio::microseconds</scope><name>time_point</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

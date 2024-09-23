@@ -1,0 +1,305 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1blockchain__parameters" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::blockchain_parameters</compoundname>
+    <includes refid="privileged_8hpp" local="no">privileged.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a7b5cd1e666be7f1d73cf09ff52bf7ee7_1a7b5cd1e666be7f1d73cf09ff52bf7ee7" prot="public" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::blockchain_parameters::max_block_net_usage</definition>
+        <argsstring></argsstring>
+        <name>max_block_net_usage</name>
+        <qualifiedname>sysio::blockchain_parameters::max_block_net_usage</qualifiedname>
+        <briefdescription>
+<para>the maximum net usage in instructions for a block </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The maximum net usage in instructions for a block </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="57" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="57" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_af9824f6ca8c5f0134523452f27eb8797_1af9824f6ca8c5f0134523452f27eb8797" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::target_block_net_usage_pct</definition>
+        <argsstring></argsstring>
+        <name>target_block_net_usage_pct</name>
+        <qualifiedname>sysio::blockchain_parameters::target_block_net_usage_pct</qualifiedname>
+        <briefdescription>
+<para>The target percent (1% == 100, 100%= 10,000) of maximum net usage; exceeding this triggers congestion handling. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The target percent (1% == 100, 100%= 10,000) of maximum net usage; exceeding this triggers congestion handling </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="63" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="63" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_abb18f1690c365801145fe33c21743b6e_1abb18f1690c365801145fe33c21743b6e" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::max_transaction_net_usage</definition>
+        <argsstring></argsstring>
+        <name>max_transaction_net_usage</name>
+        <qualifiedname>sysio::blockchain_parameters::max_transaction_net_usage</qualifiedname>
+        <briefdescription>
+<para>The maximum objectively measured net usage that the chain will allow regardless of account limits. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The maximum objectively measured net usage that the chain will allow regardless of account limits </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="69" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="69" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_af9733758cc366fdcfbbe9dc3fe2460da_1af9733758cc366fdcfbbe9dc3fe2460da" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::base_per_transaction_net_usage</definition>
+        <argsstring></argsstring>
+        <name>base_per_transaction_net_usage</name>
+        <qualifiedname>sysio::blockchain_parameters::base_per_transaction_net_usage</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The base amount of net usage billed for a transaction to cover incidentals </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="74" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="74" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_ac95ad51a1d75af94c90d785cd19c5796_1ac95ad51a1d75af94c90d785cd19c5796" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::net_usage_leeway</definition>
+        <argsstring></argsstring>
+        <name>net_usage_leeway</name>
+        <qualifiedname>sysio::blockchain_parameters::net_usage_leeway</qualifiedname>
+        <briefdescription>
+<para>The amount of net usage leeway available whilst executing a transaction (still checks against new limits without leeway at the end of the transaction) </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The amount of net usage leeway available whilst executing a transaction (still checks against new limits without leeway at the end of the transaction) </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="80" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="80" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a33dc15a8af7642c79291ff817bfba804_1a33dc15a8af7642c79291ff817bfba804" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::context_free_discount_net_usage_num</definition>
+        <argsstring></argsstring>
+        <name>context_free_discount_net_usage_num</name>
+        <qualifiedname>sysio::blockchain_parameters::context_free_discount_net_usage_num</qualifiedname>
+        <briefdescription>
+<para>The numerator for the discount on net usage of context-free data. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The numerator for the discount on net usage of context-free data </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="86" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="86" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_ad4a2d067e1f77337ffa5537266d453c9_1ad4a2d067e1f77337ffa5537266d453c9" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::context_free_discount_net_usage_den</definition>
+        <argsstring></argsstring>
+        <name>context_free_discount_net_usage_den</name>
+        <qualifiedname>sysio::blockchain_parameters::context_free_discount_net_usage_den</qualifiedname>
+        <briefdescription>
+<para>The denominator for the discount on net usage of context-free data. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The denominator for the discount on net usage of context-free data </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="92" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="92" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_adfdbb978c27f421348130cacff58a164_1adfdbb978c27f421348130cacff58a164" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::max_block_cpu_usage</definition>
+        <argsstring></argsstring>
+        <name>max_block_cpu_usage</name>
+        <qualifiedname>sysio::blockchain_parameters::max_block_cpu_usage</qualifiedname>
+        <briefdescription>
+<para>The maximum billable cpu usage (in microseconds) for a block. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The maximum billable cpu usage (in microseconds) for a block </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="98" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="98" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a71dffda1e9c99c858d6e5ce3849a451e_1a71dffda1e9c99c858d6e5ce3849a451e" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::target_block_cpu_usage_pct</definition>
+        <argsstring></argsstring>
+        <name>target_block_cpu_usage_pct</name>
+        <qualifiedname>sysio::blockchain_parameters::target_block_cpu_usage_pct</qualifiedname>
+        <briefdescription>
+<para>The target percent (1% == 100, 100%= 10,000) of maximum cpu usage; exceeding this triggers congestion handling. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The target percent (1% == 100, 100%= 10,000) of maximum cpu usage; exceeding this triggers congestion handling </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="104" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="104" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a88c4425f8e04b99f85f2c5ec13520179_1a88c4425f8e04b99f85f2c5ec13520179" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::max_transaction_cpu_usage</definition>
+        <argsstring></argsstring>
+        <name>max_transaction_cpu_usage</name>
+        <qualifiedname>sysio::blockchain_parameters::max_transaction_cpu_usage</qualifiedname>
+        <briefdescription>
+<para>The maximum billable cpu usage (in microseconds) that the chain will allow regardless of account limits. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The maximum billable cpu usage (in microseconds) that the chain will allow regardless of account limits </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="110" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="110" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a36084639be814839caf617c966a465cb_1a36084639be814839caf617c966a465cb" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::min_transaction_cpu_usage</definition>
+        <argsstring></argsstring>
+        <name>min_transaction_cpu_usage</name>
+        <qualifiedname>sysio::blockchain_parameters::min_transaction_cpu_usage</qualifiedname>
+        <briefdescription>
+<para>The minimum billable cpu usage (in microseconds) that the chain requires. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The minimum billable cpu usage (in microseconds) that the chain requires </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="116" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="116" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_ab65c452f8dabce7a4827955af278b4e3_1ab65c452f8dabce7a4827955af278b4e3" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::max_transaction_lifetime</definition>
+        <argsstring></argsstring>
+        <name>max_transaction_lifetime</name>
+        <qualifiedname>sysio::blockchain_parameters::max_transaction_lifetime</qualifiedname>
+        <briefdescription>
+<para>Maximum lifetime of a transacton. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Maximum lifetime of a transacton </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="122" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="122" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_ac3c689c29f8beec18e105a56402e4501_1ac3c689c29f8beec18e105a56402e4501" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::deferred_trx_expiration_window</definition>
+        <argsstring></argsstring>
+        <name>deferred_trx_expiration_window</name>
+        <qualifiedname>sysio::blockchain_parameters::deferred_trx_expiration_window</qualifiedname>
+        <briefdescription>
+<para>the number of seconds after the time a deferred transaction can first execute until it expires </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The number of seconds after the time a deferred transaction can first execute until it expires </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="128" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="128" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_ab6a3466396f2375c2644ac98877446d0_1ab6a3466396f2375c2644ac98877446d0" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::max_transaction_delay</definition>
+        <argsstring></argsstring>
+        <name>max_transaction_delay</name>
+        <qualifiedname>sysio::blockchain_parameters::max_transaction_delay</qualifiedname>
+        <briefdescription>
+<para>The maximum number of seconds that can be imposed as a delay requirement by authorization checks. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The maximum number of seconds that can be imposed as a delay requirement by authorization checks </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="135" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="135" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a9f20c14f35e1938513a24c1c8039cd85_1a9f20c14f35e1938513a24c1c8039cd85" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t sysio::blockchain_parameters::max_inline_action_size</definition>
+        <argsstring></argsstring>
+        <name>max_inline_action_size</name>
+        <qualifiedname>sysio::blockchain_parameters::max_inline_action_size</qualifiedname>
+        <briefdescription>
+<para>Maximum size of inline action. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Maximum size of inline action </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="141" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="141" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_abe88e662ea94410ec98e6ef33043238e_1abe88e662ea94410ec98e6ef33043238e" prot="public" static="no" mutable="no">
+        <type>uint16_t</type>
+        <definition>uint16_t sysio::blockchain_parameters::max_inline_action_depth</definition>
+        <argsstring></argsstring>
+        <name>max_inline_action_depth</name>
+        <qualifiedname>sysio::blockchain_parameters::max_inline_action_depth</qualifiedname>
+        <briefdescription>
+<para>Maximum depth of inline action. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Maximum depth of inline action </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="147" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="147" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1blockchain__parameters_a7eac74a6db454f3c1a13cb22e9650ef2_1a7eac74a6db454f3c1a13cb22e9650ef2" prot="public" static="no" mutable="no">
+        <type>uint16_t</type>
+        <definition>uint16_t sysio::blockchain_parameters::max_authority_depth</definition>
+        <argsstring></argsstring>
+        <name>max_authority_depth</name>
+        <qualifiedname>sysio::blockchain_parameters::max_authority_depth</qualifiedname>
+        <briefdescription>
+<para>Maximum authority depth. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Maximum authority depth </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="153" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="153" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Tunable blockchain configuration that can be changed via consensus </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="51" column="4" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="51" bodyend="167"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1blockchain__parameters_af9733758cc366fdcfbbe9dc3fe2460da_1af9733758cc366fdcfbbe9dc3fe2460da" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>base_per_transaction_net_usage</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_ad4a2d067e1f77337ffa5537266d453c9_1ad4a2d067e1f77337ffa5537266d453c9" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>context_free_discount_net_usage_den</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a33dc15a8af7642c79291ff817bfba804_1a33dc15a8af7642c79291ff817bfba804" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>context_free_discount_net_usage_num</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_ac3c689c29f8beec18e105a56402e4501_1ac3c689c29f8beec18e105a56402e4501" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>deferred_trx_expiration_window</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a7eac74a6db454f3c1a13cb22e9650ef2_1a7eac74a6db454f3c1a13cb22e9650ef2" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_authority_depth</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_adfdbb978c27f421348130cacff58a164_1adfdbb978c27f421348130cacff58a164" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_block_cpu_usage</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a7b5cd1e666be7f1d73cf09ff52bf7ee7_1a7b5cd1e666be7f1d73cf09ff52bf7ee7" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_block_net_usage</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_abe88e662ea94410ec98e6ef33043238e_1abe88e662ea94410ec98e6ef33043238e" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_inline_action_depth</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a9f20c14f35e1938513a24c1c8039cd85_1a9f20c14f35e1938513a24c1c8039cd85" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_inline_action_size</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a88c4425f8e04b99f85f2c5ec13520179_1a88c4425f8e04b99f85f2c5ec13520179" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_transaction_cpu_usage</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_ab6a3466396f2375c2644ac98877446d0_1ab6a3466396f2375c2644ac98877446d0" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_transaction_delay</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_ab65c452f8dabce7a4827955af278b4e3_1ab65c452f8dabce7a4827955af278b4e3" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_transaction_lifetime</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_abb18f1690c365801145fe33c21743b6e_1abb18f1690c365801145fe33c21743b6e" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>max_transaction_net_usage</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a36084639be814839caf617c966a465cb_1a36084639be814839caf617c966a465cb" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>min_transaction_cpu_usage</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_ac95ad51a1d75af94c90d785cd19c5796_1ac95ad51a1d75af94c90d785cd19c5796" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>net_usage_leeway</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_a71dffda1e9c99c858d6e5ce3849a451e_1a71dffda1e9c99c858d6e5ce3849a451e" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>target_block_cpu_usage_pct</name></member>
+      <member refid="structsysio_1_1blockchain__parameters_af9824f6ca8c5f0134523452f27eb8797_1af9824f6ca8c5f0134523452f27eb8797" prot="public" virt="non-virtual"><scope>sysio::blockchain_parameters</scope><name>target_block_net_usage_pct</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

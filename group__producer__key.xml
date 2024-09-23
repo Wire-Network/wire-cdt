@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__producer__key" kind="group">
+    <compoundname>producer_key</compoundname>
+    <title>Producer Key</title>
+    <innerclass refid="structsysio_1_1producer__key" prot="public">sysio::producer_key</innerclass>
+    <sectiondef kind="var">
+      <memberdef kind="variable" id="group__producer__key_gae42a7a26b089dce8a7caef366c050389_1gae42a7a26b089dce8a7caef366c050389" prot="public" static="no" mutable="no">
+        <type>name</type>
+        <definition>name sysio::producer_key::producer_name</definition>
+        <argsstring></argsstring>
+        <name>producer_name</name>
+        <qualifiedname>sysio::producer_key::producer_name</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Name of the producer </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="27" column="22" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="27" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="group__producer__key_gaf7d9571f28795037aa221ac9ee89ba9a_1gaf7d9571f28795037aa221ac9ee89ba9a" prot="public" static="no" mutable="no">
+        <type>public_key</type>
+        <definition>public_key sysio::producer_key::block_signing_key</definition>
+        <argsstring></argsstring>
+        <name>block_signing_key</name>
+        <qualifiedname>sysio::producer_key::block_signing_key</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Block signing key used by this producer </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="34" column="22" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Maps producer with its signing key, used for producer schedule. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

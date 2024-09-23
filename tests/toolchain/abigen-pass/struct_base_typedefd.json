@@ -1,9 +1,0 @@
-{
-    "tests": [
-        {
-            "expected": {
-                "abi-file": "struct_base_typedefd.abi"
-            }
-        }
-    ]
-}

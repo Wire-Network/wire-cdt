@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__symbol" kind="group">
+    <compoundname>symbol</compoundname>
+    <title>Symbol</title>
+    <innerclass refid="classsysio_1_1symbol__code" prot="public">sysio::symbol_code</innerclass>
+    <innerclass refid="classsysio_1_1symbol" prot="public">sysio::symbol</innerclass>
+    <innerclass refid="classsysio_1_1extended__symbol" prot="public">sysio::extended_symbol</innerclass>
+    <briefdescription>
+<para>Defines C++ API for managing symbols. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

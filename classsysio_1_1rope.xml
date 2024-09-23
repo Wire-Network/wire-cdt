@@ -1,0 +1,528 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1rope" kind="class" language="C++" prot="public">
+    <compoundname>sysio::rope</compoundname>
+    <includes refid="rope_8hpp" local="no">rope.hpp</includes>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classsysio_1_1rope_1a103174d8aff05a5a942fbcb90f33f8e2" prot="private" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+        <definition>rope_node* sysio::rope::root</definition>
+        <argsstring></argsstring>
+        <name>root</name>
+        <qualifiedname>sysio::rope::root</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="36" column="20" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="36" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1rope_1ac3a0f9c17794bea4f0e02a335f2c36cd" prot="private" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+        <definition>rope_node* sysio::rope::last</definition>
+        <argsstring></argsstring>
+        <name>last</name>
+        <qualifiedname>sysio::rope::last</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="37" column="20" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1rope_1a95b0d6308f60c9bd485c564abe0ce26c" prot="private" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t sysio::rope::size</definition>
+        <argsstring></argsstring>
+        <name>size</name>
+        <qualifiedname>sysio::rope::size</qualifiedname>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="38" column="17" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="38" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-static-func">
+      <memberdef kind="function" id="classsysio_1_1rope_1aca156d8491553909c1d7f29f9dab69a5" prot="private" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>static constexpr size_t sysio::rope::strlen</definition>
+        <argsstring>(const char *str)</argsstring>
+        <name>strlen</name>
+        <qualifiedname>sysio::rope::strlen</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="40" column="34" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="40" bodyend="44"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_1a61efed31cff5bbdf124f56c9f10ba58a" prot="private" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>static void sysio::rope::c_str</definition>
+        <argsstring>(char *buffer, const rope_node *r, size_t &amp;off)</argsstring>
+        <name>c_str</name>
+        <qualifiedname>sysio::rope::c_str</qualifiedname>
+        <param>
+          <type>char *</type>
+          <declname>buffer</declname>
+        </param>
+        <param>
+          <type>const <ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+          <declname>r</declname>
+        </param>
+        <param>
+          <type>size_t &amp;</type>
+          <declname>off</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="46" column="22" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="46" bodyend="98"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-func">
+      <memberdef kind="function" id="classsysio_1_1rope_1ab2d1367e31810d990497313c2c5807b1" prot="private" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::rope::append</definition>
+        <argsstring>(rope_node *rn, bool use_left=false)</argsstring>
+        <name>append</name>
+        <qualifiedname>sysio::rope::append</qualifiedname>
+        <param>
+          <type><ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+          <declname>rn</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>use_left</declname>
+          <defval>false</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="100" column="15" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="100" bodyend="109"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_1a240bb6c1ebe5752e68997be1e934bd95" prot="private" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::rope::at</definition>
+        <argsstring>(char &amp;ret, size_t index, rope_node *rn, size_t &amp;index_so_far, bool &amp;stop)</argsstring>
+        <name>at</name>
+        <qualifiedname>sysio::rope::at</qualifiedname>
+        <param>
+          <type>char &amp;</type>
+          <declname>ret</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>index</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+          <declname>rn</declname>
+        </param>
+        <param>
+          <type>size_t &amp;</type>
+          <declname>index_so_far</declname>
+        </param>
+        <param>
+          <type>bool &amp;</type>
+          <declname>stop</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="111" column="15" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="111" bodyend="131"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1rope_a8c857f29220ebcc161bc1ca5ff294867_1a8c857f29220ebcc161bc1ca5ff294867" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::rope::rope</definition>
+        <argsstring>(const char *s)</argsstring>
+        <name>rope</name>
+        <qualifiedname>sysio::rope::rope</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="134" column="10" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="134" bodyend="138"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a722b40f342b4e73969cf1e24b1772d1c_1a722b40f342b4e73969cf1e24b1772d1c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::rope::rope</definition>
+        <argsstring>(std::string_view s=&quot;&quot;)</argsstring>
+        <name>rope</name>
+        <qualifiedname>sysio::rope::rope</qualifiedname>
+        <param>
+          <type>std::string_view</type>
+          <declname>s</declname>
+          <defval>&quot;&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="140" column="10" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="140" bodyend="143"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a2bb6032b80704084453a65da7b9085f4_1a2bb6032b80704084453a65da7b9085f4" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>size_t</type>
+            <declname>N</declname>
+            <defname>N</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::rope::append</definition>
+        <argsstring>(const char(&amp;s)[N])</argsstring>
+        <name>append</name>
+        <qualifiedname>sysio::rope::append</qualifiedname>
+        <param>
+          <type>const char(&amp;)</type>
+          <declname>s</declname>
+          <array>[N]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="146" column="32" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="146" bodyend="148"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a060ba0a06a9288e3d6cf96653cb2e4d9_1a060ba0a06a9288e3d6cf96653cb2e4d9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::rope::append</definition>
+        <argsstring>(const char *s, size_t len)</argsstring>
+        <name>append</name>
+        <qualifiedname>sysio::rope::append</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>s</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="150" column="15" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="150" bodyend="155"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a23baaa93044a660db388aa79900e7050_1a23baaa93044a660db388aa79900e7050" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char</type>
+        <definition>char sysio::rope::at</definition>
+        <argsstring>(size_t index)</argsstring>
+        <name>at</name>
+        <qualifiedname>sysio::rope::at</qualifiedname>
+        <param>
+          <type>size_t</type>
+          <declname>index</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="157" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="157" bodyend="163"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a9e9f67ad261ca14e2f24f000cf93d8ef_1a9e9f67ad261ca14e2f24f000cf93d8ef" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::rope::append</definition>
+        <argsstring>(const rope &amp;r)</argsstring>
+        <name>append</name>
+        <qualifiedname>sysio::rope::append</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;</type>
+          <declname>r</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="165" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="165" bodyend="168"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_ad75d44d7cc2805543e0d3b37b3a15cf6_1ad75d44d7cc2805543e0d3b37b3a15cf6" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::rope::append</definition>
+        <argsstring>(rope &amp;&amp;r)</argsstring>
+        <name>append</name>
+        <qualifiedname>sysio::rope::append</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;&amp;</type>
+          <declname>r</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="170" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="170" bodyend="173"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_ab8fd8dbb8cefccca823b5cb694dc1ad0_1ab8fd8dbb8cefccca823b5cb694dc1ad0" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>char</type>
+        <definition>char sysio::rope::operator[]</definition>
+        <argsstring>(size_t index)</argsstring>
+        <name>operator[]</name>
+        <qualifiedname>sysio::rope::operator[]</qualifiedname>
+        <param>
+          <type>size_t</type>
+          <declname>index</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="175" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="175" bodyend="177"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a4ec03e8e2ef81e83867a93fae18993ad_1a4ec03e8e2ef81e83867a93fae18993ad" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;</type>
+        <definition>rope &amp; sysio::rope::operator+=</definition>
+        <argsstring>(const char *s)</argsstring>
+        <name>operator+=</name>
+        <qualifiedname>sysio::rope::operator+=</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="179" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="179" bodyend="182"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_ac332b6fad7d7b4ab1dc152a2e57fe908_1ac332b6fad7d7b4ab1dc152a2e57fe908" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;</type>
+        <definition>rope &amp; sysio::rope::operator+=</definition>
+        <argsstring>(const rope &amp;r)</argsstring>
+        <name>operator+=</name>
+        <qualifiedname>sysio::rope::operator+=</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;</type>
+          <declname>r</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="184" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="184" bodyend="187"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a5e8635bf77e0252b3f6aad4203ca2848_1a5e8635bf77e0252b3f6aad4203ca2848" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;</type>
+        <definition>rope &amp; sysio::rope::operator+=</definition>
+        <argsstring>(rope &amp;&amp;r)</argsstring>
+        <name>operator+=</name>
+        <qualifiedname>sysio::rope::operator+=</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;&amp;</type>
+          <declname>r</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="188" column="25" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="188" bodyend="191"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_ab60ddcd7cab389dc4456c5670fccc351_1ab60ddcd7cab389dc4456c5670fccc351" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t sysio::rope::length</definition>
+        <argsstring>()</argsstring>
+        <name>length</name>
+        <qualifiedname>sysio::rope::length</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="209" column="27" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="209" bodyend="211"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_aa09b2a963bc521dbd2c4ae42e9a7424b_1aa09b2a963bc521dbd2c4ae42e9a7424b" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::rope::print</definition>
+        <argsstring>() const</argsstring>
+        <name>print</name>
+        <qualifiedname>sysio::rope::print</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="213" column="15" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="213" bodyend="215"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a102eec6cd3c6297891adf421559a851a_1a102eec6cd3c6297891adf421559a851a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>char *</type>
+        <definition>char * sysio::rope::c_str</definition>
+        <argsstring>() const</argsstring>
+        <name>c_str</name>
+        <qualifiedname>sysio::rope::c_str</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="217" column="15" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="217" bodyend="225"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1rope_a258e0f02a597885fdbf7a8a7871a8815_1a258e0f02a597885fdbf7a8a7871a8815" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::string_view</type>
+        <definition>std::string_view sysio::rope::sv</definition>
+        <argsstring>() const</argsstring>
+        <name>sv</name>
+        <qualifiedname>sysio::rope::sv</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="227" column="27" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="227" bodyend="229"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="classsysio_1_1rope_aa882baad43917693e1f93b5e546eb4d8_1aa882baad43917693e1f93b5e546eb4d8" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref></type>
+        <definition>rope operator+</definition>
+        <argsstring>(rope lhs, const char *s)</argsstring>
+        <name>operator+</name>
+        <qualifiedname>sysio::rope::operator+</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref></type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>s</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="193" column="22" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="193" bodyend="196"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1rope_a36e6c3ae93eb1350bd138347edebe939_1a36e6c3ae93eb1350bd138347edebe939" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref></type>
+        <definition>rope operator+</definition>
+        <argsstring>(rope lhs, const rope &amp;rhs)</argsstring>
+        <name>operator+</name>
+        <qualifiedname>sysio::rope::operator+</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref></type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="198" column="22" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="198" bodyend="201"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1rope_a7bb3cd3347e4718e40e175d6c76a5f2a_1a7bb3cd3347e4718e40e175d6c76a5f2a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref></type>
+        <definition>rope operator+</definition>
+        <argsstring>(rope lhs, rope &amp;&amp;rhs)</argsstring>
+        <name>operator+</name>
+        <qualifiedname>sysio::rope::operator+</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref></type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type><ref refid="classsysio_1_1rope" kindref="compound">rope</ref> &amp;&amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="203" column="22" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="203" bodyend="206"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/rope.hpp" line="34" column="4" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="34" bodyend="230"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1rope_1ab2d1367e31810d990497313c2c5807b1" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>append</name></member>
+      <member refid="classsysio_1_1rope_a2bb6032b80704084453a65da7b9085f4_1a2bb6032b80704084453a65da7b9085f4" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>append</name></member>
+      <member refid="classsysio_1_1rope_a060ba0a06a9288e3d6cf96653cb2e4d9_1a060ba0a06a9288e3d6cf96653cb2e4d9" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>append</name></member>
+      <member refid="classsysio_1_1rope_a9e9f67ad261ca14e2f24f000cf93d8ef_1a9e9f67ad261ca14e2f24f000cf93d8ef" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>append</name></member>
+      <member refid="classsysio_1_1rope_ad75d44d7cc2805543e0d3b37b3a15cf6_1ad75d44d7cc2805543e0d3b37b3a15cf6" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>append</name></member>
+      <member refid="classsysio_1_1rope_1a240bb6c1ebe5752e68997be1e934bd95" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>at</name></member>
+      <member refid="classsysio_1_1rope_a23baaa93044a660db388aa79900e7050_1a23baaa93044a660db388aa79900e7050" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>at</name></member>
+      <member refid="classsysio_1_1rope_1a61efed31cff5bbdf124f56c9f10ba58a" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>c_str</name></member>
+      <member refid="classsysio_1_1rope_a102eec6cd3c6297891adf421559a851a_1a102eec6cd3c6297891adf421559a851a" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>c_str</name></member>
+      <member refid="classsysio_1_1rope_1ac3a0f9c17794bea4f0e02a335f2c36cd" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>last</name></member>
+      <member refid="classsysio_1_1rope_ab60ddcd7cab389dc4456c5670fccc351_1ab60ddcd7cab389dc4456c5670fccc351" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>length</name></member>
+      <member refid="classsysio_1_1rope_aa882baad43917693e1f93b5e546eb4d8_1aa882baad43917693e1f93b5e546eb4d8" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator+</name></member>
+      <member refid="classsysio_1_1rope_a36e6c3ae93eb1350bd138347edebe939_1a36e6c3ae93eb1350bd138347edebe939" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator+</name></member>
+      <member refid="classsysio_1_1rope_a7bb3cd3347e4718e40e175d6c76a5f2a_1a7bb3cd3347e4718e40e175d6c76a5f2a" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator+</name></member>
+      <member refid="classsysio_1_1rope_a4ec03e8e2ef81e83867a93fae18993ad_1a4ec03e8e2ef81e83867a93fae18993ad" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator+=</name></member>
+      <member refid="classsysio_1_1rope_ac332b6fad7d7b4ab1dc152a2e57fe908_1ac332b6fad7d7b4ab1dc152a2e57fe908" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator+=</name></member>
+      <member refid="classsysio_1_1rope_a5e8635bf77e0252b3f6aad4203ca2848_1a5e8635bf77e0252b3f6aad4203ca2848" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator+=</name></member>
+      <member refid="classsysio_1_1rope_ab8fd8dbb8cefccca823b5cb694dc1ad0_1ab8fd8dbb8cefccca823b5cb694dc1ad0" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>operator[]</name></member>
+      <member refid="classsysio_1_1rope_aa09b2a963bc521dbd2c4ae42e9a7424b_1aa09b2a963bc521dbd2c4ae42e9a7424b" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>print</name></member>
+      <member refid="classsysio_1_1rope_1a103174d8aff05a5a942fbcb90f33f8e2" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>root</name></member>
+      <member refid="classsysio_1_1rope_a8c857f29220ebcc161bc1ca5ff294867_1a8c857f29220ebcc161bc1ca5ff294867" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>rope</name></member>
+      <member refid="classsysio_1_1rope_a722b40f342b4e73969cf1e24b1772d1c_1a722b40f342b4e73969cf1e24b1772d1c" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>rope</name></member>
+      <member refid="classsysio_1_1rope_1a95b0d6308f60c9bd485c564abe0ce26c" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>size</name></member>
+      <member refid="classsysio_1_1rope_1aca156d8491553909c1d7f29f9dab69a5" prot="private" virt="non-virtual"><scope>sysio::rope</scope><name>strlen</name></member>
+      <member refid="classsysio_1_1rope_a258e0f02a597885fdbf7a8a7871a8815_1a258e0f02a597885fdbf7a8a7871a8815" prot="public" virt="non-virtual"><scope>sysio::rope</scope><name>sv</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

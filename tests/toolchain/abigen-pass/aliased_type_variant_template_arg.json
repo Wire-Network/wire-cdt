@@ -1,9 +1,0 @@
-{
-    "tests": [
-        {
-            "expected": {
-                "abi-file": "aliased_type_variant_template_arg.abi"
-            }
-        }
-    ]
-}

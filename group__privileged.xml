@@ -1,0 +1,372 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__privileged" kind="group">
+    <compoundname>privileged</compoundname>
+    <title>Privileged</title>
+    <innerclass refid="structsysio_1_1blockchain__parameters" prot="public">sysio::blockchain_parameters</innerclass>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="group__privileged_ga3e6a33d77cd0347d579a81ef4850b6c5_1ga3e6a33d77cd0347d579a81ef4850b6c5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::set_blockchain_parameters</definition>
+        <argsstring>(const sysio::blockchain_parameters &amp;params)</argsstring>
+        <name>set_blockchain_parameters</name>
+        <qualifiedname>sysio::set_blockchain_parameters</qualifiedname>
+        <param>
+          <type>const <ref refid="structsysio_1_1blockchain__parameters" kindref="compound">sysio::blockchain_parameters</ref> &amp;</type>
+          <declname>params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set the blockchain parameters</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- New blockchain parameters to set </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="175" column="9" declfile="libraries/sysiolib/contracts/sysio/privileged.hpp" declline="175" declcolumn="9"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_gaf3771599b6ee096789e8533b808186c5_1gaf3771599b6ee096789e8533b808186c5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::get_blockchain_parameters</definition>
+        <argsstring>(sysio::blockchain_parameters &amp;params)</argsstring>
+        <name>get_blockchain_parameters</name>
+        <qualifiedname>sysio::get_blockchain_parameters</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1blockchain__parameters" kindref="compound">sysio::blockchain_parameters</ref> &amp;</type>
+          <declname>params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Retrieve the blolckchain parameters</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- It will be replaced with the retrieved blockchain params </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="183" column="9" declfile="libraries/sysiolib/contracts/sysio/privileged.hpp" declline="183" declcolumn="9"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_gaf7f07253b6b687a2a6555bc26db70552_1gaf7f07253b6b687a2a6555bc26db70552" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::get_resource_limits</definition>
+        <argsstring>(name account, int64_t &amp;ram_bytes, int64_t &amp;net_weight, int64_t &amp;cpu_weight)</argsstring>
+        <name>get_resource_limits</name>
+        <qualifiedname>sysio::get_resource_limits</qualifiedname>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <param>
+          <type>int64_t &amp;</type>
+          <declname>ram_bytes</declname>
+        </param>
+        <param>
+          <type>int64_t &amp;</type>
+          <declname>net_weight</declname>
+        </param>
+        <param>
+          <type>int64_t &amp;</type>
+          <declname>cpu_weight</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get the resource limits of an account</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account whose resource limit to get </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ram_bytes</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- output to hold retrieved ram limit in absolute bytes </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>net_weight</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- output to hold net limit </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>cpu_weight</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- output to hold cpu limit </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="194" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="194" bodyend="196"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_ga72bf370dd88d10fe4a19d89c24986f1a_1ga72bf370dd88d10fe4a19d89c24986f1a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::set_resource_limits</definition>
+        <argsstring>(name account, int64_t ram_bytes, int64_t net_weight, int64_t cpu_weight)</argsstring>
+        <name>set_resource_limits</name>
+        <qualifiedname>sysio::set_resource_limits</qualifiedname>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <param>
+          <type>int64_t</type>
+          <declname>ram_bytes</declname>
+        </param>
+        <param>
+          <type>int64_t</type>
+          <declname>net_weight</declname>
+        </param>
+        <param>
+          <type>int64_t</type>
+          <declname>cpu_weight</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set the resource limits of an account</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account whose resource limit to be set </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ram_bytes</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- ram limit in absolute bytes </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>net_weight</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- fractionally proportionate net limit of available resources based on (weight / total_weight_of_all_accounts) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>cpu_weight</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- fractionally proportionate cpu limit of available resources based on (weight / total_weight_of_all_accounts) </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="207" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="207" bodyend="209"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_ga5f1f8e488781cea9dd48318169b537db_1ga5f1f8e488781cea9dd48318169b537db" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::optional&lt; uint64_t &gt;</type>
+        <definition>std::optional&lt; uint64_t &gt; sysio::set_proposed_producers</definition>
+        <argsstring>(const std::vector&lt; producer_key &gt; &amp;prods)</argsstring>
+        <name>set_proposed_producers</name>
+        <qualifiedname>sysio::set_proposed_producers</qualifiedname>
+        <param>
+          <type>const std::vector&lt; producer_key &gt; &amp;</type>
+          <declname>prods</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Proposes a schedule change using the legacy producer key format</para>
+<para><simplesect kind="note"><para>Once the block that contains the proposal becomes irreversible, the schedule is promoted to &quot;pending&quot; automatically. Once the block that promotes the schedule is irreversible, the schedule will become &quot;active&quot; </para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>producers</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- vector of producer keys</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>an optional value of the version of the new proposed schedule if successful </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="220" column="18" declfile="libraries/sysiolib/contracts/sysio/privileged.hpp" declline="220" declcolumn="18"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_gaf6696bcae7fc0d1225b4431ce355ab33_1gaf6696bcae7fc0d1225b4431ce355ab33" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::optional&lt; uint64_t &gt;</type>
+        <definition>std::optional&lt; uint64_t &gt; sysio::set_proposed_producers</definition>
+        <argsstring>(const std::vector&lt; producer_authority &gt; &amp;prods)</argsstring>
+        <name>set_proposed_producers</name>
+        <qualifiedname>sysio::set_proposed_producers</qualifiedname>
+        <param>
+          <type>const std::vector&lt; producer_authority &gt; &amp;</type>
+          <declname>prods</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Proposes a schedule change using the more flexible key format</para>
+<para><simplesect kind="note"><para>Once the block that contains the proposal becomes irreversible, the schedule is promoted to &quot;pending&quot; automatically. Once the block that promotes the schedule is irreversible, the schedule will become &quot;active&quot; </para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>producers</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- vector of producer authorities</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>an optional value of the version of the new proposed schedule if successful </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="231" column="25" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="231" bodyend="237"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_ga3d143655999ef472c02bf92b84174781_1ga3d143655999ef472c02bf92b84174781" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::is_privileged</definition>
+        <argsstring>(name account)</argsstring>
+        <name>is_privileged</name>
+        <qualifiedname>sysio::is_privileged</qualifiedname>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Check if an account is privileged</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account to be checked </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if the account is privileged </para>
+</simplesect>
+<simplesect kind="return"><para>false if the account is not privileged </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="247" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="247" bodyend="249"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_ga66f12c1f562eac7fd45a7979bfa2847f_1ga66f12c1f562eac7fd45a7979bfa2847f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::set_privileged</definition>
+        <argsstring>(name account, bool is_priv)</argsstring>
+        <name>set_privileged</name>
+        <qualifiedname>sysio::set_privileged</qualifiedname>
+        <param>
+          <type>name</type>
+          <declname>account</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>is_priv</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set the privileged status of an account</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>account</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- name of the account whose privileged account to be set </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>is_priv</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- privileged status </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="258" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="258" bodyend="260"/>
+      </memberdef>
+      <memberdef kind="function" id="group__privileged_ga783f438d474d0f4681f7aa185fd407f4_1ga783f438d474d0f4681f7aa185fd407f4" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::preactivate_feature</definition>
+        <argsstring>(const checksum256 &amp;feature_digest)</argsstring>
+        <name>preactivate_feature</name>
+        <qualifiedname>sysio::preactivate_feature</qualifiedname>
+        <param>
+          <type>const checksum256 &amp;</type>
+          <declname>feature_digest</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Pre-activate protocol feature</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>feature_digest</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- digest of the protocol feature to pre-activate </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/privileged.hpp" line="268" column="16" bodyfile="libraries/sysiolib/contracts/sysio/privileged.hpp" bodystart="268" bodyend="273"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Defines C++ Privileged API. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

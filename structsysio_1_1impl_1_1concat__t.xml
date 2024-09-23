@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1impl_1_1concat__t" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::impl::concat_t</compoundname>
+    <includes refid="rope_8hpp" local="no">rope.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1impl_1_1concat__t_aa123186afa4a99104459ab8558107f4e_1aa123186afa4a99104459ab8558107f4e" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+        <definition>rope_node* sysio::impl::concat_t::left</definition>
+        <argsstring></argsstring>
+        <name>left</name>
+        <qualifiedname>sysio::impl::concat_t::left</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="26" column="34" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="26" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1impl_1_1concat__t_a15639b26df9bfaf28b560b94f28f0797_1a15639b26df9bfaf28b560b94f28f0797" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+        <definition>rope_node* sysio::impl::concat_t::right</definition>
+        <argsstring></argsstring>
+        <name>right</name>
+        <qualifiedname>sysio::impl::concat_t::right</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="27" column="34" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="27" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1impl_1_1concat__t_a9ccee85d0e88e5080723267340652a5e_1a9ccee85d0e88e5080723267340652a5e" prot="public" static="no" mutable="yes">
+        <type>const <ref refid="namespacesysio_1_1impl_a6c1045355d93cbd08ab37e3511dffac8_1a6c1045355d93cbd08ab37e3511dffac8" kindref="member">rope_node</ref> *</type>
+        <definition>const rope_node* sysio::impl::concat_t::temp</definition>
+        <argsstring></argsstring>
+        <name>temp</name>
+        <qualifiedname>sysio::impl::concat_t::temp</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="28" column="34" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="28" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1impl_1_1concat__t_a95ac3af735851a1e2547960f46d95ae1_1a95ac3af735851a1e2547960f46d95ae1" prot="public" static="no" mutable="yes">
+        <type>bool</type>
+        <definition>bool sysio::impl::concat_t::temp_left</definition>
+        <argsstring></argsstring>
+        <name>temp_left</name>
+        <qualifiedname>sysio::impl::concat_t::temp_left</qualifiedname>
+        <initializer>= false</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/rope.hpp" line="29" column="35" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="29" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/rope.hpp" line="25" column="7" bodyfile="libraries/sysiolib/core/sysio/rope.hpp" bodystart="25" bodyend="30"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1impl_1_1concat__t_aa123186afa4a99104459ab8558107f4e_1aa123186afa4a99104459ab8558107f4e" prot="public" virt="non-virtual"><scope>sysio::impl::concat_t</scope><name>left</name></member>
+      <member refid="structsysio_1_1impl_1_1concat__t_a15639b26df9bfaf28b560b94f28f0797_1a15639b26df9bfaf28b560b94f28f0797" prot="public" virt="non-virtual"><scope>sysio::impl::concat_t</scope><name>right</name></member>
+      <member refid="structsysio_1_1impl_1_1concat__t_a9ccee85d0e88e5080723267340652a5e_1a9ccee85d0e88e5080723267340652a5e" prot="public" virt="non-virtual"><scope>sysio::impl::concat_t</scope><name>temp</name></member>
+      <member refid="structsysio_1_1impl_1_1concat__t_a95ac3af735851a1e2547960f46d95ae1_1a95ac3af735851a1e2547960f46d95ae1" prot="public" virt="non-virtual"><scope>sysio::impl::concat_t</scope><name>temp_left</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

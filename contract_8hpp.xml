@@ -1,0 +1,213 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="contract_8hpp" kind="file" language="C++">
+    <compoundname>contract.hpp</compoundname>
+    <includes refid="name_8hpp" local="yes">../../core/sysio/name.hpp</includes>
+    <includes refid="datastream_8hpp" local="yes">../../core/sysio/datastream.hpp</includes>
+    <includedby refid="sysio_8hpp" local="yes">libraries/sysiolib/contracts/sysio/sysio.hpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>libraries/sysiolib/contracts/sysio/contract.hpp</label>
+        <link refid="contract_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>check.hpp</label>
+        <link refid="check_8hpp"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="14">
+        <label>../../core/sysio/datastream.hpp</label>
+        <link refid="datastream_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="22" relation="include">
+        </childnode>
+        <childnode refid="23" relation="include">
+        </childnode>
+        <childnode refid="24" relation="include">
+        </childnode>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="26" relation="include">
+        </childnode>
+        <childnode refid="27" relation="include">
+        </childnode>
+        <childnode refid="28" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>../../core/sysio/name.hpp</label>
+        <link refid="name_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="12">
+        <label>reflect.hpp</label>
+        <link refid="reflect_8hpp"/>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>serialize.hpp</label>
+        <link refid="serialize_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+      </node>
+      <node id="15">
+        <label>varint.hpp</label>
+        <link refid="varint_8hpp"/>
+      </node>
+      <node id="19">
+        <label>array</label>
+      </node>
+      <node id="13">
+        <label>bluegrass/meta/refl.hpp</label>
+      </node>
+      <node id="26">
+        <label>boost/fusion/adapted/std_tuple.hpp</label>
+      </node>
+      <node id="24">
+        <label>boost/fusion/algorithm/iteration/for_each.hpp</label>
+      </node>
+      <node id="25">
+        <label>boost/fusion/include/for_each.hpp</label>
+      </node>
+      <node id="27">
+        <label>boost/fusion/include/std_tuple.hpp</label>
+      </node>
+      <node id="28">
+        <label>boost/mp11/tuple.hpp</label>
+      </node>
+      <node id="29">
+        <label>boost/pfr.hpp</label>
+      </node>
+      <node id="8">
+        <label>boost/preprocessor/seq/enum.hpp</label>
+      </node>
+      <node id="7">
+        <label>boost/preprocessor/seq/for_each.hpp</label>
+      </node>
+      <node id="10">
+        <label>boost/preprocessor/seq/seq.hpp</label>
+      </node>
+      <node id="9">
+        <label>boost/preprocessor/seq/size.hpp</label>
+      </node>
+      <node id="11">
+        <label>boost/preprocessor/stringize.hpp</label>
+      </node>
+      <node id="16">
+        <label>list</label>
+      </node>
+      <node id="21">
+        <label>map</label>
+      </node>
+      <node id="22">
+        <label>optional</label>
+      </node>
+      <node id="17">
+        <label>queue</label>
+      </node>
+      <node id="20">
+        <label>set</label>
+      </node>
+      <node id="4">
+        <label>string</label>
+      </node>
+      <node id="5">
+        <label>string_view</label>
+      </node>
+      <node id="23">
+        <label>variant</label>
+      </node>
+      <node id="18">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="1">
+        <label>libraries/sysiolib/contracts/sysio/contract.hpp</label>
+        <link refid="contract_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>libraries/sysiolib/contracts/sysio/sysio.hpp</label>
+        <link refid="sysio_8hpp"/>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classsysio_1_1contract" prot="public">sysio::contract</innerclass>
+    <innernamespace refid="namespacesysio">sysio</innernamespace>
+    <sectiondef kind="define">
+      <member refid="group__contract_1ga3dd8a1be2fbf980ee66578476244d85f" kind="define"><name>CONTRACT</name></member>
+      <memberdef kind="define" id="contract_8hpp_abeb73dfe8d6e8c280ebce28d84190c7e_1abeb73dfe8d6e8c280ebce28d84190c7e" prot="public" static="no">
+        <name>ACTION</name>
+        <initializer>[[<ref refid="structsysio_1_1action" kindref="compound">sysio::action</ref>]] void</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="19" column="9" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="19" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="contract_8hpp_acadaccd8321f8569f31a11bdad1829da_1acadaccd8321f8569f31a11bdad1829da" prot="public" static="no">
+        <name>TABLE</name>
+        <initializer>struct [[sysio::table]]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/contract.hpp" line="20" column="9" bodyfile="libraries/sysiolib/contracts/sysio/contract.hpp" bodystart="20" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/contracts/sysio/contract.hpp"/>
+  </compounddef>
+</doxygen>

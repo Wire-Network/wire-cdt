@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1detail_1_1largest__power" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::detail::largest_power</compoundname>
+    <includes refid="powers_8hpp" local="no">powers.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+      <param>
+        <type>T</type>
+        <declname>Base</declname>
+        <defname>Base</defname>
+      </param>
+    </templateparamlist>
+    <sectiondef kind="private-type">
+      <memberdef kind="typedef" id="structsysio_1_1detail_1_1largest__power_1ae1b1e91b9e446610a5c2e1502d0935a3" prot="private" static="no">
+        <type><ref refid="structsysio_1_1detail_1_1largest__power__helper" kindref="compound">largest_power_helper</ref>&lt; T, Base, 0, 1 &gt;</type>
+        <definition>using sysio::detail::largest_power&lt; T, Base &gt;::helper =  largest_power_helper&lt;T, Base, 0, 1&gt;</definition>
+        <argsstring></argsstring>
+        <name>helper</name>
+        <qualifiedname>sysio::detail::largest_power::helper</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="51" column="10" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="51" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power_a35bb021043087e5de783ca0009eab282_1a35bb021043087e5de783ca0009eab282" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>T</type>
+        <definition>T sysio::detail::largest_power&lt; T, Base &gt;::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <qualifiedname>sysio::detail::largest_power::value</qualifiedname>
+        <initializer>= helper::value</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="53" column="35" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="53" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1detail_1_1largest__power_a2ddd854fc6a9c727ee1bad1b6e7229e6_1a2ddd854fc6a9c727ee1bad1b6e7229e6" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type>uint8_t</type>
+        <definition>uint8_t sysio::detail::largest_power&lt; T, Base &gt;::exponent</definition>
+        <argsstring></argsstring>
+        <name>exponent</name>
+        <qualifiedname>sysio::detail::largest_power::exponent</qualifiedname>
+        <initializer>= helper::exponent</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/powers.hpp" line="54" column="35" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="54" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/powers.hpp" line="49" column="7" bodyfile="libraries/sysiolib/core/sysio/powers.hpp" bodystart="49" bodyend="55"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1detail_1_1largest__power_a2ddd854fc6a9c727ee1bad1b6e7229e6_1a2ddd854fc6a9c727ee1bad1b6e7229e6" prot="public" virt="non-virtual"><scope>sysio::detail::largest_power</scope><name>exponent</name></member>
+      <member refid="structsysio_1_1detail_1_1largest__power_1ae1b1e91b9e446610a5c2e1502d0935a3" prot="private" virt="non-virtual"><scope>sysio::detail::largest_power</scope><name>helper</name></member>
+      <member refid="structsysio_1_1detail_1_1largest__power_a35bb021043087e5de783ca0009eab282_1a35bb021043087e5de783ca0009eab282" prot="public" virt="non-virtual"><scope>sysio::detail::largest_power</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

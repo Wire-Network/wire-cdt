@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1iostream" kind="class" language="C++" prot="public">
+    <compoundname>sysio::iostream</compoundname>
+    <includes refid="print_8hpp" local="no">print.hpp</includes>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Simulate C++ style streams </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/print.hpp" line="242" column="4" bodyfile="libraries/sysiolib/core/sysio/print.hpp" bodystart="242" bodyend="242"/>
+    <listofallmembers>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

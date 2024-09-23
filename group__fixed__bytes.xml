@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__fixed__bytes" kind="group">
+    <compoundname>fixed_bytes</compoundname>
+    <title>Fixed Size Byte Array</title>
+    <innerclass refid="classsysio_1_1fixed__bytes" prot="public">sysio::fixed_bytes</innerclass>
+    <briefdescription>
+<para>Fixed size array of bytes sorted lexicographically. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

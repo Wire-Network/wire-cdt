@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1producer__authority" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::producer_authority</compoundname>
+    <includes refid="producer__schedule_8hpp" local="no">producer_schedule.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1producer__authority_a7e2ee493677370880aa4bc5e184b8998_1a7e2ee493677370880aa4bc5e184b8998" prot="public" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::producer_authority::producer_name</definition>
+        <argsstring></argsstring>
+        <name>producer_name</name>
+        <qualifiedname>sysio::producer_authority::producer_name</qualifiedname>
+        <briefdescription>
+<para>Name of the producer. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Name of the producer </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="152" column="24" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="152" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1producer__authority_ac7efdc60caaaaf28f8e4f414d3af471d_1ac7efdc60caaaaf28f8e4f414d3af471d" prot="public" static="no" mutable="no">
+        <type><ref refid="group__producer__authority_ga9c7f243af7ec394ec7b8a838fbe085f7_1ga9c7f243af7ec394ec7b8a838fbe085f7" kindref="member">block_signing_authority</ref></type>
+        <definition>block_signing_authority sysio::producer_authority::authority</definition>
+        <argsstring></argsstring>
+        <name>authority</name>
+        <qualifiedname>sysio::producer_authority::authority</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The block signing authority used by this producer </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="157" column="37" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="157" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="structsysio_1_1producer__authority_aa26af3fe95014015f5501d41d997f6be_1aa26af3fe95014015f5501d41d997f6be" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator&lt;</definition>
+        <argsstring>(const producer_authority &amp;a, const producer_authority &amp;b)</argsstring>
+        <name>operator&lt;</name>
+        <qualifiedname>sysio::producer_authority::operator&lt;</qualifiedname>
+        <param>
+          <type>const <ref refid="structsysio_1_1producer__authority" kindref="compound">producer_authority</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structsysio_1_1producer__authority" kindref="compound">producer_authority</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="159" column="24" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="159" bodyend="161"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1producer__authority_a2ca89f10fc101b688db8ccd0f2f83c67_1a2ca89f10fc101b688db8ccd0f2f83c67" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::producer_authority::CDT_REFLECT</definition>
+        <argsstring>(producer_name, authority)</argsstring>
+        <name>CDT_REFLECT</name>
+        <qualifiedname>sysio::producer_authority::CDT_REFLECT</qualifiedname>
+        <param>
+          <type><ref refid="structsysio_1_1producer__authority_a7e2ee493677370880aa4bc5e184b8998_1a7e2ee493677370880aa4bc5e184b8998" kindref="member">producer_name</ref></type>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1producer__authority_ac7efdc60caaaaf28f8e4f414d3af471d_1ac7efdc60caaaaf28f8e4f414d3af471d" kindref="member">authority</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="163" column="7"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Maps producer with its signing key. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>Maps producer with its signing key, used for producer schedule </para>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="2">
+        <label>sysio::name</label>
+        <link refid="structsysio_1_1name"/>
+      </node>
+      <node id="1">
+        <label>sysio::producer_authority</label>
+        <link refid="structsysio_1_1producer__authority"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>producer_name</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="145" column="4" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="145" bodyend="164"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1producer__authority_ac7efdc60caaaaf28f8e4f414d3af471d_1ac7efdc60caaaaf28f8e4f414d3af471d" prot="public" virt="non-virtual"><scope>sysio::producer_authority</scope><name>authority</name></member>
+      <member refid="structsysio_1_1producer__authority_a2ca89f10fc101b688db8ccd0f2f83c67_1a2ca89f10fc101b688db8ccd0f2f83c67" prot="public" virt="non-virtual"><scope>sysio::producer_authority</scope><name>CDT_REFLECT</name></member>
+      <member refid="structsysio_1_1producer__authority_aa26af3fe95014015f5501d41d997f6be_1aa26af3fe95014015f5501d41d997f6be" prot="public" virt="non-virtual"><scope>sysio::producer_authority</scope><name>operator&lt;</name></member>
+      <member refid="structsysio_1_1producer__authority_a7e2ee493677370880aa4bc5e184b8998_1a7e2ee493677370880aa4bc5e184b8998" prot="public" virt="non-virtual"><scope>sysio::producer_authority</scope><name>producer_name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

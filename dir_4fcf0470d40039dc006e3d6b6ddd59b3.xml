@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="dir_4fcf0470d40039dc006e3d6b6ddd59b3" kind="dir">
+    <compoundname>libraries/sysiolib/core/sysio</compoundname>
+    <innerfile refid="asset_8hpp">asset.hpp</innerfile>
+    <innerfile refid="binary__extension_8hpp">binary_extension.hpp</innerfile>
+    <innerfile refid="check_8hpp">check.hpp</innerfile>
+    <innerfile refid="context_8hpp">context.hpp</innerfile>
+    <innerfile refid="crypto_8hpp">crypto.hpp</innerfile>
+    <innerfile refid="crypto__ext_8hpp">crypto_ext.hpp</innerfile>
+    <innerfile refid="datastream_8hpp">datastream.hpp</innerfile>
+    <innerfile refid="fixed__bytes_8hpp">fixed_bytes.hpp</innerfile>
+    <innerfile refid="ignore_8hpp">ignore.hpp</innerfile>
+    <innerfile refid="key__utils_8hpp">key_utils.hpp</innerfile>
+    <innerfile refid="name_8hpp">name.hpp</innerfile>
+    <innerfile refid="powers_8hpp">powers.hpp</innerfile>
+    <innerfile refid="print_8hpp">print.hpp</innerfile>
+    <innerfile refid="reflect_8hpp">reflect.hpp</innerfile>
+    <innerfile refid="rope_8hpp">rope.hpp</innerfile>
+    <innerfile refid="serialize_8hpp">serialize.hpp</innerfile>
+    <innerfile refid="string_8hpp">string.hpp</innerfile>
+    <innerfile refid="symbol_8hpp">symbol.hpp</innerfile>
+    <innerfile refid="time_8hpp">time.hpp</innerfile>
+    <innerfile refid="varint_8hpp">varint.hpp</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/"/>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,252 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="classsysio_1_1extended__symbol" kind="class" language="C++" prot="public">
+    <compoundname>sysio::extended_symbol</compoundname>
+    <includes refid="symbol_8hpp" local="no">symbol.hpp</includes>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classsysio_1_1extended__symbol_1ab7c360aeda68aa88779d8ae0f211a41a" prot="private" static="no" mutable="no">
+        <type><ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref></type>
+        <definition>symbol sysio::extended_symbol::sym</definition>
+        <argsstring></argsstring>
+        <name>sym</name>
+        <qualifiedname>sysio::extended_symbol::sym</qualifiedname>
+        <briefdescription>
+<para>the symbol </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="450" column="14" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="450" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classsysio_1_1extended__symbol_1a50d73cd6823aa04aea8713f480516020" prot="private" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::extended_symbol::contract</definition>
+        <argsstring></argsstring>
+        <name>contract</name>
+        <qualifiedname>sysio::extended_symbol::contract</qualifiedname>
+        <briefdescription>
+<para>the token contract hosting the symbol </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="451" column="14" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="451" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classsysio_1_1extended__symbol_aea773c9990f3de42bae4d13e9a4e6a71_1aea773c9990f3de42bae4d13e9a4e6a71" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::extended_symbol::extended_symbol</definition>
+        <argsstring>()</argsstring>
+        <name>extended_symbol</name>
+        <qualifiedname>sysio::extended_symbol::extended_symbol</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Default constructor, construct a new <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="388" column="17" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="388" bodyend="388"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1extended__symbol_af986cd310c85e855569a6eb15ad5ed37_1af986cd310c85e855569a6eb15ad5ed37" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr</type>
+        <definition>sysio::extended_symbol::extended_symbol</definition>
+        <argsstring>(symbol s, name con)</argsstring>
+        <name>extended_symbol</name>
+        <qualifiedname>sysio::extended_symbol::extended_symbol</qualifiedname>
+        <param>
+          <type><ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref></type>
+          <declname>s</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+          <declname>con</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Construct a new <ref refid="classsysio_1_1symbol__code" kindref="compound">symbol_code</ref> object initialising symbol and contract with the passed in symbol and name</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>sym</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The symbol </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>con</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- The name of the contract </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="396" column="17" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="396" bodyend="396"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1extended__symbol_a391aeb78fc6e30fb67c39b2a55ac4f48_1a391aeb78fc6e30fb67c39b2a55ac4f48" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classsysio_1_1symbol" kindref="compound">symbol</ref></type>
+        <definition>symbol sysio::extended_symbol::get_symbol</definition>
+        <argsstring>() const</argsstring>
+        <name>get_symbol</name>
+        <qualifiedname>sysio::extended_symbol::get_symbol</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the symbol in the extended_contract</para>
+<para><simplesect kind="return"><para>symbol </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="403" column="24" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="403" bodyend="403"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1extended__symbol_ae1b421436666e73018eaaf1b1cae6b43_1ae1b421436666e73018eaaf1b1cae6b43" prot="public" static="no" constexpr="yes" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structsysio_1_1name" kindref="compound">name</ref></type>
+        <definition>name sysio::extended_symbol::get_contract</definition>
+        <argsstring>() const</argsstring>
+        <name>get_contract</name>
+        <qualifiedname>sysio::extended_symbol::get_contract</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the name of the contract in the <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref></para>
+<para><simplesect kind="return"><para>name </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="410" column="23" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="410" bodyend="410"/>
+      </memberdef>
+      <memberdef kind="function" id="classsysio_1_1extended__symbol_a131e2dff0dc898f956e5a5663b4076b9_1a131e2dff0dc898f956e5a5663b4076b9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::extended_symbol::print</definition>
+        <argsstring>(bool show_precision=true) const</argsstring>
+        <name>print</name>
+        <qualifiedname>sysio::extended_symbol::print</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>show_precision</declname>
+          <defval>true</defval>
+        </param>
+        <briefdescription>
+<para>Print the extended symbol </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Print the extended symbol </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="417" column="12" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="417" bodyend="420"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="classsysio_1_1extended__symbol_ad306b3eaac29fba58441578b179398bc_1ad306b3eaac29fba58441578b179398bc" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator==</definition>
+        <argsstring>(const extended_symbol &amp;a, const extended_symbol &amp;b)</argsstring>
+        <name>operator==</name>
+        <qualifiedname>sysio::extended_symbol::operator==</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Equivalency operator. Returns true if a == b (are the same)</para>
+<para><simplesect kind="return"><para>boolean - true if both provided extended_symbols are the same </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="427" column="29" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="427" bodyend="429"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1extended__symbol_aafb631b64d0586016ca8ea499350820d_1aafb631b64d0586016ca8ea499350820d" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator!=</definition>
+        <argsstring>(const extended_symbol &amp;a, const extended_symbol &amp;b)</argsstring>
+        <name>operator!=</name>
+        <qualifiedname>sysio::extended_symbol::operator!=</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Inverted equivalency operator. Returns true if a != b (are different)</para>
+<para><simplesect kind="return"><para>boolean - true if both provided extended_symbols are not the same </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="436" column="29" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="436" bodyend="438"/>
+      </memberdef>
+      <memberdef kind="friend" id="classsysio_1_1extended__symbol_afeaa211627f6df2a4f4f31aefedc6077_1afeaa211627f6df2a4f4f31aefedc6077" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool operator&lt;</definition>
+        <argsstring>(const extended_symbol &amp;a, const extended_symbol &amp;b)</argsstring>
+        <name>operator&lt;</name>
+        <qualifiedname>sysio::extended_symbol::operator&lt;</qualifiedname>
+        <param>
+          <type>const <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Less than operator. Returns true if a &lt; b.</para>
+<para><simplesect kind="return"><para>boolean - true if <ref refid="classsysio_1_1extended__symbol" kindref="compound">extended_symbol</ref> <computeroutput>a</computeroutput> is less than <computeroutput>b</computeroutput> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="445" column="24" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="445" bodyend="447"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Extended asset which stores the information of the owner of the symbol </para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/symbol.hpp" line="381" column="4" bodyfile="libraries/sysiolib/core/sysio/symbol.hpp" bodystart="382" bodyend="454"/>
+    <listofallmembers>
+      <member refid="classsysio_1_1extended__symbol_1a50d73cd6823aa04aea8713f480516020" prot="private" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>contract</name></member>
+      <member refid="classsysio_1_1extended__symbol_aea773c9990f3de42bae4d13e9a4e6a71_1aea773c9990f3de42bae4d13e9a4e6a71" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>extended_symbol</name></member>
+      <member refid="classsysio_1_1extended__symbol_af986cd310c85e855569a6eb15ad5ed37_1af986cd310c85e855569a6eb15ad5ed37" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>extended_symbol</name></member>
+      <member refid="classsysio_1_1extended__symbol_ae1b421436666e73018eaaf1b1cae6b43_1ae1b421436666e73018eaaf1b1cae6b43" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>get_contract</name></member>
+      <member refid="classsysio_1_1extended__symbol_a391aeb78fc6e30fb67c39b2a55ac4f48_1a391aeb78fc6e30fb67c39b2a55ac4f48" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>get_symbol</name></member>
+      <member refid="classsysio_1_1extended__symbol_aafb631b64d0586016ca8ea499350820d_1aafb631b64d0586016ca8ea499350820d" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>operator!=</name></member>
+      <member refid="classsysio_1_1extended__symbol_afeaa211627f6df2a4f4f31aefedc6077_1afeaa211627f6df2a4f4f31aefedc6077" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>operator&lt;</name></member>
+      <member refid="classsysio_1_1extended__symbol_ad306b3eaac29fba58441578b179398bc_1ad306b3eaac29fba58441578b179398bc" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>operator==</name></member>
+      <member refid="classsysio_1_1extended__symbol_a131e2dff0dc898f956e5a5663b4076b9_1a131e2dff0dc898f956e5a5663b4076b9" prot="public" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>print</name></member>
+      <member refid="classsysio_1_1extended__symbol_1ab7c360aeda68aa88779d8ae0f211a41a" prot="private" virt="non-virtual"><scope>sysio::extended_symbol</scope><name>sym</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

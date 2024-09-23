@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__producer__schedule" kind="group">
+    <compoundname>producer_schedule</compoundname>
+    <title>Producer Schedule</title>
+    <innerclass refid="structsysio_1_1producer__schedule" prot="public">sysio::producer_schedule</innerclass>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="group__producer__schedule_gacebec7736799062a5885a054cd1763ea_1gacebec7736799062a5885a054cd1763ea" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; name &gt;</type>
+        <definition>std::vector&lt; name &gt; sysio::get_active_producers</definition>
+        <argsstring>()</argsstring>
+        <name>get_active_producers</name>
+        <qualifiedname>sysio::get_active_producers</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns back the list of active producer names. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="171" column="16" declfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" declline="171" declcolumn="16"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Defines both the order, account name, and signing keys of the active set of producers. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

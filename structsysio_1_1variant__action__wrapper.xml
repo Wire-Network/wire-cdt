@@ -1,0 +1,321 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1variant__action__wrapper" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::variant_action_wrapper</compoundname>
+    <includes refid="action_8hpp" local="no">action.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">sysio::name::raw</ref></type>
+        <declname>Name</declname>
+        <defname>Name</defname>
+      </param>
+      <param>
+        <type>auto...</type>
+        <declname>Actions</declname>
+        <defname>Actions</defname>
+      </param>
+    </templateparamlist>
+    <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="structsysio_1_1variant__action__wrapper_a85ddc43a970aa0778bc85db350567a09_1a85ddc43a970aa0778bc85db350567a09" prot="public" static="yes" constexpr="yes" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+        <definition>sysio::name sysio::variant_action_wrapper&lt; Name, Actions &gt;::action_name</definition>
+        <argsstring></argsstring>
+        <name>action_name</name>
+        <qualifiedname>sysio::variant_action_wrapper::action_name</qualifiedname>
+        <initializer>= <ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref>(Name)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="515" column="36" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="515" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsysio_1_1variant__action__wrapper_a562d19ef0f2109bf8c5f34c5ae6ad295_1a562d19ef0f2109bf8c5f34c5ae6ad295" prot="public" static="no" mutable="no">
+        <type><ref refid="structsysio_1_1name" kindref="compound">sysio::name</ref></type>
+        <definition>sysio::name sysio::variant_action_wrapper&lt; Name, Actions &gt;::code_name</definition>
+        <argsstring></argsstring>
+        <name>code_name</name>
+        <qualifiedname>sysio::variant_action_wrapper::code_name</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="516" column="19" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="516" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsysio_1_1variant__action__wrapper_aa8ef878ab95b5993cf2fce5a8abda16c_1aa8ef878ab95b5993cf2fce5a8abda16c" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; <ref refid="structsysio_1_1permission__level" kindref="compound">sysio::permission_level</ref> &gt;</type>
+        <definition>std::vector&lt;sysio::permission_level&gt; sysio::variant_action_wrapper&lt; Name, Actions &gt;::permissions</definition>
+        <argsstring></argsstring>
+        <name>permissions</name>
+        <qualifiedname>sysio::variant_action_wrapper::permissions</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="517" column="19" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="517" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_ae4702bf89ebc113d386226e4db4e0771_1ae4702bf89ebc113d386226e4db4e0771" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Code</type>
+          </param>
+        </templateparamlist>
+        <type>constexpr</type>
+        <definition>sysio::variant_action_wrapper&lt; Name, Actions &gt;::variant_action_wrapper</definition>
+        <argsstring>(Code &amp;&amp;code, std::vector&lt; sysio::permission_level &gt; &amp;&amp;perms)</argsstring>
+        <name>variant_action_wrapper</name>
+        <qualifiedname>sysio::variant_action_wrapper::variant_action_wrapper</qualifiedname>
+        <param>
+          <type>Code &amp;&amp;</type>
+          <declname>code</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; <ref refid="structsysio_1_1permission__level" kindref="compound">sysio::permission_level</ref> &gt; &amp;&amp;</type>
+          <declname>perms</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="500" column="17" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="500" bodyend="501"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_a21b3d623761d0fe8d73252bf0dcf20cb_1a21b3d623761d0fe8d73252bf0dcf20cb" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Code</type>
+          </param>
+        </templateparamlist>
+        <type>constexpr</type>
+        <definition>sysio::variant_action_wrapper&lt; Name, Actions &gt;::variant_action_wrapper</definition>
+        <argsstring>(Code &amp;&amp;code, const std::vector&lt; sysio::permission_level &gt; &amp;perms)</argsstring>
+        <name>variant_action_wrapper</name>
+        <qualifiedname>sysio::variant_action_wrapper::variant_action_wrapper</qualifiedname>
+        <param>
+          <type>Code &amp;&amp;</type>
+          <declname>code</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; <ref refid="structsysio_1_1permission__level" kindref="compound">sysio::permission_level</ref> &gt; &amp;</type>
+          <declname>perms</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="504" column="17" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="504" bodyend="505"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_a15d531c025da891b740e3125322ea19d_1a15d531c025da891b740e3125322ea19d" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Code</type>
+          </param>
+        </templateparamlist>
+        <type>constexpr</type>
+        <definition>sysio::variant_action_wrapper&lt; Name, Actions &gt;::variant_action_wrapper</definition>
+        <argsstring>(Code &amp;&amp;code, sysio::permission_level &amp;&amp;perm)</argsstring>
+        <name>variant_action_wrapper</name>
+        <qualifiedname>sysio::variant_action_wrapper::variant_action_wrapper</qualifiedname>
+        <param>
+          <type>Code &amp;&amp;</type>
+          <declname>code</declname>
+        </param>
+        <param>
+          <type><ref refid="structsysio_1_1permission__level" kindref="compound">sysio::permission_level</ref> &amp;&amp;</type>
+          <declname>perm</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="508" column="17" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="508" bodyend="509"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_aa9be1bcfb8ca25c53e54969a0493d69c_1aa9be1bcfb8ca25c53e54969a0493d69c" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Code</type>
+          </param>
+        </templateparamlist>
+        <type>constexpr</type>
+        <definition>sysio::variant_action_wrapper&lt; Name, Actions &gt;::variant_action_wrapper</definition>
+        <argsstring>(Code &amp;&amp;code, const sysio::permission_level &amp;perm)</argsstring>
+        <name>variant_action_wrapper</name>
+        <qualifiedname>sysio::variant_action_wrapper::variant_action_wrapper</qualifiedname>
+        <param>
+          <type>Code &amp;&amp;</type>
+          <declname>code</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structsysio_1_1permission__level" kindref="compound">sysio::permission_level</ref> &amp;</type>
+          <declname>perm</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="512" column="17" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="512" bodyend="513"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_a7d0c1b4f3b0d1029ebd7c0fb654a8d6d_1a7d0c1b4f3b0d1029ebd7c0fb654a8d6d" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>size_t</type>
+            <declname>Variant</declname>
+            <defname>Variant</defname>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="structsysio_1_1action" kindref="compound">action</ref></type>
+        <definition>action sysio::variant_action_wrapper&lt; Name, Actions &gt;::to_action</definition>
+        <argsstring>(Args &amp;&amp;... args) const</argsstring>
+        <name>to_action</name>
+        <qualifiedname>sysio::variant_action_wrapper::to_action</qualifiedname>
+        <param>
+          <type>Args &amp;&amp;...</type>
+          <declname>args</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="525" column="14" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="525" bodyend="529"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_ab30b6e9c427da5d5ddadc3f9c947db40_1ab30b6e9c427da5d5ddadc3f9c947db40" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>size_t</type>
+            <declname>Variant</declname>
+            <defname>Variant</defname>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::variant_action_wrapper&lt; Name, Actions &gt;::send</definition>
+        <argsstring>(Args &amp;&amp;... args) const</argsstring>
+        <name>send</name>
+        <qualifiedname>sysio::variant_action_wrapper::send</qualifiedname>
+        <param>
+          <type>Args &amp;&amp;...</type>
+          <declname>args</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="533" column="12" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="533" bodyend="535"/>
+      </memberdef>
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_a1460f2212d0006be71a487a12dc2329a_1a1460f2212d0006be71a487a12dc2329a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>size_t</type>
+            <declname>Variant</declname>
+            <defname>Variant</defname>
+          </param>
+          <param>
+            <type>typename...</type>
+            <declname>Args</declname>
+            <defname>Args</defname>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::variant_action_wrapper&lt; Name, Actions &gt;::send_context_free</definition>
+        <argsstring>(Args &amp;&amp;... args) const</argsstring>
+        <name>send_context_free</name>
+        <qualifiedname>sysio::variant_action_wrapper::send_context_free</qualifiedname>
+        <param>
+          <type>Args &amp;&amp;...</type>
+          <declname>args</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="538" column="12" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="538" bodyend="540"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="structsysio_1_1variant__action__wrapper_a523f5d9dbb367ce1370c5cf1fff9befc_1a523f5d9dbb367ce1370c5cf1fff9befc" prot="public" static="yes" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>size_t</type>
+            <declname>Variant</declname>
+            <defname>Variant</defname>
+          </param>
+        </templateparamlist>
+        <type>auto</type>
+        <definition>static constexpr auto sysio::variant_action_wrapper&lt; Name, Actions &gt;::get_mem_ptr</definition>
+        <argsstring>()</argsstring>
+        <name>get_mem_ptr</name>
+        <qualifiedname>sysio::variant_action_wrapper::get_mem_ptr</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="520" column="29" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="520" bodyend="522"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="2">
+        <label>sysio::name</label>
+        <link refid="structsysio_1_1name"/>
+      </node>
+      <node id="1">
+        <label>sysio::variant_action_wrapper&lt; Name, Actions &gt;</label>
+        <link refid="structsysio_1_1variant__action__wrapper"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>action_name</edgelabel>
+          <edgelabel>code_name</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/action.hpp" line="498" column="4" bodyfile="libraries/sysiolib/contracts/sysio/action.hpp" bodystart="498" bodyend="542"/>
+    <listofallmembers>
+      <member refid="structsysio_1_1variant__action__wrapper_a85ddc43a970aa0778bc85db350567a09_1a85ddc43a970aa0778bc85db350567a09" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>action_name</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_a562d19ef0f2109bf8c5f34c5ae6ad295_1a562d19ef0f2109bf8c5f34c5ae6ad295" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>code_name</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_a523f5d9dbb367ce1370c5cf1fff9befc_1a523f5d9dbb367ce1370c5cf1fff9befc" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>get_mem_ptr</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_aa8ef878ab95b5993cf2fce5a8abda16c_1aa8ef878ab95b5993cf2fce5a8abda16c" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>permissions</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_ab30b6e9c427da5d5ddadc3f9c947db40_1ab30b6e9c427da5d5ddadc3f9c947db40" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>send</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_a1460f2212d0006be71a487a12dc2329a_1a1460f2212d0006be71a487a12dc2329a" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>send_context_free</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_a7d0c1b4f3b0d1029ebd7c0fb654a8d6d_1a7d0c1b4f3b0d1029ebd7c0fb654a8d6d" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>to_action</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_ae4702bf89ebc113d386226e4db4e0771_1ae4702bf89ebc113d386226e4db4e0771" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>variant_action_wrapper</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_a21b3d623761d0fe8d73252bf0dcf20cb_1a21b3d623761d0fe8d73252bf0dcf20cb" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>variant_action_wrapper</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_a15d531c025da891b740e3125322ea19d_1a15d531c025da891b740e3125322ea19d" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>variant_action_wrapper</name></member>
+      <member refid="structsysio_1_1variant__action__wrapper_aa9be1bcfb8ca25c53e54969a0493d69c_1aa9be1bcfb8ca25c53e54969a0493d69c" prot="public" virt="non-virtual"><scope>sysio::variant_action_wrapper</scope><name>variant_action_wrapper</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

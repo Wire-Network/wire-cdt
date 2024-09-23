@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="structsysio_1_1producer__key" kind="struct" language="C++" prot="public">
+    <compoundname>sysio::producer_key</compoundname>
+    <includes refid="producer__schedule_8hpp" local="no">producer_schedule.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <member refid="group__producer__key_1gae42a7a26b089dce8a7caef366c050389" kind="variable"><name>producer_name</name></member>
+      <member refid="group__producer__key_1gaf7d9571f28795037aa221ac9ee89ba9a" kind="variable"><name>block_signing_key</name></member>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structsysio_1_1producer__key_a8d1188b39f584b03e1b0dffddada671e_1a8d1188b39f584b03e1b0dffddada671e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>sysio::producer_key::CDT_REFLECT</definition>
+        <argsstring>(producer_name, block_signing_key)</argsstring>
+        <name>CDT_REFLECT</name>
+        <qualifiedname>sysio::producer_key::CDT_REFLECT</qualifiedname>
+        <param>
+          <type><ref refid="group__producer__key_gae42a7a26b089dce8a7caef366c050389_1gae42a7a26b089dce8a7caef366c050389" kindref="member">producer_name</ref></type>
+        </param>
+        <param>
+          <type><ref refid="group__producer__key_gaf7d9571f28795037aa221ac9ee89ba9a_1gaf7d9571f28795037aa221ac9ee89ba9a" kindref="member">block_signing_key</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="44" column="5"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>Maps producer with its signing key, used for producer schedule </para>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="2">
+        <label>sysio::name</label>
+        <link refid="structsysio_1_1name"/>
+      </node>
+      <node id="1">
+        <label>sysio::producer_key</label>
+        <link refid="structsysio_1_1producer__key"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>producer_name</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" line="20" column="3" bodyfile="libraries/sysiolib/contracts/sysio/producer_schedule.hpp" bodystart="20" bodyend="45"/>
+    <listofallmembers>
+      <member refid="group__producer__key_gaf7d9571f28795037aa221ac9ee89ba9a_1gaf7d9571f28795037aa221ac9ee89ba9a" prot="public" virt="non-virtual"><scope>sysio::producer_key</scope><name>block_signing_key</name></member>
+      <member refid="structsysio_1_1producer__key_a8d1188b39f584b03e1b0dffddada671e_1a8d1188b39f584b03e1b0dffddada671e" prot="public" virt="non-virtual"><scope>sysio::producer_key</scope><name>CDT_REFLECT</name></member>
+      <member refid="group__producer__key_gae42a7a26b089dce8a7caef366c050389_1gae42a7a26b089dce8a7caef366c050389" prot="public" virt="non-virtual"><scope>sysio::producer_key</scope><name>producer_name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

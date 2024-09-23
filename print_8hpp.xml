@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="print_8hpp" kind="file" language="C++">
+    <compoundname>print.hpp</compoundname>
+    <includes local="no">utility</includes>
+    <includes local="no">string</includes>
+    <includedby refid="sysio_8hpp" local="yes">libraries/sysiolib/contracts/sysio/sysio.hpp</includedby>
+    <includedby refid="asset_8hpp" local="yes">libraries/sysiolib/core/sysio/asset.hpp</includedby>
+    <includedby refid="rope_8hpp" local="yes">libraries/sysiolib/core/sysio/rope.hpp</includedby>
+    <includedby refid="symbol_8hpp" local="yes">libraries/sysiolib/core/sysio/symbol.hpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>libraries/sysiolib/core/sysio/print.hpp</label>
+        <link refid="print_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>string</label>
+      </node>
+      <node id="2">
+        <label>utility</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="2">
+        <label>libraries/sysiolib/contracts/sysio/sysio.hpp</label>
+        <link refid="sysio_8hpp"/>
+      </node>
+      <node id="3">
+        <label>libraries/sysiolib/core/sysio/asset.hpp</label>
+        <link refid="asset_8hpp"/>
+      </node>
+      <node id="1">
+        <label>libraries/sysiolib/core/sysio/print.hpp</label>
+        <link refid="print_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>libraries/sysiolib/core/sysio/rope.hpp</label>
+        <link refid="rope_8hpp"/>
+      </node>
+      <node id="5">
+        <label>libraries/sysiolib/core/sysio/symbol.hpp</label>
+        <link refid="symbol_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classsysio_1_1iostream" prot="public">sysio::iostream</innerclass>
+    <innernamespace refid="namespacesysio">sysio</innernamespace>
+    <innernamespace refid="namespacesysio_1_1internal__use__do__not__use">sysio::internal_use_do_not_use</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="copyright"><para>defined in eos/LICENSE </para>
+</simplesect>
+</para>
+    </detaileddescription>
+    <location file="libraries/sysiolib/core/sysio/print.hpp"/>
+  </compounddef>
+</doxygen>

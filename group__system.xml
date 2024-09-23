@@ -1,0 +1,339 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__system" kind="group">
+    <compoundname>system</compoundname>
+    <title>System</title>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, std::string_view msg)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>std::string_view</type>
+          <declname>msg</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use the supplied message.</para>
+<para>Example: <programlisting><codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="42" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="42" bodyend="45"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga5fdfb5e610f149b5280bc03d3f288b81_1ga5fdfb5e610f149b5280bc03d3f288b81" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, const char *msg)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>msg</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use the supplied message.</para>
+<para>Example: <programlisting><codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="57" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="57" bodyend="61"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_gaa065d823ab52c8386b4931c7a540d29b_1gaa065d823ab52c8386b4931c7a540d29b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, const std::string &amp;msg)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>msg</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use the supplied message.</para>
+<para>Example: <programlisting><codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="73" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="73" bodyend="77"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga76cd9ac08b61b1cf36e8cca30cc91465_1ga76cd9ac08b61b1cf36e8cca30cc91465" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, std::string &amp;&amp;msg)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>std::string &amp;&amp;</type>
+          <declname>msg</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use the supplied message.</para>
+<para>Example: <programlisting><codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="89" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="89" bodyend="93"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga9a6b000dd9f96a11b3ed20ce96724fb6_1ga9a6b000dd9f96a11b3ed20ce96724fb6" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, const char *msg, size_t n)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>msg</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use a subset of the supplied message.</para>
+<para>Example: <programlisting><codeline><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*<sp/>msg<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b<sp/>b<sp/>does<sp/>not<sp/>equal<sp/>a&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b&quot;</highlight><highlight class="normal">,<sp/>18);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="107" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="107" bodyend="111"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_gae97a231e3a459b32f9c15a98f2253b55_1gae97a231e3a459b32f9c15a98f2253b55" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, const std::string &amp;msg, size_t n)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>msg</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use a subset of the supplied message.</para>
+<para>Example: <programlisting><codeline><highlight class="normal">std::string<sp/>msg<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;a<sp/>does<sp/>not<sp/>equal<sp/>b<sp/>b<sp/>does<sp/>not<sp/>equal<sp/>a&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/>msg,<sp/>18);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="124" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="124" bodyend="128"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_gac4b2540d052e45f2e47e79daf2510860_1gac4b2540d052e45f2e47e79daf2510860" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::check</definition>
+        <argsstring>(bool pred, uint64_t code)</argsstring>
+        <name>check</name>
+        <qualifiedname>sysio::check</qualifiedname>
+        <param>
+          <type>bool</type>
+          <declname>pred</declname>
+        </param>
+        <param>
+          <type>uint64_t</type>
+          <declname>code</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Assert if the predicate fails and use the supplied error code.</para>
+<para>Example: <programlisting><codeline><highlight class="normal"><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(a<sp/>==<sp/>b,<sp/>13);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/core/sysio/check.hpp" line="140" column="16" bodyfile="libraries/sysiolib/core/sysio/check.hpp" bodystart="140" bodyend="144"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::sysio_exit</definition>
+        <argsstring>(int32_t code)</argsstring>
+        <name>sysio_exit</name>
+        <qualifiedname>sysio::sysio_exit</qualifiedname>
+        <param>
+          <type>int32_t</type>
+          <declname>code</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>This method will abort execution of wasm without failing the contract. This is used to bypass all cleanup / destructors that would normally be called.</para>
+<para>&lt;html&gt;</para>
+<para><bold> WARNING: this method will immediately abort execution of wasm code that is on the stack and would be executed as the method normally returned. Problems can occur with write-caches, RAII, reference counting when this method aborts execution of wasm code immediately. </bold></para>
+<para>&lt;/html&gt;</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>code</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the exit code Example:</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<programlisting><codeline><highlight class="normal"><ref refid="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" kindref="member">sysio_exit</ref>(0);</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" kindref="member">sysio_exit</ref>(1);</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" kindref="member">sysio_exit</ref>(2);</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__system_gae987dd898961af1231142a37a4461611_1gae987dd898961af1231142a37a4461611" kindref="member">sysio_exit</ref>(3);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="62" column="16" bodyfile="libraries/sysiolib/contracts/sysio/system.hpp" bodystart="62" bodyend="64"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga6a9fba6c93fcad4e6089f6dae813bdc7_1ga6a9fba6c93fcad4e6089f6dae813bdc7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>time_point</type>
+        <definition>time_point sysio::current_time_point</definition>
+        <argsstring>()</argsstring>
+        <name>current_time_point</name>
+        <qualifiedname>sysio::current_time_point</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the time in microseconds from 1970 of the current block as a <ref refid="classsysio_1_1time__point" kindref="compound">time_point</ref></para>
+<para><simplesect kind="return"><para>time in microseconds from 1970 of the current block as a <ref refid="classsysio_1_1time__point" kindref="compound">time_point</ref> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="72" column="15" declfile="libraries/sysiolib/contracts/sysio/system.hpp" declline="72" declcolumn="15"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga12c423e9a5c7c036b417f4f0db2c0b98_1ga12c423e9a5c7c036b417f4f0db2c0b98" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>block_timestamp</type>
+        <definition>block_timestamp sysio::current_block_time</definition>
+        <argsstring>()</argsstring>
+        <name>current_block_time</name>
+        <qualifiedname>sysio::current_block_time</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the time in microseconds from 1970 of the current block as a <ref refid="classsysio_1_1block__timestamp" kindref="compound">block_timestamp</ref></para>
+<para><simplesect kind="return"><para>time in microseconds from 1970 of the current block as a <ref refid="classsysio_1_1block__timestamp" kindref="compound">block_timestamp</ref> </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="80" column="20" declfile="libraries/sysiolib/contracts/sysio/system.hpp" declline="80" declcolumn="20"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga393d227e5bf35a244f435b9d212b4b0e_1ga393d227e5bf35a244f435b9d212b4b0e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>block_num_t</type>
+        <definition>block_num_t sysio::current_block_number</definition>
+        <argsstring>()</argsstring>
+        <name>current_block_number</name>
+        <qualifiedname>sysio::current_block_number</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the current block number</para>
+<para><simplesect kind="return"><para>the current block number </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="90" column="23" bodyfile="libraries/sysiolib/contracts/sysio/system.hpp" bodystart="90" bodyend="92"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_gacab202f036dce91e3094765f9490469d_1gacab202f036dce91e3094765f9490469d" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool sysio::is_feature_activated</definition>
+        <argsstring>(const checksum256 &amp;feature_digest)</argsstring>
+        <name>is_feature_activated</name>
+        <qualifiedname>sysio::is_feature_activated</qualifiedname>
+        <param>
+          <type>const checksum256 &amp;</type>
+          <declname>feature_digest</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Check if specified protocol feature has been activated</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>feature_digest</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- digest of the protocol feature </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if the specified protocol feature has been activated, false otherwise </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="101" column="16" bodyfile="libraries/sysiolib/contracts/sysio/system.hpp" bodystart="101" bodyend="106"/>
+      </memberdef>
+      <memberdef kind="function" id="group__system_ga31252e36bebf5c09875571507d43b6af_1ga31252e36bebf5c09875571507d43b6af" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>name</type>
+        <definition>name sysio::get_sender</definition>
+        <argsstring>()</argsstring>
+        <name>get_sender</name>
+        <qualifiedname>sysio::get_sender</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Return name of account that sent current inline action</para>
+<para><simplesect kind="return"><para>name of account that sent the current inline action (empty name if not called from inline action) </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/system.hpp" line="114" column="16" bodyfile="libraries/sysiolib/contracts/sysio/system.hpp" bodystart="114" bodyend="116"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Defines wrappers over sysio_assert. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>Defines time related functions and sysio_exit.</para>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

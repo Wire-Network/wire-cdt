@@ -1,0 +1,1261 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.12.0" xml:lang="en-US">
+  <compounddef id="group__multiindex" kind="group">
+    <compoundname>multiindex</compoundname>
+    <title>Multi Index Table</title>
+    <innerclass refid="structsysio_1_1indexed__by" prot="public">sysio::indexed_by</innerclass>
+    <innerclass refid="classsysio_1_1multi__index" prot="public">sysio::multi_index</innerclass>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="group__multiindex_ga95334a641c52bb1dd5091174c7191ae9_1ga95334a641c52bb1dd5091174c7191ae9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>sysio::multi_index&lt; TableName, T, Indices &gt;::multi_index</definition>
+        <argsstring>(name code, uint64_t scope)</argsstring>
+        <name>multi_index</name>
+        <qualifiedname>sysio::multi_index::multi_index</qualifiedname>
+        <param>
+          <type>name</type>
+          <declname>code</declname>
+        </param>
+        <param>
+          <type>uint64_t</type>
+          <declname>scope</declname>
+        </param>
+        <briefdescription>
+<para>load_object_by_primary_iterator </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Constructs an instance of a Multi-Index table.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>code</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Account that owns table </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>scope</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Scope identifier within the code hierarchy</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>code and scope member properties are initialized </para>
+</simplesect>
+<simplesect kind="post"><para>each secondary index table initialized </para>
+</simplesect>
+<simplesect kind="post"><para>Secondary indices are updated to refer to the newly added object. If the secondary index tables do not exist, they are created. </para>
+</simplesect>
+<simplesect kind="post"><para>The payer is charged for the storage usage of the new object and, if the table (and secondary index tables) must be created, for the overhead of the table creation.</para>
+</simplesect>
+Notes The <computeroutput><ref refid="classsysio_1_1multi__index" kindref="compound">sysio::multi_index</ref></computeroutput> template has template parameters <computeroutput>&lt;<ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref> TableName, typename T, typename... Indices&gt;</computeroutput>, where:<itemizedlist>
+<listitem><para><computeroutput>TableName</computeroutput> is the name of the table, maximum 12 characters long, characters in the name from the set of lowercase letters, digits 1 to 5, and the &quot;.&quot; (period) character and is converted to a sysio::raw - which wraps uint64_t;</para>
+</listitem><listitem><para><computeroutput>T</computeroutput> is the object type (i.e., row definition);</para>
+</listitem><listitem><para><computeroutput>Indices</computeroutput> is a list of up to 16 secondary indices.</para>
+</listitem><listitem><para>Each must be a default constructable class or struct</para>
+</listitem><listitem><para>Each must have a function call operator that takes a const reference to the table object type and returns either a secondary key type or a reference to a secondary key type</para>
+</listitem><listitem><para>It is recommended to use the <ref refid="structsysio_1_1const__mem__fun" kindref="compound">sysio::const_mem_fun</ref> template, which is a type alias to the boost::multi_index::const_mem_fun. See the documentation for the Boost <ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun</ref> key extractor for more details.</para>
+</listitem></itemizedlist>
+</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="preprocessor">#include<sp/>&lt;sysiolib/sysio.hpp&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal"><ref refid="namespacesysio" kindref="compound">sysio</ref>;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal">std;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">addressbook:<sp/><ref refid="classsysio_1_1contract" kindref="compound">contract</ref><sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">address<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>account_name;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>first_name;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>last_name;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>street;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>city;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_aa9cafaf1709bec38f666a7e8e5ba370c_1aa9cafaf1709bec38f666a7e8e5ba370c" kindref="member">state</ref>;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>primary_key()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>account_name;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>addressbook(<ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>self):<ref refid="classsysio_1_1contract" kindref="compound">contract</ref>(self)<sp/>{}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/><ref refid="classsysio_1_1multi__index" kindref="compound" tooltip="Defines SYSIO Multi Index Table.">sysio::multi_index</ref>&lt;<sp/></highlight><highlight class="stringliteral">&quot;address&quot;</highlight><highlight class="normal">_n,<sp/>address<sp/>&gt;<sp/>address_index;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>address_index<sp/>addresses(_self,<sp/>_self.value);<sp/></highlight><highlight class="comment">//<sp/>code,<sp/>scope</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="881" column="7" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="881" bodyend="883"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga888fe8091f8cfdd13202543e50496bf9_1ga888fe8091f8cfdd13202543e50496bf9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>name</type>
+        <definition>name sysio::multi_index&lt; TableName, T, Indices &gt;::get_code</definition>
+        <argsstring>() const</argsstring>
+        <name>get_code</name>
+        <qualifiedname>sysio::multi_index::get_code</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the <computeroutput>code</computeroutput> member property.</para>
+<para><simplesect kind="return"><para>Account name of the Code that owns the Primary Table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>address_index<sp/>addresses(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n,<sp/></highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n.value);<sp/></highlight><highlight class="comment">//<sp/>code,<sp/>scope</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(addresses.get_code()<sp/>==<sp/></highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n,<sp/></highlight><highlight class="stringliteral">&quot;Codes<sp/>don&apos;t<sp/>match.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="904" column="12" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="904" bodyend="904"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga4cf5db8ffadb7a8a33790f848ee1a9aa_1ga4cf5db8ffadb7a8a33790f848ee1a9aa" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::get_scope</definition>
+        <argsstring>() const</argsstring>
+        <name>get_scope</name>
+        <qualifiedname>sysio::multi_index::get_scope</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns the <computeroutput>scope</computeroutput> member property.</para>
+<para><simplesect kind="return"><para>Scope id of the Scope within the Code of the Current Receiver under which the desired Primary Table instance can be found.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>address_index<sp/>addresses(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n,<sp/></highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n.value);<sp/></highlight><highlight class="comment">//<sp/>code,<sp/>scope</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(addresses.get_scope()<sp/>==<sp/></highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n.value,<sp/></highlight><highlight class="stringliteral">&quot;Scopes<sp/>don&apos;t<sp/>match&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="925" column="16" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="925" bodyend="925"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga3bee12520f92461789ac396041f83fe4_1ga3bee12520f92461789ac396041f83fe4" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::cbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>cbegin</name>
+        <qualifiedname>sysio::multi_index::cbegin</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator pointing to the object_type with the lowest primary key value in the Multi-Index table.</para>
+<para><simplesect kind="return"><para>An iterator pointing to the object_type with the lowest primary key value in the Multi-Index table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>==<sp/>addresses.cbegin(),<sp/></highlight><highlight class="stringliteral">&quot;Only<sp/>address<sp/>is<sp/>not<sp/>at<sp/>front.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1012" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1012" bodyend="1014"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga5f8d713f117163e2e8e650f7e4311afa_1ga5f8d713f117163e2e8e650f7e4311afa" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::begin</definition>
+        <argsstring>() const</argsstring>
+        <name>begin</name>
+        <qualifiedname>sysio::multi_index::begin</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator pointing to the object_type with the lowest primary key value in the Multi-Index table.</para>
+<para><simplesect kind="return"><para>An iterator pointing to the object_type with the lowest primary key value in the Multi-Index table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>==<sp/>addresses.begin(),<sp/></highlight><highlight class="stringliteral">&quot;Only<sp/>address<sp/>is<sp/>not<sp/>at<sp/>front.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal">SYSIO_ABI(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1038" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1038" bodyend="1038"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga9a5621617d016211f40c8a8e4c7f0c9c_1ga9a5621617d016211f40c8a8e4c7f0c9c" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::cend</definition>
+        <argsstring>() const</argsstring>
+        <name>cend</name>
+        <qualifiedname>sysio::multi_index::cend</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator referring to the <computeroutput>past-the-end</computeroutput> element in the multi index container. The <computeroutput>past-the-end</computeroutput> element is the theoretical element that would follow the last element in the vector. It does not point to any element, and thus shall not be dereferenced.</para>
+<para><simplesect kind="return"><para>An iterator referring to the <computeroutput>past-the-end</computeroutput> element in the multi index container.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.cend(),<sp/></highlight><highlight class="stringliteral">&quot;Address<sp/>for<sp/>account<sp/>doesn&apos;t<sp/>exist&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1062" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1062" bodyend="1062"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gafad1f03794294c4060be066d3c2d0bab_1gafad1f03794294c4060be066d3c2d0bab" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::end</definition>
+        <argsstring>() const</argsstring>
+        <name>end</name>
+        <qualifiedname>sysio::multi_index::end</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator referring to the <computeroutput>past-the-end</computeroutput> element in the multi index container. The <computeroutput>past-the-end</computeroutput> element is the theoretical element that would follow the last element in the vector. It does not point to any element, and thus shall not be dereferenced.</para>
+<para><simplesect kind="return"><para>An iterator referring to the <computeroutput>past-the-end</computeroutput> element in the multi index container.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Address<sp/>for<sp/>account<sp/>doesn&apos;t<sp/>exist&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1086" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1086" bodyend="1086"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga9f624a04aa347287ce4992d5eae1dbc3_1ga9f624a04aa347287ce4992d5eae1dbc3" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_reverse_iterator</type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::crbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>crbegin</name>
+        <qualifiedname>sysio::multi_index::crbegin</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns a reverse iterator pointing to the <computeroutput>object_type</computeroutput> with the highest primary key value in the Multi-Index table.</para>
+<para><simplesect kind="return"><para>A reverse iterator pointing to the <computeroutput>object_type</computeroutput> with the highest primary key value in the Multi-Index table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.crbegin();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Last<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr++;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Second<sp/>Last<sp/>Record&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1121" column="30" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1121" bodyend="1121"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gac438151b3f7afb8ceb385d2e9447ebe6_1gac438151b3f7afb8ceb385d2e9447ebe6" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_reverse_iterator</type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::rbegin</definition>
+        <argsstring>() const</argsstring>
+        <name>rbegin</name>
+        <qualifiedname>sysio::multi_index::rbegin</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns a reverse iterator pointing to the <computeroutput>object_type</computeroutput> with the highest primary key value in the Multi-Index table.</para>
+<para><simplesect kind="return"><para>A reverse iterator pointing to the <computeroutput>object_type</computeroutput> with the highest primary key value in the Multi-Index table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.rbegin();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Last<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr++;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Second<sp/>Last<sp/>Record&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1156" column="30" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1156" bodyend="1156"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gad7fbbef0f5b74941bebd67434a8344f8_1gad7fbbef0f5b74941bebd67434a8344f8" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_reverse_iterator</type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::crend</definition>
+        <argsstring>() const</argsstring>
+        <name>crend</name>
+        <qualifiedname>sysio::multi_index::crend</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator pointing to the <computeroutput>object_type</computeroutput> with the lowest primary key value in the Multi-Index table.</para>
+<para><simplesect kind="return"><para>An iterator pointing to the <computeroutput>object_type</computeroutput> with the lowest primary key value in the Multi-Index table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.crend();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr--;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>First<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr--;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Second<sp/>Record&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1192" column="30" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1192" bodyend="1192"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga85a853178d819521c50bcd9860f70d59_1ga85a853178d819521c50bcd9860f70d59" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_reverse_iterator</type>
+        <definition>const_reverse_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::rend</definition>
+        <argsstring>() const</argsstring>
+        <name>rend</name>
+        <qualifiedname>sysio::multi_index::rend</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator pointing to the <computeroutput>object_type</computeroutput> with the lowest primary key value in the Multi-Index table.</para>
+<para><simplesect kind="return"><para>An iterator pointing to the <computeroutput>object_type</computeroutput> with the lowest primary key value in the Multi-Index table.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.rend();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr--;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>First<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr--;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Second<sp/>Record&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1228" column="30" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1228" bodyend="1228"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga385d93cf277878b667a3e22264a4230a_1ga385d93cf277878b667a3e22264a4230a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::lower_bound</definition>
+        <argsstring>(uint64_t primary) const</argsstring>
+        <name>lower_bound</name>
+        <qualifiedname>sysio::multi_index::lower_bound</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>primary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Searches for the <computeroutput>object_type</computeroutput> with the lowest primary key that is greater than or equal to a given primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>primary</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Primary key that establishes the target value for the lower bound search. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An iterator pointing to the <computeroutput>object_type</computeroutput> that has the lowest primary key that is greater than or equal to <computeroutput>primary</computeroutput>. If an object could not be found, or if the table does not exist**, it will return the <computeroutput>end</computeroutput> iterator.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>get_index()<sp/>example<sp/>below.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.zip<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref><sp/>zipnumb<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>zip_index<sp/>=<sp/>addresses.get_index&lt;name(</highlight><highlight class="stringliteral">&quot;zip&quot;</highlight><highlight class="normal">)&gt;();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>zip_index.lower_bound(zipnumb);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>First<sp/>Lower<sp/>Bound<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr++;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Second<sp/>Lower<sp/>Bound<sp/>Record&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr++;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>==<sp/>zip_index.end(),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>End<sp/>of<sp/>Iterator&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1269" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1269" bodyend="1274"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga9c460cb3a0a25aab8c4e6f2deeb97dd3_1ga9c460cb3a0a25aab8c4e6f2deeb97dd3" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::upper_bound</definition>
+        <argsstring>(uint64_t primary) const</argsstring>
+        <name>upper_bound</name>
+        <qualifiedname>sysio::multi_index::upper_bound</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>primary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Searches for the <computeroutput>object_type</computeroutput> with the lowest primary key that is greater than a given primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>primary</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Primary key that establishes the target value for the upper bound search </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An iterator pointing to the <computeroutput>object_type</computeroutput> that has the lowest primary key that is greater than a given <computeroutput>primary</computeroutput> key. If an object could not be found, or if the table does not exist**, it will return the <computeroutput>end</computeroutput> iterator.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>get_index()<sp/>example<sp/>below.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.zip<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref><sp/>zipnumb<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>zip_index<sp/>=<sp/>addresses.get_index&lt;name(</highlight><highlight class="stringliteral">&quot;zip&quot;</highlight><highlight class="normal">)&gt;();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>zip_index.upper_bound(zipnumb);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>First<sp/>Upper<sp/>Bound<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr++;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>==<sp/>zip_index.end(),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>End<sp/>of<sp/>Iterator&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1313" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1313" bodyend="1318"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga1eca5d070f199f2339314f2c6ceb1de0_1ga1eca5d070f199f2339314f2c6ceb1de0" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t sysio::multi_index&lt; TableName, T, Indices &gt;::available_primary_key</definition>
+        <argsstring>() const</argsstring>
+        <name>available_primary_key</name>
+        <qualifiedname>sysio::multi_index::available_primary_key</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an available primary key.</para>
+<para><simplesect kind="return"><para>An available (unused) primary key value.</para>
+</simplesect>
+Notes: Intended to be used in tables in which the primary keys of the table are strictly intended to be auto-incrementing, and thus will never be set to custom values by the contract. Violating this expectation could result in the table appearing to be full due to inability to allocate an available primary key. Ideally this method would only be used to determine the appropriate primary key to use within new objects added to a table in which the primary keys of the table are strictly intended from the beginning to be autoincrementing and thus will not ever be set to custom arbitrary values by the contract. Violating this agreement could result in the table appearing full when in reality there is plenty of space left.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>address_index<sp/>addresses(_self,<sp/>_self.value);<sp/><sp/></highlight><highlight class="comment">//<sp/>code,<sp/>scope</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>to<sp/>table,<sp/>first<sp/>argument<sp/>is<sp/>account<sp/>to<sp/>bill<sp/>for<sp/>storage</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.key<sp/>=<sp/>addresses.available_primary_key();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Daniel&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Larimer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blacksburg&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;VA&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1351" column="16" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1351" bodyend="1368"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gafdc920626da6bacc840603bd6eb30b5c_1gafdc920626da6bacc840603bd6eb30b5c" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+            <declname>IndexName</declname>
+            <defname>IndexName</defname>
+          </param>
+        </templateparamlist>
+        <type>auto</type>
+        <definition>auto sysio::multi_index&lt; TableName, T, Indices &gt;::get_index</definition>
+        <argsstring>()</argsstring>
+        <name>get_index</name>
+        <qualifiedname>sysio::multi_index::get_index</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an appropriately typed Secondary Index.</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>IndexName</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the ID of the desired secondary index</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An index of the appropriate type: Primitive 64-bit unsigned integer key (idx64), Primitive 128-bit unsigned integer key (idx128), 128-bit fixed-size lexicographical key (idx128), 256-bit fixed-size lexicographical key (idx256), Floating point key, Double precision floating point key, Long Double (quadruple) precision floating point key</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="preprocessor">#include<sp/>&lt;sysiolib/sysio.hpp&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal"><ref refid="namespacesysio" kindref="compound">sysio</ref>;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal">std;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">addressbook:<sp/><ref refid="classsysio_1_1contract" kindref="compound">contract</ref><sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">address<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>account_name;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>first_name;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>last_name;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>street;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/>city;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">string</highlight><highlight class="normal"><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_aa9cafaf1709bec38f666a7e8e5ba370c_1aa9cafaf1709bec38f666a7e8e5ba370c" kindref="member">state</ref>;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref><sp/>zip<sp/>=<sp/>0;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>primary_key()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>account_name;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a27a21b547281063f06bbb643ae543390_1a27a21b547281063f06bbb643ae543390" kindref="member">uint64_t</ref><sp/>by_zip()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>zip;<sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>addressbook(<ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>receiver,<sp/><ref refid="structsysio_1_1name" kindref="compound">name</ref><sp/>code,<sp/><ref refid="classsysio_1_1datastream" kindref="compound">datastream&lt;const char*&gt;</ref><sp/>ds):<ref refid="classsysio_1_1contract" kindref="compound">contract</ref>(receiver,<sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_ac7acc8b6eb5977fff5f5bf1176d29607_1ac7acc8b6eb5977fff5f5bf1176d29607" kindref="member">code</ref>,<sp/>ds)<sp/>{}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/><ref refid="classsysio_1_1multi__index" kindref="compound" tooltip="Defines SYSIO Multi Index Table.">sysio::multi_index</ref>&lt;<sp/><ref refid="structsysio_1_1name" kindref="compound">name</ref>(</highlight><highlight class="stringliteral">&quot;address&quot;</highlight><highlight class="normal">),<sp/>address,<sp/><ref refid="structsysio_1_1indexed__by" kindref="compound">indexed_by</ref>&lt;<sp/><ref refid="structsysio_1_1name" kindref="compound">name</ref>(</highlight><highlight class="stringliteral">&quot;zip&quot;</highlight><highlight class="normal">),<sp/><ref refid="structsysio_1_1const__mem__fun" kindref="compound">const_mem_fun&lt;address, uint64_t, &amp;address::by_zip&gt;</ref><sp/>&gt;<sp/>address_index;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref><sp/>zipnumb<sp/>=<sp/>93446;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>zip_index<sp/>=<sp/>addresses.get_index&lt;<ref refid="structsysio_1_1name" kindref="compound">name</ref>(</highlight><highlight class="stringliteral">&quot;zip&quot;</highlight><highlight class="normal">)&gt;();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>zip_index.find(zipnumb);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/><ref refid="structsysio_1_1name" kindref="compound">name</ref>(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1412" column="12" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1412" bodyend="1422"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gace446e93ccd2232549e753e473f62ce1_1gace446e93ccd2232549e753e473f62ce1" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type><ref refid="structsysio_1_1name_a1462b64fcb07730f984669b55994128b_1a1462b64fcb07730f984669b55994128b" kindref="member">name::raw</ref></type>
+            <declname>IndexName</declname>
+            <defname>IndexName</defname>
+          </param>
+        </templateparamlist>
+        <type>auto</type>
+        <definition>auto sysio::multi_index&lt; TableName, T, Indices &gt;::get_index</definition>
+        <argsstring>() const</argsstring>
+        <name>get_index</name>
+        <qualifiedname>sysio::multi_index::get_index</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an appropriately typed Secondary Index.</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>IndexName</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- the ID of the desired secondary index</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An index of the appropriate type: Primitive 64-bit unsigned integer key (idx64), Primitive 128-bit unsigned integer key (idx128), 128-bit fixed-size lexicographical key (idx128), 256-bit fixed-size lexicographical key (idx256), Floating point key, Double precision floating point key, Long Double (quadruple) precision floating point key</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>get_index()<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.zip<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacesysio_1_1internal__use__do__not__use_a1e636c4326e2bab56f050ab6ff3a8a61_1a1e636c4326e2bab56f050ab6ff3a8a61" kindref="member">uint32_t</ref><sp/>zipnumb<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>zip_index<sp/>=<sp/>addresses.get_index&lt;name(</highlight><highlight class="stringliteral">&quot;zip&quot;</highlight><highlight class="normal">)&gt;();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>zip_index.upper_bound(zipnumb);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;account_name<sp/>==<sp/>name(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>First<sp/>Upper<sp/>Bound<sp/>Record<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr++;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>==<sp/>zip_index.end(),<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Incorrect<sp/>End<sp/>of<sp/>Iterator&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1463" column="12" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1463" bodyend="1473"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga96ad41ccaa25039b3abc5e40dfd6d24c_1ga96ad41ccaa25039b3abc5e40dfd6d24c" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::iterator_to</definition>
+        <argsstring>(const T &amp;obj) const</argsstring>
+        <name>iterator_to</name>
+        <qualifiedname>sysio::multi_index::iterator_to</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Returns an iterator to the given object in a Multi-Index table.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>obj</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- A reference to the desired object</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An iterator to the given object</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>get_index()<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example<sp/>below</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>additional<sp/>account<sp/>-<sp/>brendan</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(payer,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;brendan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Brendan&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blumer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Hong<sp/>Kong&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;HK&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.zip<sp/>=<sp/>93445;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>user<sp/>=<sp/>addresses.get(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>address.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(<ref refid="group__multiindex_ga96ad41ccaa25039b3abc5e40dfd6d24c_1ga96ad41ccaa25039b3abc5e40dfd6d24c" kindref="member">iterator_to</ref>(user)<sp/>==<sp/>itr,<sp/></highlight><highlight class="stringliteral">&quot;Invalid<sp/>iterator&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting></para>
+<para>Warning: the interator_to can have undefined behavior if the caller passes in a reference to a stack-allocated object rather than the reference returned by get or by dereferencing a <ref refid="structsysio_1_1multi__index_1_1const__iterator" kindref="compound">const_iterator</ref>. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1514" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1514" bodyend="1518"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga8b2849d63f5d3764ff66dbf57287192a_1ga8b2849d63f5d3764ff66dbf57287192a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Lambda</type>
+          </param>
+        </templateparamlist>
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::emplace</definition>
+        <argsstring>(name payer, Lambda &amp;&amp;constructor)</argsstring>
+        <name>emplace</name>
+        <qualifiedname>sysio::multi_index::emplace</qualifiedname>
+        <param>
+          <type>name</type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>Lambda &amp;&amp;</type>
+          <declname>constructor</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Adds a new object (i.e., row) to the table.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>payer</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Account name of the payer for the Storage usage of the new object </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>constructor</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Lambda function that does an in-place initialization of the object to be created in the table</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>A multi index table has been instantiated </para>
+</simplesect>
+<simplesect kind="post"><para>A new object is created in the Multi-Index table, with a unique primary key (as specified in the object). The object is serialized and written to the table. If the table does not exist, it is created. </para>
+</simplesect>
+<simplesect kind="post"><para>Secondary indices are updated to refer to the newly added object. If the secondary index tables do not exist, they are created. </para>
+</simplesect>
+<simplesect kind="post"><para>The payer is charged for the storage usage of the new object and, if the table (and secondary index tables) must be created, for the overhead of the table creation.</para>
+</simplesect>
+<simplesect kind="return"><para>A primary key iterator to the newly created object</para>
+</simplesect>
+Exception - The account is not authorized to write to the table.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>address_index<sp/>addresses(_self,<sp/>_self.value);<sp/></highlight><highlight class="comment">//<sp/>code,<sp/>scope</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>to<sp/>table,<sp/>first<sp/>argument<sp/>is<sp/>account<sp/>to<sp/>bill<sp/>for<sp/>storage</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.emplace(_self,<sp/>[&amp;](</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.account_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.first_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Daniel&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.last_name<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Larimer&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.street<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;1<sp/>SYS<sp/>Way&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;Blacksburg&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;VA&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1557" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1557" bodyend="1599"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga50037b09faedb27a322444c238722f43_1ga50037b09faedb27a322444c238722f43" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Lambda</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::multi_index&lt; TableName, T, Indices &gt;::modify</definition>
+        <argsstring>(const_iterator itr, name payer, Lambda &amp;&amp;updater)</argsstring>
+        <name>modify</name>
+        <qualifiedname>sysio::multi_index::modify</qualifiedname>
+        <param>
+          <type>const_iterator</type>
+          <declname>itr</declname>
+        </param>
+        <param>
+          <type>name</type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>Lambda &amp;&amp;</type>
+          <declname>updater</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Modifies an existing object in a table.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>itr</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- an iterator pointing to the object to be updated </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>payer</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- account name of the payer for the storage usage of the updated row </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>updater</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- lambda function that updates the target object</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>itr points to an existing element </para>
+</simplesect>
+<simplesect kind="pre"><para>payer is a valid account that is authorized to execute the action and be billed for storage usage.</para>
+</simplesect>
+<simplesect kind="post"><para>The modified object is serialized, then replaces the existing object in the table. </para>
+</simplesect>
+<simplesect kind="post"><para>Secondary indices are updated; the primary key of the updated object is not changed. </para>
+</simplesect>
+<simplesect kind="post"><para>The payer is charged for the storage usage of the updated object. </para>
+</simplesect>
+<simplesect kind="post"><para>If payer is the same as the existing payer, payer only pays for the usage difference between existing and updated object (and is refunded if this difference is negative). </para>
+</simplesect>
+<simplesect kind="post"><para>If payer is different from the existing payer, the existing payer is refunded for the storage usage of the existing object.</para>
+</simplesect>
+Exceptions: If called with an invalid precondition, execution is aborted.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Address<sp/>for<sp/>account<sp/>not<sp/>found&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.modify(<sp/>itr,<sp/>account<sp/>payer,<sp/>[&amp;](<sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address<sp/>)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;San<sp/>Luis<sp/>Obispo&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;CA&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1642" column="12" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1642" bodyend="1646"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gaff0329e2ee02b9cac7c39150023ff48d_1gaff0329e2ee02b9cac7c39150023ff48d" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Lambda</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void sysio::multi_index&lt; TableName, T, Indices &gt;::modify</definition>
+        <argsstring>(const T &amp;obj, name payer, Lambda &amp;&amp;updater)</argsstring>
+        <name>modify</name>
+        <qualifiedname>sysio::multi_index::modify</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type>name</type>
+          <declname>payer</declname>
+        </param>
+        <param>
+          <type>Lambda &amp;&amp;</type>
+          <declname>updater</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Modifies an existing object in a table.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>obj</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- a reference to the object to be updated </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>payer</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- account name of the payer for the storage usage of the updated row </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>updater</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- lambda function that updates the target object</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>obj is an existing object in the table </para>
+</simplesect>
+<simplesect kind="pre"><para>payer is a valid account that is authorized to execute the action and be billed for storage usage.</para>
+</simplesect>
+<simplesect kind="post"><para>The modified object is serialized, then replaces the existing object in the table. </para>
+</simplesect>
+<simplesect kind="post"><para>Secondary indices are updated; the primary key of the updated object is not changed. </para>
+</simplesect>
+<simplesect kind="post"><para>The payer is charged for the storage usage of the updated object. </para>
+</simplesect>
+<simplesect kind="post"><para>If payer is the same as the existing payer, payer only pays for the usage difference between existing and updated object (and is refunded if this difference is negative). </para>
+</simplesect>
+<simplesect kind="post"><para>If payer is different from the existing payer, the existing payer is refunded for the storage usage of the existing object.</para>
+</simplesect>
+Exceptions: If called with an invalid precondition, execution is aborted.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Address<sp/>for<sp/>account<sp/>not<sp/>found&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.modify(<sp/>*itr,<sp/>payer,<sp/>[&amp;](<sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>address<sp/>)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.city<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;San<sp/>Luis<sp/>Obispo&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>address.state<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;CA&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>});</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr-&gt;city<sp/>==<sp/></highlight><highlight class="stringliteral">&quot;San<sp/>Luis<sp/>Obispo&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Lock<sp/>arf,<sp/>Address<sp/>not<sp/>modified&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1690" column="12" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1690" bodyend="1743"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gacec9d7e96fed1c1633898e498664242f_1gacec9d7e96fed1c1633898e498664242f" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const T &amp;</type>
+        <definition>const T &amp; sysio::multi_index&lt; TableName, T, Indices &gt;::get</definition>
+        <argsstring>(uint64_t primary, const char *error_msg=&quot;unable to find key&quot;) const</argsstring>
+        <name>get</name>
+        <qualifiedname>sysio::multi_index::get</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>primary</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>error_msg</declname>
+          <defval>&quot;unable to find key&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Retrieves an existing object from a table using its primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>primary</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Primary key value of the object. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>A constant reference to the object containing the specified primary key.</para>
+</simplesect>
+Exception - No object matches the given key.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>user<sp/>=<sp/>addresses.get(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(user.first_name<sp/>==<sp/></highlight><highlight class="stringliteral">&quot;Daniel&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Couldn&apos;t<sp/>get<sp/>him.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting></para>
+<para>Warning:</para>
+<para>Avoid the common pitfall of copy-assigning the T&amp; reference returned to a stack-allocated local variable and then passing that into modify of the multi-index. The most common mistake is when the local variable is defined as auto typename, instead it should be of type auto&amp; or decltype(auto). </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1777" column="15" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1777" bodyend="1781"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga1349af85de36d7ef0a7a790f94516348_1ga1349af85de36d7ef0a7a790f94516348" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::find</definition>
+        <argsstring>(uint64_t primary) const</argsstring>
+        <name>find</name>
+        <qualifiedname>sysio::multi_index::find</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>primary</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Search for an existing object in a table using its primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>primary</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Primary key value of the object </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An iterator to the found object which has a primary key equal to <computeroutput>primary</computeroutput> OR the <computeroutput>end</computeroutput> iterator of the referenced table if an object with primary key <computeroutput>primary</computeroutput> is not found.</para>
+</simplesect>
+Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Couldn&apos;t<sp/>get<sp/>him.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1806" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1806" bodyend="1818"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga9245ddf1b3177affdb3932f5d1f65ca9_1ga9245ddf1b3177affdb3932f5d1f65ca9" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::require_find</definition>
+        <argsstring>(uint64_t primary, const char *error_msg=&quot;unable to find key&quot;) const</argsstring>
+        <name>require_find</name>
+        <qualifiedname>sysio::multi_index::require_find</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>primary</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>error_msg</declname>
+          <defval>&quot;unable to find key&quot;</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Search for an existing object in a table using its primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>primary</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Primary key value of the object </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>error_msg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- error message if an object with primary key <computeroutput>primary</computeroutput> is not found. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An iterator to the found object which has a primary key equal to <computeroutput>primary</computeroutput> OR throws an exception if an object with primary key <computeroutput>primary</computeroutput> is not found. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1829" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1829" bodyend="1841"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_ga9aaa4cd5f39691494d8cb7d2bb2e6a96_1ga9aaa4cd5f39691494d8cb7d2bb2e6a96" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>const_iterator</type>
+        <definition>const_iterator sysio::multi_index&lt; TableName, T, Indices &gt;::erase</definition>
+        <argsstring>(const_iterator itr)</argsstring>
+        <name>erase</name>
+        <qualifiedname>sysio::multi_index::erase</qualifiedname>
+        <param>
+          <type>const_iterator</type>
+          <declname>itr</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Remove an existing object from a table using its primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>itr</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- An iterator pointing to the object to be removed</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>itr points to an existing element </para>
+</simplesect>
+<simplesect kind="post"><para>The object is removed from the table and all associated storage is reclaimed. </para>
+</simplesect>
+<simplesect kind="post"><para>Secondary indices associated with the table are updated. </para>
+</simplesect>
+<simplesect kind="post"><para>The existing payer for storage usage of the object is refunded for the table and secondary indices usage of the removed object, and if the table and indices are removed, for the associated overhead.</para>
+</simplesect>
+<simplesect kind="return"><para>For the signature with <computeroutput><ref refid="structsysio_1_1multi__index_1_1const__iterator" kindref="compound">const_iterator</ref></computeroutput>, returns a pointer to the object following the removed object.</para>
+</simplesect>
+Exceptions: The object to be removed is not in the table. The action is not authorized to modify the table. The given iterator is invalid.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>create<sp/>reference<sp/>to<sp/>address_index<sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>add<sp/>dan<sp/>account<sp/>to<sp/>table<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>-<sp/>see<sp/>emplace<sp/>example</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Address<sp/>for<sp/>account<sp/>not<sp/>found&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.erase(<sp/>itr<sp/>);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Everting<sp/>lock<sp/>arf,<sp/>Address<sp/>not<sp/>erased<sp/>properly&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal">SYSIO_ABI(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1879" column="22" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1879" bodyend="1888"/>
+      </memberdef>
+      <memberdef kind="function" id="group__multiindex_gab8634205229f6b142ec2eb90a9456328_1gab8634205229f6b142ec2eb90a9456328" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void sysio::multi_index&lt; TableName, T, Indices &gt;::erase</definition>
+        <argsstring>(const T &amp;obj)</argsstring>
+        <name>erase</name>
+        <qualifiedname>sysio::multi_index::erase</qualifiedname>
+        <param>
+          <type>const T &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Remove an existing object from a table using its primary key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>obj</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- Object to be removed</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para>obj is an existing object in the table </para>
+</simplesect>
+<simplesect kind="post"><para>The object is removed from the table and all associated storage is reclaimed. </para>
+</simplesect>
+<simplesect kind="post"><para>Secondary indices associated with the table are updated. </para>
+</simplesect>
+<simplesect kind="post"><para>The existing payer for storage usage of the object is refunded for the table and secondary indices usage of the removed object, and if the table and indices are removed, for the associated overhead.</para>
+</simplesect>
+Exceptions: The object to be removed is not in the table. The action is not authorized to modify the table. The given iterator is invalid.</para>
+<para>Example:</para>
+<para><programlisting><codeline><highlight class="comment">//<sp/>This<sp/>assumes<sp/>the<sp/>code<sp/>from<sp/>the<sp/>constructor<sp/>example.<sp/>Replace<sp/>myaction()<sp/>{...}</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>myaction()<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>!=<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Record<sp/>is<sp/>not<sp/>found&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>addresses.erase(*itr);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>itr<sp/>=<sp/>addresses.find(</highlight><highlight class="stringliteral">&quot;dan&quot;</highlight><highlight class="normal">_n);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__system_ga8f44fb02ae19a86ba7bcaa5672580334_1ga8f44fb02ae19a86ba7bcaa5672580334" kindref="member">sysio::check</ref>(itr<sp/>==<sp/>addresses.end(),<sp/></highlight><highlight class="stringliteral">&quot;Record<sp/>is<sp/>not<sp/>deleted&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="group__dispatcher_ga2cf5a1a75578fbe4e722658ac2909833_1ga2cf5a1a75578fbe4e722658ac2909833" kindref="member">SYSIO_DISPATCH</ref>(<sp/>addressbook,<sp/>(myaction)<sp/>)</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="libraries/sysiolib/contracts/sysio/multi_index.hpp" line="1922" column="12" bodyfile="libraries/sysiolib/contracts/sysio/multi_index.hpp" bodystart="1922" bodyend="1951"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>
