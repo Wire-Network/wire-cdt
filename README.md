@@ -2,20 +2,17 @@
 
 Wire Contract Development Toolkit (CDT) is a C/C++ toolchain targeting WebAssembly (WASM) and a set of tools to facilitate development of smart contracts written in C/C++ that are meant to be deployed to a Wire blockchain.
 
-
 ## Branches
 
-The `master` branch is the latest stable branch. 
+The `master` branch is the latest stable branch.
 
-
-
-## Installation 
+## Installation
 
 In the future, we plan to support the installation of Debian packages directly from our release page, providing a more streamlined and convenient setup process. However, for the time being, installation requires building the software from source.
 
-
 ### Building from source
-Recent Ubuntu LTS releases are the only Linux distributions that we fully support. Other Linux distributions and other POSIX operating systems (such as macOS) are tended to on a best-effort basis and may not be full featured. 
+
+Recent Ubuntu LTS releases are the only Linux distributions that we fully support. Other Linux distributions and other POSIX operating systems (such as macOS) are tended to on a best-effort basis and may not be full featured.
 
 The instructions below assume that you are building on Ubuntu 20.04. and 22.04.
 
@@ -112,14 +109,15 @@ Installing CDT globally on your system will install the following tools in a loc
 * cdt-strip
 * sysio-pp
 * sysio-wasm2wast
-* sysio-wast2wasm 
+* sysio-wast2wasm
 
 It will also install CMake files for CDT accessible within a `cmake/cdt` directory located within your system's `lib` directory.
+
 #### Manual installation
 
 One option for installing CDT globally is via `make install`. From within the `build` directory, run the following command:
 
-```
+```sh
 sudo make install
 ```
 
