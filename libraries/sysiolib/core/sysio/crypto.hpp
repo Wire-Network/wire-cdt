@@ -86,6 +86,15 @@ namespace sysio {
    };
 
    /**
+    * SYSIO ED public key data
+    * 
+    * Fixed size representation of a ED25519 public key
+    * 
+    * @ingroup public_key
+    */
+   using ed_public_key = std::array<char, 32>;
+
+   /**
     *  SYSIO Public Key
     *
     *  A public key is a variant of
@@ -93,10 +102,11 @@ namespace sysio {
     *   1 : a ECC R1 public key
     *   2 : a WebAuthN public key (requires the host chain to activate the WEBAUTHN_KEY consensus upgrade)
     *   3 : a ECC EM public key
+    *   4 : a ED25519 public key
     *
     *  @ingroup public_key
     */
-   using public_key = std::variant<ecc_public_key, ecc_public_key, webauthn_public_key, ecc_public_key>;
+   using public_key = std::variant<ecc_public_key, ecc_public_key, webauthn_public_key, ecc_public_key, ed_public_key>;
 
 
    /// @cond IMPLEMENTATIONS
@@ -185,6 +195,15 @@ namespace sysio {
    };
 
    /**
+    * SYSIO ED signature data
+    * 
+    * Fixed size representation of a ED25519 signature
+    * 
+    * @ingroup signature
+    */
+   using ed_signature = std::array<char, 64>; //TODO: Check if this is correct, we padded the signature to 65 bytes not sure if we need to do the same here.
+   
+   /**
     *  SYSIO Signature
     *
     *  A signature is a variant of
@@ -192,10 +211,11 @@ namespace sysio {
     *   1 : a ECC R1 signatre
     *   2 : a WebAuthN signature (requires the host chain to activate the WEBAUTHN_KEY consensus upgrade)
     *   3 : a ECC EM signature
+    *   4 : a ED25519 signature
     *
     *  @ingroup signature
     */
-   using signature = std::variant<ecc_signature, ecc_signature, webauthn_signature, ecc_signature>;
+   using signature = std::variant<ecc_signature, ecc_signature, webauthn_signature, ecc_signature, ed_signature>;
 
    /// @cond IMPLEMENTATIONS
 
