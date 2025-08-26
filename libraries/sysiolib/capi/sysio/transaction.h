@@ -37,40 +37,6 @@ extern "C" {
  * @{
  */
 
- /**
-  *  Sends a deferred transaction.
-  *
-  *  @param sender_id - ID of sender
-  *  @param payer - Account paying for RAM
-  *  @param serialized_transaction - Pointer of serialized transaction to be deferred
-  *  @param size - Size to reserve
-  *  @param replace_existing - f this is `0` then if the provided sender_id is already in use by an in-flight transaction from this contract, which will be a failing assert. If `1` then transaction will atomically cancel/replace the inflight transaction
-  */
-__attribute__((sysio_wasm_import))
-void send_deferred(const uint128_t* sender_id, capi_name payer, const char *serialized_transaction, size_t size, uint32_t replace_existing);
-
- /**
-  *  Cancels a deferred transaction.
-  *
-  *  @brief Cancels a deferred transaction.
-  *  @param sender_id - The id of the sender
-  *
-  *  @pre The deferred transaction ID exists.
-  *  @pre The deferred transaction ID has not yet been published.
-  *  @post Deferred transaction canceled.
-  *
-  *  @return 1 if transaction was canceled, 0 if transaction was not found
-  *
-  *  Example:
-*
-  *  @code
-  *  id = 0xffffffffffffffff
-  *  cancel_deferred( id );
-  *  @endcode
-  */
-__attribute__((sysio_wasm_import))
-int cancel_deferred(const uint128_t* sender_id);
-
 /**
  * Access a copy of the currently executing transaction.
  *
