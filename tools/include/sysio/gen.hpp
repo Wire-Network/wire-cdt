@@ -893,20 +893,11 @@ struct generation_utils {
          "db_idx_long_double_store",
          "db_idx_long_double_update",
          "db_idx_long_double_remove",
-         "send_deferred",
          "send_inline",
          "send_context_free_inline"
       };
 
       return write_host_funcs.count(func_decl->getNameInfo().getAsString()) >= 1;
-   }
-
-   inline bool is_deferred_transaction_func( const std::string& t ) {
-      static const std::set<std::string> deferred_transaction_funcs =
-      {
-         "send_deferred",
-      };
-      return deferred_transaction_funcs.count(t) >= 1;
    }
 
    inline bool is_inline_action_func( const std::string& t ) {

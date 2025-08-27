@@ -7,7 +7,6 @@ set_proposed_producers_ex : yes
 set_blockchain_parameters_packed : yes
 set_parameters_packed : yes
 set_privileged  : yes
-send_deferred : yes
 */
 
 #include <sysio/sysio.hpp>
@@ -49,7 +48,6 @@ extern "C" __attribute__((sysio_wasm_import)) int32_t db_idx_long_double_store(u
 extern "C" __attribute__((sysio_wasm_import)) void db_idx_long_double_update(int32_t iterator, capi_name payer, const long double* secondary);
 extern "C" __attribute__((sysio_wasm_import)) void db_idx_long_double_remove(int32_t iterator);
 
-extern "C" __attribute__((sysio_wasm_import)) void send_deferred(const uint128_t&, uint64_t, const char*, size_t, uint32_t);
 extern "C" __attribute__((sysio_wasm_import)) int64_t set_proposed_producers( char*, uint32_t );
 extern "C" __attribute__((sysio_wasm_import)) int64_t set_proposed_producers_ex( uint64_t producer_data_format, char *producer_data, uint32_t producer_data_size );
 extern "C" __attribute__((sysio_wasm_import)) void set_wasm_parameters_packed(const void*, std::size_t);
@@ -213,11 +211,6 @@ db_idx_long_double_remove
    ACTION_TYPE
    bool dbidxldbr(){
       db_idx_long_double_remove(0);
-      return true;
-   }
-   ACTION_TYPE
-   bool senddefer(){
-      send_deferred(0, 0, NULL, 0, 0);
       return true;
    }
    ACTION_TYPE

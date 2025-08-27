@@ -14,12 +14,6 @@ namespace sysio {
    namespace internal_use_do_not_use {
       extern "C" {
          __attribute__((sysio_wasm_import))
-         void send_deferred(const uint128_t&, uint64_t, const char*, size_t, uint32_t);
-
-         __attribute__((sysio_wasm_import))
-         int cancel_deferred(const uint128_t&);
-
-         __attribute__((sysio_wasm_import))
          size_t read_transaction(char*, size_t);
 
          __attribute__((sysio_wasm_import))
@@ -114,19 +108,6 @@ namespace sysio {
        */
       transaction(time_point_sec exp = time_point_sec(current_time_point()) + 60) : transaction_header( exp ) {}
 
-      /**
-       *  Sends this transaction, packs the transaction then sends it as a deferred transaction
-       *
-       *  @details Writes the symbol_code as a string to the provided char buffer
-       *  @param sender_id - ID of sender
-       *  @param payer - Account paying for RAM
-       *  @param replace_existing - Defaults to false, if this is `0`/false then if the provided sender_id is already in use by an in-flight transaction from this contract, which will be a failing assert. If `1` then transaction will atomically cancel/replace the inflight transaction
-       */
-      void send(const uint128_t& sender_id, name payer, bool replace_existing = false) const {
-         auto serialize = pack(*this);
-         internal_use_do_not_use::send_deferred(sender_id, payer.value, serialize.data(), serialize.size(), replace_existing);
-      }
-
       std::vector<action>  context_free_actions;
       std::vector<action>  actions;
       extensions_type      transaction_extensions;
@@ -134,47 +115,6 @@ namespace sysio {
       SYSLIB_SERIALIZE_DERIVED( transaction, transaction_header, (context_free_actions)(actions)(transaction_extensions) )
    };
 
-   /**
-    *  Struct onerror contains and sender id and packed transaction
-    *
-    *  @ingroup transaction
-    */
-   struct onerror {
-      uint128_t          sender_id;
-      std::vector<char> sent_trx;
-
-     /**
-      *  from_current_action unpacks and returns a onerror struct
-      *
-      *  @ingroup transaction
-      */
-      static onerror from_current_action() {
-         return unpack_action_data<onerror>();
-      }
-
-     /**
-      * Unpacks and returns a transaction
-      */
-      transaction unpack_sent_trx() const {
-         return unpack<transaction>(sent_trx);
-      }
-
-      SYSLIB_SERIALIZE( onerror, (sender_id)(sent_trx) )
-   };
-
-   /**
-    *  Send a deferred transaction
-    *
-    *  @ingroup transaction
-    *  @param sender_id - Account name of the sender of this deferred transaction
-    *  @param payer - Account name responsible for paying the RAM for this deferred transaction
-    *  @param serialized_transaction - The packed transaction to be deferred
-    *  @param size - The size of the packed transaction, required for persistence.
-    *  @param replace - If true, will replace an existing transaction.
-    */
-   inline void send_deferred(const uint128_t& sender_id, name payer, const char* serialized_transaction, size_t size, bool replace = false) {
-     internal_use_do_not_use::send_deferred(sender_id, payer.value, serialized_transaction, size, replace);
-   }
    /**
     *  Retrieve the indicated action from the active transaction.
     *
@@ -202,29 +142,6 @@ namespace sysio {
     */
    inline size_t read_transaction(char* ptr, size_t sz) {
       return internal_use_do_not_use::read_transaction( ptr, sz );
-   }
-
-    /**
-     *  Cancels a deferred transaction.
-     *
-     *  @ingroup transaction
-     *  @param sender_id - The id of the sender
-     *
-     *  @pre The deferred transaction ID exists.
-     *  @pre The deferred transaction ID has not yet been published.
-     *  @post Deferred transaction canceled.
-     *
-     *  @return 1 if transaction was canceled, 0 if transaction was not found
-     *
-     *  Example:
-*
-     *  @code
-     *  id = 0xffffffffffffffff
-     *  cancel_deferred( id );
-     *  @endcode
-     */
-   inline int cancel_deferred(const uint128_t& sender_id) {
-      return internal_use_do_not_use::cancel_deferred(sender_id);
    }
 
    /**

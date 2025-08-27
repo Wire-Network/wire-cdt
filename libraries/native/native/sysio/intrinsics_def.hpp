@@ -157,8 +157,6 @@ intrinsic_macro(tapos_block_num) \
 intrinsic_macro(get_action) \
 intrinsic_macro(send_inline) \
 intrinsic_macro(send_context_free_inline) \
-intrinsic_macro(send_deferred) \
-intrinsic_macro(cancel_deferred) \
 intrinsic_macro(get_context_free_data) \
 intrinsic_macro(get_sender) \
 intrinsic_macro(set_action_return_value) \

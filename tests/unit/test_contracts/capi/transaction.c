@@ -2,8 +2,6 @@
 #include <stddef.h>
 
 void test_transaction( void ) {
-   send_deferred(NULL, 0, NULL, 0, 0);
-   cancel_deferred(NULL);
    read_transaction(NULL, 0);
    transaction_size();
    tapos_block_num();

@@ -49,19 +49,7 @@ class [[sysio::contract]] simple_tests : public contract {
          check(nm == "bucky"_n, "should be bucky");
       }
 
-      [[sysio::action]] 
-      void testd(name nm) {
-         transaction t;
-         action act;
-         act.account = "other"_n;
-         act.name    = "testc"_n;
-         act.authorization = {permission_level{get_self(), "active"_n}};
-         std::vector<char> data = pack(nm);
-         t.actions.push_back(act);
-         t.send(nm.value, get_self());
-      }
-
-      [[sysio::on_notify("sysio.token::transfer")]] 
+      [[sysio::on_notify("sysio.token::transfer")]]
       void on_transfer(name from, name to, asset quant, std::string memo) {
          check(get_first_receiver() == "sysio.token"_n, "should be sysio.token");
          print_f("On notify : % % % %", from, to, quant, memo);
