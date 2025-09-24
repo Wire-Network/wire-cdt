@@ -33,17 +33,6 @@ __attribute__((sysio_wasm_import))
 void set_resource_limits( capi_name account, int64_t ram_bytes, int64_t net_weight, int64_t cpu_weight );
 
 /**
- * Get the ram usage of an account
- *
- * @ingroup privileged
- *
- * @param account - name of the account whose ram usage to get.
- * @return number of bytes currently used by the account.
-*/
-__attribute__((sysio_wasm_import))
-int64_t get_ram_usage( capi_name account );
-
-/**
  * Proposes a schedule change
  *
  * This is exactly equivalent to calling `set_proposed_producers_ex(0, producer_data, producer_data_size)`

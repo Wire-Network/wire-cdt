@@ -27,6 +27,8 @@ namespace sysio {
       __attribute__((sysio_wasm_import))
       uint32_t get_block_num();
 
+       __attribute__((sysio_wasm_import))
+       int64_t get_ram_usage( uint64_t account );
     }
   }
 
@@ -113,5 +115,15 @@ namespace sysio {
     */
    inline name get_sender() {
       return name( internal_use_do_not_use::get_sender() );
+   }
+
+   /**
+    * Get the ram usage of an account
+    *
+    * @param account - name of the account whose ram usage to get.
+    * @return number of bytes currently used by the account.
+   */
+   inline int64_t get_ram_usage( name account ) {
+      return internal_use_do_not_use::get_ram_usage( account.value );
    }
 }

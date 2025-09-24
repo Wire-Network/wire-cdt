@@ -11,5 +11,4 @@ void test_privileged( void ) {
    set_blockchain_parameters_packed(NULL, 0);
    get_blockchain_parameters_packed(NULL, 0);
    preactivate_feature(NULL);
-   get_ram_usage(0);
 }
