@@ -19,6 +19,9 @@ namespace sysio {
          void set_resource_limits( uint64_t account, int64_t ram_bytes, int64_t net_weight, int64_t cpu_weight );
 
          __attribute__((sysio_wasm_import))
+         int64_t get_ram_usage( uint64_t account );
+
+         __attribute__((sysio_wasm_import))
          void set_privileged( uint64_t account, bool is_priv );
 
          __attribute__((sysio_wasm_import))
@@ -193,6 +196,18 @@ namespace sysio {
     */
    inline void get_resource_limits( name account, int64_t& ram_bytes, int64_t& net_weight, int64_t& cpu_weight ) {
       internal_use_do_not_use::get_resource_limits( account.value, &ram_bytes, &net_weight, &cpu_weight );
+   }
+
+   /**
+    * Get the ram usage of an account
+    *
+    * @ingroup privileged
+    *
+    * @param account - name of the account whose ram usage to get.
+    * @return number of bytes currently used by the account.
+   */
+   int64_t get_ram_usage( name account ) {
+      return internal_use_do_not_use::get_ram_usage( account.value );
    }
 
    /**

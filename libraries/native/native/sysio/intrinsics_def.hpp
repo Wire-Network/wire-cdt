@@ -170,7 +170,8 @@ intrinsic_macro(k1_recover) \
 intrinsic_macro(alt_bn128_add) \
 intrinsic_macro(alt_bn128_mul) \
 intrinsic_macro(alt_bn128_pair) \
-intrinsic_macro(mod_exp)
+intrinsic_macro(mod_exp) \
+intrinsic_macro(get_ram_usage)
 
 
 
