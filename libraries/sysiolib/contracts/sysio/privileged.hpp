@@ -206,7 +206,7 @@ namespace sysio {
     * @param account - name of the account whose ram usage to get.
     * @return number of bytes currently used by the account.
    */
-   int64_t get_ram_usage( name account ) {
+   inline int64_t get_ram_usage( name account ) {
       return internal_use_do_not_use::get_ram_usage( account.value );
    }
 
