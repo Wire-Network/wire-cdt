@@ -45,32 +45,32 @@ if(NOT LIBS_BUILD_TYPE)
    set(LIBS_BUILD_TYPE "Release")
 endif()
 
-include(modules/ClangExternalProject.txt)
-include(modules/ToolsExternalProject.txt)
+include(cmake/ClangExternalProject.cmake)
+include(cmake/ToolsExternalProject.cmake)
 
 set(WASM_SDK_BUILD true)
 
 ### Configure the CDTWasmToolchain.cmakes
 set(CDT_ROOT_DIR ${CMAKE_BINARY_DIR})
 
-configure_file(${CMAKE_SOURCE_DIR}/modules/cdt-config.cmake ${CMAKE_BINARY_DIR}/lib/cmake/cdt/cdt-config.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTMacros.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake ${CMAKE_BINARY_DIR}/lib/cmake/cdt/cdt-config.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTMacros.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
 
 set(CDT_ROOT_DIR ${CDT_INSTALL_PREFIX})
 
-configure_file(${CMAKE_SOURCE_DIR}/modules/cdt-config.cmake ${CMAKE_BINARY_DIR}/modules/cdt-config.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTMacros.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTWasmToolchain.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTMacros.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchain.cmake @ONLY)
 
 set(CDT_ROOT_DIR "_PREFIX_")
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTMacrosPackage.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTWasmToolchainPackage.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/cdt-config.cmake ${CMAKE_BINARY_DIR}/modules/cdt-config.cmake.package @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTMacrosPackage.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchainPackage.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake.package @ONLY)
 
-include(modules/LibrariesExternalProject.txt)
+include(cmake/LibrariesExternalProject.cmake)
 
-include(modules/InstallCDT.cmake)
+include(cmake/InstallCDT.cmake)
 
 configure_file(${CMAKE_SOURCE_DIR}/imports/cdt.imports.in ${CMAKE_BINARY_DIR}/cdt.imports COPYONLY)
 install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
@@ -99,8 +99,7 @@ configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md ${CMAKE_BINARY_DIR}/licenses/cdt.l
 
 
 if(ENABLE_TESTS)
-   include(modules/TestsExternalProject.txt)
-
+   include(cmake/TestsExternalProject.cmake)
    include(CTest)
    enable_testing()
    add_subdirectory(tests)
