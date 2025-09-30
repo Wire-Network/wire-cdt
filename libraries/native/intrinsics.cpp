@@ -22,6 +22,9 @@ extern "C" {
    void set_resource_limits( capi_name account, int64_t ram_bytes, int64_t net_weight, int64_t cpu_weight ) {
       return intrinsics::get().call<intrinsics::set_resource_limits>(account, ram_bytes, net_weight, cpu_weight);
    }
+   int64_t get_ram_usage( capi_name account ) {
+      return intrinsics::get().call<intrinsics::get_ram_usage>(account);
+   }
    int64_t set_proposed_producers( char *producer_data, uint32_t producer_data_size ) {
       return intrinsics::get().call<intrinsics::set_proposed_producers>(producer_data, producer_data_size);
    }

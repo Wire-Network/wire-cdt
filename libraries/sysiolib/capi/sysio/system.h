@@ -101,6 +101,15 @@ bool is_feature_activated( const struct capi_checksum256* feature_digest );
 __attribute__((sysio_wasm_import))
 capi_name get_sender( void );
 
+ /**
+  * Get the ram usage of an account
+  *
+  * @param account - name of the account whose ram usage to get.
+  * @return number of bytes currently used by the account.
+ */
+ __attribute__((sysio_wasm_import))
+ int64_t get_ram_usage( capi_name account );
+
 #ifdef __cplusplus
 }
 #endif

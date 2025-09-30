@@ -9,4 +9,5 @@ void test_system( void ) {
    current_time();
    is_feature_activated(NULL);
    get_sender();
+   get_ram_usage(0);
 }
