@@ -10,3 +10,6 @@
 [submodule "libraries/native/softfloat"]
 	path = libraries/native/softfloat
 	url = https://github.com/Wire-Network/berkeley-softfloat-3
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/Microsoft/vcpkg.git

@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.5)
 # Sanity check our source directory to make sure that we are not trying to
 # generate an in-source build, and to make
 # sure that we don't have any stray generated files lying around in the tree
-if( CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-  message(FATAL_ERROR "In-source builds are not allowed.
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+   message(FATAL_ERROR "In-source builds are not allowed.
 Please create a directory and run cmake from there, passing the path
 to this source directory as the last argument.
 This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
@@ -16,18 +16,20 @@ project(cdt)
 set(VERSION_MAJOR 4)
 set(VERSION_MINOR 1)
 set(VERSION_PATCH 0)
-set(VERSION_SUFFIX "") 
+set(VERSION_SUFFIX "")
 
-if (VERSION_SUFFIX)
+if(VERSION_SUFFIX)
    set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_SUFFIX}")
 else()
    set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 endif()
 
-set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/cdt)
+# set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/cdt)
+set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 option(ENABLE_NATIVE_COMPILER "enable native builds with the CDT toolchain" ON)
 option(ENABLE_TESTS "enable building tests" ON)
+option(ENABLE_PACKAGE "enable cpack" ON)
 
 include(GNUInstallDirs)
 
@@ -43,32 +45,32 @@ if(NOT LIBS_BUILD_TYPE)
    set(LIBS_BUILD_TYPE "Release")
 endif()
 
-include(modules/ClangExternalProject.txt)
-include(modules/ToolsExternalProject.txt)
+include(cmake/ClangExternalProject.cmake)
+include(cmake/ToolsExternalProject.cmake)
 
 set(WASM_SDK_BUILD true)
 
 ### Configure the CDTWasmToolchain.cmakes
 set(CDT_ROOT_DIR ${CMAKE_BINARY_DIR})
 
-configure_file(${CMAKE_SOURCE_DIR}/modules/cdt-config.cmake ${CMAKE_BINARY_DIR}/lib/cmake/cdt/cdt-config.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTMacros.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake ${CMAKE_BINARY_DIR}/lib/cmake/cdt/cdt-config.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTMacros.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
 
 set(CDT_ROOT_DIR ${CDT_INSTALL_PREFIX})
 
-configure_file(${CMAKE_SOURCE_DIR}/modules/cdt-config.cmake ${CMAKE_BINARY_DIR}/modules/cdt-config.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTMacros.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTWasmToolchain.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTMacros.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchain.cmake @ONLY)
 
 set(CDT_ROOT_DIR "_PREFIX_")
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTMacrosPackage.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/modules/CDTWasmToolchainPackage.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/modules/cdt-config.cmake ${CMAKE_BINARY_DIR}/modules/cdt-config.cmake.package @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTMacrosPackage.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchainPackage.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake.package @ONLY)
 
-include(modules/LibrariesExternalProject.txt)
+include(cmake/LibrariesExternalProject.cmake)
 
-include(modules/InstallCDT.cmake)
+include(cmake/InstallCDT.cmake)
 
 configure_file(${CMAKE_SOURCE_DIR}/imports/cdt.imports.in ${CMAKE_BINARY_DIR}/cdt.imports COPYONLY)
 install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
@@ -76,7 +78,6 @@ install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
 configure_file(${CMAKE_SOURCE_DIR}/scripts/ricardeos/ricardeos.py ${CMAKE_BINARY_DIR}/scripts/ricardeos.py COPYONLY)
 install(FILES ${CMAKE_BINARY_DIR}/scripts/ricardeos.py DESTINATION ${CDT_INSTALL_PREFIX}/scripts)
 
-# section for package construction
 set(VENDOR "WireNetwork")
 set(PROJECT_NAME "cdt")
 set(DESC "Toolchain and supporting tools to facilitate C/C++ development of contracts for Wire blockchains")
@@ -96,25 +97,29 @@ configure_file(${CMAKE_SOURCE_DIR}/tools/external/wabt/LICENSE ${CMAKE_BINARY_DI
 configure_file(${CMAKE_SOURCE_DIR}/tools/jsoncons/LICENSE ${CMAKE_BINARY_DIR}/licenses/jsoncons.license COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md ${CMAKE_BINARY_DIR}/licenses/cdt.license COPYONLY)
 
-include(modules/TestsExternalProject.txt)
 
-include(CTest)
-enable_testing()
-add_subdirectory(tests)
+if(ENABLE_TESTS)
+   include(cmake/TestsExternalProject.cmake)
+   include(CTest)
+   enable_testing()
+   add_subdirectory(tests)
+endif()
 
+if(ENABLE_PACKAGE)
+   # section for package construction
+   set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+   set(CPACK_PACKAGE_VENDOR "${VENDOR}")
+   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${DESC}")
+   set(CPACK_PACKAGE_VERSION "${VERSION_FULL}")
+   set(CPACK_PACKAGE_CONTACT "${EMAIL}")
 
-set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_PACKAGE_VENDOR "${VENDOR}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${DESC}")
-set(CPACK_PACKAGE_VERSION "${VERSION_FULL}")
-set(CPACK_PACKAGE_CONTACT "${EMAIL}")
+   # Optionally specify license file, URL, etc.
+   # set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+   # set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md")
+   # set(CPACK_PACKAGE_INSTALL_DIRECTORY "CDT-${VERSION_FULL}")
 
-# Optionally specify license file, URL, etc.
-# set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-# set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md")
-# set(CPACK_PACKAGE_INSTALL_DIRECTORY "CDT-${VERSION_FULL}")
+   # Define the package generators, for example, TGZ, DEB, and RPM:
+   set(CPACK_GENERATOR "DEB")
 
-# Define the package generators, for example, TGZ, DEB, and RPM:
-set(CPACK_GENERATOR "DEB")
-
-include(CPack)
+   include(CPack)
+endif()
