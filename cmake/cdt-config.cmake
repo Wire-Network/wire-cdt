@@ -4,6 +4,7 @@ endif()
 
 set(CDT_VERSION "@VERSION_FULL@")
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 list(APPEND CMAKE_MODULE_PATH ${CDT_ROOT}/lib/cmake/cdt)
 
 include(CDTMacros)
