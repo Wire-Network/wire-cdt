@@ -1,4 +1,3 @@
-
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
   "default-registry": {
@@ -10,7 +9,7 @@
     {
       "kind": "git",
       "repository": "https://github.com/wire-network/wire-vcpkg-registry",
-      "baseline": "0ceb5cc73ca439f6ac0fb8b185b82afd75070bc1",
+      "baseline": "7dc586d8cc7c5dacc5aa16e33ea7dd28fa9c5bb3",
       "packages": [
         "softfloat",
         "libsodium",

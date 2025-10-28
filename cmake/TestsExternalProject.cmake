@@ -30,29 +30,37 @@ ExternalProject_Add(
 )
 
 
-find_package(sysio QUIET)
 
-if (sysio_FOUND)
-   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(TEST_BUILD_TYPE "Debug")
-   else()
-      set(TEST_BUILD_TYPE ${CMAKE_BUILD_TYPE})
-   endif()
+if (ENABLE_INTEGRATION_TESTS)
+  message(STATUS "Building integration tests as BUILD_INTEGRATION_TESTS is ON")
 
-   string(REPLACE ";" "|" TEST_FRAMEWORK_PATH "${CMAKE_FRAMEWORK_PATH}")
-   string(REPLACE ";" "|" TEST_MODULE_PATH "${CMAKE_MODULE_PATH}")
+  find_package(sysio QUIET)
 
-   ExternalProject_Add(
-     CDTIntegrationTests
-     SOURCE_DIR "${CMAKE_SOURCE_DIR}/tests/integration"
-     BINARY_DIR "${CMAKE_BINARY_DIR}/tests/integration"
-     CMAKE_ARGS -DCMAKE_BUILD_TYPE=${TEST_BUILD_TYPE} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_FRAMEWORK_PATH=${TEST_FRAMEWORK_PATH} -DCMAKE_MODULE_PATH=${TEST_MODULE_PATH} -Dsysio_DIR=${sysio_DIR} -DLLVM_DIR=${LLVM_DIR} -DBOOST_ROOT=${BOOST_ROOT}
-     UPDATE_COMMAND ""
-     PATCH_COMMAND  ""
-     TEST_COMMAND   ""
-     INSTALL_COMMAND ""
-     BUILD_ALWAYS 1
-   )
+  if (sysio_FOUND)
+     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(TEST_BUILD_TYPE "Debug")
+     else()
+        set(TEST_BUILD_TYPE ${CMAKE_BUILD_TYPE})
+     endif()
+
+     string(REPLACE ";" "|" TEST_FRAMEWORK_PATH "${CMAKE_FRAMEWORK_PATH}")
+     string(REPLACE ";" "|" TEST_MODULE_PATH "${CMAKE_MODULE_PATH}")
+
+     ExternalProject_Add(
+       CDTIntegrationTests
+       SOURCE_DIR "${CMAKE_SOURCE_DIR}/tests/integration"
+       BINARY_DIR "${CMAKE_BINARY_DIR}/tests/integration"
+       CMAKE_ARGS -DCMAKE_BUILD_TYPE=${TEST_BUILD_TYPE} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_FRAMEWORK_PATH=${TEST_FRAMEWORK_PATH} -DCMAKE_MODULE_PATH="${TEST_MODULE_PATH};${CMAKE_MODULE_PATH}" -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" -Dsysio_DIR=${sysio_DIR} -DLLVM_DIR=${LLVM_DIR} -DBOOST_ROOT=${BOOST_ROOT}
+       UPDATE_COMMAND ""
+       PATCH_COMMAND  ""
+       TEST_COMMAND   ""
+       INSTALL_COMMAND ""
+       BUILD_ALWAYS 1
+     )
+  else()
+     message(STATUS "sysio package not found, skipping building integration tests")
+  endif()
 else()
-   message(STATUS "sysio package not found, skipping building integration tests")
+  message(STATUS "Skipping building integration tests as BUILD_INTEGRATION_TESTS is OFF")
+  return()
 endif()
