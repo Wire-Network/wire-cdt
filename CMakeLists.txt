@@ -29,6 +29,7 @@ set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 option(ENABLE_NATIVE_COMPILER "enable native builds with the CDT toolchain" ON)
 option(ENABLE_TESTS "enable building tests" ON)
+cmake_dependent_option(ENABLE_INTEGRATION_TESTS "Build integration tests" OFF "NOT ENABLE_TESTS" OFF)
 option(ENABLE_PACKAGE "enable cpack" ON)
 
 include(GNUInstallDirs)
