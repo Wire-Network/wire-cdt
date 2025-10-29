@@ -19,12 +19,10 @@ cp -R ${BUILD_DIR}/bin/* ${CDT_PREFIX}/bin || exit 1
 cp -R ${BUILD_DIR}/licenses/* ${CDT_PREFIX}/licenses || exit 1
 
 # install cmake modules
-# sed "s/_PREFIX_/\/${SPREFIX}/g" ${BUILD_DIR}/modules/CDTMacrosPackage.cmake &> ${CDT_PREFIX}/lib/cmake/${PROJECT}/CDTMacros.cmake || exit 1
-# sed "s/_PREFIX_/\/${SPREFIX}/g" ${BUILD_DIR}/modules/CDTWasmToolchainPackage.cmake &> ${CDT_PREFIX}/lib/cmake/${PROJECT}/CDTWasmToolchain.cmake || exit 1
-# sed "s/_PREFIX_/\/${SPREFIX}\/${SSUBPREFIX}/g" ${BUILD_DIR}/modules/${PROJECT}-config.cmake.package &> ${CDT_PREFIX}/lib/cmake/${PROJECT}/${PROJECT}-config.cmake || exit 1
-sed "s/_PREFIX_/\/${SPREFIX}/g" ${BUILD_DIR}/cmake/CDTMacrosPackage.cmake
-sed "s/_PREFIX_/\/${SPREFIX}/g" ${BUILD_DIR}/cmake/CDTWasmToolchainPackage.cmake
-sed "s/_PREFIX_/\/${SPREFIX}\/${SSUBPREFIX}/g" ${BUILD_DIR}/cmake/${PROJECT}-config.cmake.package
+sed "s/_PREFIX_/\/${SPREFIX}/g" ${BUILD_DIR}/cmake/CDTMacrosPackage.cmake &> ${CDT_PREFIX}/lib/cmake/${PROJECT}/CDTMacros.cmake || exit 1
+sed "s/_PREFIX_/\/${SPREFIX}/g" ${BUILD_DIR}/cmake/CDTWasmToolchainPackage.cmake &> ${CDT_PREFIX}/lib/cmake/${PROJECT}/CDTWasmToolchain.cmake || exit 1
+sed "s/_PREFIX_/\/${SPREFIX}\/${SSUBPREFIX}/g" ${BUILD_DIR}/cmake/${PROJECT}-config.cmake.package &> ${CDT_PREFIX}/lib/cmake/${PROJECT}/${PROJECT}-config.cmake || exit 1
+
 # install scripts
 cp -R ${BUILD_DIR}/scripts/* ${CDT_PREFIX}/scripts  || exit 1
 
