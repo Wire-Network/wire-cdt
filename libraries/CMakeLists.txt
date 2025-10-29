@@ -27,4 +27,5 @@ if (ENABLE_NATIVE_COMPILER)
    add_subdirectory(native)
 endif()
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/boost/include/boost/preprocessor DESTINATION ${BASE_BINARY_DIR}/include/boost)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/meta_refl/include/bluegrass DESTINATION ${BASE_BINARY_DIR}/include)
