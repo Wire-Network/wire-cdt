@@ -481,7 +481,24 @@ namespace sysio { namespace cdt {
             return;
          }
          if (!is_builtin_type(translate_type(type))) {
-            if (is_aliasing(type)) {
+            // Handle plain C++ enums by creating a typedef from enum name to its underlying storage type.
+            if (type.getTypePtr()->isEnumeralType()) {
+               const clang::EnumType* ET = llvm::dyn_cast<clang::EnumType>(type.getTypePtr());
+               if (ET) {
+                  const clang::EnumDecl* ED = ET->getDecl();
+                  // Only support unscoped enums (not enum class)
+                  if (ED && !ED->isScoped()) {
+                     abi_typedef td;
+                     td.new_type_name = get_base_type_name(type);
+                     // Use the enum's integer (underlying) type for storage mapping
+                     td.type = translate_type(ED->getIntegerType());
+                     if (!td.new_type_name.empty() && !td.type.empty()) {
+                        _abi.typedefs.insert(td);
+                     }
+                  }
+               }
+            }
+            else if (is_aliasing(type)) {
                add_typedef(type);
             }
             else if (is_template_specialization(type, {"vector", "set", "deque", "list", "optional", "binary_extension", "ignore"})) {
