@@ -1,12 +1,5 @@
 #pragma once
 
-#include <bluegrass/meta/preprocessor.hpp>
-#include <boost/preprocessor/seq/for_each.hpp>
-#include <boost/preprocessor/seq/enum.hpp>
-#include <boost/preprocessor/seq/size.hpp>
-#include <boost/preprocessor/seq/seq.hpp>
-#include <boost/preprocessor/stringize.hpp>
-
 #define SYSLIB_REFLECT_MEMBER_OP( OP, elem ) \
   OP t.elem
 
@@ -15,7 +8,6 @@
 
 #define SYSLIB_REFLECT_SEQ_NIL(x) (x)
 
-//#define SYSLIB_REFLECT_ENUM(...) BLUEGRASS_META_SEQ_ENUM(__VA_ARGS__)
 /**
  *  @defgroup serialize Serialize
  *  @ingroup core
@@ -65,13 +57,13 @@
  }
 
 #define SYSLIB_SERIALIZE_DERIVED_EMPTY( TYPE, BASE ) \
-template<typename DataStream> \
-friend DataStream& operator << ( DataStream& ds, const TYPE& t ){ \
-ds << static_cast<const BASE&>(t); \
-return ds;\
-}\
-template<typename DataStream> \
-friend DataStream& operator >> ( DataStream& ds, TYPE& t ){ \
-ds >> static_cast<BASE&>(t); \
-return ds;\
-}
+ template<typename DataStream> \
+ friend DataStream& operator << ( DataStream& ds, const TYPE& t ){ \
+    ds << static_cast<const BASE&>(t); \
+    return ds;\
+ }\
+ template<typename DataStream> \
+ friend DataStream& operator >> ( DataStream& ds, TYPE& t ){ \
+    ds >> static_cast<BASE&>(t); \
+    return ds;\
+ }
