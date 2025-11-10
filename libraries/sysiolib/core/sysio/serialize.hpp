@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bluegrass/meta/preprocessor.hpp>
 #define SYSLIB_REFLECT_MEMBER_OP( OP, elem ) \
   OP t.elem
 

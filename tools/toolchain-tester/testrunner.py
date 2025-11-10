@@ -1,6 +1,7 @@
 from multiprocessing import Pool
 from typing import Dict, List, NamedTuple, Optional
 
+# noinspection PyPep8Naming
 from printer import Printer as P
 
 from errors import TestFailure

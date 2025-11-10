@@ -1,0 +1,9 @@
+{
+  "tests": [
+    {
+      "expected": {
+        "abi": "{\n    \"____comment\": \"This file was generated with sysio-abigen. DO NOT EDIT \",\n    \"version\": \"sysio::abi/1.2\",\n    \"types\": [\n        {\n            \"new_type_name\": \"abigen_test_enum\",\n            \"type\": \"uint8\"\n        }\n    ],\n    \"structs\": [\n        {\n            \"name\": \"echo\",\n            \"base\": \"\",\n            \"fields\": [\n                {\n                    \"name\": \"user\",\n                    \"type\": \"name\"\n                },\n                {\n                    \"name\": \"abigen_test_enum_value\",\n                    \"type\": \"abigen_test_enum\"\n                }\n            ]\n        }\n    ],\n    \"actions\": [\n        {\n            \"name\": \"echo\",\n            \"type\": \"echo\",\n            \"ricardian_contract\": \"\"\n        }\n    ],\n    \"tables\": [],\n    \"ricardian_clauses\": [],\n    \"variants\": [],\n    \"action_results\": []\n}"
+      }
+    }
+  ]
+}
