@@ -7,6 +7,7 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import List
 
+# noinspection PyPep8Naming
 from printer import Printer as P
 from printer import print_test_results, print_test_results_machine
 
