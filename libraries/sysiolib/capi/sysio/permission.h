@@ -58,18 +58,6 @@ check_permission_authorization( capi_name account,
                               );
 
 /**
- *  Returns the last used time of a permission
- *
- *  @param account    - the account owner of the permission
- *  @param permission - the name of the permission
- *
- *  @return the last used time (in microseconds since Unix epoch) of the permission
- */
-__attribute__((sysio_wasm_import))
-int64_t get_permission_last_used( capi_name account, capi_name permission );
-
-
-/**
  *  Returns the creation time of an account
  *
  *  @param account - the account

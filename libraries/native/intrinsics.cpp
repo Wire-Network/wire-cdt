@@ -274,9 +274,6 @@ extern "C" {
                                   ) {
       return intrinsics::get().call<intrinsics::check_permission_authorization>(account, permission, pubkeys_data, pubkeys_size, perms_data, perms_size, delay_us);
    }
-   int64_t get_permission_last_used( capi_name account, capi_name permission ) {
-      return intrinsics::get().call<intrinsics::get_permission_last_used>(account, permission);
-   }
    int64_t get_account_creation_time( capi_name account ) {
       return intrinsics::get().call<intrinsics::get_account_creation_time>(account);
    }

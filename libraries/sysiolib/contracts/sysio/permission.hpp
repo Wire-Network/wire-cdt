@@ -25,9 +25,6 @@ namespace sysio {
                                                  const char*, uint32_t,
                                                  uint64_t);
          __attribute__((sysio_wasm_import))
-         int64_t get_permission_last_used(uint64_t, uint64_t);
-
-         __attribute__((sysio_wasm_import))
          int64_t get_account_creation_time(uint64_t);
       }
    }
@@ -171,23 +168,6 @@ namespace sysio {
                                                  );
 
       return (res > 0);
-   }
-
-   /**
-    *  Returns the last used time of a permission
-    *
-    *  @ingroup permission
-    *
-    *  @param account    - the account owner of the permission
-    *  @param permission - the name of the permission
-    *
-    *  @return the last used time (in microseconds since Unix epoch) of the permission
-    */
-   time_point get_permission_last_used( name account, name permission ) {
-      return time_point(
-               microseconds(
-                  internal_use_do_not_use::get_permission_last_used(account.value, permission.value)));
-
    }
 
    /**
