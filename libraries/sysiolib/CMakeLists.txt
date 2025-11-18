@@ -4,6 +4,7 @@ file(GLOB HEADERS "*.hpp"
 add_library(sysio
             sysiolib.cpp
             crypto.cpp
+            base64.cpp
             ${HEADERS})
 
 add_library(sysio_malloc
@@ -40,6 +41,7 @@ if (ENABLE_NATIVE_COMPILER)
                       sysiolib.cpp
                       crypto.cpp
                       malloc.cpp
+                      base64.cpp
                       ${HEADERS})
 
    add_dependencies( native_sysio sysio )

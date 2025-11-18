@@ -1,4 +1,5 @@
 #include <sysio/privileged.h>
+#include <sysio/instant_finality.h>
 #include <stdint.h>
 
 void test_privileged( void ) {
@@ -11,4 +12,5 @@ void test_privileged( void ) {
    set_blockchain_parameters_packed(NULL, 0);
    get_blockchain_parameters_packed(NULL, 0);
    preactivate_feature(NULL);
+   set_finalizers(0, NULL, 0);
 }
