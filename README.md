@@ -30,6 +30,7 @@ The instructions below assume that you are building on Ubuntu 20.04. and 22.04.
 sudo apt-get update && sudo apt-get install   \
         build-essential             \
         clang                       \
+        clang-tidy                  \
         cmake                       \
         git                         \
         libxml2-dev                 \

@@ -170,7 +170,6 @@ public:
     {
         using std::swap;
         swap(lhs.it_,rhs.it_);
-        swap(lhs.empty_,rhs.empty_);
     }
 
 private:
@@ -248,8 +247,6 @@ public:
     {
         using std::swap;
         swap(lhs.it_,rhs.it_);
-        // FIXME: Is this required
-        // swap(lhs.empty_,rhs.empty_);
     }
 
 private:

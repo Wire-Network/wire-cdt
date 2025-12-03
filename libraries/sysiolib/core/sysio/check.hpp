@@ -22,6 +22,15 @@ namespace sysio {
       }
    }
 
+
+   /**
+    * Return codes returned by host functions
+    */
+   enum return_code : int32_t {
+      failure = -1,
+      success = 0
+   };
+
    /**
     *  @defgroup system System
     *  @ingroup core
@@ -53,7 +62,7 @@ namespace sysio {
     *
     *  Example:
     *  @code
-    *  eosio::check(eosio::current_time_point() >= time, [&] {
+    *  sysio::check(sysio::current_time_point() >= time, [&] {
     *     std::string err_msg = "Upgrade failed: Account '";
     *     err_msg += account.to_string();
     *     err_msg += "' disabled until ";

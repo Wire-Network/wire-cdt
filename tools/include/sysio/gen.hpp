@@ -894,7 +894,8 @@ struct generation_utils {
          "db_idx_long_double_update",
          "db_idx_long_double_remove",
          "send_inline",
-         "send_context_free_inline"
+         "send_context_free_inline",
+         "set_finalizers"
       };
 
       return write_host_funcs.count(func_decl->getNameInfo().getAsString()) >= 1;

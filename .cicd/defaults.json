@@ -1,0 +1,6 @@
+{
+    "antelope-spring-dev":{
+       "target":"main",
+       "prerelease":false
+    }
+ }
