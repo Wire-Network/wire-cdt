@@ -144,6 +144,12 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
         run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+
           # Determine overall status
           if [[ "${{ needs.discover.result }}" == "success" && \
                 ("${{ needs.build-platforms.result }}" == "success" || "${{ needs.build-platforms.result }}" == "skipped") && \
@@ -161,6 +167,12 @@ jobs:
           [[ "${{ needs.build-platforms.result }}" != "success" && "${{ needs.build-platforms.result }}" != "skipped" ]] && JOB_DETAILS="${JOB_DETAILS}\n- **Build Platforms**: ❌ ${{ needs.build-platforms.result }}"
           [[ "${{ needs.Build.result }}" != "success" ]] && JOB_DETAILS="${JOB_DETAILS}\n- **Build & Test**: ❌ ${{ needs.Build.result }}"
 
+          # Add PR-specific info if applicable
+          PR_INFO=""
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_INFO="\n**PR**: [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})"
+          fi
+
           # Create message payload
           PAYLOAD=$(cat <<EOF
           {
@@ -170,7 +182,7 @@ jobs:
             "attachments": [{
               "color": "$COLOR",
               "title": "$STATUS: CDT Build & Test",
-              "text": "**Repository**: ${{ github.repository }}\n**Branch**: ${{ github.ref_name }}\n**Commit**: [\`${GITHUB_SHA::7}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n**Triggered by**: ${{ github.actor }}\n**Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})${JOB_DETAILS}"
+              "text": "**Repository**: ${{ github.repository }}\n**Branch**: $BRANCH${PR_INFO}\n**Commit**: [\`${GITHUB_SHA::7}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n**Triggered by**: ${{ github.actor }}\n**Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})${JOB_DETAILS}"
             }]
           }
           EOF
