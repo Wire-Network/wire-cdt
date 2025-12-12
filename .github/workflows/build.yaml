@@ -62,7 +62,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu22, ubuntu24]
+        platform: [ubuntu24]
     runs-on: ubuntu-24.04
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
     steps:
@@ -133,3 +133,61 @@ jobs:
         #   with:
         #     name: cdt_ubuntu_package_amd64
         #     path: build/packages/cdt*amd64.deb
+  notification:
+    name: Send Notification
+    needs: [discover, build-platforms, Build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Mattermost Notification
+        if: always()
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+
+          # Determine overall status
+          if [[ "${{ needs.discover.result }}" == "success" && \
+                ("${{ needs.build-platforms.result }}" == "success" || "${{ needs.build-platforms.result }}" == "skipped") && \
+                "${{ needs.Build.result }}" == "success" ]]; then
+            STATUS="✅ SUCCESS"
+            COLOR="#00FF00"
+          else
+            STATUS="❌ FAILURE"
+            COLOR="#FF0000"
+          fi
+
+          # Build job status details
+          JOB_DETAILS=""
+          [[ "${{ needs.discover.result }}" != "success" ]] && JOB_DETAILS="${JOB_DETAILS}\n- **Discover Platforms**: ❌ ${{ needs.discover.result }}"
+          [[ "${{ needs.build-platforms.result }}" != "success" && "${{ needs.build-platforms.result }}" != "skipped" ]] && JOB_DETAILS="${JOB_DETAILS}\n- **Build Platforms**: ❌ ${{ needs.build-platforms.result }}"
+          [[ "${{ needs.Build.result }}" != "success" ]] && JOB_DETAILS="${JOB_DETAILS}\n- **Build & Test**: ❌ ${{ needs.Build.result }}"
+
+          # Add PR-specific info if applicable
+          PR_INFO=""
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_INFO="\n**PR**: [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})"
+          fi
+
+          # Create message payload
+          PAYLOAD=$(cat <<EOF
+          {
+            "channel": "cicd-notifications",
+            "username": "GitHub Actions",
+            "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+            "attachments": [{
+              "color": "$COLOR",
+              "title": "$STATUS: CDT Build & Test",
+              "text": "**Repository**: ${{ github.repository }}\n**Branch**: $BRANCH${PR_INFO}\n**Commit**: [\`${GITHUB_SHA::7}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n**Triggered by**: ${{ github.actor }}\n**Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})${JOB_DETAILS}"
+            }]
+          }
+          EOF
+          )
+
+          curl -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
