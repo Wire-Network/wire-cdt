@@ -85,10 +85,19 @@ set(DESC "Toolchain and supporting tools to facilitate C/C++ development of cont
 set(URL "https://github.com/Wire-Network/wire-cdt")
 set(EMAIL "support@wire.network")
 configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_package.sh.in ${CMAKE_BINARY_DIR}/packages/generate_package.sh @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_deb.sh ${CMAKE_BINARY_DIR}/packages/generate_deb.sh COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_bottle.sh ${CMAKE_BINARY_DIR}/packages/generate_bottle.sh COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_rpm.sh ${CMAKE_BINARY_DIR}/packages/generate_rpm.sh COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_tarball.sh ${CMAKE_BINARY_DIR}/packages/generate_tarball.sh COPYONLY)
+file(CHMOD ${CMAKE_BINARY_DIR}/packages/generate_package.sh
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE)
+file(COPY
+        ${CMAKE_SOURCE_DIR}/scripts/generate_deb.sh
+        ${CMAKE_SOURCE_DIR}/scripts/generate_bottle.sh
+        ${CMAKE_SOURCE_DIR}/scripts/generate_rpm.sh
+        ${CMAKE_SOURCE_DIR}/scripts/generate_tarball.sh
+        DESTINATION ${CMAKE_BINARY_DIR}/packages
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE)
 
 # add licenses
 configure_file(${CMAKE_SOURCE_DIR}/cdt-llvm/LICENSE.TXT ${CMAKE_BINARY_DIR}/licenses/llvm.license COPYONLY)
