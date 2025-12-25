@@ -55,7 +55,7 @@ jobs:
           push: true
           tags: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
           file: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].dockerfile}}
-  Build:
+  build:
     name: Build & Test
     needs: [discover, build-platforms]
     if: always() && needs.discover.result == 'success' && (needs.build-platforms.result == 'success' || needs.build-platforms.result == 'skipped')
@@ -135,7 +135,7 @@ jobs:
         #     path: build/packages/cdt*amd64.deb
   notification:
     name: Send Notification
-    needs: [discover, build-platforms, Build]
+    needs: [discover, build]
     if: always()
     runs-on: ubuntu-latest
     steps:
