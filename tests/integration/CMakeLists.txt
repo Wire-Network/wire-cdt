@@ -12,11 +12,11 @@ get_filename_component(_SYSIO_BUILD_DIR "${_SYSIO_LIB_DIR}" DIRECTORY)    # .../
 get_filename_component(_SYSIO_SRC_DIR "${_SYSIO_BUILD_DIR}" DIRECTORY)    # .../wire-sysio
 if (EXISTS "${_SYSIO_SRC_DIR}/libraries/chain/include")
     set(SYSIO_TESTER_EXTRA_INCLUDE_DIRS
-            "${_SYSIO_SRC_DIR}/libraries/chain/include;${_SYSIO_BUILD_DIR}/libraries/chain/include;${_SYSIO_SRC_DIR}/libraries/chaindb/include;${_SYSIO_SRC_DIR}/libraries/libfc/include;${_SYSIO_SRC_DIR}/libraries/testing/include"
+            "${_SYSIO_SRC_DIR}/libraries/chain/include;${_SYSIO_BUILD_DIR}/libraries/chain/include;${_SYSIO_SRC_DIR}/libraries/chaindb/include;${_SYSIO_SRC_DIR}/libraries/libfc/include;${_SYSIO_SRC_DIR}/libraries/libfc-lite/include;${_SYSIO_SRC_DIR}/libraries/testing/include"
             CACHE INTERNAL "Extra include directories for SysioTester")
     # Help SysioTester locate build-tree libraries (when not installed yet)
     set(SYSIO_TESTER_EXTRA_LIBRARY_DIRS
-            "${_SYSIO_BUILD_DIR}/libraries/chain;${_SYSIO_BUILD_DIR}/libraries/libfc;${_SYSIO_BUILD_DIR}/libraries/chaindb;${_SYSIO_BUILD_DIR}/libraries/builtins;${_SYSIO_BUILD_DIR}/libraries/testing;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WAST;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WASM;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/IR;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/Logging;${_SYSIO_BUILD_DIR}/vcpkg_installed/x64-linux/debug/lib"
+            "${_SYSIO_BUILD_DIR}/libraries/chain;${_SYSIO_BUILD_DIR}/libraries/libfc;${_SYSIO_BUILD_DIR}/libraries/libfc-lite;${_SYSIO_BUILD_DIR}/libraries/chaindb;${_SYSIO_BUILD_DIR}/libraries/builtins;${_SYSIO_BUILD_DIR}/libraries/testing;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WAST;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WASM;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/IR;${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/Logging;${_SYSIO_BUILD_DIR}/vcpkg_installed/x64-linux/debug/lib"
             CACHE INTERNAL "Extra library directories for SysioTester")
     # Workaround older generated SysioTester.cmake that still consumes SYSIO_TESTER_ATOMIC_LIB
     set(SYSIO_TESTER_ATOMIC_LIB atomic CACHE INTERNAL "Atomic lib name for SysioTester fallback")

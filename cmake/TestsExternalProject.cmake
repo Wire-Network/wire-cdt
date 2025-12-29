@@ -82,6 +82,7 @@ if (ENABLE_INTEGRATION_TESTS)
         get_filename_component(_SYSIO_CMAKE_DIR "${sysio_DIR}" DIRECTORY)         # .../lib/cmake
         get_filename_component(_SYSIO_LIB_DIR "${_SYSIO_CMAKE_DIR}" DIRECTORY)    # .../lib
         get_filename_component(_SYSIO_BUILD_DIR "${_SYSIO_LIB_DIR}" DIRECTORY)    # .../cmake-build-*
+        get_filename_component(_SYSIO_SRC_DIR "${_SYSIO_BUILD_DIR}" DIRECTORY)    # .../wire-sysio
         set(_SYSIO_VCPKG_BASE "${_SYSIO_BUILD_DIR}/vcpkg_installed/x64-linux")
         if (EXISTS "${_SYSIO_VCPKG_BASE}")
             set(SYSIO_VCPKG_PREFIX "${_SYSIO_VCPKG_BASE}")
@@ -114,8 +115,8 @@ if (ENABLE_INTEGRATION_TESTS)
             $<$<BOOL:${VCPKG_INCLUDE_DIR}>:-DBOOST_INCLUDEDIR:PATH=${VCPKG_INCLUDE_DIR}>
             $<$<BOOL:${SYSIO_VCPKG_INCLUDE}>:-DBOOST_INCLUDEDIR:PATH=${SYSIO_VCPKG_INCLUDE}>
             # Provide SysioTester with the extra include/library dirs derived from sysio_DIR
-            $<$<BOOL:${_SYSIO_BUILD_DIR}>:-DSYSIO_TESTER_EXTRA_INCLUDE_DIRS:PATH=${_SYSIO_SRC_DIR}/libraries/chain/include|${_SYSIO_BUILD_DIR}/libraries/chain/include|${_SYSIO_SRC_DIR}/libraries/chaindb/include|${_SYSIO_SRC_DIR}/libraries/libfc/include|${_SYSIO_SRC_DIR}/libraries/testing/include>
-            $<$<BOOL:${_SYSIO_BUILD_DIR}>:-DSYSIO_TESTER_EXTRA_LIBRARY_DIRS:PATH=${_SYSIO_BUILD_DIR}/libraries/chain|${_SYSIO_BUILD_DIR}/libraries/libfc|${_SYSIO_BUILD_DIR}/libraries/chaindb|${_SYSIO_BUILD_DIR}/libraries/builtins|${_SYSIO_BUILD_DIR}/libraries/testing|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WAST|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WASM|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/IR|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/Logging|${_SYSIO_BUILD_DIR}/vcpkg_installed/x64-linux/debug/lib>
+            $<$<BOOL:${_SYSIO_BUILD_DIR}>:-DSYSIO_TESTER_EXTRA_INCLUDE_DIRS:PATH=${_SYSIO_SRC_DIR}/libraries/chain/include|${_SYSIO_BUILD_DIR}/libraries/chain/include|${_SYSIO_SRC_DIR}/libraries/chaindb/include|${_SYSIO_SRC_DIR}/libraries/libfc/include|${_SYSIO_SRC_DIR}/libraries/libfc-lite/include|${_SYSIO_SRC_DIR}/libraries/testing/include>
+            $<$<BOOL:${_SYSIO_BUILD_DIR}>:-DSYSIO_TESTER_EXTRA_LIBRARY_DIRS:PATH=${_SYSIO_BUILD_DIR}/libraries/chain|${_SYSIO_BUILD_DIR}/libraries/libfc|${_SYSIO_BUILD_DIR}/libraries/libfc-lite|${_SYSIO_BUILD_DIR}/libraries/chaindb|${_SYSIO_BUILD_DIR}/libraries/builtins|${_SYSIO_BUILD_DIR}/libraries/testing|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WAST|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/WASM|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/IR|${_SYSIO_BUILD_DIR}/libraries/wasm-jit/Source/Logging|${_SYSIO_BUILD_DIR}/vcpkg_installed/x64-linux/debug/lib>
             -DBoost_NO_BOOST_CMAKE:BOOL=ON
             -DBoost_USE_STATIC_LIBS:BOOL=ON
             -DBoost_USE_MULTITHREADED:BOOL=ON
