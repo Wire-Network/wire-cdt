@@ -399,7 +399,7 @@ SYSIO_TEST_END
 
 // Definitions in `sysio.cdt/libraries/sysio/time.hpp`
 SYSIO_TEST_BEGIN(block_timestamp_type_test)
-   static const int64_t bt_epoch{946684800000LL};
+   static const int64_t bt_epoch{1735689600000ll};
 
    static const microseconds ms0{bt_epoch*1000};
    static const microseconds ms1{bt_epoch*1000+500000};
@@ -502,13 +502,13 @@ SYSIO_TEST_BEGIN(block_timestamp_type_test)
 
    // --------------------------------------------------------------------
    // static block_timestamp from_iso_string()
-   CHECK_EQUAL( block_timestamp::from_iso_string("2020-01-01T00:00:00").to_time_point().elapsed.count(), 1577836800000000LL);
+   CHECK_EQUAL( block_timestamp::from_iso_string("2025-01-01T00:00:00").to_time_point().elapsed.count(), 1735689600000000LL);
    CHECK_EQUAL( block_timestamp::from_iso_string("2038-01-19T03:14:07").to_time_point().elapsed.count(), 2147483647000000LL);
    CHECK_ASSERT( "date parsing failed", [](){ block_timestamp::from_iso_string("2010-12-08T00:00:99"); });
 
    // --------------------------------------------------------------------
    // std::string to_string()
-   CHECK_EQUAL( block_timestamp{ time_point{ microseconds{1577836800000000LL} } }.to_string(), "2020-01-01T00:00:00");
+   CHECK_EQUAL( block_timestamp{ time_point{ microseconds{1735689600000000LL} } }.to_string(), "2025-01-01T00:00:00");
    CHECK_EQUAL( block_timestamp{ time_point{ microseconds{2147483647000000LL} } }.to_string(), "2038-01-19T03:14:07");
 SYSIO_TEST_END
 
