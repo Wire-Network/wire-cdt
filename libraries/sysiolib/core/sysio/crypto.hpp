@@ -95,18 +95,28 @@ namespace sysio {
    using ed_public_key = std::array<char, 32>;
 
    /**
+    * SYSIO BLS public key data
+    *
+    * Fixed size representation of a BLS public key
+    *
+    * @ingroup public_key
+    */
+   using bls_public_key = std::array<char, 96>;
+
+   /**
     *  SYSIO Public Key
     *
     *  A public key is a variant of
     *   0 : a ECC K1 public key
     *   1 : a ECC R1 public key
-    *   2 : a WebAuthN public key (requires the host chain to activate the WEBAUTHN_KEY consensus upgrade)
+    *   2 : a WebAuthN public key
     *   3 : a ECC EM public key
     *   4 : a ED25519 public key
+    *   5 : a BLS public key
     *
     *  @ingroup public_key
     */
-   using public_key = std::variant<ecc_public_key, ecc_public_key, webauthn_public_key, ecc_public_key, ed_public_key>;
+   using public_key = std::variant<ecc_public_key, ecc_public_key, webauthn_public_key, ecc_public_key, ed_public_key, bls_public_key>;
 
 
    /// @cond IMPLEMENTATIONS
