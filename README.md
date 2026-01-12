@@ -10,198 +10,70 @@ The `master` branch is the latest stable branch.
 
 We currently support the following operating systems.
 
-| **Operating Systems**           |
-|---------------------------------|
-| Ubuntu 22.04 Jammy              |
-| Ubuntu 20.04 Focal              |
-| Ubuntu 18.04 Bionic             |
+| **Operating Systems** |
+|-----------------------|
+| Ubuntu 24.04 Jammy    |
 
 ## Installation
 
-In the future, we plan to support the installation of Debian packages directly from our [Release page](https://github.com/Wire-Network/wire-cdt/releases), providing a more streamlined and convenient setup process. However, for the time being, installation requires **building the software from source**.
+In the future, we plan to support downloading Debian packages directly from our [release page](https://github.com/Wire-Network/wire-cdt/releases), providing a more streamlined and convenient setup process. However, for the time being, installation requires *building the software from source*.
 
-### Building from source
+Finally, verify Wire CDT was installed correctly:
 
-The instructions below assume that you are building on Ubuntu 20.04. and 22.04.
-
-### Install dependencies
-
-```sh
-sudo apt-get update && sudo apt-get install   \
-        build-essential             \
-        clang                       \
-        clang-tidy                  \
-        cmake                       \
-        git                         \
-        libxml2-dev                 \
-        opam ocaml-interp           \
-        python3                     \
-        python3-pip                 \
-        time
+```bash
+cdt-cpp --version
 ```
 
-```sh
-python3 -m pip install pygments
+You should see version information with no errors. For example:
+
+```
+Wire CDT version 4.x.x
 ```
 
----
+## Building from source
 
-#### Optional - Build with integration tests
+Follow the instructions in [BUILD.md](./BUILD.md) to build Wire CDT from source.
 
-Integration tests require access to a build of [Wire Sysio](https://github.com/Wire-Network/wire-sysio).
+## Testing
 
-If you do not wish to build Wire Sysio, you can skip this section and continue to [Build CDT](#build-cdt). Otherwise, follow the instructions below before running `cmake`.
+Wire CDT supports the following test suites:
 
-First, ensure that Wire Sysio has been built from source (see [README](https://github.com/Wire-Network/wire-sysio/wire_sysio#building-from-source) for details) and identify the build path, e.g. `/path/to/wire-sysio/build/`.
+| Test Suite                              | Test Type            | Notes                                                                                    |
+|-----------------------------------------|:--------------------:|------------------------------------------------------------------------------------------|
+| [Unit tests](#unit-tests)               | Unit tests           | Fast unit tests covering core functionality                                              |
+| [Integration tests](#integration-tests) | Integration          | Tests requiring Wire Sysio build; optional but recommended if developing contracts       |
 
-Then, execute the following command in the same terminal session that you will use to build CDT:
+When building from source, we recommend running at least the [unit tests](#unit-tests).
 
-```sh
-export sysio_DIR=/path/to/wire-sysio/build/lib/cmake/sysio
-```
+#### Unit Tests
 
-Now you can continue with the steps to build CDT as described. When you run `cmake` make sure that it does not report `sysio package not found`. If it does, this means CDT was not able to find a build of Wire Sysio at the specified path in `sysio_DIR` and will therefore continue without building the integration tests.
+The unit test suite consists of tests that verify core CDT functionality without external dependencies.
 
+You can invoke them by running `ctest` from a terminal in your build directory:
 
-### ccache
-
-If issues persist with ccache when building CDT, you can disable ccache:
-
-```sh
-export CCACHE_DISABLE=1
-```
-
----
-
-### Build CDT
-
-> [!WARNING]  
-> **About Compilation Jobs (`-j` flag)**:
->
-> When building C/C++ software often the build is performed in > parallel via a command such as `make -j $(nproc)` which uses the > number of CPU cores as the number of compilation jobs to perform > simultaneously. However, be aware that some compilation units (.cpp > files) in CDT are extremely complex and can consume a large amount > of memory to compile. If you are running into issues due to amount > of memory available on your build host, you may need to reduce the > level of parallelization used for the build. For example, instead of > `make -j $(nproc)` you can try `make -j2`. Failures due to memory > exhaustion will typically but not always manifest as compiler > crashes.
-
-Use the commands below to clone this repository along with its submodules, set up the build environment, and compile the project:
-
-```sh
-git clone --recursive https://github.com/Wire-Network/wire-cdt && cd wire-cdt && mkdir build && cd build 
-cmake ..
-make -j $(nproc)
-```
-
-The binaries will be located at in the `build/bin` directory.
-
-You can export the path to the directory to your `PATH` environment variable which allows you to conveniently use them to compile contracts without installing CDT globally.
-
-Alternatively, you can use CMake toolchain file located in `build/lib/cmake/CDTWasmToolchain.cmake` to compile the contracts in your CMake project, which also allows you to avoid installing CDT globally.
-
-If you would prefer to install CDT globally, see the section [Install CDT](#install-cdt) below.
-
-
-> [!NOTE]
-> If you wish to build with integration tests, you cmake command would be: 
-> `cmake -Dsysio_DIR=/home/svetla/repos/leap-5-rename/leap/build/lib/cmake/sysio ..`
->
-
-#### Build CDT in Debug mode
-
-To build CDT in debug mode (with debug symbols) you need to add the following flags to cmake command:
-```sh
-cmake -DCMAKE_BUILD_TYPE="Debug" -DTOOLS_BUILD_TYPE="Debug" -DLIBS_BUILD_TYPE="Debug" ..
-```
-
-
-### Generate the `.deb`
-```sh
-cd build/packages && bash ./generate_package.sh deb ubuntu-22.04 amd64
-```
-
-### Run tests
-
-#### Run unit tests
-
-```sh
-cd build
-
+```bash
 ctest
 ```
 
-#### Run integration tests (if CDT was build with integration tests)
+#### Integration Tests
 
-```sh
+The integration test suite requires a built version of [Wire Sysio](https://github.com/Wire-Network/wire-sysio) and tests contract compilation and execution end-to-end.
+
+To build and run integration tests, you must first build Wire Sysio from source and set the `sysio_DIR` environment variable before configuring the CDT build. You also need to pass `ENABLE_INTEGRATION_TESTS=ON` to cmake. See [BUILD.md](./BUILD.md) for detailed instructions.
+
+You can invoke them by running `ctest` from a terminal in your integration tests directory:
+
+```bash
 cd build/tests/integration
-
 ctest
 ```
-
-### Install CDT
-
-Installing CDT globally on your system will install the following tools in a location accessible to your `PATH`:
-
-* cdt-abidiff
-* cdt-ar
-* cdt-cc
-* cdt-cpp
-* cdt-init
-* cdt-ld
-* cdt-nm
-* cdt-objcopy
-* cdt-objdump
-* cdt-ranlib
-* cdt-readelf
-* cdt-strip
-* sysio-pp
-* sysio-wasm2wast
-* sysio-wast2wasm
-
-It will also install CMake files for CDT accessible within a `cmake/cdt` directory located within your system's `lib` directory.
-
-#### Manual installation
-
-One option for installing CDT globally is via `make install`. From within the `build` directory, run the following command:
-
-```sh
-sudo make install
-```
-
-#### Package installation
-
-A better option for installing CDT globally is to generate a package and then install the package. This makes uninstalling CDT much easier.
-
-From within the `build` directory, run the following commands to generate a Debian package:
-
-```sh
-cd packages
-bash ./generate_package.sh deb ubuntu-20.04 amd64
-sudo apt install ./cdt_*_amd64.deb
-```
-
-### Uninstall CDT
-
-#### Uninstall CDT(if installed via `make install`)
-
-```sh
-sudo rm -fr /usr/local/cdt
-sudo rm -fr /usr/local/lib/cmake/cdt
-sudo rm /usr/local/bin/sysio-*
-sudo rm /usr/local/bin/cdt-*
-```
-
-#### Uninstall CDT( if installed via `apt install`)
-
-```sh
-sudo apt remove cdt
-```
-
-## License
-
-[FSL-1.1-Apache-2.0](./LICENSE.md)
 
 ---
 
 <!-- markdownlint-disable MD033 -->
 <table>
   <tr>
-    <td><img src="https://wire.foundation/favicon.ico" alt="Wire Network" width="50"/></td>
+    <td><img src="https://bucket.gitgo.app/frontend-assets/icons/favicon.png" alt="Wire Network" width="50"/></td>
     <td>
       <strong>Wire Network</strong><br>
       <a href="https://www.wire.network/">Website</a> |
