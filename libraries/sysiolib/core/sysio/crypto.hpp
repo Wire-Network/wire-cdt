@@ -92,7 +92,7 @@ namespace sysio {
     * 
     * @ingroup public_key
     */
-   using ed_public_key = std::array<unsigned char, 32>;
+   using ed_public_key = std::array<uint8_t, 32>;
 
    /**
     * SYSIO BLS public key data
@@ -252,7 +252,7 @@ namespace sysio {
     * 
     * @ingroup signature
     */
-   using ed_signature = std::array<unsigned char, 64>;
+   using ed_signature = std::array<uint8_t, 64>;
 
    /**
     * SYSIO BLS signature data
