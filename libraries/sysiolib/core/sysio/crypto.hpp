@@ -92,7 +92,7 @@ namespace sysio {
     * 
     * @ingroup public_key
     */
-   using ed_public_key = std::array<char, 32>;
+   using ed_public_key = std::array<unsigned char, 32>;
 
    /**
     * SYSIO BLS public key data
@@ -101,7 +101,7 @@ namespace sysio {
     *
     * @ingroup public_key
     */
-   using bls_public_key_ptr = std::shared_ptr<std::array<char, 96>>;
+   using bls_public_key = std::shared_ptr<std::array<uint8_t, 96>>;
 
    /// @cond IMPLEMENTATIONS
 
@@ -115,7 +115,7 @@ namespace sysio {
     *  @return DataStream& - Reference to the datastream
     */
    template<typename DataStream>
-   inline DataStream& operator<<(DataStream& ds, const sysio::bls_public_key_ptr& pubkey) {
+   inline DataStream& operator<<(DataStream& ds, const sysio::bls_public_key& pubkey) {
       ds << !!pubkey;
       if (!!pubkey) ds << *pubkey;
       return ds;
@@ -131,7 +131,7 @@ namespace sysio {
     *  @return DataStream& - Reference to the datastream
     */
    template<typename DataStream>
-   inline DataStream& operator>>(DataStream& ds, sysio::bls_public_key_ptr& pubkey) {
+   inline DataStream& operator>>(DataStream& ds, sysio::bls_public_key& pubkey) {
       bool b;
       ds >> b;
       if (b) {
@@ -157,7 +157,7 @@ namespace sysio {
     *
     *  @ingroup public_key
     */
-   using public_key = std::variant<ecc_public_key, ecc_public_key, webauthn_public_key, ecc_public_key, ed_public_key, bls_public_key_ptr>;
+   using public_key = std::variant<ecc_public_key, ecc_public_key, webauthn_public_key, ecc_public_key, ed_public_key, bls_public_key>;
 
 
    /// @cond IMPLEMENTATIONS
@@ -252,7 +252,7 @@ namespace sysio {
     * 
     * @ingroup signature
     */
-   using ed_signature = std::array<char, 64>;
+   using ed_signature = std::array<unsigned char, 64>;
 
    /**
     * SYSIO BLS signature data
@@ -261,7 +261,7 @@ namespace sysio {
     *
     * @ingroup signature
     */
-   using bls_signature_ptr = std::shared_ptr<std::array<char, 192>>;
+   using bls_signature = std::shared_ptr<std::array<uint8_t, 192>>;
 
    /// @cond IMPLEMENTATIONS
 
@@ -275,7 +275,7 @@ namespace sysio {
     *  @return DataStream& - Reference to the datastream
     */
    template<typename DataStream>
-   inline DataStream& operator<<(DataStream& ds, const sysio::bls_signature_ptr& sig) {
+   inline DataStream& operator<<(DataStream& ds, const sysio::bls_signature& sig) {
       ds << !!sig;
       if (!!sig) ds << *sig;
       return ds;
@@ -291,7 +291,7 @@ namespace sysio {
     *  @return DataStream& - Reference to the datastream
     */
    template<typename DataStream>
-   inline DataStream& operator>>(DataStream& ds, sysio::bls_signature_ptr& sig) {
+   inline DataStream& operator>>(DataStream& ds, sysio::bls_signature& sig) {
       bool b;
       ds >> b;
       if (b) {
@@ -317,7 +317,7 @@ namespace sysio {
     *
     *  @ingroup signature
     */
-   using signature = std::variant<ecc_signature, ecc_signature, webauthn_signature, ecc_signature, ed_signature, bls_signature_ptr>;
+   using signature = std::variant<ecc_signature, ecc_signature, webauthn_signature, ecc_signature, ed_signature, bls_signature>;
 
    /// @cond IMPLEMENTATIONS
 
