@@ -92,16 +92,57 @@ namespace sysio {
     * 
     * @ingroup public_key
     */
-   using ed_public_key = std::array<char, 32>;
+   using ed_public_key = std::array<uint8_t, 32>;
 
    /**
     * SYSIO BLS public key data
     *
-    * Fixed size representation of a BLS public key
+    * Representation of a BLS public key
     *
     * @ingroup public_key
     */
-   using bls_public_key = std::array<char, 96>;
+   using bls_public_key = std::shared_ptr<std::array<uint8_t, 96>>;
+
+   /// @cond IMPLEMENTATIONS
+
+   /**
+    *  Serialize an sysio::bls_public_key_ptr into a stream
+    *
+    *  @ingroup public_key
+    *  @param ds - The stream to write
+    *  @param pubkey - The value to serialize
+    *  @tparam DataStream - Type of datastream buffer
+    *  @return DataStream& - Reference to the datastream
+    */
+   template<typename DataStream>
+   inline DataStream& operator<<(DataStream& ds, const sysio::bls_public_key& pubkey) {
+      ds << !!pubkey;
+      if (!!pubkey) ds << *pubkey;
+      return ds;
+   }
+
+   /**
+    *  Deserialize an sysio::bls_public_key_ptr from a stream
+    *
+    *  @ingroup public_key
+    *  @param ds - The stream to read
+    *  @param pubkey - The destination for deserialized value
+    *  @tparam DataStream - Type of datastream buffer
+    *  @return DataStream& - Reference to the datastream
+    */
+   template<typename DataStream>
+   inline DataStream& operator>>(DataStream& ds, sysio::bls_public_key& pubkey) {
+      bool b;
+      ds >> b;
+      if (b) {
+         ds >> *pubkey;
+      } else {
+         pubkey = nullptr;
+      }
+      return ds;
+   }
+
+   /// @endcond
 
    /**
     *  SYSIO Public Key
@@ -211,8 +252,58 @@ namespace sysio {
     * 
     * @ingroup signature
     */
-   using ed_signature = std::array<char, 64>; //TODO: Check if this is correct, we padded the signature to 65 bytes not sure if we need to do the same here.
-   
+   using ed_signature = std::array<uint8_t, 64>;
+
+   /**
+    * SYSIO BLS signature data
+    *
+    * Representation of a BLS signature in crypto signature variant
+    *
+    * @ingroup signature
+    */
+   using bls_signature = std::shared_ptr<std::array<uint8_t, 192>>;
+
+   /// @cond IMPLEMENTATIONS
+
+   /**
+    *  Serialize an sysio::bls_signature_ptr into a stream
+    *
+    *  @ingroup signature
+    *  @param ds - The stream to write
+    *  @param sig - The value to serialize
+    *  @tparam DataStream - Type of datastream buffer
+    *  @return DataStream& - Reference to the datastream
+    */
+   template<typename DataStream>
+   inline DataStream& operator<<(DataStream& ds, const sysio::bls_signature& sig) {
+      ds << !!sig;
+      if (!!sig) ds << *sig;
+      return ds;
+   }
+
+   /**
+    *  Deserialize an sysio::bls_signature_ptr from a stream
+    *
+    *  @ingroup signature
+    *  @param ds - The stream to read
+    *  @param sig - The destination for deserialized value
+    *  @tparam DataStream - Type of datastream buffer
+    *  @return DataStream& - Reference to the datastream
+    */
+   template<typename DataStream>
+   inline DataStream& operator>>(DataStream& ds, sysio::bls_signature& sig) {
+      bool b;
+      ds >> b;
+      if (b) {
+         ds >> *sig;
+      } else {
+         sig = nullptr;
+      }
+      return ds;
+   }
+
+   /// @endcond
+
    /**
     *  SYSIO Signature
     *
@@ -222,10 +313,11 @@ namespace sysio {
     *   2 : a WebAuthN signature (requires the host chain to activate the WEBAUTHN_KEY consensus upgrade)
     *   3 : a ECC EM signature
     *   4 : a ED25519 signature
+    *   5 : a BLS signature
     *
     *  @ingroup signature
     */
-   using signature = std::variant<ecc_signature, ecc_signature, webauthn_signature, ecc_signature, ed_signature>;
+   using signature = std::variant<ecc_signature, ecc_signature, webauthn_signature, ecc_signature, ed_signature, bls_signature>;
 
    /// @cond IMPLEMENTATIONS
 
