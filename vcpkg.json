@@ -13,6 +13,14 @@
       ]
     }
   ],
-  "overrides": [    
+  "overrides": [
+    {
+      "name": "llvm",
+      "version": "18.1.6#5"
+    },
+    {
+      "name": "protobuf",
+      "version": "6.33.4#1"
+    }
   ]
 }
