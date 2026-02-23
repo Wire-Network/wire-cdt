@@ -1,7 +1,17 @@
 {
   "name": "wire-cdt",
   "version": "5.2.0-rc1",
-  "dependencies": [    
+  "dependencies": [
+    "protobuf",
+    {
+      "name": "llvm",
+      "default-features": false,
+      "features": [
+        "enable-rtti",
+        "target-aarch64",
+        "target-x86"
+      ]
+    }
   ],
   "overrides": [    
   ]

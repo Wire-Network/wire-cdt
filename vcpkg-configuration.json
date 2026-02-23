@@ -2,20 +2,22 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
   "default-registry": {
     "kind": "git",
-    "baseline": "29ff5b8131d0c6c8fcb8fbaef35992f0d507cd7c",
+    "baseline": "74e6536215718009aae747d86d84b78376bf9e09",
     "repository": "https://github.com/Microsoft/vcpkg"
   },
   "registries": [
     {
       "kind": "git",
       "repository": "https://github.com/wire-network/wire-vcpkg-registry",
-      "baseline": "7dc586d8cc7c5dacc5aa16e33ea7dd28fa9c5bb3",
+      "baseline": "ca66247913dfdcd5272becc144fc333439d6286e",
       "packages": [
+        "boost",
         "softfloat",
         "libsodium",
+        "ethash",
         "catch2",
         "cli11",
-        "boost",
+        "curl",
         "boringssl-custom",
         "secp256k1-internal",
         "bn256",
