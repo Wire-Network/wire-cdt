@@ -15,7 +15,7 @@
     {
       "compile_flags": ["--abigen"],
       "expected" : {
-        "stderr": "wasm-ld: error"
+        "stderr": "abigen error"
       }
     }
   ]

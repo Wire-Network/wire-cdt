@@ -123,7 +123,6 @@ namespace sysio {
          constexpr const T&& value_or()const&& {
             if (!_has_value)
                return std::move(T());
-            _has_value = false;
             return std::move(_get());
          }
          constexpr T value_or()& {

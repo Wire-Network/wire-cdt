@@ -15,6 +15,18 @@ using jsoncons::ojson;
 class ABIMerger {
    public:
       ABIMerger(ojson a) : abi(a) {}
+      ABIMerger(ojson a, int version_major, int version_minor) : abi(a) {
+         if (abi.empty()) {
+            abi["version"] = std::string("sysio::abi/") + std::to_string(version_major) + "." + std::to_string(version_minor);
+            abi["types"] = ojson::array();
+            abi["structs"] = ojson::array();
+            abi["actions"] = ojson::array();
+            abi["tables"] = ojson::array();
+            abi["ricardian_clauses"] = ojson::array();
+            abi["variants"] = ojson::array();
+            abi["action_results"] = ojson::array();
+         }
+      }
       void set_abi(ojson a) {
          abi = a;
       }
@@ -25,7 +37,10 @@ class ABIMerger {
       }
       ojson merge(ojson other) {
          ojson ret;
-         ret["____comment"] = abi["____comment"];
+         if (abi.has_key("____comment"))
+            ret["____comment"] = abi["____comment"];
+         else if (other.has_key("____comment"))
+            ret["____comment"] = other["____comment"];
          ret["version"]  = merge_version(other);
          ret["types"]    = merge_types(other);
          ret["structs"]  = merge_structs(other);

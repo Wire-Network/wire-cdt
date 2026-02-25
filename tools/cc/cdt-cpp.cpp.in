@@ -2,18 +2,6 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/DeclTemplate.h"
-#include "clang/AST/Expr.h"
-#include "clang/Basic/Builtins.h"
-#include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Rewrite/Frontend/Rewriters.h"
-#include "llvm/Support/FileSystem.h"
-
-#include <sysio/abigen.hpp>
-#include <sysio/codegen.hpp>
 
 #include <iostream>
 #include <sstream>
@@ -33,85 +21,14 @@ using namespace llvm;
 #include <set>
 #include <sstream>
 
-using namespace clang::tooling;
-using namespace clang::ast_matchers;
 using namespace llvm;
-using namespace sysio;
-using namespace sysio::cdt;
-
-void handle_empty_abigen(const std::string& contract_name, bool has_o_opt, bool has_contract_opt);
-
-void generate(const std::vector<std::string>& base_options, std::string input, std::string contract_name, const std::vector<std::string>& resource_paths, const std::pair<int, int>& abi_version, bool abigen, bool suppress_ricardian_warning, bool has_o_opt, bool has_contract_opt, bool warn_action_read_only) {
-   std::vector<std::string> options;
-   options.push_back("cdt-cpp");
-   options.push_back(input); // don't remove oddity of CommonOptionsParser?
-   options.push_back(input);
-   options.push_back("--");
-   if (llvm::sys::path::extension(input).equals(".c"))
-      options.push_back("-xc++");
-   for (size_t i=0; i < base_options.size(); i++) {
-      options.push_back(base_options[i]);
-   }
-   options.push_back("-Wno-everything");
-
-   int size = options.size();
-   const char** new_argv = new const char*[size];
-   for (size_t i=0; i < size; i++)
-      new_argv[i] = options[i].c_str();
-
-   CommonOptionsParser opts( size, new_argv, SysioCompilerToolCategory, 0 );
-   ClangTool ctool(opts.getCompilations(), opts.getSourcePathList());
-
-   abigen::get().set_contract_name(contract_name);
-   abigen::get().set_resource_dirs(resource_paths);
-   abigen::get().set_abi_version(std::get<0>(abi_version), std::get<1>(abi_version));
-   abigen::get().set_suppress_ricardian_warning(suppress_ricardian_warning);
-   codegen::get().set_contract_name(contract_name);
-   codegen::get().set_warn_action_read_only(warn_action_read_only);
-
-   int tool_run = -1;
-   tool_run = ctool.run(newFrontendActionFactory<sysio_abigen_frontend_action>().get());
-   if (tool_run != 0) {
-      throw std::runtime_error("abigen error");
-   }
-
-   if (!abigen::get().is_empty()) {
-      std::string abi_s;
-      abigen::get().to_json().dump(abi_s);
-      codegen::get().set_abi(abi_s);
-   } else if (abigen) {
-      handle_empty_abigen(contract_name, has_o_opt, has_contract_opt);
-   }
-
-   tool_run = ctool.run(newFrontendActionFactory<sysio_codegen_frontend_action>().get());
-   if (tool_run != 0) {
-      throw std::runtime_error("codegen error");
-   }
-}
-
-void handle_empty_abigen(const std::string& contract_name, bool has_o_opt, bool has_contract_opt) {
-   const std::string& parsed_contract_name = abigen::get().get_parsed_contract_name();
-   if (parsed_contract_name.empty()) {
-      // if no contract name could be obtained by parsing methods/records, it means the contract is empty
-      std::cout << "Warning, contract is empty and ABI is not generated\n";
-   } else if (contract_name != parsed_contract_name) {
-      // if contract is empty but the contract file contains other contracts, the parsed contract name could be wrong
-      std::string err = "abigen error: contract is empty, or ";
-      // or, the contract is not empty but the specified or inferred contract name is wrong
-      err += has_contract_opt ? "'--contract' specified name" : (has_o_opt ? "'-o' specified name" : "contract filename");
-      err += " doesn't match the real contract name";
-      throw std::runtime_error(err);
-   } else {
-      throw std::runtime_error("abigen error"); // unknown error
-   }
-}
 
 int main(int argc, const char **argv) {
 
    // fix to show version info without having to have any other arguments
    for (int i=0; i < argc; i++) {
      if (argv[i] == std::string("-v")) {
-       sysio::cdt::environment::exec_subprogram("clang-9", {"-v"});
+       sysio::cdt::environment::exec_subprogram("clang++", {"-v"});
        return 0;
      }
    }
@@ -124,58 +41,150 @@ int main(int argc, const char **argv) {
 
    std::vector<std::string> outputs;
    try {
+      // Run cdt-codegen to generate .dispatch.cpp and .abi
+      // Run for: (1) any wasm link build, or (2) compile-only with explicit -contract flag
+      // When -contract is not given, the contract name is derived from the output filename.
+      bool is_wasm_build = !opts.pp_only && !opts.native;
+      bool should_run_codegen = is_wasm_build && (opts.link || opts.has_contract_opt);
+      if (should_run_codegen) {
+         std::vector<std::string> codegen_args;
+         // Pass --contract when explicitly specified by user (or by CMake macro),
+         // or when --abigen is set (strict contract name matching required for ABI generation).
+         // When neither is set (plain link build), let cdt-codegen auto-detect from source.
+         if (opts.has_contract_opt || opts.abigen) {
+            codegen_args.push_back("--contract");
+            codegen_args.push_back(opts.abigen_contract);
+         }
+         codegen_args.push_back("--output-dir");
+
+         // Determine output directory from output filename
+         llvm::SmallString<256> out_dir(opts.output_fn);
+         llvm::sys::path::remove_filename(out_dir);
+         std::string output_dir = out_dir.str().empty() ? "." : std::string(out_dir.str());
+         codegen_args.push_back(output_dir);
+
+         if (opts.abi_version.first > 0) {
+            codegen_args.push_back("--abi-version");
+            codegen_args.push_back(std::to_string(opts.abi_version.first) + "." + std::to_string(opts.abi_version.second));
+         }
+
+         // Only suppress ABI generation when explicitly not linking (compile-only mode)
+         // and abigen was not requested. When linking, always generate ABI.
+         if (!opts.abigen && !opts.link) {
+            codegen_args.push_back("--no-abigen");
+         }
+
+         // Build --cxx options string from compiler options
+         std::string cxx_opts;
+         for (const auto& opt : opts.comp_options) {
+            if (!cxx_opts.empty()) cxx_opts += " ";
+            cxx_opts += opt;
+         }
+         codegen_args.push_back("--cxx");
+         codegen_args.push_back(cxx_opts);
+
+         for (const auto& r : opts.abigen_resources) {
+            codegen_args.push_back("-R");
+            codegen_args.push_back(r);
+         }
+
+         for (auto& input : opts.inputs) {
+            codegen_args.push_back(input);
+         }
+
+         if (!sysio::cdt::environment::exec_subprogram("cdt-codegen", codegen_args)) {
+            return -1;
+         }
+      }
+
+      // Determine output directory for codegen artifacts
+      llvm::SmallString<256> out_dir_buf(opts.output_fn);
+      llvm::sys::path::remove_filename(out_dir_buf);
+      std::string codegen_output_dir = out_dir_buf.str().empty() ? "." : std::string(out_dir_buf.str());
+      bool is_contract_build = should_run_codegen;
+
+      // Compile each input file. For contract builds, if a .actions.cpp was generated,
+      // compile it instead (it #includes the original source and adds action wrappers).
       for (auto input : opts.inputs) {
          std::vector<std::string> new_opts = opts.comp_options;
          std::string output;
+         std::string compile_input = input;
 
-         if (!opts.pp_only) {
-            auto tool_opts = opts.comp_options;
-            std::set<std::string> non_tool_opts = { "-S", "-emit-llvm", "-emit-ast" };
-            tool_opts.erase(std::remove_if(tool_opts.begin(), tool_opts.end(),
-                                           [&](const auto& opt){ return non_tool_opts.count(opt); }),
-                            tool_opts.end());
-            generate(tool_opts, input, opts.abigen_contract, opts.abigen_resources, opts.abi_version, opts.abigen, opts.suppress_ricardian_warning, opts.has_o_opt, opts.has_contract_opt, opts.warn_action_read_only);
+         auto src = SmallString<64>(input);
+         llvm::sys::path::remove_filename(src);
+         std::string source_path = src.str().empty() ? "." : std::string(src.str());
+         new_opts.insert(new_opts.begin(), "-I" + source_path);
 
-            auto src = SmallString<64>(input);
-            llvm::sys::path::remove_filename(src);
-            std::string source_path = src.str().empty() ? "." : src.str();
-            new_opts.insert(new_opts.begin(), "-I" + source_path);
-
-            if (!opts.link) {
-               output = opts.output_fn.empty() ? "a.out" : opts.output_fn;
-            } else {
-               SmallString<64> res;
-               llvm::sys::fs::createTemporaryFile("antelope", ".o", res);
-               output = res.c_str();
+         // For contract builds, use the generated .actions.cpp if it exists
+         if (is_contract_build) {
+            auto basename = input.substr(input.rfind('/') + 1);
+            std::string actions_file = codegen_output_dir + "/" + basename + ".actions.cpp";
+            if (llvm::sys::fs::exists(actions_file)) {
+               compile_input = actions_file;
             }
-
-            new_opts.insert(new_opts.begin(), {"-o", output});
-            outputs.push_back(output);
          }
 
-         llvm::Optional<std::string> stdin_redirect;
-         llvm::SmallString<64> abs_input(input.c_str());
-         llvm::sys::fs::make_absolute(abs_input);
-         auto file_iter = codegen::get().tmp_files.find(abs_input.c_str());
-         if (file_iter != codegen::get().tmp_files.end()) {
-            stdin_redirect = file_iter->second;
-            new_opts.insert(new_opts.begin(), "-");
+         if (!opts.link) {
+            output = opts.output_fn.empty() ? "a.out" : opts.output_fn;
          } else {
-            new_opts.insert(new_opts.begin(), input);
+            SmallString<64> res;
+            llvm::sys::fs::createTemporaryFile("antelope", ".o", res);
+            output = std::string(res.c_str());
          }
 
+         new_opts.insert(new_opts.begin(), {"-o", output});
+         outputs.push_back(output);
+
+         new_opts.insert(new_opts.begin(), compile_input);
          new_opts.insert(new_opts.begin(), "-xc++");
 
-         if (!sysio::cdt::environment::exec_subprogram("clang-9", new_opts, false, stdin_redirect)) {
-            if(stdin_redirect) {
-               llvm::sys::fs::remove(*stdin_redirect);
-            }
+         if (!sysio::cdt::environment::exec_subprogram("clang++", new_opts)) {
             return -1;
          }
-         if(stdin_redirect) {
-            llvm::sys::fs::remove(*stdin_redirect);
+      }
+
+      // Compile the generated dispatch file (contains apply() entry point)
+      if (is_contract_build) {
+         std::string dispatch_file = codegen_output_dir + "/" + opts.abigen_contract + ".dispatch.cpp";
+         if (llvm::sys::fs::exists(dispatch_file)) {
+            std::vector<std::string> dispatch_opts = opts.comp_options;
+            SmallString<64> res;
+            llvm::sys::fs::createTemporaryFile("dispatch", ".o", res);
+            std::string dispatch_output = std::string(res.c_str());
+
+            dispatch_opts.insert(dispatch_opts.begin(), {"-o", dispatch_output});
+            dispatch_opts.insert(dispatch_opts.begin(), dispatch_file);
+            dispatch_opts.insert(dispatch_opts.begin(), "-xc++");
+
+            if (!sysio::cdt::environment::exec_subprogram("clang++", dispatch_opts)) {
+               return -1;
+            }
+            outputs.push_back(dispatch_output);
          }
       }
+
+      // When compiling with -c and a dispatch file was generated, merge the .o files
+      // using wasm-ld --relocatable so CMake sees a single .o output
+      if (!opts.link && opts.has_contract_opt && outputs.size() > 1) {
+         std::string final_output = outputs[0];
+         std::string temp_main = final_output + ".main.tmp";
+         llvm::sys::fs::rename(final_output, temp_main);
+
+         std::vector<std::string> merge_opts = {"--relocatable", "-o", final_output, temp_main};
+         for (size_t i = 1; i < outputs.size(); i++) {
+            merge_opts.push_back(outputs[i]);
+         }
+         if (!sysio::cdt::environment::exec_subprogram("wasm-ld", merge_opts)) {
+            llvm::sys::fs::remove(temp_main);
+            for (size_t i = 1; i < outputs.size(); i++)
+               llvm::sys::fs::remove(outputs[i]);
+            return -1;
+         }
+         llvm::sys::fs::remove(temp_main);
+         for (size_t i = 1; i < outputs.size(); i++)
+            llvm::sys::fs::remove(outputs[i]);
+      }
+
    } catch (std::runtime_error& err) {
       llvm::errs() << err.what() << '\n';
       return -1;
@@ -186,7 +195,7 @@ int main(int argc, const char **argv) {
       for (auto input : outputs) {
          new_opts.insert(new_opts.begin(), input);
       }
-   
+
       if (!sysio::cdt::environment::exec_subprogram("cdt-ld", new_opts)) {
          for (auto input : outputs) {
             llvm::sys::fs::remove(input);

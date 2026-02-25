@@ -42,6 +42,12 @@ static std::string s_infile;
 static std::string s_outfile;
 static Features s_features;
 static WriteBinaryOptions s_write_binary_options;
+
+static void InitFeatures() {
+   s_features.enable_sign_extension();
+   s_features.enable_mutable_globals();
+}
+
 static std::unique_ptr<FileStream> s_log_stream;
 
 static const char s_description[] =
@@ -76,18 +82,22 @@ static void ParseOptions(int argc, char** argv) {
   parser.Parse(argc, argv);
 }
 
-uint32_t GetHeapPtr( Module& mod, const std::vector<uint8_t>& buff ) {
-   size_t offset = mod.GetGlobal(Var(1))->init_expr.begin()->loc.offset;
-   uint32_t heap_ptr;
+bool GetHeapPtr( Module& mod, const std::vector<uint8_t>& buff, uint32_t& heap_ptr ) {
+   auto* global = mod.GetGlobal(Var(1));
+   if (!global || global->init_expr.empty())
+      return false;
+   size_t offset = global->init_expr.begin()->loc.offset;
    ReadS32Leb128(buff.data()+offset+4, buff.data()+offset+9, &heap_ptr);
-   return heap_ptr;
+   return true;
 }
 
-uint32_t GetStackPtr( Module& mod, const std::vector<uint8_t>& buff ) {
-   size_t offset = mod.GetGlobal(Var(0))->init_expr.begin()->loc.offset;
-   uint32_t stack_ptr;
+bool GetStackPtr( Module& mod, const std::vector<uint8_t>& buff, uint32_t& stack_ptr ) {
+   auto* global = mod.GetGlobal(Var(0));
+   if (!global || global->init_expr.empty())
+      return false;
+   size_t offset = global->init_expr.begin()->loc.offset;
    ReadS32Leb128(buff.data()+offset+4, buff.data()+offset+9, &stack_ptr);
-   return stack_ptr;
+   return true;
 }
 
 inline bool IsZeroed(const DataSegment* ds) {
@@ -169,19 +179,23 @@ inline std::vector<DataSegment*> CreateSegments(std::vector<uint8_t> memory) {
    return segments;
 }
 
-void AddHeapPointerData( Module& mod, size_t fixup, const std::vector<uint8_t>& buff, DataSegment& ds ) {
-   uint32_t heap_ptr  = ((GetHeapPtr(mod, buff)) + 7) & ~7; // align to 8 bytes
+bool AddHeapPointerData( Module& mod, size_t fixup, const std::vector<uint8_t>& buff, DataSegment& ds ) {
+   uint32_t heap_ptr_val;
+   if (!GetHeapPtr(mod, buff, heap_ptr_val))
+      return false;
+   heap_ptr_val = (heap_ptr_val + 7) & ~7; // align to 8 bytes
    Const c;
    c.I32(0);
    std::unique_ptr<Expr> ce(new ConstExpr(c));
    ds.memory_var = Var(0);
    ds.offset = ExprList{std::move(ce)};
-   uint8_t* dat = reinterpret_cast<uint8_t*>(&heap_ptr);
+   uint8_t* dat = reinterpret_cast<uint8_t*>(&heap_ptr_val);
    ds.data = std::vector<uint8_t>{dat[0],
                                   dat[1],
                                   dat[2],
                                   dat[3]};
    mod.data_segments.push_back(&ds);
+   return true;
 }
 
 void WriteBufferToFile(string_view filename,
@@ -193,6 +207,7 @@ int ProgramMain(int argc, char** argv) {
   Result result;
 
   InitStdio();
+  InitFeatures();
   ParseOptions(argc, argv);
 
   std::vector<uint8_t> file_data;
@@ -212,15 +227,20 @@ int ProgramMain(int argc, char** argv) {
 
     if (Succeeded(result)) {
       size_t fixup = 0;
-      auto pre_memory =  FillFromSegments(module.data_segments);
-      auto segments   = CreateSegments(pre_memory);
-      if (pre_memory != FillFromSegments(segments)) {
-        std::cerr << "Fractured Memory Failed, not applying optimizations" << std::endl;
-        module.data_segments = StripZeroedData(std::move(module.data_segments), fixup);
-      } else {
-        module.data_segments = StripZeroedData(std::move(segments), fixup);
+      if (!module.data_segments.empty()) {
+        auto pre_memory =  FillFromSegments(module.data_segments);
+        auto segments   = CreateSegments(pre_memory);
+        if (pre_memory != FillFromSegments(segments)) {
+          std::cerr << "Fractured Memory Failed, not applying optimizations" << std::endl;
+          module.data_segments = StripZeroedData(std::move(module.data_segments), fixup);
+        } else {
+          module.data_segments = StripZeroedData(std::move(segments), fixup);
+        }
       }
-      AddHeapPointerData(module, fixup, file_data, _hds);
+      if (!AddHeapPointerData(module, fixup, file_data, _hds)) {
+        if (s_verbose)
+          std::cerr << "Warning: could not find heap pointer global, skipping heap fixup" << std::endl;
+      }
      if (Succeeded(result)) {
       MemoryStream stream(s_log_stream.get());
       result =

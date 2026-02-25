@@ -410,6 +410,9 @@ static void GetCompDefaults(std::vector<std::string>& copts) {
       copts.emplace_back("-ffreestanding");
       copts.emplace_back("-nostdlib");
       copts.emplace_back("-fno-builtin");
+      // Disable WASM features not supported by sysio-pp (wabt)
+      copts.emplace_back("-mno-sign-ext");
+      copts.emplace_back("-mno-nontrapping-fptoint");
    } else {
       copts.emplace_back("-Wunused-command-line-argument");
 #ifdef __APPLE__
@@ -434,34 +437,37 @@ static void GetCompDefaults(std::vector<std::string>& copts) {
 #ifdef CPP_COMP
       copts.emplace_back("-fno-exceptions");
       copts.emplace_back("-fno-rtti");
-      copts.emplace_back("-fmodules-ts");
+      // -fmodules-ts removed: not supported in Clang 18
       copts.emplace_back("-D_GNU_SOURCE=1");
 #endif
       copts.emplace_back("-DBOOST_DISABLE_ASSERTS");
       copts.emplace_back("-DBOOST_EXCEPTION_DISABLE");
       copts.emplace_back("-U__APPLE__");
+      // Load sysio_attrs plugin for attribute processing (wasm_entry -> export_name, etc.)
+      // Load sysio_codegen plugin for read-only action validation during all compilations.
       if (!fnative_opt) {
-         copts.emplace_back("-Xclang");
-         copts.emplace_back("-load");
-         copts.emplace_back("-Xclang");
-         if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/LLVMSysioApply"+sysio_apply_suff))
-            copts.emplace_back(sysio::cdt::whereami::where()+"/LLVMSysioApply"+sysio_apply_suff);
-         else if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/../lib/LLVMSysioApply"+sysio_apply_suff))
-            copts.emplace_back(sysio::cdt::whereami::where()+"/../lib/LLVMSysioApply"+sysio_apply_suff);
+         if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/sysio_attrs"+sysio_apply_suff))
+            copts.emplace_back("-fplugin="+sysio::cdt::whereami::where()+"/sysio_attrs"+sysio_apply_suff);
+         else if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/../lib/sysio_attrs"+sysio_apply_suff))
+            copts.emplace_back("-fplugin="+sysio::cdt::whereami::where()+"/../lib/sysio_attrs"+sysio_apply_suff);
+         if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/sysio_codegen"+sysio_apply_suff)) {
+            copts.emplace_back("-fplugin="+sysio::cdt::whereami::where()+"/sysio_codegen"+sysio_apply_suff);
+            // Activate the codegen plugin for read-only action validation
+            copts.push_back("-Xclang");
+            copts.push_back("-add-plugin");
+            copts.push_back("-Xclang");
+            copts.push_back("sysio_codegen");
+            // Increase error limit so all codegen errors are emitted
+            copts.push_back("-ferror-limit=100");
+         } else if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/../lib/sysio_codegen"+sysio_apply_suff)) {
+            copts.emplace_back("-fplugin="+sysio::cdt::whereami::where()+"/../lib/sysio_codegen"+sysio_apply_suff);
+            copts.push_back("-Xclang");
+            copts.push_back("-add-plugin");
+            copts.push_back("-Xclang");
+            copts.push_back("sysio_codegen");
+            copts.push_back("-ferror-limit=100");
+         }
       }
-      if (false && fnative_opt) {
-         copts.emplace_back("-Xclang");
-         copts.emplace_back("-load");
-         copts.emplace_back("-Xclang");
-         if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/LLVMSysioSoftfloat"+sysio_apply_suff))
-            copts.emplace_back(sysio::cdt::whereami::where()+"/LLVMSysioSoftfloat"+sysio_apply_suff);
-         else if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/../lib/LLVMSysioSoftfloat"+sysio_apply_suff))
-            copts.emplace_back(sysio::cdt::whereami::where()+"/../lib/LLVMSysioSoftfloat"+sysio_apply_suff);
-      }
-      if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/sysio_plugin"+sysio_apply_suff))
-         copts.emplace_back("-fplugin="+sysio::cdt::whereami::where()+"/sysio_plugin"+sysio_apply_suff);
-      else if (llvm::sys::fs::exists(sysio::cdt::whereami::where()+"/../lib/sysio_plugin"+sysio_apply_suff))
-         copts.emplace_back("-fplugin="+sysio::cdt::whereami::where()+"/../lib/sysio_plugin"+sysio_apply_suff);
    }
 }
 
@@ -475,40 +481,30 @@ static void GetLdDefaults(std::vector<std::string>& ldopts) {
       ldopts.emplace_back("--no-merge-data-segments");
       if (fquery_opt || fquery_server_opt || fquery_client_opt) {
          ldopts.emplace_back("--export-table");
-         ldopts.emplace_back("-other-model");
-         ldopts.insert(ldopts.end(), { "--only-export", "*:table" });
-         ldopts.insert(ldopts.end(), { "--only-export", "*:memory" });
+         ldopts.emplace_back("--export-memory");
          if (fuse_main_opt) {
             ldopts.insert(ldopts.end(), { "-e", "main" });
-            ldopts.insert(ldopts.end(), { "--only-export", "main:function" } );
+            ldopts.insert(ldopts.end(), { "--export", "main" } );
          }
          else {
             ldopts.insert(ldopts.end(), { "-e", "initialize" } );
-            ldopts.insert(ldopts.end(), { "--only-export", "initialize:function" } );
+            ldopts.insert(ldopts.end(), { "--export", "initialize" } );
          }
-         if (fquery_server_opt)
-            ldopts.insert(ldopts.end(), { "-export", "run_query" });
-         else {
-            ldopts.insert(ldopts.end(), { "-export", "create_query_request" });
-            ldopts.insert(ldopts.end(), { "-export", "decode_query_response" });
-            ldopts.insert(ldopts.end(), { "-export", "describe_query_request" });
-            ldopts.insert(ldopts.end(), { "-export", "describe_query_response" });
-         }
-         if (fquery_server_opt)
-            ldopts.insert(ldopts.end(), { "--only-export", "run_query:function" });
-         else {
-            ldopts.insert(ldopts.end(), { "--only-export", "create_query_request:function" });
-            ldopts.insert(ldopts.end(), { "--only-export", "decode_query_response:function" });
-            ldopts.insert(ldopts.end(), { "--only-export", "describe_query_request:function" });
-            ldopts.insert(ldopts.end(), { "--only-export", "describe_query_response:function" });
+         if (fquery_server_opt) {
+            ldopts.insert(ldopts.end(), { "--export", "run_query" });
+         } else {
+            ldopts.insert(ldopts.end(), { "--export", "create_query_request" });
+            ldopts.insert(ldopts.end(), { "--export", "decode_query_response" });
+            ldopts.insert(ldopts.end(), { "--export", "describe_query_request" });
+            ldopts.insert(ldopts.end(), { "--export", "describe_query_response" });
          }
       } else {
          if (fuse_main_opt)
             ldopts.insert(ldopts.end(), { "-e", "main" });
          else
             ldopts.insert(ldopts.end(), { "-e", "apply" });
-         ldopts.insert(ldopts.end(), { "--only-export", "apply:function" });
-         ldopts.insert(ldopts.end(), { "--only-export", "*:memory" });
+         ldopts.insert(ldopts.end(), { "--export", "apply" });
+         ldopts.emplace_back("--export-memory");
       }
       ldopts.emplace_back("-lc++");
       ldopts.emplace_back("-lc");
@@ -525,7 +521,7 @@ static void GetLdDefaults(std::vector<std::string>& ldopts) {
       if (fquery_opt || fquery_server_opt || fquery_client_opt)
          ldopts.emplace_back("-lsysio_cmem");
       if (!only_export_opt.empty()) {
-         ldopts.emplace_back("--only-export");
+         ldopts.emplace_back("--export");
          ldopts.emplace_back(only_export_opt);
       }
 
@@ -543,7 +539,7 @@ static void GetLdDefaults(std::vector<std::string>& ldopts) {
          throw std::runtime_error("Failed to create tmp file");
       auto delete_output = llvm::make_scope_exit([&](){ llvm::sys::fs::remove(output); });
 
-      if(!sysio::cdt::environment::exec_subprogram("xcrun", {"--show-sdk-path"}, true, llvm::None, {output.str()}))
+      if(!sysio::cdt::environment::exec_subprogram("xcrun", {"--show-sdk-path"}, true, std::nullopt, {std::string(output.str())}))
          throw std::runtime_error("Failed to run xcrun --show-sdk-path");
 
       auto buf = llvm::MemoryBuffer::getFile(output);
@@ -809,11 +805,12 @@ static Options CreateOptions(bool add_defaults=true) {
 #endif
    if (!fnative_opt) {
 #ifdef ONLY_LD
+      // --stack-canary was a custom cdt-llvm wasm-ld feature, not available in standard wasm-ld
       if (stack_canary_opt) {
-         ldopts.emplace_back("--stack-canary");
+         std::cerr << "Warning: --stack-canary is not supported with standard wasm-ld, ignoring\n";
       }
       if (!fno_stack_first_opt) {
-         ldopts.emplace_back("-stack-first");
+         ldopts.emplace_back("--stack-first");
       }
       if (fno_lto_opt) {
          ldopts.emplace_back("--lto-O0");
@@ -941,6 +938,11 @@ static Options CreateOptions(bool add_defaults=true) {
    
    if(warn_action_read_only_opt) {
       warn_action_read_only = true;
+      // Pass warn-action-read-only to sysio_codegen plugin for validation
+      copts.push_back("-Xclang");
+      copts.push_back("-plugin-arg-sysio_codegen");
+      copts.push_back("-Xclang");
+      copts.push_back("warn-action-read-only");
    } else {
       warn_action_read_only = false;
    }

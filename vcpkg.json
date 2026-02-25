@@ -7,9 +7,14 @@
       "name": "llvm",
       "default-features": false,
       "features": [
+        "clang",
+        "enable-eh",
         "enable-rtti",
+        "lld",
         "target-aarch64",
-        "target-x86"
+        "target-webassembly",
+        "target-x86",
+        "tools"
       ]
     }
   ],

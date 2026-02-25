@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
-find_package(LLVM REQUIRED CONFIG)
+
+find_package(LLVM 18.1 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+find_package(Clang REQUIRED CONFIG)
+message(STATUS "Found Clang in: ${Clang_DIR}")
+
+list(APPEND CMAKE_MODULE_PATH ${LLVM_DIR})
+include(AddLLVM)
 
 find_program(SCCACHE_FOUND sccache)
 if (SCCACHE_FOUND)
@@ -16,10 +23,6 @@ else()
 endif()
 
 include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${LLVM_SRCDIR}/tools/clang/include)
-include_directories(${LLVM_BINDIR}/tools/clang/include)
-include_directories(${LLVM_SRCDIR}/include)
-include_directories(${LLVM_BINDIR}/include)
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -34,42 +37,26 @@ macro (add_tool name)
    add_executable(${name} ${CMAKE_BINARY_DIR}/${name}.cpp)
    set_property(TARGET ${name} PROPERTY CXX_STANDARD 17)
    target_compile_options(${name} PRIVATE -fexceptions -fno-rtti)
-   target_include_directories(${name} PUBLIC ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/../jsoncons/include ${CMAKE_SOURCE_DIR}/sysio_llvm/tools/clang/include ${LLVM_INCLUDE_DIR})
+   target_include_directories(${name} PUBLIC
+      ${CMAKE_BINARY_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include
+      ${CMAKE_CURRENT_SOURCE_DIR}/../jsoncons/include
+      ${LLVM_INCLUDE_DIRS}
+      ${CLANG_INCLUDE_DIRS}
+   )
    target_link_libraries(${name}
-     clangTooling
-     clangBasic
-     clangASTMatchers
-     clangRewrite
-     clangToolingCore
-     clangFrontend
-     clangDriver
-     clangSerialization
-     clangParse
-     clangSema
-     clangAnalysis
-     clangAST
-     clangLex
-     clangBasic
-     clangEdit
-
-     LLVMipo
-     LLVMScalarOpts
-     LLVMInstCombine
-     LLVMTransformUtils
-     LLVMAnalysis
-     LLVMTarget
-     LLVMOption
-     LLVMMCParser
-     LLVMMC
-     LLVMObject
-     LLVMBitReader
-     LLVMCore
      LLVMSupport
-     LLVMDemangle
    )
 
    add_custom_command( TARGET ${name} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${name}> ${CMAKE_BINARY_DIR}/bin/ )
 endmacro()
+
+# Build plugins (sysio_attrs and sysio_codegen)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../plugins/sysio ${CMAKE_CURRENT_BINARY_DIR}/sysio_plugins)
+
+# Build orchestrator tool
+add_subdirectory(codegen)
 
 add_subdirectory(abidiff)
 add_subdirectory(cc)
@@ -78,3 +65,14 @@ add_subdirectory(init)
 add_subdirectory(external)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CMAKE_BINARY_DIR}/compiler_options.hpp)
+
+# Create symlinks for LLVM tools in the bin directory
+foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy llvm-objdump llvm-readobj llvm-readelf llvm-strip opt llc lld ld.lld)
+   find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
+   if(_tool_path)
+      file(CREATE_LINK ${_tool_path} ${CMAKE_BINARY_DIR}/bin/${target} SYMBOLIC)
+   else()
+      message(WARNING "LLVM tool '${target}' not found in ${LLVM_TOOLS_BINARY_DIR}")
+   endif()
+   unset(_tool_path CACHE)
+endforeach()
