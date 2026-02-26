@@ -8,6 +8,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <llvm/Support/Program.h>
 
 #pragma GCC diagnostic push
@@ -308,8 +309,9 @@ static void gen_actions(const std::string& input) {
    std::string codegen_opts;
    codegen_opts += "output=" + _output;
 
-   // Only pass contract name to plugins when explicitly specified.
-   // When auto-derived from filename, let plugins accept any contract class.
+   // Only pass contract name to the codegen plugin when explicitly specified.
+   // When auto-derived from filename, the name may not match the actual
+   // [[sysio::contract("...")]] attribute, so let the plugin accept any contract.
    if (explicit_contract && contract_name.size()) {
       codegen_opts += ",contract=" + contract_name;
    }
@@ -368,9 +370,14 @@ static void gen_actions(const std::string& input) {
       exit(ret);
    }
 
-   auto desc_file = _output + ".desc";
-
-   if (exists(desc_file.c_str())) {
+   // The abigen plugin writes to <output>.desc. Rename it with a contract-name
+   // prefix so that directory scanning can distinguish desc files belonging to
+   // different contracts that share the same output directory.
+   auto raw_desc = _output + ".desc";
+   auto basename = input.substr(input.rfind('/') + 1);
+   auto desc_file = output_dir + "/" + contract_name + "." + basename + ".desc";
+   if (exists(raw_desc.c_str())) {
+      rename(raw_desc.c_str(), desc_file.c_str());
       desc_files.push_back(desc_file);
    }
 }
@@ -385,6 +392,32 @@ int main(int argc, const char** argv) {
    try {
       for (auto& input : input_files) {
          gen_actions(input);
+      }
+
+      // In compile-only mode (single file per invocation), scan the output
+      // directory for .desc files from previous compilations of other TUs
+      // in the same contract.  Desc files are prefixed with the contract name
+      // (e.g., "sysio.system.peer_keys.cpp.desc") to avoid merging unrelated
+      // contracts that might share the same output directory.
+      {
+         std::string prefix = contract_name + ".";
+         std::string suffix = ".desc";
+         std::set<std::string> known(desc_files.begin(), desc_files.end());
+         if (DIR* dir = opendir(output_dir.c_str())) {
+            while (struct dirent* ent = readdir(dir)) {
+               std::string name = ent->d_name;
+               if (name.size() > prefix.size() + suffix.size() &&
+                   name.substr(0, prefix.size()) == prefix &&
+                   name.substr(name.size() - suffix.size()) == suffix) {
+                  std::string path = output_dir + "/" + name;
+                  if (known.find(path) == known.end() &&
+                      exists(path.c_str()) && file_size(path.c_str()) > 0) {
+                     desc_files.push_back(path);
+                  }
+               }
+            }
+            closedir(dir);
+         }
       }
 
       ojson abi;

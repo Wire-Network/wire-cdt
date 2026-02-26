@@ -487,7 +487,10 @@ namespace sysio { namespace cdt {
          if (!is_builtin_type(translate_type(type))) {
             // Handle plain C++ enums by creating a typedef from enum name to its underlying storage type.
             if (type.getTypePtr()->isEnumeralType()) {
-               const clang::EnumType* ET = llvm::dyn_cast<clang::EnumType>(type.getTypePtr());
+               // Use canonical type for the cast — the non-canonical pointer may be
+               // wrapped in ElaboratedType (common in LLVM 18), which would cause
+               // dyn_cast<EnumType> to return null even though isEnumeralType() is true.
+               const clang::EnumType* ET = llvm::dyn_cast<clang::EnumType>(type.getCanonicalType().getTypePtr());
                if (ET) {
                   const clang::EnumDecl* ED = ET->getDecl();
                   // Only support unscoped enums (not enum class)
@@ -988,11 +991,12 @@ namespace sysio { namespace cdt {
                      auto name = attr_name.empty() ? cf.get_contract()->getName() : attr_name;
                      abigen::get().set_contract_name(name.str());
                   }
-                  // Only traverse for ABI data when the contract class was found.
-                  // Traversing without a contract class causes spurious warnings
-                  // from defined_in_contract() and produces no useful ABI data.
-                  visitor->TraverseDecl(Context.getTranslationUnitDecl());
                }
+               // Always traverse the TU for ABI data, even when the contract class
+               // was not found in this TU.  The old (cdt-llvm) abigen did this
+               // unconditionally; skipping it drops types referenced by actions
+               // defined in other TUs of the same contract.
+               visitor->TraverseDecl(Context.getTranslationUnitDecl());
 
                std::ofstream ofs(output + ".desc");
                if (!ofs) throw;
