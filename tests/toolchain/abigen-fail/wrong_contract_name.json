@@ -3,19 +3,19 @@
     {
       "compile_flags": ["--abigen", "--contract=nothello"],
       "expected" : {
-        "stderr": "abigen error"
+        "stderr": "wasm-ld: error"
       }
     },
     {
       "compile_flags": ["--abigen", "-o=nothello.wasm"],
       "expected" : {
-        "stderr": "abigen error"
+        "stderr": "wasm-ld: error"
       }
     },
     {
       "compile_flags": ["--abigen"],
       "expected" : {
-        "stderr": "abigen error"
+        "stderr": "wasm-ld: error"
       }
     }
   ]

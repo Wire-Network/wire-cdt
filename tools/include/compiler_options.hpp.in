@@ -407,6 +407,7 @@ static void GetCompDefaults(std::vector<std::string>& copts) {
    copts.emplace_back(std::string("-D__sysio_cdt_patchlevel__=")+"${VERSION_PATCH}");
    if (!fnative_opt) {
       copts.emplace_back("--target=wasm32");
+      copts.emplace_back("-mcpu=mvp"); // forces LLVM to only emit MVP instructions, which excludes sign-extension operators.
       copts.emplace_back("-ffreestanding");
       copts.emplace_back("-nostdlib");
       copts.emplace_back("-fno-builtin");
@@ -505,6 +506,12 @@ static void GetLdDefaults(std::vector<std::string>& ldopts) {
             ldopts.insert(ldopts.end(), { "-e", "apply" });
          ldopts.insert(ldopts.end(), { "--export", "apply" });
          ldopts.emplace_back("--export-memory");
+         // Export __heap_base and __data_end so sysio-pp can read them as globals
+         // and write the heap pointer to memory offset 0 for simple_malloc.
+         // Stock LLVM 18 wasm-ld does not export these by default (the old custom
+         // cdt-llvm linker did so unconditionally in Driver.cpp).
+         ldopts.insert(ldopts.end(), { "--export", "__heap_base" });
+         ldopts.insert(ldopts.end(), { "--export", "__data_end" });
       }
       ldopts.emplace_back("-lc++");
       ldopts.emplace_back("-lc");

@@ -40,6 +40,70 @@ static bool exists(const char* filename) {
    return stat(filename, &st) == 0;
 }
 
+// Write dispatch code (apply entry point) to an output stream.
+// When weak=true, apply() gets __attribute__((weak)) so a user-defined apply()
+// (e.g. from SYSIO_DISPATCH) takes priority at link time.
+// When weak=false (standalone dispatch.cpp for link-mode builds), no weak attr.
+static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>& wasm_actions,
+                                 const std::set<wasm_notify>& wasm_notifies, bool weak) {
+   ofs << "extern \"C\" {\n";
+   ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(uint32_t, uint64_t);";
+   ofs << "  void sysio_set_contract_name(uint64_t n);\n";
+   for (auto& wa : wasm_actions) {
+      ofs << "  void " << wa.handler << "(uint64_t r, uint64_t c);\n";
+   }
+   for (auto& wn : wasm_notifies) {
+      ofs << "  void " << wn.handler << "(uint64_t r, uint64_t c);\n";
+   }
+   if (weak)
+      ofs << "  __attribute__((weak, export_name(\"apply\"), visibility(\"default\")))\n";
+   else
+      ofs << "  __attribute__((export_name(\"apply\"), visibility(\"default\")))\n";
+   ofs << "  void apply(uint64_t r, uint64_t c, uint64_t a) {\n";
+   ofs << "    sysio_set_contract_name(r);\n";
+   ofs << "    if (c == r) {\n";
+   if (wasm_actions.size()) {
+      ofs << "      switch (a) {\n";
+      for (auto& wa : wasm_actions) {
+         ofs << "      case \"" << wa.name << "\"_n.value:\n";
+         ofs << "        " << wa.handler << "(r, c);\n";
+         ofs << "        break;\n";
+      }
+      ofs << "      default:\n"
+          << "        if ( r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n"
+          << "      }\n";
+   }
+   ofs << "    } else {\n";
+   if (wasm_notifies.size()) {
+      std::string action;
+      for (auto& wn : wasm_notifies) {
+         if (wn.name != action) {
+            if (action.empty()) {
+               ofs << "      if (a == \"" << wn.name << "\"_n.value) {\n";
+            } else {
+               ofs << "        }\n";
+               ofs << "      }\n";
+               ofs << "      else if (a == \"" << wn.name << "\"_n.value) {\n";
+            }
+            ofs << "        switch (c) {\n";
+            action = wn.name;
+         }
+         if (wn.contract != "*")
+            ofs << "        case \"" << wn.contract << "\"_n.value:\n";
+         else
+            ofs << "        default:\n";
+         ofs << "          " << wn.handler << "(r, c);\n";
+         ofs << "          break;\n";
+      }
+      ofs << "        }\n";
+      ofs << "      }\n";
+   }
+   ofs << "    }\n";
+   ofs << "  }\n";
+   ofs << "}\n";
+}
+
+// Generate a standalone dispatch.cpp file (for link-mode builds via cdt-cpp).
 static void generate_sysio_dispatch(const std::string& output, const std::set<wasm_action>& wasm_actions,
                                     const std::set<wasm_notify>& wasm_notifies) {
    try {
@@ -48,58 +112,7 @@ static void generate_sysio_dispatch(const std::string& output, const std::set<wa
          throw std::runtime_error("cannot open " + output);
       ofs << "#include <cstdint>\n"
           << "#include <sysio/name.hpp>\n";
-      ofs << "extern \"C\" {\n";
-      ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(uint32_t, uint64_t);";
-      ofs << "  void sysio_set_contract_name(uint64_t n);\n";
-      for (auto& wa : wasm_actions) {
-         ofs << "  void " << wa.handler << "(uint64_t r, uint64_t c);\n";
-      }
-      for (auto& wn : wasm_notifies) {
-         ofs << "  void " << wn.handler << "(uint64_t r, uint64_t c);\n";
-      }
-      ofs << "  __attribute__((export_name(\"apply\"), visibility(\"default\")))\n";
-      ofs << "  void apply(uint64_t r, uint64_t c, uint64_t a) {\n";
-      ofs << "    sysio_set_contract_name(r);\n";
-      ofs << "    if (c == r) {\n";
-      if (wasm_actions.size()) {
-         ofs << "      switch (a) {\n";
-         for (auto& wa : wasm_actions) {
-            ofs << "      case \"" << wa.name << "\"_n.value:\n";
-            ofs << "        " << wa.handler << "(r, c);\n";
-            ofs << "        break;\n";
-         }
-         ofs << "      default:\n"
-             << "        if ( r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n"
-             << "      }\n";
-      }
-      ofs << "    } else {\n";
-      if (wasm_notifies.size()) {
-         std::string action;
-         for (auto& wn : wasm_notifies) {
-            if (wn.name != action) {
-               if (action.empty()) {
-                  ofs << "      if (a == \"" << wn.name << "\"_n.value) {\n";
-               } else {
-                  ofs << "        }\n";
-                  ofs << "      }\n";
-                  ofs << "      else if (a == \"" << wn.name << "\"_n.value) {\n";
-               }
-               ofs << "        switch (c) {\n";
-               action = wn.name;
-            }
-            if (wn.contract != "*")
-               ofs << "        case \"" << wn.contract << "\"_n.value:\n";
-            else
-               ofs << "        default:\n";
-            ofs << "          " << wn.handler << "(r, c);\n";
-            ofs << "          break;\n";
-         }
-         ofs << "        }\n";
-         ofs << "      }\n";
-      }
-      ofs << "    }\n";
-      ofs << "  }\n";
-      ofs << "}\n";
+      write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, false);
       ofs.close();
    } catch (...) {
       std::cerr << "Failed to generate sysio dispatcher\n";
@@ -131,6 +144,7 @@ static std::string abi_version;
 static int         abi_version_major           = 1;
 static int         abi_version_minor           = 3;
 static bool        no_abigen                   = false;
+static bool        embed_dispatch              = false;
 static bool        verbose                     = false;
 static bool        suppress_ricardian_warnings = true;
 static bool        is_wasm                     = false;
@@ -195,6 +209,8 @@ static void parse_args(int argc, const char** argv) {
          exit(0);
       } else if (arg == "--no-abigen") {
          no_abigen = true;
+      } else if (arg == "--embed-dispatch") {
+         embed_dispatch = true;
       } else if (arg == "-v" || arg == "--verbose") {
          verbose = true;
       } else if (arg == "--contract" && i + 1 < argc) {
@@ -408,12 +424,12 @@ int main(int argc, const char** argv) {
 
       if (!no_abigen) {
          if (abi.empty()) {
-            // Only fail on empty ABI when an explicit contract name was provided
-            if (explicit_contract) {
-               std::cerr << "abigen error\n";
-               return -1;
+            // No [[sysio::contract]] class found — contract may define apply() directly.
+            // Skip ABI generation silently; this is not an error.
+            if (verbose && explicit_contract) {
+               std::cerr << "note: no [[sysio::contract]] class found for '" << contract_name
+                         << "', skipping ABI generation\n";
             }
-            // Otherwise, just skip ABI generation (no contract found in source)
          } else {
             std::string   filename = output_dir + "/" + contract_name + ".abi";
             std::ofstream ofs(filename);
@@ -428,12 +444,30 @@ int main(int argc, const char** argv) {
          }
       }
 
-      // Only generate dispatch file if there are actions/notifies to dispatch.
-      // Empty contracts (no actions) should not get an apply() function,
-      // so the linker will properly fail with "entry symbol not defined: apply".
-      if (!wasm_actions.empty() || !wasm_notifies.empty() || dispatcher_was_found) {
-         auto main_file = output_dir + "/" + contract_name + ".dispatch.cpp";
-         generate_sysio_dispatch(main_file, wasm_actions, wasm_notifies);
+      // Only generate dispatch if there are actions/notifies to dispatch
+      // AND the source doesn't already define its own apply() (e.g. via SYSIO_DISPATCH macro).
+      if ((!wasm_actions.empty() || !wasm_notifies.empty()) && !dispatcher_was_found) {
+         if (embed_dispatch) {
+            // Embed weak dispatch code into each .actions.cpp file.
+            // This avoids a separate dispatch.o and the wasm-ld --relocatable merge,
+            // which can't handle weak/strong symbol resolution.
+            // At final link time, wasm-ld properly resolves weak vs strong apply().
+            for (auto& input : input_files) {
+               std::string actions_file = output_dir + "/" + input.substr(input.rfind('/') + 1) + ".actions.cpp";
+               if (exists(actions_file.c_str())) {
+                  std::ofstream ofs(actions_file, std::ios::app);
+                  if (ofs) {
+                     ofs << "\n// --- Auto-generated weak dispatch ---\n";
+                     write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, true);
+                     ofs.close();
+                  }
+               }
+            }
+         } else {
+            // Standalone dispatch.cpp for link-mode builds (cdt-cpp handles compilation).
+            auto main_file = output_dir + "/" + contract_name + ".dispatch.cpp";
+            generate_sysio_dispatch(main_file, wasm_actions, wasm_notifies);
+         }
       }
       return 0;
    } catch (std::runtime_error& err) {

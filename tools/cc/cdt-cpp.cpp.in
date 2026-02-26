@@ -74,6 +74,13 @@ int main(int argc, const char **argv) {
             codegen_args.push_back("--no-abigen");
          }
 
+         // In compile-only mode, embed weak dispatch code directly into .actions.cpp
+         // instead of generating a separate dispatch.cpp. This avoids needing
+         // wasm-ld --relocatable to merge .o files (which can't handle weak symbols).
+         if (!opts.link) {
+            codegen_args.push_back("--embed-dispatch");
+         }
+
          // Build --cxx options string from compiler options
          std::string cxx_opts;
          for (const auto& opt : opts.comp_options) {
@@ -143,8 +150,10 @@ int main(int argc, const char **argv) {
          }
       }
 
-      // Compile the generated dispatch file (contains apply() entry point)
-      if (is_contract_build) {
+      // Compile the generated dispatch file (contains apply() entry point).
+      // Only needed in link mode — in compile-only mode, dispatch is embedded
+      // directly in .actions.cpp via --embed-dispatch (weak symbol).
+      if (is_contract_build && opts.link) {
          std::string dispatch_file = codegen_output_dir + "/" + opts.abigen_contract + ".dispatch.cpp";
          if (llvm::sys::fs::exists(dispatch_file)) {
             std::vector<std::string> dispatch_opts = opts.comp_options;
@@ -161,28 +170,6 @@ int main(int argc, const char **argv) {
             }
             outputs.push_back(dispatch_output);
          }
-      }
-
-      // When compiling with -c and a dispatch file was generated, merge the .o files
-      // using wasm-ld --relocatable so CMake sees a single .o output
-      if (!opts.link && opts.has_contract_opt && outputs.size() > 1) {
-         std::string final_output = outputs[0];
-         std::string temp_main = final_output + ".main.tmp";
-         llvm::sys::fs::rename(final_output, temp_main);
-
-         std::vector<std::string> merge_opts = {"--relocatable", "-o", final_output, temp_main};
-         for (size_t i = 1; i < outputs.size(); i++) {
-            merge_opts.push_back(outputs[i]);
-         }
-         if (!sysio::cdt::environment::exec_subprogram("wasm-ld", merge_opts)) {
-            llvm::sys::fs::remove(temp_main);
-            for (size_t i = 1; i < outputs.size(); i++)
-               llvm::sys::fs::remove(outputs[i]);
-            return -1;
-         }
-         llvm::sys::fs::remove(temp_main);
-         for (size_t i = 1; i < outputs.size(); i++)
-            llvm::sys::fs::remove(outputs[i]);
       }
 
    } catch (std::runtime_error& err) {
