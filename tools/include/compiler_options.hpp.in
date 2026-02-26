@@ -785,7 +785,7 @@ static Options CreateOptions(bool add_defaults=true) {
 #endif
    }
    if (O_opt.empty() && !g_opt) {
-      copts.emplace_back("-O3");
+      copts.emplace_back("-Os");
    }
    else if (!O_opt.empty() && !g_opt) {
       copts.emplace_back("-O"+O_opt);
@@ -828,7 +828,7 @@ static Options CreateOptions(bool add_defaults=true) {
          ldopts.emplace_back("--lto-"+lto_opt_opt);
       }
       else {
-         ldopts.emplace_back("--lto-O3");
+         ldopts.emplace_back("--lto-O2");
       }
       ldopts.emplace_back("-zstack-size=" + std::to_string(stack_size_opt));
 #else
