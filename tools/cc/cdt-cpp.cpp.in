@@ -63,6 +63,14 @@ int main(int argc, const char **argv) {
          std::string output_dir = out_dir.str().empty() ? "." : std::string(out_dir.str());
          codegen_args.push_back(output_dir);
 
+         // Forward explicit ABI output path to cdt-codegen.
+         // Some test harnesses pass -abigen_output='' (literal quotes) to mean "default";
+         // treat those as empty.
+         if (!opts.abigen_output.empty() && opts.abigen_output != "''") {
+            codegen_args.push_back("--abi-output");
+            codegen_args.push_back(opts.abigen_output);
+         }
+
          if (opts.abi_version.first > 0) {
             codegen_args.push_back("--abi-version");
             codegen_args.push_back(std::to_string(opts.abi_version.first) + "." + std::to_string(opts.abi_version.second));

@@ -144,6 +144,7 @@ static std::string abi_version;
 static int         abi_version_major           = 1;
 static int         abi_version_minor           = 3;
 static bool        no_abigen                   = false;
+static std::string abi_output_path;
 static bool        embed_dispatch              = false;
 static bool        verbose                     = false;
 static bool        suppress_ricardian_warnings = true;
@@ -209,6 +210,8 @@ static void parse_args(int argc, const char** argv) {
          exit(0);
       } else if (arg == "--no-abigen") {
          no_abigen = true;
+      } else if (arg == "--abi-output" && i + 1 < argc) {
+         abi_output_path = argv[++i];
       } else if (arg == "--embed-dispatch") {
          embed_dispatch = true;
       } else if (arg == "-v" || arg == "--verbose") {
@@ -431,7 +434,9 @@ int main(int argc, const char** argv) {
                          << "', skipping ABI generation\n";
             }
          } else {
-            std::string   filename = output_dir + "/" + contract_name + ".abi";
+            std::string   filename = abi_output_path.empty()
+                                   ? output_dir + "/" + contract_name + ".abi"
+                                   : abi_output_path;
             std::ofstream ofs(filename);
             if (!ofs) {
                std::cerr << "cannot open " + filename + "\n";
