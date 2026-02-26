@@ -25,6 +25,9 @@ macro( cdt_libraries_install)
    install(DIRECTORY ${CMAKE_BINARY_DIR}/include/ DESTINATION ${CDT_INSTALL_PREFIX}/include)
 endmacro( cdt_libraries_install )
 
+# Ensure bin/ exists before copying anything into it
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin )
+
 # Copy LLVM tools from tools/bin/ to bin/
 foreach(tool llvm-ranlib llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-readobj llvm-readelf llvm-strip opt llc lld ld.lld clang clang++ wasm-ld)
    add_custom_command( TARGET CDTTools POST_BUILD
@@ -35,7 +38,6 @@ foreach(tool llvm-ranlib llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-readobj 
 endforeach()
 
 # CDT symlinks
-add_custom_command( TARGET CDTTools POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
 add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-ranlib cdt-ranlib 2>/dev/null || true )
 add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-ar cdt-ar 2>/dev/null || true )
 add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-nm cdt-nm 2>/dev/null || true )
@@ -59,12 +61,10 @@ cdt_tool_install_and_symlink(cdt-codegen cdt-codegen)
 # Sysio plugins (built by tools project)
 foreach(plugin sysio_attrs sysio_codegen)
    set(PLUGIN_FILE ${CMAKE_BINARY_DIR}/tools/bin/${plugin}${CMAKE_SHARED_LIBRARY_SUFFIX})
-   if(EXISTS ${PLUGIN_FILE})
-      add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PLUGIN_FILE} ${CMAKE_BINARY_DIR}/bin/ )
-      install(FILES ${PLUGIN_FILE}
-         DESTINATION ${CDT_INSTALL_PREFIX}/bin
-         PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-   endif()
+   add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PLUGIN_FILE} ${CMAKE_BINARY_DIR}/bin/ )
+   install(FILES ${PLUGIN_FILE}
+      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+      PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endforeach()
 
 cdt_cmake_install_and_symlink(cdt-config.cmake cdt-config.cmake)

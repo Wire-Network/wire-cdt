@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
 # Sanity check our source directory to make sure that we are not trying to
 # generate an in-source build, and to make
@@ -29,7 +29,8 @@ set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 option(ENABLE_NATIVE_COMPILER "enable native builds with the CDT toolchain" ON)
 option(ENABLE_TESTS "enable building tests" ON)
-cmake_dependent_option(ENABLE_INTEGRATION_TESTS "Build integration tests" OFF "NOT ENABLE_TESTS" OFF)
+include(CMakeDependentOption)
+cmake_dependent_option(ENABLE_INTEGRATION_TESTS "Build integration tests" OFF "ENABLE_TESTS" OFF)
 option(ENABLE_PACKAGE "enable cpack" ON)
 
 include(GNUInstallDirs)
@@ -71,6 +72,18 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}
 include(cmake/LibrariesExternalProject.cmake)
 
 include(cmake/InstallCDT.cmake)
+
+# Ensure `ninja clean` also cleans ExternalProject sub-builds and their output artifacts.
+# NOTE: Do NOT add lib/ itself — lib/cmake/cdt/ contains configure-time files
+# (CDTWasmToolchain.cmake, etc.) that only cmake can regenerate, not ninja.
+file(GLOB _lib_artifacts "${CMAKE_BINARY_DIR}/lib/*.a")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+   "${CMAKE_BINARY_DIR}/tools"
+   "${CMAKE_BINARY_DIR}/libraries"
+   "${CMAKE_BINARY_DIR}/bin"
+   "${CMAKE_BINARY_DIR}/include"
+   ${_lib_artifacts}
+)
 
 configure_file(${CMAKE_SOURCE_DIR}/imports/cdt.imports.in ${CMAKE_BINARY_DIR}/cdt.imports COPYONLY)
 install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
