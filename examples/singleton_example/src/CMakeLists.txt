@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.16)
 project(singleton_example)
 
 find_package(cdt)
