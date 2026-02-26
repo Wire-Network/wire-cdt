@@ -61,6 +61,8 @@ macro(add_native_library TARGET)
     set_cdt_include_directories(${TARGET})
     set_target_properties(${TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dummy)
   endif()
+  # sysio_wasm_import is only understood by the WASM clang plugin; suppress for native builds
+  target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
 endmacro()
 
 # Adds a native executable target that can be used in native and WASM builds
@@ -85,5 +87,7 @@ macro(add_native_executable TARGET)
     set_cdt_include_directories(${TARGET})
     set_target_properties(${TARGET} PROPERTIES EXECUTABLE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dummy)
   endif()
+  # sysio_wasm_import is only understood by the WASM clang plugin; suppress for native builds
+  target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
 endmacro()
 

@@ -1,7 +1,7 @@
 #include "compiler_builtins.hpp"
 #include <stdint.h>
 
-static constexpr uint32_t SHIFT_WIDTH = (sizeof(uint64_t)*8)-1;
+static constexpr uint32_t SHIFT_WIDTH [[maybe_unused]] = (sizeof(uint64_t)*8)-1;
 
 extern "C" {
 void sysio_assert(int32_t, const char*);
