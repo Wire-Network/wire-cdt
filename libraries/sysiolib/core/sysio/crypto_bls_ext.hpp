@@ -341,7 +341,7 @@ namespace detail {
                                                                                    " + checksum " + std::to_string(bls_checksum_size));
         
         auto it = decoded.end();
-        std::advance(it, -bls_checksum_size);
+        std::advance(it, -static_cast<std::ptrdiff_t>(bls_checksum_size));
         std::copy(decoded.begin(), it, ret.begin());
         
         auto csum = ripemd160(ret.data(), ret.size()).extract_as_byte_array();
