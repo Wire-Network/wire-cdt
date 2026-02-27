@@ -358,8 +358,10 @@ namespace sysio {
        * @brief %asset to std::string
        */
       std::string to_string()const {
+         // max precision is uint8_t (255), so max buffer = max(255,19)+11 = 266
+         constexpr int max_buffer_size = 266;
+         char buffer[max_buffer_size];
          int buffer_size = std::max(static_cast<int>(symbol.precision()), 19) + 11;
-         char buffer[buffer_size];
          char* end = write_as_string( buffer, buffer + buffer_size );
          check( end <= buffer + buffer_size, "insufficient space in buffer" ); // should never fail
 
@@ -372,8 +374,10 @@ namespace sysio {
        * @brief %Print the asset
        */
       void print()const {
+         // max precision is uint8_t (255), so max buffer = max(255,19)+11 = 266
+         constexpr int max_buffer_size = 266;
+         char buffer[max_buffer_size];
          int buffer_size = std::max(static_cast<int>(symbol.precision()), 19) + 11;
-         char buffer[buffer_size];
          char* end = write_as_string( buffer, buffer + buffer_size );
          check( end <= buffer + buffer_size, "insufficient space in buffer" ); // should never fail
 

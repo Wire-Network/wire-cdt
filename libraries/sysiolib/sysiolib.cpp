@@ -6,7 +6,7 @@
 #include <algorithm>
 
 extern "C" volatile uint64_t sysio_contract_name = 0;
-extern "C" volatile void sysio_set_contract_name(uint64_t n) { sysio_contract_name = n; } // LLVM creates the call to this at the beginning of apply
+extern "C" void sysio_set_contract_name(uint64_t n) { sysio_contract_name = n; } // LLVM creates the call to this at the beginning of apply
 
 namespace sysio {
    extern "C" {
@@ -74,14 +74,15 @@ namespace sysio {
    }
 
    // system.hpp
+   // NOTE: No `static` caching here. In WASM each action execution gets a fresh
+   // module instance so static would be harmless, but for native-module builds
+   // the .so persists across calls and a cached value would be stale.
    time_point current_time_point() {
-      static auto ct = time_point(microseconds(static_cast<int64_t>(current_time())));
-      return ct;
+      return time_point(microseconds(static_cast<int64_t>(current_time())));
    }
 
    block_timestamp current_block_time() {
-      static auto bt = block_timestamp(current_time_point());
-      return bt;
+      return block_timestamp(current_time_point());
    }
 
    std::vector<name> get_active_producers() {

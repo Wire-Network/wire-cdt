@@ -467,8 +467,8 @@ namespace detail {
     inline bool bls_pop_verify(const bls_g1& pubkey, const bls_g2& signature_proof) {
         using namespace detail;
 
-        bls_g1 g1_points[2] = {0};
-        bls_g2 g2_points[2] = {0};
+        bls_g1 g1_points[2] = {{0}, {0}};
+        bls_g2 g2_points[2] = {{0}, {0}};
 
         std::memcpy(g1_points[0].data(), G1_ONE_NEG.data(), G1_ONE_NEG.size());
         std::memcpy(g2_points[0].data(), signature_proof.data(), signature_proof.size());

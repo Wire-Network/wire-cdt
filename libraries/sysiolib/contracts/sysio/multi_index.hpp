@@ -510,8 +510,13 @@ class multi_index
             constexpr static uint64_t name()   { return index_table_name; }
             constexpr static uint64_t number() { return Number; }
 
-            struct const_iterator : public std::iterator<std::bidirectional_iterator_tag, const T> {
+            struct const_iterator {
                public:
+                  using iterator_category = std::bidirectional_iterator_tag;
+                  using value_type        = const T;
+                  using difference_type   = std::ptrdiff_t;
+                  using pointer           = const T*;
+                  using reference         = const T&;
                   friend bool operator == ( const const_iterator& a, const const_iterator& b ) {
                      return a._item == b._item;
                   }
@@ -935,7 +940,13 @@ class multi_index
        */
       uint64_t get_scope()const { return _scope; }
 
-      struct const_iterator : public std::iterator<std::bidirectional_iterator_tag, const T> {
+      struct const_iterator {
+         using iterator_category = std::bidirectional_iterator_tag;
+         using value_type        = const T;
+         using difference_type   = std::ptrdiff_t;
+         using pointer           = const T*;
+         using reference         = const T&;
+
          friend bool operator == ( const const_iterator& a, const const_iterator& b ) {
             return a._item == b._item;
          }
