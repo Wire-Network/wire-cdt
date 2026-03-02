@@ -4,6 +4,7 @@ project(cdt_libraries)
 
 list(APPEND CMAKE_MODULE_PATH ${CDT_BIN})
 include(CDTMacros)
+include(CDTInternalMacros)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -no-missing-ricardian-clause")

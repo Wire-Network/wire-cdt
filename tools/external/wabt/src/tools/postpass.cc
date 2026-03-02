@@ -160,7 +160,6 @@ inline std::vector<DataSegment*> CreateSegments(std::vector<uint8_t> memory) {
    }
 
    uint32_t zero_span = 0;
-   uint32_t break_size = 1024;
    uint32_t last_offset = f;
 
    for (std::size_t i=f; i < memory.size(); ++i) {

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <sysio/sysio.hpp>
 
 #include <cmath>

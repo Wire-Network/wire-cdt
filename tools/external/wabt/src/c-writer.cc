@@ -1146,7 +1146,6 @@ void CWriter::WriteElemInitializers() {
     Write("wasm_rt_allocate_table(", ExternalPtr(table->name), ", ",
           table->elem_limits.initial, ", ", max, ");", Newline());
   }
-  Index elem_segment_index = 0;
   for (const ElemSegment* elem_segment : module_->elem_segments) {
     Write("offset = ");
     WriteInitExpr(elem_segment->offset);
@@ -1162,7 +1161,6 @@ void CWriter::WriteElemInitializers() {
             "], (wasm_rt_anyfunc_t)", ExternalPtr(func->name), "};", Newline());
       ++i;
     }
-    ++elem_segment_index;
   }
 
   Write(CloseBrace(), Newline());
