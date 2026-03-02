@@ -135,6 +135,7 @@ namespace sysio {
       bool b;
       ds >> b;
       if (b) {
+         if (!pubkey) pubkey = std::make_shared<std::array<uint8_t, 96>>();
          ds >> *pubkey;
       } else {
          pubkey = nullptr;

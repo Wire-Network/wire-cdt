@@ -14,13 +14,13 @@ namespace detail {
     ///////////////////// Structure that can be converted to reference to anything
     struct ubiq_constructor {
         std::size_t ignore;
-        template <class Type> constexpr operator Type&() const noexcept; // Undefined, allows initialization of reference fields (T& and const T&)
+        template <class Type> operator Type&() const noexcept; // Intentionally undefined
     };
 
     ///////////////////// Structure that can be converted to reference to anything except reference to T
     template <class T>
     struct ubiq_constructor_except {
-        template <class Type> constexpr operator std::enable_if_t<!std::is_same<T, Type>::value, Type&> () const noexcept; // Undefined
+        template <class Type> operator std::enable_if_t<!std::is_same<T, Type>::value, Type&> () const noexcept; // Intentionally undefined
     };
 
     ///////////////////// Hand-made is_aggregate_initializable_n<T> trait
@@ -864,7 +864,7 @@ void for_each_field(T&& value, F&& func) {
 
     detail::for_each_field_dispatcher(
         value,
-        [f = std::forward<F>(func), fields_count_val](auto&& t) mutable {
+        [f = std::forward<F>(func)](auto&& t) mutable {
 
             detail::for_each_field_impl(
                 t,
