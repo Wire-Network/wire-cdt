@@ -46,6 +46,11 @@ namespace detail {
         static constexpr bool value =
             std::is_empty<T>::value
             || std::is_fundamental<T>::value
+#if defined(__cpp_aggregate_paren_init)
+            // C++20 P0960R3 makes is_constructible return true for aggregates,
+            // breaking the is_not_constructible_n heuristic. Use std::is_aggregate instead.
+            || std::is_aggregate<std::remove_cv_t<T>>::value
+#endif
             || is_not_constructible_n(std::make_index_sequence<N>{})
         ;
     };

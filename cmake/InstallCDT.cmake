@@ -1,21 +1,3 @@
-add_custom_command( TARGET CDTClang POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-macro( cdt_clang_install file )
-   set(BINARY_DIR ${CMAKE_BINARY_DIR}/cdt-llvm/bin)
-   add_custom_command( TARGET CDTClang POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/${file} ${CMAKE_BINARY_DIR}/bin/ )
-   install(FILES ${BINARY_DIR}/${file}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin
-      PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endmacro( cdt_clang_install )
-
-macro( cdt_clang_install_and_symlink file symlink )
-   set(BINARY_DIR ${CMAKE_BINARY_DIR}/cdt-llvm/bin)
-   add_custom_command( TARGET CDTClang POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/${file} ${CMAKE_BINARY_DIR}/bin/ )
-   add_custom_command( TARGET CDTClang POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf ${file} ${symlink} )
-   install(FILES ${BINARY_DIR}/${file}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin
-      PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endmacro( cdt_clang_install_and_symlink )
-
 macro( cdt_tool_install file )
    set(BINARY_DIR ${CMAKE_BINARY_DIR}/tools/bin)
    add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/${file} ${CMAKE_BINARY_DIR}/bin/ )
@@ -43,23 +25,29 @@ macro( cdt_libraries_install)
    install(DIRECTORY ${CMAKE_BINARY_DIR}/include/ DESTINATION ${CDT_INSTALL_PREFIX}/include)
 endmacro( cdt_libraries_install )
 
-cdt_clang_install_and_symlink(llvm-ranlib cdt-ranlib)
-cdt_clang_install_and_symlink(llvm-ar cdt-ar)
-cdt_clang_install_and_symlink(llvm-nm cdt-nm)
-cdt_clang_install_and_symlink(llvm-objcopy cdt-objcopy)
-cdt_clang_install_and_symlink(llvm-objdump cdt-objdump)
-cdt_clang_install_and_symlink(llvm-readobj cdt-readobj)
-cdt_clang_install_and_symlink(llvm-readelf cdt-readelf)
-cdt_clang_install_and_symlink(llvm-strip cdt-strip)
+# Ensure bin/ exists before copying anything into it
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin )
 
-cdt_clang_install(opt)
-cdt_clang_install(llc)
-cdt_clang_install(lld)
-cdt_clang_install(ld.lld)
-cdt_clang_install(ld64.lld)
-cdt_clang_install(clang-9)
-cdt_clang_install(wasm-ld)
+# Copy LLVM tools from tools/bin/ to bin/
+foreach(tool llvm-ranlib llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-readobj llvm-readelf llvm-strip opt llc lld ld.lld clang clang++ wasm-ld)
+   add_custom_command( TARGET CDTTools POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/tools/bin/${tool} ${CMAKE_BINARY_DIR}/bin/ 2>/dev/null || true )
+   install(PROGRAMS ${CMAKE_BINARY_DIR}/tools/bin/${tool}
+      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+      OPTIONAL)
+endforeach()
 
+# CDT symlinks
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-ranlib cdt-ranlib 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-ar cdt-ar 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-nm cdt-nm 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-objcopy cdt-objcopy 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-objdump cdt-objdump 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-readobj cdt-readobj 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-readelf cdt-readelf 2>/dev/null || true )
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-strip cdt-strip 2>/dev/null || true )
+
+# CDT tools
 cdt_tool_install_and_symlink(sysio-pp cdt-pp)
 cdt_tool_install_and_symlink(sysio-wast2wasm cdt-wast2wasm)
 cdt_tool_install_and_symlink(sysio-wasm2wast cdt-wasm2wast)
@@ -68,9 +56,16 @@ cdt_tool_install_and_symlink(cdt-cpp cdt-cpp)
 cdt_tool_install_and_symlink(cdt-ld cdt-ld)
 cdt_tool_install_and_symlink(cdt-abidiff cdt-abidiff)
 cdt_tool_install_and_symlink(cdt-init cdt-init)
+cdt_tool_install_and_symlink(cdt-codegen cdt-codegen)
 
-cdt_clang_install(../lib/LLVMSysioApply${CMAKE_SHARED_LIBRARY_SUFFIX})
-cdt_clang_install(../lib/LLVMSysioSoftfloat${CMAKE_SHARED_LIBRARY_SUFFIX})
+# Sysio plugins (built by tools project)
+foreach(plugin sysio_attrs sysio_codegen)
+   set(PLUGIN_FILE ${CMAKE_BINARY_DIR}/tools/bin/${plugin}${CMAKE_SHARED_LIBRARY_SUFFIX})
+   add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PLUGIN_FILE} ${CMAKE_BINARY_DIR}/bin/ )
+   install(FILES ${PLUGIN_FILE}
+      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+      PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+endforeach()
 
 cdt_cmake_install_and_symlink(cdt-config.cmake cdt-config.cmake)
 cdt_cmake_install_and_symlink(CDTWasmToolchain.cmake CDTWasmToolchain.cmake)

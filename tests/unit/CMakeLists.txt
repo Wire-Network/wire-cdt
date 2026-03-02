@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
+project(cdt_unit_tests)
 
 list( APPEND CMAKE_MODULE_PATH ${CDT_BIN} )
 include( CDTMacros )

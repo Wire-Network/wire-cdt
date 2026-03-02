@@ -55,6 +55,9 @@ else ()
   set(COMPILER_IS_MSVC 0)
 endif ()
 
+# Statically link C++ runtime for portable binaries
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+
 include(CheckIncludeFile)
 include(CheckSymbolExists)
 

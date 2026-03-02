@@ -1,35 +1,13 @@
-// Declares clang::SyntaxOnlyAction.
-#include "clang/Frontend/FrontendActions.h"
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Tooling.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/DeclTemplate.h"
-#include "clang/AST/Expr.h"
-#include "clang/Basic/Builtins.h"
-#include "llvm/Support/FileSystem.h"
-#include "sysio/utils.hpp"
-#include "sysio/gen.hpp"
-#include "sysio/whereami/whereami.hpp"
-#include "sysio/abi.hpp"
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/FileSystem.h>
 
 #include <exception>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <regex>
 #include <sstream>
-#include <memory>
-#include <set>
-#include <map>
-#include <chrono>
-#include <ctime>
 
-#include "llvm/Support/CommandLine.h"
-using namespace clang::tooling;
-using namespace clang::ast_matchers;
 using namespace llvm;
-using namespace sysio;
-using namespace sysio::cdt;
 
 struct project {
    std::string project_name;

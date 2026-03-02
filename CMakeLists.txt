@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
 # Sanity check our source directory to make sure that we are not trying to
 # generate an in-source build, and to make
@@ -24,12 +24,12 @@ else()
    set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 endif()
 
-# set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/cdt)
-set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CDT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/cdt)
 
 option(ENABLE_NATIVE_COMPILER "enable native builds with the CDT toolchain" ON)
 option(ENABLE_TESTS "enable building tests" ON)
-cmake_dependent_option(ENABLE_INTEGRATION_TESTS "Build integration tests" OFF "NOT ENABLE_TESTS" OFF)
+include(CMakeDependentOption)
+cmake_dependent_option(ENABLE_INTEGRATION_TESTS "Build integration tests" OFF "ENABLE_TESTS" OFF)
 option(ENABLE_PACKAGE "enable cpack" ON)
 
 include(GNUInstallDirs)
@@ -46,7 +46,6 @@ if(NOT LIBS_BUILD_TYPE)
    set(LIBS_BUILD_TYPE "Release")
 endif()
 
-include(cmake/ClangExternalProject.cmake)
 include(cmake/ToolsExternalProject.cmake)
 
 set(WASM_SDK_BUILD true)
@@ -73,6 +72,18 @@ include(cmake/LibrariesExternalProject.cmake)
 
 include(cmake/InstallCDT.cmake)
 
+# Ensure `ninja clean` also cleans ExternalProject sub-builds and their output artifacts.
+# NOTE: Do NOT add lib/ itself — lib/cmake/cdt/ contains configure-time files
+# (CDTWasmToolchain.cmake, etc.) that only cmake can regenerate, not ninja.
+file(GLOB _lib_artifacts "${CMAKE_BINARY_DIR}/lib/*.a")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+   "${CMAKE_BINARY_DIR}/tools"
+   "${CMAKE_BINARY_DIR}/libraries"
+   "${CMAKE_BINARY_DIR}/bin"
+   "${CMAKE_BINARY_DIR}/include"
+   ${_lib_artifacts}
+)
+
 configure_file(${CMAKE_SOURCE_DIR}/imports/cdt.imports.in ${CMAKE_BINARY_DIR}/cdt.imports COPYONLY)
 install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
 
@@ -91,7 +102,6 @@ configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_rpm.sh ${CMAKE_BINARY_DIR}/p
 configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_tarball.sh ${CMAKE_BINARY_DIR}/packages/generate_tarball.sh COPYONLY)
 
 # add licenses
-configure_file(${CMAKE_SOURCE_DIR}/cdt-llvm/LICENSE.TXT ${CMAKE_BINARY_DIR}/licenses/llvm.license COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/libraries/boost/boost.license ${CMAKE_BINARY_DIR}/licenses/boost.license COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/libraries/meta_refl/LICENSE ${CMAKE_BINARY_DIR}/licenses/meta_refl.license COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tools/external/wabt/LICENSE ${CMAKE_BINARY_DIR}/licenses/wabt.license COPYONLY)
