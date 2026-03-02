@@ -431,6 +431,7 @@ static void GetCompDefaults(std::vector<std::string>& copts) {
          copts.emplace_back("-DSYSIO_NATIVE");
          copts.emplace_back("-DLLP64");
       }
+      copts.emplace_back("-Wno-unknown-attributes");
    }
 
    if (!fasm_opt) {

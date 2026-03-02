@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.16)
 project(hello_tests)
 find_package(cdt)
 add_native_executable(hello_test hello_test.cpp ${CMAKE_SOURCE_DIR}/../src/hello.cpp)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "check.hpp"
+#include <cstddef>
 
 namespace sysio {
     /**
@@ -179,7 +180,7 @@ namespace sysio {
 
        private:
          bool _has_value = false;
-         typename std::aligned_storage<sizeof(T), alignof(T)>::type _data;
+         alignas(T) std::byte _data[sizeof(T)];
 
          constexpr T& _get() {
             return *reinterpret_cast<T*>(&_data);

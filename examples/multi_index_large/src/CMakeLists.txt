@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.16)
 project(multi_index_large)
 
 find_package(cdt)
