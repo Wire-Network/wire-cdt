@@ -7,7 +7,7 @@
 
 #include <vector>
 
-namespace eosio {
+namespace sysio {
 
 // -------------------------------------------------------------------------------
 //      see https://github.com/AntelopeIO/spring/wiki/ABI-1.3:-bitset-type
@@ -222,4 +222,4 @@ private:
 
 constexpr const char* get_type_name(bitset*) { return "bitset"; }
 
-} // namespace eosio
+} // namespace sysio
