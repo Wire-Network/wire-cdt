@@ -1,7 +1,7 @@
 set(LLVM_LINK_COMPONENTS support)
 
 add_executable(cdt-codegen cdt-codegen.cpp)
-set_property(TARGET cdt-codegen PROPERTY CXX_STANDARD 17)
+set_property(TARGET cdt-codegen PROPERTY CXX_STANDARD 23)
 target_compile_options(cdt-codegen PRIVATE -fexceptions -fno-rtti)
 target_compile_definitions(cdt-codegen PRIVATE
    CDT_VERSION="${PROJECT_VERSION}"

@@ -438,7 +438,6 @@ static void GetCompDefaults(std::vector<std::string>& copts) {
 #ifdef CPP_COMP
       copts.emplace_back("-fno-exceptions");
       copts.emplace_back("-fno-rtti");
-      // -fmodules-ts removed: not supported in Clang 18
       copts.emplace_back("-D_GNU_SOURCE=1");
 #endif
       copts.emplace_back("-DBOOST_DISABLE_ASSERTS");

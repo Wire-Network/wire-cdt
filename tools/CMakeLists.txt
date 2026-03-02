@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 project(cdt_tools)
 
-find_package(LLVM 18.1 REQUIRED CONFIG)
+find_package(LLVM 18.1 CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-find_package(Clang REQUIRED CONFIG)
+find_package(Clang CONFIG REQUIRED)
 message(STATUS "Found Clang in: ${Clang_DIR}")
 
 list(APPEND CMAKE_MODULE_PATH ${LLVM_DIR})
@@ -40,7 +40,7 @@ macro (add_tool name)
    include_directories(include)
 
    add_executable(${name} ${CMAKE_BINARY_DIR}/${name}.cpp)
-   set_property(TARGET ${name} PROPERTY CXX_STANDARD 17)
+   set_property(TARGET ${name} PROPERTY CXX_STANDARD 23)
    target_compile_options(${name} PRIVATE -fexceptions -fno-rtti)
    target_include_directories(${name} PUBLIC
       ${CMAKE_BINARY_DIR}
