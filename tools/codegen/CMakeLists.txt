@@ -9,8 +9,10 @@ target_compile_definitions(cdt-codegen PRIVATE
 )
 target_include_directories(cdt-codegen PRIVATE
    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../jsoncons/include
    ${LLVM_INCLUDE_DIRS}
+)
+target_include_directories(cdt-codegen SYSTEM PRIVATE
+   ${CMAKE_CURRENT_SOURCE_DIR}/../jsoncons/include
 )
 target_link_libraries(cdt-codegen PRIVATE LLVMSupport)
 

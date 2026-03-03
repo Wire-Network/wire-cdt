@@ -48,50 +48,134 @@ macro(target_ricardian_directory TARGET DIR)
   endif()
 endmacro()
 
-# Adds a native library target that can be used in native and WASM builds
-# @param TARGET The target name
-# @param ARGN Additional source files
-macro(add_native_library TARGET)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "wasm")
-    add_library(${TARGET} ${ARGN})
-    target_compile_options(${TARGET} PUBLIC -fnative)
-  else()
-    add_library(${TARGET} ${ARGN})
-    set_target_properties(${TARGET} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-    set_cdt_include_directories(${TARGET})
-    set_target_properties(${TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dummy)
-  endif()
-  # sysio_wasm_import is only understood by the WASM clang plugin; suppress for native builds
-  target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
-endmacro()
+# ── Native contract compilation (for native-module runtime) ───────────────
+#
+# Compiles contract sources with the HOST compiler (not CDT's WASM toolchain)
+# to produce a shared library (.so) that can be dlopen'd by the native_module
+# runtime for debugging with GDB/LLDB/IDE debuggers.
+#
+# Usage:
+#   add_native_contract(
+#     TARGET         sysio.bios_native
+#     SOURCES        sysio.bios.cpp
+#     INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}
+#     CONTRACT_CLASS "sysiobios::bios"
+#     HEADERS        "sysio.bios.hpp"
+#     ABI_FILE       ${CMAKE_BINARY_DIR}/contracts/sysio.bios/sysio.bios.abi
+#   )
+#
+# For contracts with actions on multiple classes:
+#   add_native_contract(
+#     ...
+#     CONTRACT_CLASS "sysiosystem::system_contract"
+#     HEADERS        "sysio.system/sysio.system.hpp"
+#                    "sysio.system/peer_keys.hpp"
+#                    "sysio.system/trx_priority.hpp"
+#     EXTRA_DISPATCH "sysiosystem::peer_keys:regpeerkey,delpeerkey,getpeerkeys"
+#                    "sysiosystem::trx_priority:addtrxp,deltrxp"
+#   )
+#
+# The resulting .so exports an `apply(uint64_t, uint64_t, uint64_t)` function.
+# Intrinsic symbols (db_store_i64, etc.) are left undefined and resolved at
+# dlopen time against the test executable's --dynamic-list exports.
+function(add_native_contract)
+  cmake_parse_arguments(ARG "" "TARGET;CONTRACT_CLASS;ABI_FILE"
+    "SOURCES;INCLUDE_DIRS;HEADERS;EXTRA_DISPATCH" ${ARGN})
 
-# Adds a native executable target that can be used in native and WASM builds
-# @param TARGET The target name
-# @param ARGN Additional source files
-macro(add_native_executable TARGET)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "wasm")
-    add_executable(${TARGET} ${ARGN})
-    target_compile_options(${TARGET} PUBLIC -fnative)
-    set_target_properties(${TARGET} PROPERTIES LINK_FLAGS "-fnative" SUFFIX "")
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-      target_compile_options(${TARGET} PUBLIC -g)
-      if(APPLE)
-        get_target_property(BINOUTPUT ${TARGET} BINARY_DIR)
-        find_program(name NAMES "dsymutil")
-        if(name)
-          add_custom_command(TARGET ${TARGET} POST_BUILD COMMAND dsymutil ${BINOUTPUT}/${TARGET})
-        endif()
-      endif()
-    endif()
-  else()
-    add_executable(${TARGET} ${ARGN})
-    set_target_properties(${TARGET} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-    set_cdt_include_directories(${TARGET})
-    set_target_properties(${TARGET} PROPERTIES EXECUTABLE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dummy)
+  if(NOT ARG_TARGET)
+    message(FATAL_ERROR "add_native_contract: TARGET is required")
   endif()
-  # sysio_wasm_import is only understood by the WASM clang plugin; suppress for native builds
-  target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
-endmacro()
+  if(NOT ARG_SOURCES)
+    message(FATAL_ERROR "add_native_contract: SOURCES is required")
+  endif()
+
+  # Auto-generate dispatch .cpp from ABI when CONTRACT_CLASS + HEADERS + ABI_FILE are given
+  if(ARG_CONTRACT_CLASS AND ARG_HEADERS AND ARG_ABI_FILE)
+    set(_gen_script "${CDT_ROOT}/scripts/gen_native_dispatch.py")
+    set(_dispatch_cpp "${CMAKE_CURRENT_BINARY_DIR}/${ARG_TARGET}_dispatch.cpp")
+
+    set(_gen_args
+      --abi "${ARG_ABI_FILE}"
+      --contract-class "${ARG_CONTRACT_CLASS}"
+      -o "${_dispatch_cpp}"
+    )
+    foreach(_hdr ${ARG_HEADERS})
+      list(APPEND _gen_args --header "${_hdr}")
+    endforeach()
+    foreach(_extra ${ARG_EXTRA_DISPATCH})
+      list(APPEND _gen_args --extra-dispatch "${_extra}")
+    endforeach()
+
+    add_custom_command(
+      OUTPUT "${_dispatch_cpp}"
+      COMMAND python3 "${_gen_script}" ${_gen_args}
+      DEPENDS "${_gen_script}" "${ARG_ABI_FILE}"
+      COMMENT "Generating native dispatch for ${ARG_TARGET}"
+      VERBATIM
+    )
+
+    list(APPEND ARG_SOURCES "${_dispatch_cpp}")
+  endif()
+
+  # CDT's sysiolib source files compiled with the host compiler
+  set(_native_src_dir "${CDT_ROOT}/share/cdt/native-contract-src")
+  set(_cdt_sources
+    "${_native_src_dir}/crypto.cpp"
+    "${_native_src_dir}/sysiolib.cpp"
+    "${_native_src_dir}/base64.cpp"
+  )
+
+  # Build as a MODULE library (dlopen-able, no lib prefix)
+  add_library(${ARG_TARGET} MODULE ${ARG_SOURCES} ${_cdt_sources})
+  set_target_properties(${ARG_TARGET} PROPERTIES
+    PREFIX ""
+    OUTPUT_NAME "${ARG_TARGET}"
+  )
+
+  # CDT include paths — we intentionally exclude the native/ directory because
+  # it contains CDT's own intrinsic dispatch headers (intrinsics.hpp, crt.hpp)
+  # which conflict with the dlopen-based symbol resolution used by the
+  # native-module runtime. The sysiolib root is included for CDT source files
+  # that use relative includes like #include "core/sysio/crypto.hpp".
+  target_include_directories(${ARG_TARGET} PRIVATE
+    ${ARG_INCLUDE_DIRS}
+    "${CDT_ROOT}/include/sysiolib"
+    "${CDT_ROOT}/include/sysiolib/capi"
+    "${CDT_ROOT}/include/sysiolib/core"
+    "${CDT_ROOT}/include/sysiolib/contracts"
+    "${CDT_ROOT}/include/bluegrass"
+    "${CDT_ROOT}/include"
+  )
+
+  # Compile definitions for native mode
+  target_compile_definitions(${ARG_TARGET} PRIVATE
+    __sysio_cdt_native__
+    SYSIO_NATIVE
+    "uint128_t=unsigned __int128"
+    "int128_t=__int128"
+  )
+
+  # Suppress unknown-attribute warnings from __attribute__((sysio_wasm_import))
+  # Force-include standard headers since CDT headers expect standard integer types
+  target_compile_options(${ARG_TARGET} PRIVATE
+    -Wno-unknown-attributes
+    -fPIC
+    "SHELL:-include cstdint"
+    "SHELL:-include cstdlib"
+    "SHELL:-include cstring"
+    "SHELL:-include memory"
+  )
+
+  # Allow undefined symbols — intrinsics are resolved at dlopen time.
+  # Link against shared libgcc_s and libstdc++ to ensure C++ exceptions can
+  # propagate across the .so boundary.
+  if(APPLE)
+    target_link_options(${ARG_TARGET} PRIVATE -undefined dynamic_lookup)
+  else()
+    target_link_options(${ARG_TARGET} PRIVATE -Wl,--allow-shlib-undefined)
+    target_link_libraries(${ARG_TARGET} PRIVATE gcc_s stdc++)
+  endif()
+endfunction()
 
 # Adds a native contract executable for debugging with standard debuggers
 # Unlike add_native_executable, this is specifically for compiling contract code

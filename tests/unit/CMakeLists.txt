@@ -3,6 +3,7 @@ project(cdt_unit_tests)
 
 list( APPEND CMAKE_MODULE_PATH ${CDT_BIN} )
 include( CDTMacros )
+include( CDTInternalMacros )
 
 macro(add_cdt_unit_test TEST_NAME)
    add_native_executable(${TEST_NAME} ${TEST_NAME}.cpp)

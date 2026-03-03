@@ -56,6 +56,7 @@ set(CDT_ROOT_DIR ${CMAKE_BINARY_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/cdt-config.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTMacros.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTInternalMacros.cmake ${CMAKE_BINARY_DIR}/lib/cmake/cdt/CDTInternalMacros.cmake COPYONLY)
 
 set(CDT_ROOT_DIR ${CDT_INSTALL_PREFIX})
 
@@ -89,6 +90,17 @@ install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
 
 configure_file(${CMAKE_SOURCE_DIR}/scripts/ricardeos/ricardeos.py ${CMAKE_BINARY_DIR}/scripts/ricardeos.py COPYONLY)
 install(FILES ${CMAKE_BINARY_DIR}/scripts/ricardeos.py DESTINATION ${CDT_INSTALL_PREFIX}/scripts)
+
+configure_file(${CMAKE_SOURCE_DIR}/scripts/gen_native_dispatch.py ${CMAKE_BINARY_DIR}/scripts/gen_native_dispatch.py COPYONLY)
+install(FILES ${CMAKE_BINARY_DIR}/scripts/gen_native_dispatch.py DESTINATION ${CDT_INSTALL_PREFIX}/scripts)
+
+# Copy sysiolib source files needed for native contract compilation (host compiler)
+foreach(_src crypto.cpp sysiolib.cpp base64.cpp)
+  configure_file(${CMAKE_SOURCE_DIR}/libraries/sysiolib/${_src}
+                 ${CMAKE_BINARY_DIR}/share/cdt/native-contract-src/${_src} COPYONLY)
+endforeach()
+install(DIRECTORY ${CMAKE_BINARY_DIR}/share/cdt/native-contract-src/
+        DESTINATION ${CDT_INSTALL_PREFIX}/share/cdt/native-contract-src)
 
 set(VENDOR "WireNetwork")
 set(PROJECT_NAME "cdt")

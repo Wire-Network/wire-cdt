@@ -46,9 +46,11 @@ macro (add_tool name)
       ${CMAKE_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/../include
-      ${CMAKE_CURRENT_SOURCE_DIR}/../jsoncons/include
       ${LLVM_INCLUDE_DIRS}
       ${CLANG_INCLUDE_DIRS}
+   )
+   target_include_directories(${name} SYSTEM PUBLIC
+      ${CMAKE_CURRENT_SOURCE_DIR}/../jsoncons/include
    )
    target_link_libraries(${name}
      LLVMSupport
