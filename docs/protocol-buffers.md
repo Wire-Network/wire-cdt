@@ -73,6 +73,10 @@ The `contract_use_protobuf()` function:
 
 ## Step 3: Use in Contract Code
 
+### Single protobuf parameter (flattened)
+
+When an action has a single `sysio::pb<T>` parameter, the ABI points the action type directly at the protobuf type — no wrapper struct is generated. This gives a clean, flat JSON interface:
+
 ```cpp
 #include <sysio/sysio.hpp>
 #include <sysio/pb.hpp>
@@ -84,12 +88,11 @@ class [[sysio::contract]] mycontract : public sysio::contract {
 public:
    using sysio::contract::contract;
 
+   // Single pb<T> param → action type is "protobuf::mypackage.TransferData"
    [[sysio::action]]
    sysio::pb<TransferResult> transfer(const sysio::pb<TransferData>& data) {
       sysio::check(static_cast<uint64_t>(data.amount) > 0, "amount must be positive");
-
       // ... transfer logic ...
-
       TransferResult result;
       result.balance = zpp::bits::vuint64_t(new_balance);
       return result;
@@ -99,26 +102,64 @@ public:
 } // namespace mypackage
 ```
 
-Key points:
+JSON for pushing this action is flat — protobuf fields at the top level:
+
+```bash
+clio push action mycontract transfer \
+  '{"from":"alice","to":"bob","amount":1000,"memo":"payment"}' \
+  -p alice@active
+```
+
+### Multiple protobuf parameters (wrapper struct)
+
+When an action has multiple parameters (protobuf or mixed), a wrapper struct is generated as usual, with each parameter as a named field:
+
+```cpp
+   // Multiple params → wrapper struct "settle" with fields "header" and "body"
+   [[sysio::action]]
+   void settle(const sysio::pb<Header>& header, const sysio::pb<Body>& body) {
+      // ...
+   }
+```
+
+JSON includes the wrapper field names:
+
+```bash
+clio push action mycontract settle \
+  '{"header":{"version":1},"body":{"items":[...]}}' \
+  -p alice@active
+```
+
+### Key points
+
 - Use `sysio::pb<T>` to wrap protobuf message types in action parameters and return types
 - The ABI generator detects `sysio::pb<T>` and encodes the type as `protobuf::mypackage.TransferData`
+- **Single `pb<T>` parameter**: action type points directly at the protobuf type (flat JSON)
+- **Multiple parameters**: a wrapper struct is generated (nested JSON)
 - Protobuf integer types use `zpp::bits` varint wrappers (`vint32_t`, `vuint64_t`, etc.)
 - Varint types don't implicitly convert — use `static_cast<int32_t>(field)` to access the underlying value
 
 ## Generated ABI
 
-The generated `.abi` file will include a `protobuf_types` section containing the FileDescriptorSet in JSON format. This allows external tools to understand the protobuf message definitions and serialize/deserialize action data accordingly.
+The generated `.abi` file uses version `sysio::abi/1.3` and includes a `protobuf_types` section containing the FileDescriptorSet in JSON format. Non-protobuf contracts continue to use `sysio::abi/1.2`.
+
+### Single parameter (flattened)
+
+The action type references the protobuf type directly. No wrapper struct is generated:
 
 ```json
 {
   "version": "sysio::abi/1.3",
-  "structs": [...],
+  "structs": [],
   "actions": [
     {
       "name": "transfer",
-      "type": "transfer",
+      "type": "protobuf::mypackage.TransferData",
       "ricardian_contract": ""
     }
+  ],
+  "action_results": [
+    { "name": "transfer", "result_type": "protobuf::mypackage.TransferResult" }
   ],
   "protobuf_types": {
     "file": [
@@ -129,6 +170,33 @@ The generated `.abi` file will include a `protobuf_types` section containing the
       }
     ]
   }
+}
+```
+
+### Multiple parameters (wrapper struct)
+
+A wrapper struct is generated with one field per parameter:
+
+```json
+{
+  "version": "sysio::abi/1.3",
+  "structs": [
+    {
+      "name": "settle",
+      "fields": [
+        { "name": "header", "type": "protobuf::mypackage.Header" },
+        { "name": "body", "type": "protobuf::mypackage.Body" }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "settle",
+      "type": "settle",
+      "ricardian_contract": ""
+    }
+  ],
+  "protobuf_types": { ... }
 }
 ```
 

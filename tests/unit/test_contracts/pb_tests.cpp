@@ -25,6 +25,14 @@ public:
       sysio::check(static_cast<int32_t>(msg.id) > 0, "id must be positive");
       sysio::print("Received protobuf action with id=", static_cast<int32_t>(msg.id));
    }
+
+   // Multi-param action: generates a wrapper struct with two protobuf fields
+   [[sysio::action]]
+   void pbmulti(const sysio::pb<ActData>& data, const sysio::pb<ActResult>& result) {
+      sysio::check(static_cast<int32_t>(data.id) > 0, "data.id must be positive");
+      sysio::check(static_cast<int32_t>(result.value) > 0, "result.value must be positive");
+      sysio::print("Multi-param protobuf action");
+   }
 };
 
 } // namespace test

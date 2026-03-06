@@ -62,12 +62,25 @@ check "protobuf_types contains ActData message" \
 check "protobuf_types contains ActResult message" \
     "${CONTRACTS_DIR}/pb_tests.abi" \
     '"name": "ActResult"'
-check "action param uses protobuf type prefix" \
+check "single-param action type is protobuf (flattened)" \
     "${CONTRACTS_DIR}/pb_tests.abi" \
     '"type": "protobuf::test.ActData"'
 check "action result uses protobuf type prefix" \
     "${CONTRACTS_DIR}/pb_tests.abi" \
     '"result_type": "protobuf::test.ActResult"'
+check_absent "single-param actions have no wrapper struct" \
+    "${CONTRACTS_DIR}/pb_tests.abi" \
+    '"name": "hiproto".*"fields"'
+# Multi-param protobuf action generates a wrapper struct
+check "multi-param action has wrapper struct" \
+    "${CONTRACTS_DIR}/pb_tests.abi" \
+    '"name": "pbmulti"'
+check "multi-param wrapper has data field" \
+    "${CONTRACTS_DIR}/pb_tests.abi" \
+    '"name": "data"'
+check "multi-param wrapper has result field" \
+    "${CONTRACTS_DIR}/pb_tests.abi" \
+    '"name": "result"'
 check "proto syntax is proto3" \
     "${CONTRACTS_DIR}/pb_tests.abi" \
     '"syntax": "proto3"'

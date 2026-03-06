@@ -124,7 +124,13 @@ namespace sysio { namespace cdt {
             validate_name( action_name.str(), [&](auto s) { CDT_ERROR("abigen_error", decl->getLocation(), s); } );
             ret.name = action_name.str();
          }
-         ret.type = decl->getNameAsString();
+         // When a single pb<T> parameter, point action type directly at protobuf type
+         if (is_single_pb_param(_decl)) {
+            auto param_type = _decl->parameters()[0]->getType().getNonReferenceType().getUnqualifiedType();
+            ret.type = translate_type(param_type);
+         } else {
+            ret.type = decl->getNameAsString();
+         }
          _abi.actions.insert(ret);
          // Handle action return types
          if (translate_type(decl->getReturnType()) != "void") {
@@ -215,7 +221,22 @@ namespace sysio { namespace cdt {
          const auto res = _abi.structs.insert(ret);
       }
 
+      // Check if an action method has a single pb<T> parameter, allowing the ABI
+      // to point directly at the protobuf type instead of generating a wrapper struct.
+      bool is_single_pb_param( const clang::CXXMethodDecl* decl ) {
+         if (decl->param_size() != 1)
+            return false;
+         auto param_type = decl->parameters()[0]->getType().getNonReferenceType().getUnqualifiedType();
+         return is_template_specialization(param_type, {"pb"});
+      }
+
       void add_struct( const clang::CXXMethodDecl* decl ) {
+         // When an action has a single pb<T> parameter, skip generating the wrapper
+         // struct — the action type points directly at the protobuf type.
+         if (is_single_pb_param(decl)) {
+            add_type(decl->parameters()[0]->getType().getNonReferenceType().getUnqualifiedType());
+            return;
+         }
          abi_struct new_struct;
          new_struct.name = decl->getNameAsString();
          for (auto param : decl->parameters() ) {
