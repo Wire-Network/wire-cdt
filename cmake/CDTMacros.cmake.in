@@ -34,6 +34,10 @@ macro(add_contract CONTRACT_NAME TARGET)
     set_cdt_include_directories(${TARGET})
   endif()
 endmacro()
+# Properties for protobuf support
+define_property(TARGET PROPERTY PROTOBUF_FILES BRIEF_DOCS "protobuf files" FULL_DOCS "protobuf files used by the contract")
+define_property(TARGET PROPERTY PROTOBUF_DIR BRIEF_DOCS "protobuf root directory" FULL_DOCS "protobuf root directory")
+
 # Sets the Ricardian contract directory for a target
 # @param TARGET The target to set Ricardian directory for
 # @param DIR The directory containing Ricardian contract files
@@ -198,3 +202,109 @@ macro(add_contract_native CONTRACT_NAME TARGET)
   endif()
   target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
 endmacro()
+
+# Generate C++ headers for protobuf files and tie to a given target
+#
+#    target_add_protobuf(target
+#                        INPUT_DIRECTORY input_dir
+#                        OUTPUT_DIRECTORY output_dir
+#                        FILES file [file1 ...])
+#
+# Given a list of .proto files, this function generates the corresponding C++ headers
+# using protoc-gen-zpp, and sets the generated files as sources for the specified target.
+#
+# If the input_dir is not specified, the default is ${CMAKE_CURRENT_SOURCE_DIR} and
+# the files specified must be relative paths to the input_dir.
+#
+function(target_add_protobuf TARGET)
+  cmake_parse_arguments(ADD_PROTOBUF "" "INPUT_DIRECTORY;OUTPUT_DIRECTORY" "FILES" ${ARGN})
+
+  if (ADD_PROTOBUF_OUTPUT_DIRECTORY AND IS_ABSOLUTE ${ADD_PROTOBUF_OUTPUT_DIRECTORY})
+    message(FATAL_ERROR "The OUTPUT_DIRECTORY for function target_add_protobuf must be a relative directory")
+  endif()
+
+  if (ADD_PROTOBUF_OUTPUT_DIRECTORY)
+    set(OUTPUT_DIR  ${CMAKE_CURRENT_BINARY_DIR}/${ADD_PROTOBUF_OUTPUT_DIRECTORY})
+  else()
+    set(OUTPUT_DIR  ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+
+  foreach (protofile ${ADD_PROTOBUF_FILES})
+    if(IS_ABSOLUTE ${protofile})
+      message(FATAL_ERROR "The FILES parameters for function target_add_protobuf must be relative paths, illegal path `${protofile}`")
+    endif()
+    cmake_path(GET protofile EXTENSION LAST_ONLY proto_ext)
+    if (NOT proto_ext STREQUAL ".proto")
+      message(FATAL_ERROR "The illegal parameter `${protofile}` for function target_add_protobuf")
+    endif()
+    cmake_path(REPLACE_EXTENSION protofile LAST_ONLY ".pb.hpp" OUTPUT_VARIABLE hdr)
+    list(APPEND OUTPUT_HDRS ${OUTPUT_DIR}/${hdr})
+    if (ADD_PROTOBUF_INPUT_DIRECTORY)
+      list(APPEND INPUT_FILES ${ADD_PROTOBUF_INPUT_DIRECTORY}/${protofile})
+    else()
+      list(APPEND INPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${protofile})
+    endif()
+  endforeach()
+
+  if (NOT ADD_PROTOBUF_INPUT_DIRECTORY)
+    set(ADD_PROTOBUF_INPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
+
+  find_program(PROTOC protoc
+    HINTS ${CMAKE_FIND_ROOT_PATH}/bin /usr/local/bin
+    REQUIRED)
+
+  if (CMAKE_GENERATOR STREQUAL "Unix Makefiles" AND NOT EXISTS ${OUTPUT_DIR})
+    file(MAKE_DIRECTORY ${OUTPUT_DIR})
+  endif()
+
+  add_custom_command(
+    COMMENT "Generating ${OUTPUT_HDRS} from ${INPUT_FILES}"
+    OUTPUT ${OUTPUT_HDRS}
+    COMMAND ${PROTOC} -I ${ADD_PROTOBUF_INPUT_DIRECTORY} -I ${CMAKE_FIND_ROOT_PATH}/include --plugin=${CMAKE_FIND_ROOT_PATH}/bin/protoc-gen-zpp --zpp_out ${OUTPUT_DIR} ${ADD_PROTOBUF_FILES}
+    DEPENDS ${CMAKE_FIND_ROOT_PATH}/bin/protoc-gen-zpp ${INPUT_FILES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
+  add_custom_target(${TARGET}.protos ALL
+    DEPENDS ${OUTPUT_HDRS}
+  )
+
+  get_target_property(type ${TARGET} TYPE)
+  if ("${type}" STREQUAL "INTERFACE_LIBRARY")
+    target_sources(${TARGET} INTERFACE ${OUTPUT_HDRS})
+    target_include_directories(${TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+  else()
+    target_sources(${TARGET} PRIVATE ${OUTPUT_HDRS})
+    target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+    add_dependencies(${TARGET} ${TARGET}.protos)
+  endif()
+
+  set_target_properties(${TARGET} PROPERTIES
+    PROTOBUF_DIR "${ADD_PROTOBUF_INPUT_DIRECTORY}"
+    PROTOBUF_FILES "${ADD_PROTOBUF_FILES}")
+endfunction()
+
+# Link a contract target to protobuf definitions for ABI generation
+#
+# contract_use_protobuf(contract_target protobuf_target)
+#
+function(contract_use_protobuf CONTRACT_TARGET PROTOBUF_TARGET)
+  get_target_property(PROTO_DIR ${PROTOBUF_TARGET} PROTOBUF_DIR)
+  get_target_property(PROTO_FILES ${PROTOBUF_TARGET} PROTOBUF_FILES)
+  set_target_properties(${CONTRACT_TARGET} PROPERTIES
+    PROTOBUF_DIR ${PROTO_DIR}
+    PROTOBUF_FILES "${PROTO_FILES}"
+  )
+  # Propagate include directories from protobuf target for generated headers
+  get_target_property(PROTO_INCLUDES ${PROTOBUF_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+  if (PROTO_INCLUDES)
+    target_include_directories(${CONTRACT_TARGET} PUBLIC ${PROTO_INCLUDES})
+  endif()
+  # Pass protobuf info to cdt-codegen via compile options (picked up by cdt-cpp)
+  string(REPLACE ";" "$<SEMICOLON>" PROTO_FILES_ESCAPED "${PROTO_FILES}")
+  target_compile_options(${CONTRACT_TARGET} PUBLIC
+    --protobuf-dir ${PROTO_DIR}
+    --protobuf-files "${PROTO_FILES_ESCAPED}"
+  )
+endfunction()

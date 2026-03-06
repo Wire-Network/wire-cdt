@@ -508,6 +508,15 @@ namespace sysio { namespace cdt {
             else if (is_aliasing(type)) {
                add_typedef(type);
             }
+            else if (is_template_specialization(type, {"pb"})) {
+               // Protobuf types are not added as regular ABI structs.
+               // They are tracked via pb_types and embedded as protobuf_types in the ABI.
+               auto translated = translate_type(type);
+               if (translated.find("protobuf::") == 0) {
+                  pb_types.insert(translated.substr(sizeof("protobuf::") - 1));
+               }
+               return;
+            }
             else if (is_template_specialization(type, {"vector", "set", "deque", "list", "optional", "binary_extension", "ignore"})) {
                add_type(std::get<clang::QualType>(get_template_argument(type)));
             }
@@ -798,6 +807,10 @@ namespace sysio { namespace cdt {
          for (auto& e : _abi.wasm_entries) {
             o["wasm_entries"].push_back(e);
          }
+         o["pb_types"] = ojson::array();
+         for (auto& e : pb_types) {
+            o["pb_types"].push_back(e);
+         }
          return o;
       }
 
@@ -807,6 +820,7 @@ namespace sysio { namespace cdt {
          std::set<abi_table>                   ctables;
          std::map<std::string, std::string>    rcs;
          std::set<const clang::Type*>          evaluated;
+         std::set<std::string>                 pb_types;
    };
 
    class sysio_abigen_visitor : public RecursiveASTVisitor<sysio_abigen_visitor>, public generation_utils {

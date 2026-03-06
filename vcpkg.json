@@ -3,6 +3,8 @@
   "version": "5.2.0-rc1",
   "dependencies": [
     "protobuf",
+    "zpp-bits",
+    "magic-enum",
     {
       "name": "llvm",
       "default-features": false,

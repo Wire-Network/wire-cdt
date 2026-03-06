@@ -20,3 +20,9 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/simple_wrong.abi ${CMAKE_CURRENT_BIN
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/capi/capi_tests.abi ${CMAKE_CURRENT_BINARY_DIR}/capi_tests.abi COPYONLY )
 
 target_link_libraries(old_malloc_tests PUBLIC --use-freeing-malloc)
+
+# Protobuf test contract
+add_library(pb_protos INTERFACE)
+target_add_protobuf(pb_protos OUTPUT_DIRECTORY test FILES test.proto)
+add_contract(pb_tests pb_tests pb_tests.cpp)
+contract_use_protobuf(pb_tests pb_protos)

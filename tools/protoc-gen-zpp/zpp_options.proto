@@ -1,0 +1,9 @@
+syntax = "proto2";
+package zpp;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+    optional string zpp_type = 50002;
+    optional bool zpp_optional = 50003;
+}

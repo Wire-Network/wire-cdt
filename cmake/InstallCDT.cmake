@@ -57,6 +57,15 @@ cdt_tool_install_and_symlink(cdt-ld cdt-ld)
 cdt_tool_install_and_symlink(cdt-abidiff cdt-abidiff)
 cdt_tool_install_and_symlink(cdt-init cdt-init)
 cdt_tool_install_and_symlink(cdt-codegen cdt-codegen)
+cdt_tool_install_and_symlink(protoc-gen-zpp protoc-gen-zpp)
+
+# Install protoc from vcpkg for contract protobuf compilation
+find_program(PROTOC_PROGRAM protoc)
+if(PROTOC_PROGRAM)
+   add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROTOC_PROGRAM} ${CMAKE_BINARY_DIR}/bin/ )
+   install(PROGRAMS ${PROTOC_PROGRAM}
+      DESTINATION ${CDT_INSTALL_PREFIX}/bin)
+endif()
 
 # Sysio plugins (built by tools project)
 foreach(plugin sysio_attrs sysio_codegen)
@@ -70,5 +79,18 @@ endforeach()
 cdt_cmake_install_and_symlink(cdt-config.cmake cdt-config.cmake)
 cdt_cmake_install_and_symlink(CDTWasmToolchain.cmake CDTWasmToolchain.cmake)
 cdt_cmake_install_and_symlink(CDTMacros.cmake CDTMacros.cmake)
+
+# Copy protobuf support files to main include dir for contract compilation
+add_custom_command( TARGET CDTTools POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include
+   COMMAND ${CMAKE_COMMAND} -E copy ${ZPP_BITS_INCLUDE_DIR}/zpp_bits.h ${CMAKE_BINARY_DIR}/include/
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/zpp
+   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/tools/include/zpp/zpp_options.proto ${CMAKE_BINARY_DIR}/include/zpp/
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/google/protobuf
+   COMMAND ${CMAKE_COMMAND} -E copy ${ZPP_BITS_INCLUDE_DIR}/google/protobuf/descriptor.proto ${CMAKE_BINARY_DIR}/include/google/protobuf/ )
+install(FILES ${CMAKE_BINARY_DIR}/tools/include/zpp/zpp_options.proto
+   DESTINATION ${CDT_INSTALL_PREFIX}/include/zpp)
+install(FILES ${ZPP_BITS_INCLUDE_DIR}/google/protobuf/descriptor.proto
+   DESTINATION ${CDT_INSTALL_PREFIX}/include/google/protobuf)
 
 cdt_libraries_install()
