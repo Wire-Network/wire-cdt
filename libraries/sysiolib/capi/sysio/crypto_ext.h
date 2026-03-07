@@ -47,8 +47,44 @@ void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, i
  *  @return -1 if there is an error otherwise 0
  */
 __attribute__((sysio_wasm_import))
-int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len, 
+int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len,
                   const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, int32_t final, char* result, uint32_t result_len);
+
+/**
+ *  BLAKE2b-256 hash function.
+ *
+ *  @param data - data to hash
+ *  @param data_len - size of data
+ *  @param hash - output buffer (must be at least 32 bytes)
+ *  @param hash_len - size of output buffer
+ *  @return -1 if there is an error otherwise 0
+ */
+__attribute__((sysio_wasm_import))
+int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t hash_len);
+
+/**
+ *  Encode binary data as a base58-encoded string.
+ *
+ *  @param data - binary data to encode
+ *  @param data_len - size of data
+ *  @param result - output buffer for encoded string
+ *  @param result_len - size of output buffer
+ *  @return number of bytes written, or -1 if buffer too small
+ */
+__attribute__((sysio_wasm_import))
+int32_t base58_encode( const char* data, uint32_t data_len, char* result, uint32_t result_len);
+
+/**
+ *  Decode a base58-encoded string into binary data.
+ *
+ *  @param base58_str - base58 encoded string
+ *  @param str_len - length of the string
+ *  @param result - output buffer for decoded bytes
+ *  @param result_len - size of output buffer
+ *  @return number of bytes written, or -1 on error
+ */
+__attribute__((sysio_wasm_import))
+int32_t base58_decode( const char* base58_str, uint32_t str_len, char* result, uint32_t result_len);
 
 /**
  * Calculates the uncompressed public key used for a given signature on a given digest.

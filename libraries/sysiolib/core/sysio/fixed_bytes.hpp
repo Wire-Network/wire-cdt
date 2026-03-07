@@ -91,7 +91,7 @@ namespace sysio {
 
       public:
 
-         typedef uint128_t word_t;
+         typedef unsigned __int128 word_t;
 
          /**
           * Get number of words contained in this fixed_bytes object. A word is defined to be 16 bytes in size
