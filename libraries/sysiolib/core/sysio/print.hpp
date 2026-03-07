@@ -24,10 +24,10 @@ namespace sysio {
          void printui(uint64_t);
 
          __attribute__((sysio_wasm_import))
-         void printi128(const int128_t*);
+         void printi128(const __int128 *);
 
          __attribute__((sysio_wasm_import))
-         void printui128(const uint128_t*);
+         void printui128(const unsigned __int128 *);
 
          __attribute__((sysio_wasm_import))
          void printsf(float);
@@ -107,7 +107,7 @@ namespace sysio {
    template <typename T, std::enable_if_t<std::is_integral<std::decay_t<T>>::value &&
                                           std::is_signed<std::decay_t<T>>::value, int> = 0>
    inline void print( T num ) {
-      if constexpr(std::is_same<T, int128_t>::value)
+      if constexpr(std::is_same<T, __int128>::value)
         internal_use_do_not_use::printi128(&num);
       else if constexpr(std::is_same<T, char>::value)
         internal_use_do_not_use::prints_l( &num, 1 );
@@ -123,7 +123,7 @@ namespace sysio {
    template <typename T, std::enable_if_t<std::is_integral<std::decay_t<T>>::value &&
                                           !std::is_signed<std::decay_t<T>>::value, int> = 0>
    inline void print( T num ) {
-      if constexpr(std::is_same<T, uint128_t>::value)
+      if constexpr(std::is_same<T, unsigned __int128>::value)
          internal_use_do_not_use::printui128(&num);
       else if constexpr(std::is_same<T, bool>::value)
          internal_use_do_not_use::prints(num?"true":"false");
@@ -222,7 +222,7 @@ namespace sysio {
      *  @code
      *  const char *s = "Hello World!";
      *  uint64_t unsigned_64_bit_int = 1e+18;
-     *  uint128_t unsigned_128_bit_int (87654323456);
+     *  unsigned __int128 unsigned_128_bit_int (87654323456);
      *  uint64_t string_as_unsigned_64_bit = "abcde"_n;
      *  print(s , unsigned_64_bit_int, unsigned_128_bit_int, string_as_unsigned_64_bit);
      *  // Ouput: Hello World!100000000000000000087654323456abcde
@@ -257,7 +257,7 @@ namespace sysio {
     *  @code
     *  const char *s = "Hello World!";
     *  uint64_t unsigned_64_bit_int = 1e+18;
-    *  uint128_t unsigned_128_bit_int (87654323456);
+    *  unsigned __int128 unsigned_128_bit_int (87654323456);
     *  uint64_t string_as_unsigned_64_bit = "abcde"_n;
     *  std::out << s << " " << unsigned_64_bit_int << " "  << unsigned_128_bit_int << " " << string_as_unsigned_64_bit;
     *  // Output: Hello World! 1000000000000000000 87654323456 abcde

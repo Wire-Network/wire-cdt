@@ -38,6 +38,15 @@ namespace sysio {
 
          __attribute__((sysio_wasm_import))
          void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, int32_t keccak );
+
+         __attribute__((sysio_wasm_import))
+         int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t hash_len );
+
+         __attribute__((sysio_wasm_import))
+         int32_t base58_encode( const char* data, uint32_t data_len, char* result, uint32_t result_len );
+
+         __attribute__((sysio_wasm_import))
+         int32_t base58_decode( const char* base58_str, uint32_t str_len, char* result, uint32_t result_len );
       }
 
       static inline auto sha3_helper(const char* data, uint32_t length, bool keccak) {
@@ -449,5 +458,79 @@ namespace sysio {
    */
    inline int32_t k1_recover( const char* sig, uint32_t sig_len, const char* dig, uint32_t dig_len, char* pub, uint32_t pub_len ) {
       return internal_use_do_not_use::k1_recover( sig, sig_len, dig, dig_len, pub, pub_len );
+   }
+
+   /**
+    *  BLAKE2b-256 hash function.
+    *
+    *  @ingroup crypto
+    *  @param data - data to hash
+    *  @param data_len - size of data
+    *  @param hash - output buffer (must be at least 32 bytes)
+    *  @param hash_len - size of output buffer
+    *  @return -1 if there was an error, 0 otherwise.
+    */
+   inline int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t hash_len ) {
+      return internal_use_do_not_use::blake2b_256( data, data_len, hash, hash_len );
+   }
+
+   /**
+    *  Encode binary data as a base58 string.
+    *
+    *  @ingroup crypto
+    *  @param data - pointer to binary data
+    *  @param data_len - size of data
+    *  @param result - output buffer
+    *  @param result_len - size of output buffer
+    *  @return number of bytes written to result, or -1 if buffer too small.
+    */
+   inline int32_t base58_encode( const char* data, uint32_t data_len, char* result, uint32_t result_len ) {
+      return internal_use_do_not_use::base58_encode( data, data_len, result, result_len );
+   }
+
+   /**
+    *  Encode binary data as a base58 std::string.
+    *
+    *  @ingroup crypto
+    *  @param data - pointer to binary data
+    *  @param data_len - size of data
+    *  @return std::string - base58 encoded string
+    */
+   inline std::string base58_encode( const char* data, uint32_t data_len ) {
+      // base58 output is at most ~138% of input
+      std::vector<char> buf( data_len * 2 + 1 );
+      auto written = internal_use_do_not_use::base58_encode( data, data_len, buf.data(), buf.size() );
+      if( written < 0 ) return {};
+      return std::string( buf.data(), written );
+   }
+
+   /**
+    *  Decode a base58 string into binary data.
+    *
+    *  @ingroup crypto
+    *  @param base58_str - base58 encoded string
+    *  @param str_len - length of the string
+    *  @param result - output buffer
+    *  @param result_len - size of output buffer
+    *  @return number of bytes written to result, or -1 on error.
+    */
+   inline int32_t base58_decode( const char* base58_str, uint32_t str_len, char* result, uint32_t result_len ) {
+      return internal_use_do_not_use::base58_decode( base58_str, str_len, result, result_len );
+   }
+
+   /**
+    *  Decode a base58 std::string into a byte vector.
+    *
+    *  @ingroup crypto
+    *  @param base58_str - base58 encoded string
+    *  @return std::vector<char> - decoded bytes
+    */
+   inline std::vector<char> base58_decode( const std::string& base58_str ) {
+      // decoded output is at most ~73% of input
+      std::vector<char> buf( base58_str.size() );
+      auto written = internal_use_do_not_use::base58_decode( base58_str.data(), base58_str.size(), buf.data(), buf.size() );
+      if( written < 0 ) return {};
+      buf.resize( written );
+      return buf;
    }
 }
