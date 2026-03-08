@@ -53,10 +53,13 @@ alt_bn128_mul
 alt_bn128_pair
 assert_recover_key
 assert_ripemd160
+base58_decode
+base58_encode
 assert_sha1
 assert_sha256
 assert_sha512
 blake2_f
+blake2b_256
 bls_fp_exp
 bls_fp_mod
 bls_fp_mul
@@ -147,6 +150,7 @@ has_auth
 in_active_security_group
 is_account
 is_feature_activated
+k1_recover
 is_privileged
 mod_exp
 preactivate_feature
