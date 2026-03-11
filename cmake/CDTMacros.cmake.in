@@ -211,7 +211,7 @@ endmacro()
 #                        FILES file [file1 ...])
 #
 # Given a list of .proto files, this function generates the corresponding C++ headers
-# using protoc-gen-zpp, and sets the generated files as sources for the specified target.
+# using cdt-protoc-gen-zpp, and sets the generated files as sources for the specified target.
 #
 # If the input_dir is not specified, the default is ${CMAKE_CURRENT_SOURCE_DIR} and
 # the files specified must be relative paths to the input_dir.
@@ -250,8 +250,8 @@ function(target_add_protobuf TARGET)
     set(ADD_PROTOBUF_INPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 
-  find_program(PROTOC protoc
-    HINTS ${CMAKE_FIND_ROOT_PATH}/bin /usr/local/bin
+  find_program(PROTOC cdt-protoc
+    HINTS ${CMAKE_FIND_ROOT_PATH}/bin
     REQUIRED)
 
   if (CMAKE_GENERATOR STREQUAL "Unix Makefiles" AND NOT EXISTS ${OUTPUT_DIR})
@@ -261,8 +261,8 @@ function(target_add_protobuf TARGET)
   add_custom_command(
     COMMENT "Generating ${OUTPUT_HDRS} from ${INPUT_FILES}"
     OUTPUT ${OUTPUT_HDRS}
-    COMMAND ${PROTOC} -I ${ADD_PROTOBUF_INPUT_DIRECTORY} -I ${CMAKE_FIND_ROOT_PATH}/include --plugin=${CMAKE_FIND_ROOT_PATH}/bin/protoc-gen-zpp --zpp_out ${OUTPUT_DIR} ${ADD_PROTOBUF_FILES}
-    DEPENDS ${CMAKE_FIND_ROOT_PATH}/bin/protoc-gen-zpp ${INPUT_FILES}
+    COMMAND ${PROTOC} -I ${ADD_PROTOBUF_INPUT_DIRECTORY} -I ${CMAKE_FIND_ROOT_PATH}/include --plugin=protoc-gen-zpp=${CMAKE_FIND_ROOT_PATH}/bin/cdt-protoc-gen-zpp --zpp_out ${OUTPUT_DIR} ${ADD_PROTOBUF_FILES}
+    DEPENDS ${CMAKE_FIND_ROOT_PATH}/bin/cdt-protoc-gen-zpp ${INPUT_FILES}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 

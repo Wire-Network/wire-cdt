@@ -57,15 +57,12 @@ cdt_tool_install_and_symlink(cdt-ld cdt-ld)
 cdt_tool_install_and_symlink(cdt-abidiff cdt-abidiff)
 cdt_tool_install_and_symlink(cdt-init cdt-init)
 cdt_tool_install_and_symlink(cdt-codegen cdt-codegen)
-cdt_tool_install_and_symlink(protoc-gen-zpp protoc-gen-zpp)
+cdt_tool_install_and_symlink(cdt-protoc-gen-zpp cdt-protoc-gen-zpp)
 
-# Install protoc from vcpkg for contract protobuf compilation
-find_program(PROTOC_PROGRAM protoc)
-if(PROTOC_PROGRAM)
-   add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROTOC_PROGRAM} ${CMAKE_BINARY_DIR}/bin/ )
-   install(PROGRAMS ${PROTOC_PROGRAM}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin)
-endif()
+# Install cdt-protoc (protoc from vcpkg, copied during tools build)
+add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/tools/bin/cdt-protoc ${CMAKE_BINARY_DIR}/bin/ )
+install(PROGRAMS ${CMAKE_BINARY_DIR}/tools/bin/cdt-protoc
+   DESTINATION ${CDT_INSTALL_PREFIX}/bin)
 
 # Sysio plugins (built by tools project)
 foreach(plugin sysio_attrs sysio_codegen)

@@ -14,7 +14,7 @@ Instead of using the standard CDT serialization (which packs struct fields seque
 The workflow:
 
 1. Define messages in `.proto` files using proto3 syntax
-2. `protoc-gen-zpp` (a custom protoc plugin) generates C++ structs with `zpp_bits` annotations
+2. `cdt-protoc-gen-zpp` (a custom protoc plugin) generates C++ structs with `zpp_bits` annotations
 3. Wrap action parameters in `sysio::pb<T>` to use protobuf serialization
 4. The generated ABI includes a `protobuf_types` section with the FileDescriptorSet, enabling tools (clio, SDKs) to serialize/deserialize protobuf action data
 
@@ -63,7 +63,7 @@ contract_use_protobuf(mycontract my_protos)
 ```
 
 The `target_add_protobuf()` function:
-- Runs `protoc` with the `protoc-gen-zpp` plugin to generate `.pb.hpp` headers
+- Runs `cdt-protoc` with the `cdt-protoc-gen-zpp` plugin to generate `.pb.hpp` headers
 - Adds the generated headers as sources to the target
 - Sets up include directories so `#include <mypackage/mycontract.pb.hpp>` works
 
@@ -202,7 +202,7 @@ A wrapper struct is generated with one field per parameter:
 
 ## Generated Code
 
-The `protoc-gen-zpp` plugin generates C++ structs with `zpp_bits` protobuf annotations. Each struct includes a `using serialize` declaration that tells `zpp_bits` to use protobuf wire format:
+The `cdt-protoc-gen-zpp` plugin generates C++ structs with `zpp_bits` protobuf annotations. Each struct includes a `using serialize` declaration that tells `zpp_bits` to use protobuf wire format:
 
 ```cpp
 // Generated from mycontract.proto
