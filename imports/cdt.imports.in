@@ -53,8 +53,6 @@ alt_bn128_mul
 alt_bn128_pair
 assert_recover_key
 assert_ripemd160
-base58_decode
-base58_encode
 assert_sha1
 assert_sha256
 assert_sha512
