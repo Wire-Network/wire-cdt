@@ -1,3 +1,6 @@
+# Compile Command DB
+compile_commands.json
+
 # Prerequisites
 *.d
 
