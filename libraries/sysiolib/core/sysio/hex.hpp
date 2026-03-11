@@ -8,6 +8,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <sysio/check.hpp>
 
 namespace sysio {
 
@@ -22,7 +23,7 @@ namespace sysio {
       if (c >= '0' && c <= '9') return c - '0';
       if (c >= 'a' && c <= 'f') return c - 'a' + 10;
       if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-      return 0;
+      sysio::check(false, std::string("Invalid hex char: ") + c);
    }
 
    /**
@@ -64,7 +65,7 @@ namespace sysio {
     *  @param hex_str - hex encoded string
     *  @return std::vector<uint8_t> - decoded bytes
     */
-   inline std::vector<uint8_t> from_hex(const std::string& hex_str) {
+   inline size_t from_hex(const std::string& hex_str, char* out_data, size_t out_data_len) {
       auto start = hex_str.data();
       auto len   = hex_str.size();
 
@@ -74,37 +75,45 @@ namespace sysio {
          len   -= 2;
       }
 
-      // Pad odd-length strings with a leading zero
-      std::vector<uint8_t> out;
-      out.reserve((len + 1) / 2);
-
+      size_t decoded_len = (len + 1) / 2;
+      size_t write_len = decoded_len < out_data_len ? decoded_len : out_data_len;
+      size_t written = 0;
       size_t i = 0;
+
       if (len % 2 != 0) {
-         out.push_back(from_hex_char(start[0]));
+         if (written < write_len) {
+            out_data[written++] = static_cast<char>(from_hex_char(start[0]));
+         }
          i = 1;
       }
-      for (; i < len; i += 2) {
-         out.push_back(static_cast<uint8_t>(
+      for (; i < len && written < write_len; i += 2) {
+         out_data[written++] = static_cast<char>(
             (from_hex_char(start[i]) << 4) | from_hex_char(start[i + 1])
-         ));
+         );
       }
-      return out;
+      return written;
    }
 
    /**
-    *  Decode a hex string into a pre-allocated output buffer. Strips optional "0x" prefix.
+    *  Decode a hex string into a byte vector. Strips optional "0x" prefix.
     *
     *  @ingroup crypto
     *  @param hex_str - hex encoded string
-    *  @param out_data - output buffer
-    *  @param out_data_len - size of output buffer
-    *  @return size_t - number of bytes written
+    *  @return std::vector<uint8_t> - decoded bytes
     */
-   inline size_t from_hex(const std::string& hex_str, char* out_data, size_t out_data_len) {
-      auto bytes = from_hex(hex_str);
-      auto copy_len = bytes.size() < out_data_len ? bytes.size() : out_data_len;
-      std::memcpy(out_data, bytes.data(), copy_len);
-      return copy_len;
+   inline std::vector<uint8_t> from_hex(const std::string& hex_str) {
+      auto start = hex_str.data();
+      auto len   = hex_str.size();
+
+      // Strip optional 0x prefix
+      if (len >= 2 && start[0] == '0' && (start[1] == 'x' || start[1] == 'X')) {
+         len -= 2;
+      }
+
+      size_t decoded_len = (len + 1) / 2;
+      std::vector<uint8_t> out(decoded_len);
+      from_hex(hex_str, reinterpret_cast<char*>(out.data()), decoded_len);
+      return out;
    }
 
 } // namespace sysio
