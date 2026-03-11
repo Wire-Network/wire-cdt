@@ -301,6 +301,10 @@ function(contract_use_protobuf CONTRACT_TARGET PROTOBUF_TARGET)
   if (PROTO_INCLUDES)
     target_include_directories(${CONTRACT_TARGET} PUBLIC ${PROTO_INCLUDES})
   endif()
+  # Ensure protobuf headers are generated before the contract is compiled
+  if (TARGET ${PROTOBUF_TARGET}.protos)
+    add_dependencies(${CONTRACT_TARGET} ${PROTOBUF_TARGET}.protos)
+  endif()
   # Pass protobuf info to cdt-codegen via compile options (picked up by cdt-cpp)
   string(REPLACE ";" "$<SEMICOLON>" PROTO_FILES_ESCAPED "${PROTO_FILES}")
   target_compile_options(${CONTRACT_TARGET} PUBLIC
