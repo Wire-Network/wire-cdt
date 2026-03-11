@@ -6,6 +6,7 @@
 #include <sysio/tester.hpp>
 #include <sysio/binary_extension.hpp>
 #include <sysio/print.hpp>
+#include <cstring>
 
 using std::in_place;
 using std::move;
@@ -88,8 +89,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( (be_char_value.value() == 'd'), false )
 
    binary_extension<char*> be_str_value{const_cast<char*>("abcd")};
-   CHECK_EQUAL( (be_str_value.value() == "abcd"), true  )
-   CHECK_EQUAL( (be_str_value.value() == "efgh"), false )
+   CHECK_EQUAL( (strcmp(be_str_value.value(), "abcd") == 0), true  )
+   CHECK_EQUAL( (strcmp(be_str_value.value(), "efgh") == 0), false )
 
    // --------------------------------
    // constexpr const T& value()const&
@@ -98,8 +99,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( (cbe_char_value.value() == 'd'), false )
 
    static const binary_extension<const char*> cbe_str_value{"abcd"};
-   CHECK_EQUAL( (cbe_str_value.value() == "abcd"), true  )
-   CHECK_EQUAL( (cbe_str_value.value() == "efgh"), false )
+   CHECK_EQUAL( (strcmp(cbe_str_value.value(), "abcd") == 0), true  )
+   CHECK_EQUAL( (strcmp(cbe_str_value.value(), "efgh") == 0), false )
 
    // -----------------------------------------------------------------------------
    // constexpr auto value_or(U&&) -> enable_if_t<is_convertible<U, T>::value, T&>&
@@ -112,14 +113,14 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( binary_extension<char>{'c'}.value_or(), 'c' )
 
    binary_extension<char*> be_val_or_rval{const_cast<char*>("abcd")};
-   CHECK_EQUAL( be_val_or_rval.value_or(), "abcd" )
+   CHECK_EQUAL( strcmp(be_val_or_rval.value_or(), "abcd"), 0 )
 
    // -------------------------------------
    // constexpr const T&& value_or()const&&
    CHECK_EQUAL( binary_extension<const char>{'c'}.value_or(), 'c' )
 
    static const binary_extension<const char*> cbe_val_or_rval{"abcd"};
-   CHECK_EQUAL( cbe_val_or_rval.value_or(), "abcd" )
+   CHECK_EQUAL( strcmp(cbe_val_or_rval.value_or(), "abcd"), 0 )
 
    // -----------------------
    // constexpr T value_or()&
@@ -127,7 +128,7 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( be_char_val_or.value_or(), 'c' )
 
    binary_extension<char*> be_str_val_or{const_cast<char*>("abcd")};
-   CHECK_EQUAL( be_str_val_or.value_or(), "abcd" )
+   CHECK_EQUAL( strcmp(be_str_val_or.value_or(), "abcd"), 0 )
 
    // ----------------------------
    // constexpr T value_or()const&
@@ -135,7 +136,7 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( cbe_char_val_or.value_or(), 'c' )
 
    static const binary_extension<const char*> cbe_str_val_or{"abcd"};
-   CHECK_EQUAL( cbe_str_val_or.value_or(), "abcd" )
+   CHECK_EQUAL( strcmp(cbe_str_val_or.value_or(), "abcd"), 0 )
 
    // -------------------------
    // constexpr T* operator->()
@@ -144,8 +145,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( *be_char_mem_op.operator->() != 'd', true )
 
    binary_extension<char*> be_str_mem_op{const_cast<char*>("abcd")};
-   CHECK_EQUAL( *be_str_mem_op.operator->() == "abcd", true )
-   CHECK_EQUAL( *be_str_mem_op.operator->() != "efgh", true )
+   CHECK_EQUAL( strcmp(*be_str_mem_op.operator->(), "abcd") == 0, true )
+   CHECK_EQUAL( strcmp(*be_str_mem_op.operator->(), "efgh") != 0, true )
 
    // ------------------------------------
    // constexpr const T* operator->()const
@@ -154,8 +155,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( *cbe_char_mem_op.operator->() != 'd', true )
 
    static const binary_extension<const char*> cbe_str_arrow_op{"abcd"};
-   CHECK_EQUAL( *cbe_str_arrow_op.operator->() == "abcd", true )
-   CHECK_EQUAL( *cbe_str_arrow_op.operator->() != "efgh", true )
+   CHECK_EQUAL( strcmp(*cbe_str_arrow_op.operator->(), "abcd") == 0, true )
+   CHECK_EQUAL( strcmp(*cbe_str_arrow_op.operator->(), "efgh") != 0, true )
 
    // -------------------------
    // constexpr T& operator*()&
@@ -164,8 +165,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( be_char_lval_dref_op.operator*() != 'd', true )
 
    binary_extension<char*> be_str_lval_dref_op{const_cast<char*>("abcd")};
-   CHECK_EQUAL( be_str_lval_dref_op.operator*() == "abcd", true )
-   CHECK_EQUAL( be_str_lval_dref_op.operator*() != "efgh", true )
+   CHECK_EQUAL( strcmp(be_str_lval_dref_op.operator*(), "abcd") == 0, true )
+   CHECK_EQUAL( strcmp(be_str_lval_dref_op.operator*(), "efgh") != 0, true )
 
    // ------------------------------------
    // constexpr const T& operator*()const&
@@ -174,8 +175,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( cbe_char_lval_dref_op.operator*() != 'd', true )
 
    static const binary_extension<const char*> cbe_str_lval_dref_op{"abcd"};
-   CHECK_EQUAL( cbe_str_lval_dref_op.operator*() == "abcd", true )
-   CHECK_EQUAL( cbe_str_lval_dref_op.operator*() != "efgh", true )
+   CHECK_EQUAL( strcmp(cbe_str_lval_dref_op.operator*(), "abcd") == 0, true )
+   CHECK_EQUAL( strcmp(cbe_str_lval_dref_op.operator*(), "efgh") != 0, true )
 
    // ---------------------------
    // constexpr T&& operator*()&&
@@ -184,8 +185,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( move(be_char_rval_dref_op.operator*()) != 'd', true )
 
    binary_extension<char*> be_str_rval_dref_op{const_cast<char*>("abcd")};
-   CHECK_EQUAL( move(be_str_rval_dref_op.operator*()) == "abcd", true )
-   CHECK_EQUAL( move(be_str_rval_dref_op.operator*()) != "efgh", true )
+   CHECK_EQUAL( strcmp(move(be_str_rval_dref_op.operator*()), "abcd") == 0, true )
+   CHECK_EQUAL( strcmp(move(be_str_rval_dref_op.operator*()), "efgh") != 0, true )
 
    // --------------------------------------
    // constexpr const T&& operator*()const&&
@@ -194,8 +195,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
    CHECK_EQUAL( move(cbe_char_rval_dref_op.operator*()) != 'd', true )
 
    static const binary_extension<const char*> cbe_str_rval_dref_op{"abcd"};
-   CHECK_EQUAL( move(cbe_str_rval_dref_op.operator*()) == "abcd", true )
-   CHECK_EQUAL( move(cbe_str_rval_dref_op.operator*()) != "efgh", true )
+   CHECK_EQUAL( strcmp(move(cbe_str_rval_dref_op.operator*()), "abcd") == 0, true )
+   CHECK_EQUAL( strcmp(move(cbe_str_rval_dref_op.operator*()), "efgh") != 0, true )
 
    // ----------------------------
    // T& emplace(Args&& ... args)&
@@ -206,8 +207,8 @@ SYSIO_TEST_BEGIN(binary_extension_test)
 
    binary_extension<const char*> be_str_emplace{"abcd"};
    be_str_emplace.emplace(move("efgh"));
-   CHECK_EQUAL( be_str_emplace.value() == "efgh", true )
-   CHECK_EQUAL( be_str_emplace.value() != "abcd", true )
+   CHECK_EQUAL( strcmp(be_str_emplace.value(), "efgh") == 0, true )
+   CHECK_EQUAL( strcmp(be_str_emplace.value(), "abcd") != 0, true )
 
    // ------------
    // void reset()
