@@ -25,6 +25,7 @@ class ABIMerger {
             abi["ricardian_clauses"] = ojson::array();
             abi["variants"] = ojson::array();
             abi["action_results"] = ojson::array();
+            abi["enums"] = ojson::array();
          }
       }
       void set_abi(ojson a) {
@@ -52,6 +53,7 @@ class ABIMerger {
          if (std::stod(vers.substr(vers.size()-3))*10 >= 12) {
             ret["action_results"] = merge_action_results(other);
          }
+         ret["enums"] = merge_enums(other);
          return ret;
       }
    private:
@@ -127,6 +129,12 @@ class ABIMerger {
       static bool action_result_is_same(ojson a, ojson b) {
          return a["name"] == b["name"] &&
                 a["result_type"] == b["result_type"];
+      }
+
+      static bool enum_is_same(ojson a, ojson b) {
+         return a["name"] == b["name"] &&
+                a["type"] == b["type"] &&
+                a["values"] == b["values"];
       }
 
       template <typename F>
@@ -212,6 +220,16 @@ class ABIMerger {
          ojson res = ojson::array();
          add_object_to_array(res, abi, b, "action_results", "name", action_result_is_same);
          return res;
+      }
+
+      ojson merge_enums(ojson b) {
+         ojson enums = ojson::array();
+         if (abi.has_key("enums") || b.has_key("enums")) {
+            if (!abi.has_key("enums")) abi["enums"] = ojson::array();
+            if (!b.has_key("enums")) b["enums"] = ojson::array();
+            add_object_to_array(enums, abi, b, "enums", "name", enum_is_same);
+         }
+         return enums;
       }
 
       ojson abi;

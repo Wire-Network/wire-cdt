@@ -485,7 +485,8 @@ namespace sysio { namespace cdt {
             return;
          }
          if (!is_builtin_type(translate_type(type))) {
-            // Handle plain C++ enums by creating a typedef from enum name to its underlying storage type.
+            // Handle C++ enums (both scoped `enum class` and unscoped `enum`)
+            // by creating an enum_def with member names and values.
             if (type.getTypePtr()->isEnumeralType()) {
                // Use canonical type for the cast — the non-canonical pointer may be
                // wrapped in ElaboratedType (common in LLVM 18), which would cause
@@ -493,14 +494,20 @@ namespace sysio { namespace cdt {
                const clang::EnumType* ET = llvm::dyn_cast<clang::EnumType>(type.getCanonicalType().getTypePtr());
                if (ET) {
                   const clang::EnumDecl* ED = ET->getDecl();
-                  // Only support unscoped enums (not enum class)
-                  if (ED && !ED->isScoped()) {
-                     abi_typedef td;
-                     td.new_type_name = get_base_type_name(type);
-                     // Use the enum's integer (underlying) type for storage mapping
-                     td.type = translate_type(ED->getIntegerType());
-                     if (!td.new_type_name.empty() && !td.type.empty()) {
-                        _abi.typedefs.insert(td);
+                  if (ED) {
+                     abi_enum en;
+                     en.name = get_base_type_name(type);
+                     en.type = translate_type(ED->getIntegerType());
+                     if (!en.name.empty() && !en.type.empty()) {
+                        for (auto it = ED->enumerator_begin(); it != ED->enumerator_end(); ++it) {
+                           abi_enum_value ev;
+                           ev.name = it->getNameAsString();
+                           ev.value = it->getInitVal().isUnsigned()
+                              ? static_cast<int64_t>(it->getInitVal().getZExtValue())
+                              : it->getInitVal().getSExtValue();
+                           en.values.push_back(ev);
+                        }
+                        _abi.enums.insert(en);
                      }
                   }
                }
@@ -592,6 +599,20 @@ namespace sysio { namespace cdt {
          return o;
       }
 
+      ojson enum_to_json( const abi_enum& e ) {
+         ojson o;
+         o["name"] = e.name;
+         o["type"] = e.type;
+         o["values"] = ojson::array();
+         for ( auto ev : e.values ) {
+            ojson v;
+            v["name"] = ev.name;
+            v["value"] = ev.value;
+            o["values"].push_back(v);
+         }
+         return o;
+      }
+
       ojson action_result_to_json( const abi_action_result& result ) {
          ojson o;
          o["name"] = result.name;
@@ -636,7 +657,7 @@ namespace sysio { namespace cdt {
             set_of_tables.insert(t);
          }
 
-         return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() && set_of_tables.empty() && _abi.ricardian_clauses.empty() && _abi.variants.empty();
+         return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() && set_of_tables.empty() && _abi.ricardian_clauses.empty() && _abi.variants.empty() && _abi.enums.empty();
       }
 
       ojson to_json() {
@@ -780,6 +801,31 @@ namespace sysio { namespace cdt {
             for ( auto ar : _abi.action_results ) {
                o["action_results"].push_back(action_result_to_json( ar ));
             }
+         }
+
+         auto validate_enums = [&]( abi_enum en ) {
+            for ( auto as : _abi.structs )
+               if (validate_struct(as)) {
+                  for ( auto f : as.fields )
+                     if ( remove_suffix(f.type) == en.name )
+                        return true;
+               }
+            for ( auto a : _abi.actions )
+               if ( a.type == en.name )
+                  return true;
+            for ( auto t : _abi.tables )
+               if ( t.type == en.name )
+                  return true;
+            for ( auto ar : _abi.action_results )
+               if ( ar.type == en.name )
+                  return true;
+            return false;
+         };
+
+         o["enums"]  = ojson::array();
+         for ( auto e : _abi.enums ) {
+            if (validate_enums(e))
+               o["enums"].push_back(enum_to_json( e ));
          }
          return o;
       }
