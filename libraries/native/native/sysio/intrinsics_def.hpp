@@ -167,8 +167,6 @@ intrinsic_macro(in_active_security_group) \
 intrinsic_macro(get_active_security_group) \
 intrinsic_macro(blake2_f) \
 intrinsic_macro(blake2b_256) \
-intrinsic_macro(base58_encode) \
-intrinsic_macro(base58_decode) \
 intrinsic_macro(sha3) \
 intrinsic_macro(k1_recover) \
 intrinsic_macro(alt_bn128_add) \

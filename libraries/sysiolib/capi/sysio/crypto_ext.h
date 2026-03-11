@@ -62,29 +62,6 @@ int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const 
 __attribute__((sysio_wasm_import))
 int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t hash_len);
 
-/**
- *  Encode binary data as a base58-encoded string.
- *
- *  @param data - binary data to encode
- *  @param data_len - size of data
- *  @param result - output buffer for encoded string
- *  @param result_len - size of output buffer
- *  @return number of bytes written, or -1 if buffer too small
- */
-__attribute__((sysio_wasm_import))
-int32_t base58_encode( const char* data, uint32_t data_len, char* result, uint32_t result_len);
-
-/**
- *  Decode a base58-encoded string into binary data.
- *
- *  @param base58_str - base58 encoded string
- *  @param str_len - length of the string
- *  @param result - output buffer for decoded bytes
- *  @param result_len - size of output buffer
- *  @return number of bytes written, or -1 on error
- */
-__attribute__((sysio_wasm_import))
-int32_t base58_decode( const char* base58_str, uint32_t str_len, char* result, uint32_t result_len);
 
 /**
  * Calculates the uncompressed public key used for a given signature on a given digest.
