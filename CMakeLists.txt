@@ -128,6 +128,10 @@ if(ENABLE_TESTS)
    add_subdirectory(tests)
 endif()
 
+# Merge compile_commands.json from ExternalProject sub-builds into a single
+# database at the root build directory so that IDEs can navigate all sources.
+include(cmake/MergeCompileCommands.cmake)
+
 if(ENABLE_PACKAGE)
    # section for package construction
    set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
