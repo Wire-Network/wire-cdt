@@ -25,7 +25,6 @@ class ABIMerger {
             abi["ricardian_clauses"] = ojson::array();
             abi["variants"] = ojson::array();
             abi["action_results"] = ojson::array();
-            abi["enums"] = ojson::array();
          }
       }
       void set_abi(ojson a) {
@@ -53,7 +52,11 @@ class ABIMerger {
          if (std::stod(vers.substr(vers.size()-3))*10 >= 12) {
             ret["action_results"] = merge_action_results(other);
          }
-         ret["enums"] = merge_enums(other);
+         {
+            ojson merged_enums = merge_enums(other);
+            if (!merged_enums.empty())
+               ret["enums"] = merged_enums;
+         }
          return ret;
       }
    private:

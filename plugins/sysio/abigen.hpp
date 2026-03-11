@@ -822,10 +822,14 @@ namespace sysio { namespace cdt {
             return false;
          };
 
-         o["enums"]  = ojson::array();
-         for ( auto e : _abi.enums ) {
-            if (validate_enums(e))
-               o["enums"].push_back(enum_to_json( e ));
+         {
+            ojson enums_arr = ojson::array();
+            for ( auto e : _abi.enums ) {
+               if (validate_enums(e))
+                  enums_arr.push_back(enum_to_json( e ));
+            }
+            if (!enums_arr.empty())
+               o["enums"] = enums_arr;
          }
          return o;
       }
