@@ -11,12 +11,26 @@
 #include <dirent.h>
 #include <llvm/Support/Program.h>
 
+#include <absl/strings/string_view.h>
+#include <google/protobuf/compiler/importer.h>
+#include <google/protobuf/util/json_util.h>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #include <jsoncons/json.hpp>
 #pragma GCC diagnostic pop
 
 using jsoncons::ojson;
+
+namespace gpb = google::protobuf;
+namespace gpbc = google::protobuf::compiler;
+
+class ProtobufErrorCollector : public gpbc::MultiFileErrorCollector {
+ public:
+   void RecordError(absl::string_view filename, int line, int column, absl::string_view message) override {
+      std::cerr << "protobuf error: " << filename << " (" << line << ", " << column << ")  " << message << std::endl;
+   }
+};
 
 #ifndef CDT_VERSION
 #define CDT_VERSION "5.2.0"
@@ -151,6 +165,8 @@ static bool        verbose                     = false;
 static bool        suppress_ricardian_warnings = true;
 static bool        is_wasm                     = false;
 static std::string smart_contract_trace_level;
+static std::string              protobuf_dir;
+static std::vector<std::string> protobuf_files;
 
 static int exec_subprogram(std::string prog, const std::vector<std::string>& options, bool show_commands) {
    if (prog.size() && prog[0] != '/') {
@@ -239,6 +255,16 @@ static void parse_args(int argc, const char** argv) {
          resource_dirs.push_back(argv[++i]);
       } else if (arg == "--smart-contract-trace-level" && i + 1 < argc) {
          smart_contract_trace_level = argv[++i];
+      } else if (arg == "--protobuf-dir" && i + 1 < argc) {
+         protobuf_dir = argv[++i];
+      } else if (arg == "--protobuf-files" && i + 1 < argc) {
+         // Semicolon-separated list of .proto files
+         std::stringstream ss(argv[++i]);
+         std::string item;
+         while (std::getline(ss, item, ';')) {
+            if (!item.empty())
+               protobuf_files.push_back(item);
+         }
       } else if (arg[0] == '-') {
          std::cerr << "Unknown option: " << arg << "\n";
          print_usage(argv[0]);
@@ -458,6 +484,21 @@ int main(int argc, const char** argv) {
          }
       }
 
+      // Collect pb_types referenced by actions from desc files
+      std::set<std::string> referenced_pb_types;
+      for (const auto& desc_name : desc_files) {
+         if (exists(desc_name.c_str()) && file_size(desc_name.c_str()) > 0) {
+            std::ifstream ifs2(desc_name);
+            auto desc = ojson::parse(ifs2);
+            ifs2.close();
+            if (desc.has_key("pb_types")) {
+               for (auto& pb_type : desc["pb_types"].array_range()) {
+                  referenced_pb_types.insert(pb_type.as_string());
+               }
+            }
+         }
+      }
+
       if (!no_abigen) {
          if (abi.empty()) {
             // No [[sysio::contract]] class found — contract may define apply() directly.
@@ -467,6 +508,67 @@ int main(int argc, const char** argv) {
                          << "', skipping ABI generation\n";
             }
          } else {
+            // Embed protobuf FileDescriptorSet into ABI if protobuf files are specified
+            if (protobuf_files.size()) {
+               gpbc::DiskSourceTree source_tree;
+               source_tree.MapPath("", protobuf_dir);
+               source_tree.MapPath("", sysio::cdt::whereami::where() + "/../include");
+
+               ProtobufErrorCollector err_collector;
+               gpbc::Importer importer(&source_tree, &err_collector);
+
+               for (auto& proto_file : protobuf_files) {
+                  importer.Import(proto_file.c_str());
+               }
+
+               auto pool = importer.pool();
+
+               for (auto& type : referenced_pb_types) {
+                  if (!pool->FindMessageTypeByName(type)) {
+                     std::cerr << "unable to find the definition of the protobuf type: '" << type << "',\n"
+                                 "please make sure the corresponding protobuf file is correctly specified\n";
+                     return -1;
+                  }
+               }
+
+               gpb::FileDescriptorSet fds;
+               for (auto& proto_file : protobuf_files) {
+                  auto descriptor = pool->FindFileByName(proto_file);
+                  auto file = fds.add_file();
+                  descriptor->CopyTo(file);
+
+                  // Remove zpp_options.proto from dependencies (internal use only)
+                  for (int i = file->dependency_size() - 1; i >= 0; --i) {
+                     if (file->dependency(i).find("zpp_options.proto") != std::string::npos ||
+                         file->dependency(i).find("zpp/zpp_options.proto") != std::string::npos) {
+                        for (int j = i; j < file->dependency_size() - 1; ++j) {
+                           file->mutable_dependency()->SwapElements(j, j + 1);
+                        }
+                        file->mutable_dependency()->RemoveLast();
+                     }
+                  }
+               }
+
+               std::string protobuf_types_json;
+               auto status = gpb::util::MessageToJsonString(fds, &protobuf_types_json);
+               if (!status.ok()) {
+                  std::cerr << "failed to convert protobuf types to JSON: " << status.message() << "\n";
+                  return -1;
+               }
+
+               abi["protobuf_types"] = ojson::parse(protobuf_types_json);
+
+               // Bump ABI version to 1.3 when protobuf_types section is present
+               if (abi_version_major == 1 && abi_version_minor < 3) {
+                  abi_version_minor = 3;
+                  abi["version"] = "sysio::abi/1.3";
+               }
+            } else if (referenced_pb_types.size()) {
+               std::cerr << "protobuf types are used but no protobuf files are specified for contract " << contract_name
+                         << ", please use `contract_use_protobuf()` cmake function to specify the protobuf files it depends on\n";
+               return -1;
+            }
+
             std::string   filename = abi_output_path.empty()
                                    ? output_dir + "/" + contract_name + ".abi"
                                    : abi_output_path;

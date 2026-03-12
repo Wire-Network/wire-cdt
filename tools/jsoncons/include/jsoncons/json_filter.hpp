@@ -23,8 +23,8 @@ private:
     basic_json_content_handler<CharT>& downstream_handler_;
 
     // noncopyable and nonmoveable
-    basic_json_filter<CharT>(const basic_json_filter<CharT>&) = delete;
-    basic_json_filter<CharT>& operator=(const basic_json_filter<CharT>&) = delete;
+    basic_json_filter(const basic_json_filter&) = delete;
+    basic_json_filter& operator=(const basic_json_filter&) = delete;
 public:
     basic_json_filter(basic_json_content_handler<CharT>& handler)
         : downstream_handler_(handler)
@@ -202,8 +202,8 @@ private:
     basic_json_content_handler<CharT>& downstream_handler_;
 
     // noncopyable and nonmoveable
-    basic_utf8_adaptor<CharT>(const basic_utf8_adaptor<CharT>&) = delete;
-    basic_utf8_adaptor<CharT>& operator=(const basic_utf8_adaptor<CharT>&) = delete;
+    basic_utf8_adaptor(const basic_utf8_adaptor&) = delete;
+    basic_utf8_adaptor& operator=(const basic_utf8_adaptor&) = delete;
 public:
     basic_utf8_adaptor(basic_json_content_handler<CharT>& handler)
         : downstream_handler_(handler)

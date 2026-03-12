@@ -685,6 +685,32 @@ struct generation_utils {
       if(is_explicit_nested(type)){
          return translate_explicit_nested_type(type.getNonReferenceType());
       }
+      else if ( is_template_specialization( type, {"pb"} ) ) {
+         // sysio::pb<T> -> "protobuf::package.MessageType"
+         auto pt = llvm::dyn_cast<clang::ElaboratedType>(type.getTypePtr());
+         auto tst = llvm::dyn_cast<clang::TemplateSpecializationType>(pt ? pt->desugar().getTypePtr() : type.getTypePtr());
+         if (tst && tst->template_arguments().size() > 0) {
+            auto arg = tst->template_arguments()[0];
+            if (arg.getKind() == clang::TemplateArgument::ArgKind::Type) {
+               auto ctsd = arg.getAsType()->getAsCXXRecordDecl();
+               if (ctsd) {
+                  std::string message_type = ctsd->getQualifiedNameAsString();
+                  // Replace C++ :: with protobuf .
+                  std::string result;
+                  for (size_t i = 0; i < message_type.size(); ++i) {
+                     if (i + 1 < message_type.size() && message_type[i] == ':' && message_type[i+1] == ':') {
+                        result += '.';
+                        ++i;
+                     } else {
+                        result += message_type[i];
+                     }
+                  }
+                  return "protobuf::" + result;
+               }
+            }
+         }
+         return "bytes";
+      }
       else if ( is_template_specialization( type, {"ignore"} ) )
          return get_template_argument_as_string( type );
       else if ( is_template_specialization( type, {"binary_extension"} ) ) {

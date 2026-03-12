@@ -36,8 +36,8 @@ private:
     //parse_error_handler& err_handler_;
 
     // noncopyable and nonmoveable
-    json_utf8_other_content_handler_adapter<CharT>(const json_utf8_other_content_handler_adapter<CharT>&) = delete;
-    json_utf8_other_content_handler_adapter<CharT>& operator=(const json_utf8_other_content_handler_adapter<CharT>&) = delete;
+    json_utf8_other_content_handler_adapter(const json_utf8_other_content_handler_adapter&) = delete;
+    json_utf8_other_content_handler_adapter& operator=(const json_utf8_other_content_handler_adapter&) = delete;
 
 public:
     json_utf8_other_content_handler_adapter()

@@ -103,6 +103,15 @@ int main(int argc, const char **argv) {
             codegen_args.push_back(r);
          }
 
+         if (!opts.protobuf_dir.empty()) {
+            codegen_args.push_back("--protobuf-dir");
+            codegen_args.push_back(opts.protobuf_dir);
+         }
+         if (!opts.protobuf_files.empty()) {
+            codegen_args.push_back("--protobuf-files");
+            codegen_args.push_back(opts.protobuf_files);
+         }
+
          for (auto& input : opts.inputs) {
             codegen_args.push_back(input);
          }

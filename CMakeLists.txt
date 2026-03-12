@@ -69,6 +69,12 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchainPackage.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake.package @ONLY)
 
+# Find zpp_bits header (from vcpkg) for contract compilation
+find_path(ZPP_BITS_INCLUDE_DIR zpp_bits.h
+   HINTS ${CMAKE_PREFIX_PATH}/include ${VCPKG_INSTALLED_DIR}/x64-linux/include
+   REQUIRED)
+
+
 include(cmake/LibrariesExternalProject.cmake)
 
 include(cmake/InstallCDT.cmake)
