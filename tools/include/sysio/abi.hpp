@@ -91,6 +91,18 @@ namespace std {
    };
 }
 
+struct abi_enum_value {
+   std::string name;
+   int64_t     value;
+};
+
+struct abi_enum {
+   std::string name;
+   std::string type;  // underlying type, e.g. "uint8"
+   std::vector<abi_enum_value> values;
+   bool operator<(const abi_enum& e) const { return name < e.name; }
+};
+
 struct abi_action_result {
    std::string name;
    std::string type;
@@ -107,6 +119,7 @@ struct abi {
    std::set<abi_action>                   actions;
    std::set<abi_table>                    tables;
    std::set<abi_variant>                  variants;
+   std::set<abi_enum>                     enums;
    std::vector<abi_ricardian_clause_pair> ricardian_clauses;
    std::vector<abi_error_message>         error_messages;
    std::set<wasm_action>                  wasm_actions;
