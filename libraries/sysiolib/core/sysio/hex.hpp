@@ -24,6 +24,7 @@ namespace sysio {
       if (c >= 'a' && c <= 'f') return c - 'a' + 10;
       if (c >= 'A' && c <= 'F') return c - 'A' + 10;
       sysio::check(false, std::string("Invalid hex char: ") + c);
+      return 0; // Unreachable, but silences compiler warning
    }
 
    /**
