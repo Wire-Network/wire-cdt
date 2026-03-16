@@ -248,12 +248,13 @@ namespace sysio {
 
    /**
     * SYSIO ED signature data
-    * 
-    * Fixed size representation of a ED25519 signature
-    * 
+    *
+    * Fixed size representation of a ED25519 signature (96 bytes = 32 pubkey + 64 sig)
+    * The public key is embedded at [0..31], the signature at [32..95].
+    *
     * @ingroup signature
     */
-   using ed_signature = std::array<uint8_t, 64>;
+   using ed_signature = std::array<uint8_t, 96>;
 
    /**
     * SYSIO BLS signature data
