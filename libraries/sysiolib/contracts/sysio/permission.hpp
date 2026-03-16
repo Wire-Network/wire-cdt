@@ -9,8 +9,11 @@
 #include "../../core/sysio/name.hpp"
 #include "../../core/sysio/time.hpp"
 
+#include <cstring>
+#include <optional>
 #include <set>
 #include <limits>
+#include <vector>
 
 namespace sysio {
    namespace internal_use_do_not_use {
@@ -26,6 +29,9 @@ namespace sysio {
                                                  uint64_t);
          __attribute__((sysio_wasm_import))
          int64_t get_account_creation_time(uint64_t);
+
+         __attribute__((sysio_wasm_import))
+         int32_t get_permission_lower_bound(uint64_t account, uint64_t permission, char* buffer, uint32_t buffer_size);
       }
    }
 
@@ -184,5 +190,77 @@ namespace sysio {
                microseconds(
                   internal_use_do_not_use::get_account_creation_time(account.value)));
 
+   }
+
+   /**
+    * @defgroup permission_types Permission Types
+    * @ingroup permission
+    * @brief Types for deserializing permission data from the get_permission_lower_bound intrinsic.
+    * @{
+    */
+
+   struct perm_key_weight {
+      public_key  key;
+      uint16_t    weight;
+
+      SYSLIB_SERIALIZE( perm_key_weight, (key)(weight) )
+   };
+
+   struct perm_level_weight {
+      permission_level  permission;
+      uint16_t          weight;
+
+      SYSLIB_SERIALIZE( perm_level_weight, (permission)(weight) )
+   };
+
+   struct perm_authority {
+      uint32_t                             threshold = 0;
+      std::vector<perm_key_weight>         keys;
+      std::vector<perm_level_weight>       accounts;
+
+      SYSLIB_SERIALIZE( perm_authority, (threshold)(keys)(accounts) )
+   };
+
+   struct permission_record {
+      name            perm_name;
+      name            parent;
+      time_point      last_updated;
+      perm_authority  auth;
+
+      SYSLIB_SERIALIZE( permission_record, (perm_name)(parent)(last_updated)(auth) )
+   };
+
+   /// @}
+
+   /**
+    *  Reads the permission record for the given account and exact permission name.
+    *  Uses the get_permission_lower_bound intrinsic and checks for an exact match.
+    *
+    *  @ingroup permission
+    *
+    *  @param account - the account to search
+    *  @param permission - the exact permission name to look up
+    *
+    *  @return the permission_record if found, std::nullopt otherwise
+    */
+   inline std::optional<permission_record> get_permission( name account, name permission ) {
+      // First call with small buffer to get size and check the returned permission name
+      char name_buf[8];
+      int32_t sz = internal_use_do_not_use::get_permission_lower_bound(
+         account.value, permission.value, name_buf, sizeof(name_buf) );
+
+      if( sz < 0 ) return std::nullopt;
+
+      // The first 8 bytes of the serialized data is the permission name
+      name returned_name;
+      std::memcpy( &returned_name, name_buf, sizeof(returned_name) );
+      if( returned_name != permission ) return std::nullopt;
+
+      // Second call with full buffer
+      std::vector<char> buf( static_cast<size_t>(sz) );
+      internal_use_do_not_use::get_permission_lower_bound(
+         account.value, permission.value, buf.data(), buf.size() );
+
+      return unpack<permission_record>( buf );
    }
 }

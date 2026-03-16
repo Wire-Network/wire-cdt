@@ -141,6 +141,7 @@ get_block_num
 get_blockchain_parameters_packed
 get_code_hash
 get_context_free_data
+get_permission_lower_bound
 get_ram_usage
 get_resource_limits
 get_sender
