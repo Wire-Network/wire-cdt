@@ -67,6 +67,19 @@ check_permission_authorization( capi_name account,
 __attribute__((sysio_wasm_import))
 int64_t get_account_creation_time( capi_name account );
 
+/**
+ *  Look up the permission of an account with the smallest name >= the given permission name.
+ *
+ *  @param account - the account to search
+ *  @param permission - the lower bound permission name
+ *  @param buffer - output buffer for serialized permission_record
+ *  @param buffer_size - size of the output buffer
+ *
+ *  @return -1 if no permission found, or the size of the serialized data
+ */
+__attribute__((sysio_wasm_import))
+int32_t get_permission_lower_bound( capi_name account, capi_name permission, char* buffer, uint32_t buffer_size );
+
 #ifdef __cplusplus
 }
 #endif

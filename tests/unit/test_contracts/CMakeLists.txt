@@ -21,6 +21,8 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/capi/capi_tests.abi ${CMAKE_CURRENT_
 
 target_link_libraries(old_malloc_tests PUBLIC --use-freeing-malloc)
 
+add_contract(permission_tests permission_tests permission_tests.cpp)
+
 # Protobuf test contract
 add_library(pb_protos INTERFACE)
 target_add_protobuf(pb_protos OUTPUT_DIRECTORY test FILES test.proto)
