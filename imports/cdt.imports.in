@@ -133,7 +133,6 @@ db_store_i64
 db_update_i64
 db_upperbound_i64
 expiration
-get_account_creation_time
 get_action
 get_active_producers
 get_active_security_group

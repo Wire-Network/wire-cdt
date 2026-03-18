@@ -58,16 +58,6 @@ check_permission_authorization( capi_name account,
                               );
 
 /**
- *  Returns the creation time of an account
- *
- *  @param account - the account
- *
- *  @return the creation time (in microseconds since Unix epoch) of the account
- */
-__attribute__((sysio_wasm_import))
-int64_t get_account_creation_time( capi_name account );
-
-/**
  *  Look up the permission of an account with the smallest name >= the given permission name.
  *
  *  @param account - the account to search
