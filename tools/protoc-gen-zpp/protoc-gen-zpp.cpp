@@ -419,6 +419,7 @@ struct zpp_generator {
       }
 
       strm << "#include <zpp_bits.h>\n"
+           << "#include <magic_enum/magic_enum.hpp>\n"
            << "// @@protoc_insertion_point(includes)\n";
 
       std::string indent = "";
