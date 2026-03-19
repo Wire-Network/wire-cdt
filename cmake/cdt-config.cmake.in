@@ -27,6 +27,21 @@ set(CDT_VERSION "@VERSION_FULL@")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 list(APPEND CMAKE_MODULE_PATH ${CDT_ROOT}/lib/cmake/cdt)
 
+# Imported executable targets for CDT protobuf tools
+if(NOT TARGET cdt::protoc)
+   add_executable(cdt::protoc IMPORTED)
+   set_target_properties(cdt::protoc PROPERTIES
+      IMPORTED_LOCATION "${CDT_ROOT}/bin/cdt-protoc"
+   )
+endif()
+
+if(NOT TARGET cdt::protoc-gen-zpp)
+   add_executable(cdt::protoc-gen-zpp IMPORTED)
+   set_target_properties(cdt::protoc-gen-zpp PROPERTIES
+      IMPORTED_LOCATION "${CDT_ROOT}/bin/cdt-protoc-gen-zpp"
+   )
+endif()
+
 include(CDTMacros)
 
 function(EXTRACT_MAJOR_MINOR_FROM_VERSION version success major minor)
