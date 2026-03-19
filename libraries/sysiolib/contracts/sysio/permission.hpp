@@ -28,9 +28,6 @@ namespace sysio {
                                                  const char*, uint32_t,
                                                  uint64_t);
          __attribute__((sysio_wasm_import))
-         int64_t get_account_creation_time(uint64_t);
-
-         __attribute__((sysio_wasm_import))
          int32_t get_permission_lower_bound(uint64_t account, uint64_t permission, char* buffer, uint32_t buffer_size);
       }
    }
@@ -174,22 +171,6 @@ namespace sysio {
                                                  );
 
       return (res > 0);
-   }
-
-   /**
-    *  Returns the creation time of an account
-    *
-    *  @ingroup permission
-    *
-    *  @param account - the account
-    *
-    *  @return the creation time (in microseconds since Unix epoch) of the account
-    */
-   time_point get_account_creation_time( name account ) {
-      return time_point(
-               microseconds(
-                  internal_use_do_not_use::get_account_creation_time(account.value)));
-
    }
 
    /**
