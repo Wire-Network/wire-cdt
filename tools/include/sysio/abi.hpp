@@ -126,6 +126,8 @@ struct abi {
    std::set<wasm_notify>                  wasm_notifies;
    std::set<std::string>                  wasm_entries;
    std::set<abi_action_result>            action_results;
+   bool                                   has_pre_dispatch  = false;
+   bool                                   has_post_dispatch = false;
 };
 
 inline void dump( const abi& abi ) {

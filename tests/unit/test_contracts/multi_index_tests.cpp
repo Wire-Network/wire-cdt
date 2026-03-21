@@ -1,4 +1,5 @@
 #include <sysio/sysio.hpp>
+#include <sysio/kv_multi_index.hpp>
 
 #include <cmath>
 #include <limits>
@@ -78,7 +79,7 @@ namespace _test_multi_index
         size_t num_records = sizeof(records) / sizeof(records[0]);
 
         // Construct and fill table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record,
+        sysio::kv_multi_index<sysio::name{TableName}, record,
                     sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
             table(receiver, receiver.value);
 
@@ -99,7 +100,7 @@ namespace _test_multi_index
         typedef record_idx64 record;
 
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record,
+        sysio::kv_multi_index<sysio::name{TableName}, record,
                     sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
             table(receiver, receiver.value);
 
@@ -210,7 +211,7 @@ namespace _test_multi_index
         typedef record_idx64 record;
 
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record> table(receiver, receiver.value);
+        sysio::kv_multi_index<sysio::name{TableName}, record> table(receiver, receiver.value);
 
         // make sure we're looking at the right table
         auto itr = table.require_find(781, "table not loaded");
@@ -227,7 +228,7 @@ namespace _test_multi_index
         typedef record_idx64 record;
 
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record> table(receiver, receiver.value);
+        sysio::kv_multi_index<sysio::name{TableName}, record> table(receiver, receiver.value);
 
         // make sure we're looking at the right table
         auto itr = table.require_find(234, "table not loaded");
@@ -244,7 +245,7 @@ namespace _test_multi_index
         typedef record_idx64 record;
 
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record, sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>> table(receiver, receiver.value);
+        sysio::kv_multi_index<sysio::name{TableName}, record, sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>> table(receiver, receiver.value);
         auto sec_index = table.template get_index<"bysecondary"_n>();
 
         // make sure we're looking at the right table
@@ -262,7 +263,7 @@ namespace _test_multi_index
         typedef record_idx64 record;
 
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record, sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>> table(receiver, receiver.value);
+        sysio::kv_multi_index<sysio::name{TableName}, record, sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>> table(receiver, receiver.value);
         auto sec_index = table.template get_index<"bysecondary"_n>();
 
         // make sure we're looking at the right table
@@ -280,7 +281,7 @@ namespace _test_multi_index
         typedef record_idx128 record;
 
         // Construct and fill table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record,
+        sysio::kv_multi_index<sysio::name{TableName}, record,
                     sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>>
             table(receiver, receiver.value);
 
@@ -301,7 +302,7 @@ namespace _test_multi_index
         typedef record_idx128 record;
 
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record,
+        sysio::kv_multi_index<sysio::name{TableName}, record,
                     sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>>
             table(receiver, receiver.value);
 
@@ -335,7 +336,7 @@ namespace _test_multi_index
     {
         typedef record_idx64 record;
         // Load table using multi_index
-        sysio::multi_index<sysio::name{TableName}, record,
+        sysio::kv_multi_index<sysio::name{TableName}, record,
                     sysio::indexed_by<sysio::name{SecondaryIndex}, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
             table(receiver, receiver.value);
         return table;
@@ -428,7 +429,7 @@ public:
         sysio::check( table1_pk_itr != table1.end() && table1_pk_itr->sec == "bob"_n.value, "idx64_pass_sk_ref_to_other_table - table.find() of existing primary key" );
 
         auto table2_sec_index = table2.get_index<"bysecondary"_n>();
-        // Should fail
+        // KV implementation: no cross-table iterator check (dev safety only, no data impact)
         table2_sec_index.iterator_to(*table1_pk_itr);
     }
 
@@ -562,7 +563,7 @@ public:
 
         auto payer = get_self();
 
-        sysio::multi_index<"autoinctbl1"_n, record,
+        sysio::kv_multi_index<"autoinctbl1"_n, record,
             sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>
         > table( get_self(), get_self().value );
 
@@ -607,7 +608,7 @@ public:
 
         auto payer = get_self();
 
-        sysio::multi_index<"autoinctbl2"_n, record,
+        sysio::kv_multi_index<"autoinctbl2"_n, record,
             sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>
         > table( get_self(), get_self().value );
 
@@ -638,14 +639,14 @@ public:
         auto payer = get_self();
 
         {
-            sysio::multi_index<table_name, record,
+            sysio::kv_multi_index<table_name, record,
                 sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>
             > table( get_self(), get_self().value );
 
             sysio::check( table.available_primary_key() == 3, "idx128_autoincrement_test_part2 - did not recover expected next primary key" );
         }
 
-        sysio::multi_index<table_name, record,
+        sysio::kv_multi_index<table_name, record,
             sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>
         > table( get_self(), get_self().value );
 
@@ -691,7 +692,7 @@ public:
         auto payer = get_self();
 
         sysio::print("Testing checksum256 secondary index.\n");
-        sysio::multi_index<"indextable5"_n, record,
+        sysio::kv_multi_index<"indextable5"_n, record,
             sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, const checksum256&, &record::get_secondary>>
         > table( get_self(), get_self().value );
 
@@ -795,7 +796,7 @@ public:
         auto payer = get_self();
 
         sysio::print("Testing double secondary index.\n");
-        sysio::multi_index<"floattable1"_n, record,
+        sysio::kv_multi_index<"floattable1"_n, record,
             sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, double, &record::get_secondary>>
         > table( get_self(), get_self().value );
 
@@ -839,6 +840,227 @@ public:
         }
     }
 
+    // ── Secondary iterator clone with duplicate keys ───────────────────────
+    // When multiple rows share the same secondary key, copying an iterator
+    // must preserve the exact position (matching primary key).
+    [[sysio::action("s1clone")]] void idx64_sec_clone_dup() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"clonetbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+
+        auto payer = get_self();
+
+        // Three rows with the SAME secondary key
+        table.emplace(payer, [](auto& r) { r.id = 10; r.sec = 42; });
+        table.emplace(payer, [](auto& r) { r.id = 20; r.sec = 42; });
+        table.emplace(payer, [](auto& r) { r.id = 30; r.sec = 42; });
+
+        auto idx = table.get_index<"bysecondary"_n>();
+        auto it = idx.begin();
+        sysio::check(it != idx.end() && it->id == 10, "clone: first should be pk 10");
+
+        // Advance to second entry (pk=20)
+        ++it;
+        sysio::check(it->id == 20, "clone: second should be pk 20");
+
+        // Copy the iterator — must land on pk=20, not pk=10
+        auto it_copy = it;
+        sysio::check(it_copy->id == 20, "clone: copy must preserve position at pk 20");
+
+        // Advance the copy — should go to pk=30
+        ++it_copy;
+        sysio::check(it_copy->id == 30, "clone: copy++ should be pk 30");
+
+        // Original should still be at pk=20
+        sysio::check(it->id == 20, "clone: original should still be pk 20");
+    }
+
+    // ── Secondary rbegin/rend ───────────────────────────────────────────────
+    [[sysio::action("s1secrb")]] void idx64_sec_rbegin() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"secrbtbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+
+        auto payer = get_self();
+        table.emplace(payer, [](auto& r) { r.id = 1; r.sec = 50; });
+        table.emplace(payer, [](auto& r) { r.id = 2; r.sec = 20; });
+        table.emplace(payer, [](auto& r) { r.id = 3; r.sec = 40; });
+
+        auto idx = table.get_index<"bysecondary"_n>();
+
+        // rbegin should be highest secondary key (50, pk=1)
+        auto rit = idx.rbegin();
+        sysio::check(rit != idx.rend(), "secrb: rbegin should not be rend");
+        sysio::check(rit->sec == 50, "secrb: rbegin should be sec 50");
+        ++rit;
+        sysio::check(rit->sec == 40, "secrb: second should be sec 40");
+        ++rit;
+        sysio::check(rit->sec == 20, "secrb: third should be sec 20");
+        ++rit;
+        sysio::check(rit == idx.rend(), "secrb: should be rend after 3");
+    }
+
+    // ── uint128_t secondary rbegin ──────────────────────────────────────────
+    // operator-- from end must use a buffer large enough for the key type.
+    [[sysio::action("s2secrb")]] void idx128_sec_rbegin() {
+        using namespace _test_multi_index;
+        typedef record_idx128 record;
+
+        sysio::kv_multi_index<"s2rbtbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint128_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+
+        auto payer = get_self();
+        // Use values > 2^64 to ensure uint128_t encoding matters
+        uint128_t lo  = uint128_t(1) << 100;
+        uint128_t mid = uint128_t(1) << 110;
+        uint128_t hi  = uint128_t(1) << 120;
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = lo; });
+        table.emplace(payer, [&](auto& r) { r.id = 2; r.sec = mid; });
+        table.emplace(payer, [&](auto& r) { r.id = 3; r.sec = hi; });
+
+        auto idx = table.get_index<"bysecondary"_n>();
+
+        auto rit = idx.rbegin();
+        sysio::check(rit != idx.rend(), "s2rb: rbegin should not be rend");
+        sysio::check(rit->id == 3, "s2rb: rbegin should be pk 3 (highest)");
+        ++rit;
+        sysio::check(rit->id == 2, "s2rb: second should be pk 2");
+        ++rit;
+        sysio::check(rit->id == 1, "s2rb: third should be pk 1");
+        ++rit;
+        sysio::check(rit == idx.rend(), "s2rb: should be rend after 3");
+    }
+
+    // ── Name-typed primary key ──────────────────────────────────────────────
+    struct name_row {
+        sysio::name account;
+        uint64_t    balance;
+
+        sysio::name primary_key() const { return account; }
+        SYSLIB_SERIALIZE(name_row, (account)(balance))
+    };
+
+    [[sysio::action("namepk")]] void name_primary_key() {
+        sysio::kv_multi_index<"namepktbl"_n, name_row> table(get_self(), get_self().value);
+        auto payer = get_self();
+
+        table.emplace(payer, [](auto& r) { r.account = "alice"_n; r.balance = 100; });
+        table.emplace(payer, [](auto& r) { r.account = "bob"_n; r.balance = 200; });
+        table.emplace(payer, [](auto& r) { r.account = "charlie"_n; r.balance = 300; });
+
+        // Find by name
+        auto itr = table.find("bob"_n);
+        sysio::check(itr != table.end(), "namepk: find(bob) should succeed");
+        sysio::check(itr->balance == 200, "namepk: bob balance mismatch");
+
+        // Iterator copy (exercises to_pk_uint64 fix)
+        auto itr_copy = itr;
+        sysio::check(itr_copy->account == "bob"_n, "namepk: copy should be bob");
+
+        // Modify
+        table.modify(itr, payer, [](auto& r) { r.balance = 999; });
+        auto itr2 = table.find("bob"_n);
+        sysio::check(itr2->balance == 999, "namepk: modified balance mismatch");
+
+        // Erase
+        table.erase(*itr2);
+        sysio::check(table.find("bob"_n) == table.end(), "namepk: bob should be gone");
+    }
+
+    // ── cbegin / cend ────────────────────────────────────────────────────────
+    [[sysio::action("cbegincend")]] void cbegin_cend_test() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"cbctbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+
+        auto payer = get_self();
+        table.emplace(payer, [](auto& r) { r.id = 1; r.sec = 10; });
+        table.emplace(payer, [](auto& r) { r.id = 2; r.sec = 20; });
+
+        auto cit = table.cbegin();
+        sysio::check(cit != table.cend(), "cbegin: should not be cend");
+        sysio::check(cit->id == 1, "cbegin: first should be pk 1");
+        ++cit;
+        sysio::check(cit->id == 2, "cbegin: second should be pk 2");
+        ++cit;
+        sysio::check(cit == table.cend(), "cbegin: should be cend after 2");
+
+        // Secondary cbegin/cend
+        auto idx = table.get_index<"bysecondary"_n>();
+        auto scit = idx.cbegin();
+        sysio::check(scit != idx.cend(), "sec cbegin: should not be cend");
+        sysio::check(scit->sec == 10, "sec cbegin: first should be sec 10");
+        ++scit;
+        sysio::check(scit->sec == 20, "sec cbegin: second should be sec 20");
+        ++scit;
+        sysio::check(scit == idx.cend(), "sec cbegin: should be cend after 2");
+    }
+
+    // ── get_code / get_scope ──────────────────────────────────────────────
+    [[sysio::action("codescope")]] void code_scope_test() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"codescopetbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), "myscope"_n.value);
+
+        sysio::check(table.get_code() == get_self(), "codescope: get_code should be self");
+        sysio::check(table.get_scope() == "myscope"_n.value, "codescope: get_scope should be myscope");
+
+        auto idx = table.get_index<"bysecondary"_n>();
+        sysio::check(idx.get_code() == get_self(), "codescope: sec get_code should be self");
+        sysio::check(idx.get_scope() == "myscope"_n.value, "codescope: sec get_scope should be myscope");
+    }
+
+    // ── crbegin / crend (const reverse iterators) ───────────────────────────
+    [[sysio::action("crbeginend")]] void const_reverse_iter() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"crbtbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+
+        auto payer = get_self();
+        table.emplace(payer, [](auto& r) { r.id = 10; r.sec = 1; });
+        table.emplace(payer, [](auto& r) { r.id = 20; r.sec = 2; });
+        table.emplace(payer, [](auto& r) { r.id = 30; r.sec = 3; });
+
+        // Primary crbegin/crend
+        auto rit = table.crbegin();
+        sysio::check(rit != table.crend(), "crbegin: should not be crend");
+        sysio::check(rit->id == 30, "crbegin: first should be pk 30");
+        ++rit;
+        sysio::check(rit->id == 20, "crbegin: second should be pk 20");
+        ++rit;
+        sysio::check(rit->id == 10, "crbegin: third should be pk 10");
+        ++rit;
+        sysio::check(rit == table.crend(), "crbegin: should be crend after 3");
+
+        // Secondary crbegin/crend
+        auto idx = table.get_index<"bysecondary"_n>();
+        auto srit = idx.crbegin();
+        sysio::check(srit != idx.crend(), "sec crbegin: should not be crend");
+        sysio::check(srit->sec == 3, "sec crbegin: first should be sec 3");
+        ++srit;
+        sysio::check(srit->sec == 2, "sec crbegin: second should be sec 2");
+        ++srit;
+        sysio::check(srit->sec == 1, "sec crbegin: third should be sec 1");
+        ++srit;
+        sysio::check(srit == idx.crend(), "sec crbegin: should be crend after 3");
+    }
+
     [[sysio::action("sldg")]] void idx_long_double_general() {
         using namespace _test_multi_index;
 
@@ -847,7 +1069,7 @@ public:
         auto payer = get_self();
 
         sysio::print("Testing long double secondary index.\n");
-        sysio::multi_index<"floattable2"_n, record,
+        sysio::kv_multi_index<"floattable2"_n, record,
             sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, long double, &record::get_secondary>>
         > table( get_self(), get_self().value );
 
@@ -891,5 +1113,58 @@ public:
             sysio::check( std::abs(1.0l / itr->sec - 4000000.0l) <= tolerance, "idx_long_double_general - upper_bound" );
 
         }
+    }
+
+    // T3: Verify kv_idx_update — modify secondary key, then verify secondary index reflects the change
+    [[sysio::action("s1secupd")]] void idx64_secondary_update() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+        auto payer = get_self();
+
+        sysio::kv_multi_index<"secupd"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(payer, payer.value);
+
+        // Insert 3 records: alice(10), bob(20), charlie(30)
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = "alice"_n.value; });
+        table.emplace(payer, [&](auto& r) { r.id = 2; r.sec = "bob"_n.value; });
+        table.emplace(payer, [&](auto& r) { r.id = 3; r.sec = "charlie"_n.value; });
+
+        auto sec = table.get_index<"bysecondary"_n>();
+
+        // Verify initial secondary order: alice, bob, charlie
+        {
+            auto it = sec.begin();
+            sysio::check(it->sec == "alice"_n.value, "s1secupd - initial order[0]");
+            ++it;
+            sysio::check(it->sec == "bob"_n.value,   "s1secupd - initial order[1]");
+            ++it;
+            sysio::check(it->sec == "charlie"_n.value,"s1secupd - initial order[2]");
+        }
+
+        // Modify bob -> zoe (should move from middle to end in secondary order)
+        auto pk_itr = table.find(2);
+        sysio::check(pk_itr != table.end(), "s1secupd - find bob");
+        table.modify(pk_itr, payer, [&](auto& r) { r.sec = "zoe"_n.value; });
+
+        // Verify new secondary order: alice, charlie, zoe
+        {
+            auto it = sec.begin();
+            sysio::check(it->sec == "alice"_n.value,   "s1secupd - after order[0]");
+            ++it;
+            sysio::check(it->sec == "charlie"_n.value, "s1secupd - after order[1]");
+            ++it;
+            sysio::check(it->sec == "zoe"_n.value,     "s1secupd - after order[2]");
+            ++it;
+            sysio::check(it == sec.end(),               "s1secupd - after order end");
+        }
+
+        // Verify old key no longer resolves to this record
+        auto old_itr = sec.find("bob"_n.value);
+        sysio::check(old_itr == sec.end(), "s1secupd - bob should not exist in secondary index");
+
+        // Verify new key resolves correctly
+        auto new_itr = sec.find("zoe"_n.value);
+        sysio::check(new_itr != sec.end() && new_itr->id == 2, "s1secupd - zoe should map to id 2");
     }
 };

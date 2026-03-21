@@ -1,4 +1,5 @@
 #include <sysio/sysio.hpp>
+#include <sysio/kv_multi_index.hpp>
 
     
 using namespace std;
@@ -36,7 +37,7 @@ CONTRACT explicit_nested_tests : public contract {
 
       SYSLIB_SERIALIZE(testdata, (id)(data)(data_vec)(data_vec2)(data_vec3)(tup1)(var1)(vvmys));
    };
-   using test_data_idx = multi_index<"testdata"_n, testdata>;
+   using test_data_idx = kv_multi_index<"testdata"_n, testdata>;
 
    [[sysio::action]]
     //usage: clio -v push action sysio vvstr '[[["abc", "cde"],["def","fgh"]]]' -p sysio@active

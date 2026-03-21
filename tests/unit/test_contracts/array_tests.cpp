@@ -1,6 +1,7 @@
 #include <sysio/sysio.hpp>
 #include <sysio/transaction.hpp>
 #include <sysio/name.hpp>
+#include <sysio/kv_multi_index.hpp>
 
 using namespace sysio;
 
@@ -19,7 +20,7 @@ class [[sysio::contract]] array_tests : public contract {
       std::string name;
    };
 
-   typedef multi_index<name("tests"), tests> tests_table;
+   typedef kv_multi_index<name("tests"), tests> tests_table;
    typedef std::array<std::string,4> array_string_4;
    struct my_struct {
       uint32_t id;

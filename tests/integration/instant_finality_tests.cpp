@@ -35,8 +35,7 @@ BOOST_FIXTURE_TEST_CASE(instant_finality_test, tester) try {
     std::cout << fc::json::to_string(pretty_output, fc::time_point::now() + abi_serializer_max_time) << std::endl;
 
     std::string output_json = fc::json::to_pretty_string(pretty_output);
-    BOOST_TEST(output_json.find("finality_extension") != std::string::npos);
-    BOOST_TEST(output_json.find("\"generation\": 2") != std::string::npos);
+    BOOST_TEST(output_json.find("new_finalizer_policy_diff") != std::string::npos);
     BOOST_TEST(output_json.find("\"threshold\": 1") != std::string::npos);
     BOOST_TEST(output_json.find("\"description\": \"test_desc\"") != std::string::npos);
     BOOST_TEST(output_json.find("\"weight\": 1") != std::string::npos);

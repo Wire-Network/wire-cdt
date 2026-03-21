@@ -1,5 +1,6 @@
 #include <sysio/sysio.hpp>
 #include <sysio/print.hpp>
+#include <sysio/kv_multi_index.hpp>
 #include <array>
 
 using std::array;
@@ -20,5 +21,5 @@ public:
       array<int, 32> t;
       uint64_t primary_key() const { return id; }
    };
-   typedef multi_index<"greeting"_n, greeting> greeting_index;
+   typedef kv_multi_index<"greeting"_n, greeting> greeting_index;
 };
