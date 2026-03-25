@@ -122,13 +122,6 @@ namespace sysio {
       uint32_t max_transaction_lifetime;
 
       /**
-      * The number of seconds after the time a deferred transaction can first execute until it expires
-      * @brief the number of seconds after the time a deferred transaction can first execute until it expires
-      */
-      uint32_t deferred_trx_expiration_window;
-
-
-      /**
       * The maximum number of seconds that can be imposed as a delay requirement by authorization checks
       * @brief The maximum number of seconds that can be imposed as a delay requirement by authorization checks
       */
@@ -152,6 +145,26 @@ namespace sysio {
        */
       uint16_t max_authority_depth;
 
+      /**
+       * Maximum size of action return value
+       */
+      uint32_t max_action_return_value_size;
+
+      /**
+       * Maximum KV primary key size in bytes
+       */
+      uint32_t max_kv_key_size;
+
+      /**
+       * Maximum KV value size in bytes
+       */
+      uint32_t max_kv_value_size;
+
+      /**
+       * Maximum KV secondary key size in bytes
+       */
+      uint32_t max_kv_secondary_key_size;
+
 
       SYSLIB_SERIALIZE( blockchain_parameters,
                         (max_block_net_usage)(target_block_net_usage_pct)
@@ -161,8 +174,11 @@ namespace sysio {
                         (max_block_cpu_usage)(target_block_cpu_usage_pct)
                         (max_transaction_cpu_usage)(min_transaction_cpu_usage)
 
-                        (max_transaction_lifetime)(deferred_trx_expiration_window)(max_transaction_delay)
+                        (max_transaction_lifetime)(max_transaction_delay)
                         (max_inline_action_size)(max_inline_action_depth)(max_authority_depth)
+
+                        (max_action_return_value_size)
+                        (max_kv_key_size)(max_kv_value_size)(max_kv_secondary_key_size)
       )
    };
 
