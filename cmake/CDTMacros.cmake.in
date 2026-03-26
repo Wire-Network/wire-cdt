@@ -1,37 +1,24 @@
 
 macro(find_cdt_magic_enum)
-  if(NOT TARGET magic_enum::magic_enum)
-    if(IS_DIRECTORY "${CDT_ROOT}/include/magic_enum")
-      add_library(magic_enum::magic_enum INTERFACE IMPORTED)
-      set_target_properties(magic_enum::magic_enum PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${CDT_ROOT}/include"
-      )
+  if(NOT DEFINED _CDT_MAGIC_ENUM_INCLUDE_DIR)
+    # Search candidate directories: installed layout, then vcpkg build-dir layout
+    set(_magic_enum_search_dirs
+      "${CDT_ROOT}/include"
+      "${CDT_ROOT}/vcpkg_installed/x64-linux/include"
+    )
 
-#    elseif(IS_DIRECTORY "${CDT_CONTRACT_INCLUDE_PATH}/magic_enum")
-#      add_library(magic_enum::magic_enum INTERFACE IMPORTED)
-#      set_target_properties(magic_enum::magic_enum PROPERTIES
-#        INTERFACE_INCLUDE_DIRECTORIES "${CDT_CONTRACT_INCLUDE_PATH}"
-#      )
-    else()
-      get_property(all_includes DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
-      message(STATUS "Searching for magic_enum in include directories: ${all_includes}")
-      foreach(dir IN LISTS all_includes)
-        file(GLOB_RECURSE matches "${dir}/magic_enum/*.hpp")
-        if(matches)
-          message(NOTICE "Found ${HEADER_TO_FIND} in: ${matches}")
-          add_library(magic_enum::magic_enum INTERFACE IMPORTED)
-          set_target_properties(magic_enum::magic_enum PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${dir}"
-          )
-          break()
-        endif()
-      endforeach()
-
-      if(NOT TARGET magic_enum::magic_enum)
-        message(FATAL_ERROR "magic_enum library not found. Please ensure it is installed and available in either
-        ${CDT_ROOT}/include
-        ${CDT_CONTRACT_INCLUDE_PATH}")
+    foreach(_me_dir IN LISTS _magic_enum_search_dirs)
+      if(IS_DIRECTORY "${_me_dir}/magic_enum")
+        set(_CDT_MAGIC_ENUM_INCLUDE_DIR "${_me_dir}" CACHE INTERNAL "magic_enum include directory")
+        break()
       endif()
+    endforeach()
+
+    if(NOT DEFINED _CDT_MAGIC_ENUM_INCLUDE_DIR)
+      message(FATAL_ERROR "magic_enum library not found. Searched:\n"
+        "  ${CDT_ROOT}/include\n"
+        "  ${CDT_ROOT}/vcpkg_installed/x64-linux/include\n"
+        "Please ensure magic_enum is installed via vcpkg or available in CDT_ROOT/include.")
     endif()
   endif()
 endmacro()
@@ -47,6 +34,7 @@ macro(set_cdt_include_directories TARGET)
     ${CDT_ROOT}/include/sysiolib/contracts
     ${CDT_ROOT}/include/bluegrass
     ${CDT_ROOT}/include
+    ${_CDT_MAGIC_ENUM_INCLUDE_DIR}
   )
 endmacro()
 
@@ -346,6 +334,7 @@ function(target_add_protobuf TARGET)
   else()
     target_sources(${TARGET} PRIVATE ${OUTPUT_HDRS})
     target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+    target_link_libraries(${TARGET} PUBLIC magic_enum::magic_enum)
     add_dependencies(${TARGET} ${TARGET}.protos)
   endif()
 
