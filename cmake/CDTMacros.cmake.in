@@ -7,11 +7,18 @@ macro(find_cdt_magic_enum)
         INTERFACE_INCLUDE_DIRECTORIES "${CDT_ROOT}/include"
       )
 
-#    elseif(IS_DIRECTORY "${CDT_CONTRACT_INCLUDE_PATH}/magic_enum")
-#      add_library(magic_enum::magic_enum INTERFACE IMPORTED)
-#      set_target_properties(magic_enum::magic_enum PROPERTIES
-#        INTERFACE_INCLUDE_DIRECTORIES "${CDT_CONTRACT_INCLUDE_PATH}"
-#      )
+    elseif(IS_DIRECTORY "${CDT_CONTRACT_INCLUDE_PATH}/magic_enum")
+      add_library(magic_enum::magic_enum INTERFACE IMPORTED)
+      set_target_properties(magic_enum::magic_enum PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${CDT_CONTRACT_INCLUDE_PATH}"
+      )
+    elseif(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET AND IS_DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/magic_enum")
+      set(_vcpkg_include "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+      message(NOTICE "Using vcpkg magic_enum include directory: ${_vcpkg_include}")
+      add_library(magic_enum::magic_enum INTERFACE IMPORTED)
+      set_target_properties(magic_enum::magic_enum PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${_vcpkg_include}"
+      )
     else()
       get_property(all_includes DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
       message(STATUS "Searching for magic_enum in include directories: ${all_includes}")

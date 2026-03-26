@@ -40,5 +40,6 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET="")
 # ADD ANY PROVIDED INCLUDE DIRECTORIES
 # `-DCDT_CONTRACT_INCLUDE_PATH=<semicolon delimited include paths>`
 if(IS_DIRECTORY ${CDT_CONTRACT_INCLUDE_PATH})
+  message(NOTICE "Adding CDT contract include path: ${CDT_CONTRACT_INCLUDE_PATH}")
   include_directories(BEFORE ${CDT_CONTRACT_INCLUDE_PATH})
 endif()
