@@ -544,6 +544,8 @@ struct generation_utils {
          inside_type_name = get_template_name(inside_type);
       }else if (inside_type.getTypePtr()->isRecordType()) {
          inside_type_name = inside_type.getTypePtr()->getAsCXXRecordDecl()->getNameAsString();
+      } else if (inside_type.getTypePtr()->isEnumeralType()) {
+         inside_type_name = get_base_type_name(inside_type);
       } else {
          std::string errstring = "translating_explicit_nested_dispatcher: this inside type  ";
          errstring += inside_type.getAsString();

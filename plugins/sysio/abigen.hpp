@@ -313,6 +313,9 @@ namespace sysio { namespace cdt {
          }else if (inside_type.getTypePtr()->isRecordType()) {
             add_struct(inside_type.getTypePtr()->getAsCXXRecordDecl());
             inside_type_name = inside_type.getTypePtr()->getAsCXXRecordDecl()->getNameAsString();
+         } else if (inside_type.getTypePtr()->isEnumeralType()) {
+            add_type(inside_type);
+            inside_type_name = get_base_type_name(inside_type);
          } else {
             std::string errstring = "adding_explicit_nested_dispatcher: this inside type  ";
             errstring += inside_type.getAsString();
