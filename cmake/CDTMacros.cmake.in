@@ -1,4 +1,42 @@
 
+# Search CDT_CONTRACT_INCLUDE_PATH (semicolon-delimited list) for a matching
+# directory or file suffix.
+#
+# Usage:
+#   find_in_cdt_contract_paths(_result MATCH magic_enum DIRECTORY)
+#   find_in_cdt_contract_paths(_result MATCH magic_enum/magic_enum.hpp FILE
+#                              MATCH_VAR_FULL _full_path)
+#
+# Sets <out_var> to the matching base path, or empty string if not found.
+# MATCH_VAR_FULL optionally receives the full path including the suffix.
+macro(find_in_cdt_contract_paths _out_var)
+  cmake_parse_arguments(_FICCP "" "MATCH;MATCH_VAR_FULL" "" ${ARGN})
+  # Remaining unparsed args: first is DIRECTORY or FILE
+  list(GET _FICCP_UNPARSED_ARGUMENTS 0 _ficcp_mode)
+
+  set(${_out_var} "")
+  if(_FICCP_MATCH_VAR_FULL)
+    set(${_FICCP_MATCH_VAR_FULL} "")
+  endif()
+
+  foreach(_ficcp_dir IN LISTS CDT_CONTRACT_INCLUDE_PATH)
+    set(_ficcp_candidate "${_ficcp_dir}/${_FICCP_MATCH}")
+    if("${_ficcp_mode}" STREQUAL "DIRECTORY" AND IS_DIRECTORY "${_ficcp_candidate}")
+      set(${_out_var} "${_ficcp_dir}")
+      if(_FICCP_MATCH_VAR_FULL)
+        set(${_FICCP_MATCH_VAR_FULL} "${_ficcp_candidate}")
+      endif()
+      break()
+    elseif("${_ficcp_mode}" STREQUAL "FILE" AND EXISTS "${_ficcp_candidate}")
+      set(${_out_var} "${_ficcp_dir}")
+      if(_FICCP_MATCH_VAR_FULL)
+        set(${_FICCP_MATCH_VAR_FULL} "${_ficcp_candidate}")
+      endif()
+      break()
+    endif()
+  endforeach()
+endmacro()
+
 macro(find_cdt_magic_enum)
   if(NOT TARGET magic_enum::magic_enum)
     if(IS_DIRECTORY "${CDT_ROOT}/include/magic_enum")
@@ -7,30 +45,41 @@ macro(find_cdt_magic_enum)
         INTERFACE_INCLUDE_DIRECTORIES "${CDT_ROOT}/include"
       )
 
-#    elseif(IS_DIRECTORY "${CDT_CONTRACT_INCLUDE_PATH}/magic_enum")
-#      add_library(magic_enum::magic_enum INTERFACE IMPORTED)
-#      set_target_properties(magic_enum::magic_enum PROPERTIES
-#        INTERFACE_INCLUDE_DIRECTORIES "${CDT_CONTRACT_INCLUDE_PATH}"
-#      )
     else()
-      get_property(all_includes DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
-      message(STATUS "Searching for magic_enum in include directories: ${all_includes}")
-      foreach(dir IN LISTS all_includes)
-        file(GLOB_RECURSE matches "${dir}/magic_enum/*.hpp")
-        if(matches)
-          message(NOTICE "Found ${HEADER_TO_FIND} in: ${matches}")
-          add_library(magic_enum::magic_enum INTERFACE IMPORTED)
-          set_target_properties(magic_enum::magic_enum PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${dir}"
-          )
-          break()
-        endif()
-      endforeach()
+      find_in_cdt_contract_paths(_magic_enum_inc MATCH magic_enum DIRECTORY)
+      if(_magic_enum_inc)
+        add_library(magic_enum::magic_enum INTERFACE IMPORTED)
+        set_target_properties(magic_enum::magic_enum PROPERTIES
+          INTERFACE_INCLUDE_DIRECTORIES "${_magic_enum_inc}"
+        )
 
-      if(NOT TARGET magic_enum::magic_enum)
-        message(FATAL_ERROR "magic_enum library not found. Please ensure it is installed and available in either
-        ${CDT_ROOT}/include
-        ${CDT_CONTRACT_INCLUDE_PATH}")
+      elseif(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET AND IS_DIRECTORY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/magic_enum")
+        set(_vcpkg_include "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
+        message(NOTICE "Using vcpkg magic_enum include directory: ${_vcpkg_include}")
+        add_library(magic_enum::magic_enum INTERFACE IMPORTED)
+        set_target_properties(magic_enum::magic_enum PROPERTIES
+          INTERFACE_INCLUDE_DIRECTORIES "${_vcpkg_include}"
+        )
+      else()
+        get_property(all_includes DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
+        message(STATUS "Searching for magic_enum in include directories: ${all_includes}")
+        foreach(dir IN LISTS all_includes)
+          file(GLOB_RECURSE matches "${dir}/magic_enum/*.hpp")
+          if(matches)
+            message(NOTICE "Found magic_enum in: ${matches}")
+            add_library(magic_enum::magic_enum INTERFACE IMPORTED)
+            set_target_properties(magic_enum::magic_enum PROPERTIES
+              INTERFACE_INCLUDE_DIRECTORIES "${dir}"
+            )
+            break()
+          endif()
+        endforeach()
+
+        if(NOT TARGET magic_enum::magic_enum)
+          message(FATAL_ERROR "magic_enum library not found. Please ensure it is installed and available in either
+          ${CDT_ROOT}/include
+          ${CDT_CONTRACT_INCLUDE_PATH}")
+        endif()
       endif()
     endif()
   endif()
