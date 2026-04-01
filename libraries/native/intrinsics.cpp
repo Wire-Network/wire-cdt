@@ -52,186 +52,6 @@ extern "C" {
    uint32_t get_active_producers( capi_name* producers, uint32_t datalen ) {
       return intrinsics::get().call<intrinsics::get_active_producers>(producers, datalen);
    }
-   int32_t db_idx64_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const uint64_t* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx64_store>(scope, table, payer, id, secondary);
-   }
-   void db_idx64_remove(int32_t iterator) {
-      return intrinsics::get().call<intrinsics::db_idx64_remove>(iterator);
-   }
-   void db_idx64_update(int32_t iterator, capi_name payer, const uint64_t* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx64_update>(iterator, payer, secondary);
-   }
-   int32_t db_idx64_find_primary(capi_name code, uint64_t scope, capi_name table, uint64_t* secondary, uint64_t primary) {
-      return intrinsics::get().call<intrinsics::db_idx64_find_primary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx64_find_secondary(capi_name code, uint64_t scope, capi_name table, const uint64_t* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx64_find_secondary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx64_lowerbound(capi_name code, uint64_t scope, capi_name table, uint64_t* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx64_lowerbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx64_upperbound(capi_name code, uint64_t scope, capi_name table, uint64_t* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx64_upperbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx64_end(capi_name code, uint64_t scope, capi_name table) {
-      return intrinsics::get().call<intrinsics::db_idx64_end>(code, scope, table);
-   }
-   int32_t db_idx64_next(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx64_next>(iterator, primary);
-   }
-   int32_t db_idx64_previous(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx64_previous>(iterator, primary);
-   }
-   int32_t db_idx128_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const uint128_t* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx128_store>(scope, table, payer, id, secondary);
-   }
-   void db_idx128_remove(int32_t iterator) {
-      return intrinsics::get().call<intrinsics::db_idx128_remove>(iterator);
-   }
-   void db_idx128_update(int32_t iterator, capi_name payer, const uint128_t* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx128_update>(iterator, payer, secondary);
-   }
-   int32_t db_idx128_find_primary(capi_name code, uint64_t scope, capi_name table, uint128_t* secondary, uint64_t primary) {
-      return intrinsics::get().call<intrinsics::db_idx128_find_primary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx128_find_secondary(capi_name code, uint64_t scope, capi_name table, const uint128_t* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx128_find_secondary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx128_lowerbound(capi_name code, uint64_t scope, capi_name table, uint128_t* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx128_lowerbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx128_upperbound(capi_name code, uint64_t scope, capi_name table, uint128_t* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx128_upperbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx128_end(capi_name code, uint64_t scope, capi_name table) {
-      return intrinsics::get().call<intrinsics::db_idx128_end>(code, scope, table);
-   }
-   int32_t db_idx128_next(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx128_next>(iterator, primary);
-   }
-   int32_t db_idx128_previous(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx128_previous>(iterator, primary);
-   }
-   int32_t db_idx256_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const uint128_t* data, uint32_t datalen) {
-      return intrinsics::get().call<intrinsics::db_idx256_store>(scope, table, payer, id, data, datalen);
-   }
-   void db_idx256_remove(int32_t iterator) {
-      return intrinsics::get().call<intrinsics::db_idx256_remove>(iterator);
-   }
-   void db_idx256_update(int32_t iterator, capi_name payer, const uint128_t* data, uint32_t datalen) {
-      return intrinsics::get().call<intrinsics::db_idx256_update>(iterator, payer, data, datalen);
-   }
-   int32_t db_idx256_find_primary(capi_name code, uint64_t scope, capi_name table, uint128_t* data, uint32_t datalen,  uint64_t primary) {
-      return intrinsics::get().call<intrinsics::db_idx256_find_primary>(code, scope, table, data, datalen, primary);
-   }
-   int32_t db_idx256_find_secondary(capi_name code, uint64_t scope, capi_name table, const uint128_t* data, uint32_t datalen, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx256_find_secondary>(code, scope, table, data, datalen, primary);
-   }
-   int32_t db_idx256_lowerbound(capi_name code, uint64_t scope, capi_name table, uint128_t* data, uint32_t datalen, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx256_lowerbound>(code, scope, table, data, datalen, primary);
-   }
-   int32_t db_idx256_upperbound(capi_name code, uint64_t scope, capi_name table, uint128_t* data, uint32_t datalen,  uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx256_upperbound>(code, scope, table, data, datalen, primary);
-   }
-   int32_t db_idx256_end(capi_name code, uint64_t scope, capi_name table) {
-      return intrinsics::get().call<intrinsics::db_idx256_end>(code, scope, table);
-   }
-   int32_t db_idx256_next(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx256_next>(iterator, primary);
-   }
-   int32_t db_idx256_previous(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx256_previous>(iterator, primary);
-   }
-   int32_t db_idx_double_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const double* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_store>(scope, table, payer, id, secondary);
-   }
-   void db_idx_double_remove(int32_t iterator) {
-      return intrinsics::get().call<intrinsics::db_idx_double_remove>(iterator);
-   }
-   void db_idx_double_update(int32_t iterator, capi_name payer, const double* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_update>(iterator, payer, secondary);
-   }
-   int32_t db_idx_double_find_primary(capi_name code, uint64_t scope, capi_name table, double* secondary, uint64_t primary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_find_primary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_double_find_secondary(capi_name code, uint64_t scope, capi_name table, const double* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_find_secondary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_double_lowerbound(capi_name code, uint64_t scope, capi_name table, double* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_lowerbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_double_upperbound(capi_name code, uint64_t scope, capi_name table, double* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_upperbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_double_end(capi_name code, uint64_t scope, capi_name table) {
-      return intrinsics::get().call<intrinsics::db_idx_double_end>(code, scope, table);
-   }
-   int32_t db_idx_double_next(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_next>(iterator, primary);
-   }
-   int32_t db_idx_double_previous(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_double_previous>(iterator, primary);
-   }
-   int32_t db_idx_long_double_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const long double* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_store>(scope, table, payer, id, secondary);
-   }
-   void db_idx_long_double_remove(int32_t iterator) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_remove>(iterator);
-   }
-   void db_idx_long_double_update(int32_t iterator, capi_name payer, const long double* secondary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_update>(iterator, payer, secondary);
-   }
-   int32_t db_idx_long_double_find_primary(capi_name code, uint64_t scope, capi_name table, long double* secondary, uint64_t primary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_find_primary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_long_double_find_secondary(capi_name code, uint64_t scope, capi_name table, const long double* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_find_secondary>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_long_double_lowerbound(capi_name code, uint64_t scope, capi_name table, long double* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_lowerbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_long_double_upperbound(capi_name code, uint64_t scope, capi_name table, long double* secondary, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_upperbound>(code, scope, table, secondary, primary);
-   }
-   int32_t db_idx_long_double_end(capi_name code, uint64_t scope, capi_name table) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_end>(code, scope, table);
-   }
-   int32_t db_idx_long_double_next(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_next>(iterator, primary);
-   }
-   int32_t db_idx_long_double_previous(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_idx_long_double_previous>(iterator, primary);
-   }
-   int32_t db_store_i64(uint64_t scope, capi_name table, capi_name payer, uint64_t id,  const void* data, uint32_t len) {
-      return intrinsics::get().call<intrinsics::db_store_i64>(scope, table, payer, id, data, len);
-   }
-   void db_update_i64(int32_t iterator, capi_name payer, const void* data, uint32_t len) {
-      return intrinsics::get().call<intrinsics::db_update_i64>(iterator, payer, data, len);
-   }
-   void db_remove_i64(int32_t iterator) {
-      return intrinsics::get().call<intrinsics::db_remove_i64>(iterator);
-   }
-   int32_t db_get_i64(int32_t iterator, const void* data, uint32_t len) {
-      return intrinsics::get().call<intrinsics::db_get_i64>(iterator, data, len);
-   }
-   int32_t db_next_i64(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_next_i64>(iterator, primary);
-   }
-   int32_t db_previous_i64(int32_t iterator, uint64_t* primary) {
-      return intrinsics::get().call<intrinsics::db_previous_i64>(iterator, primary);
-   }
-   int32_t db_find_i64(capi_name code, uint64_t scope, capi_name table, uint64_t id) {
-      return intrinsics::get().call<intrinsics::db_find_i64>(code, scope, table, id);
-   }
-   int32_t db_lowerbound_i64(capi_name code, uint64_t scope, capi_name table, uint64_t id) {
-      return intrinsics::get().call<intrinsics::db_lowerbound_i64>(code, scope, table, id);
-   }
-   int32_t db_upperbound_i64(capi_name code, uint64_t scope, capi_name table, uint64_t id) {
-      return intrinsics::get().call<intrinsics::db_upperbound_i64>(code, scope, table, id);
-   }
-   int32_t db_end_i64(capi_name code, uint64_t scope, capi_name table) {
-      return intrinsics::get().call<intrinsics::db_end_i64>(code, scope, table);
-   }
    void assert_recover_key( const capi_checksum256* digest, const char* sig, size_t siglen, const char* pub, size_t publen ) {
       return intrinsics::get().call<intrinsics::assert_recover_key>(digest, sig, siglen, pub, publen);
    }
@@ -983,4 +803,103 @@ int32_t bls_fp_mul(const char* op1, uint32_t op1_len, const char* op2, uint32_t 
 int32_t bls_fp_exp(const char* base, uint32_t base_len, const char* exp, uint32_t exp_len, char* res, uint32_t res_len)
 {
     return  intrinsics::get().call<intrinsics::bls_fp_exp>(base, base_len, exp, exp_len, res, res_len);
+}
+
+// --- KV Database intrinsics ---
+
+int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size) {
+   return intrinsics::get().call<intrinsics::kv_set>(key_format, payer, key, key_size, value, value_size);
+}
+
+int32_t kv_get(uint32_t key_format, capi_name code, const void* key, uint32_t key_size, void* value, uint32_t value_size) {
+   return intrinsics::get().call<intrinsics::kv_get>(key_format, code, key, key_size, value, value_size);
+}
+
+int64_t kv_erase(uint32_t key_format, const void* key, uint32_t key_size) {
+   return intrinsics::get().call<intrinsics::kv_erase>(key_format, key, key_size);
+}
+
+int32_t kv_contains(uint32_t key_format, capi_name code, const void* key, uint32_t key_size) {
+   return intrinsics::get().call<intrinsics::kv_contains>(key_format, code, key, key_size);
+}
+
+uint32_t kv_it_create(uint32_t key_format, capi_name code, const void* prefix, uint32_t prefix_size) {
+   return intrinsics::get().call<intrinsics::kv_it_create>(key_format, code, prefix, prefix_size);
+}
+
+void kv_it_destroy(uint32_t handle) {
+   intrinsics::get().call<intrinsics::kv_it_destroy>(handle);
+}
+
+int32_t kv_it_status(uint32_t handle) {
+   return intrinsics::get().call<intrinsics::kv_it_status>(handle);
+}
+
+int32_t kv_it_next(uint32_t handle) {
+   return intrinsics::get().call<intrinsics::kv_it_next>(handle);
+}
+
+int32_t kv_it_prev(uint32_t handle) {
+   return intrinsics::get().call<intrinsics::kv_it_prev>(handle);
+}
+
+int32_t kv_it_lower_bound(uint32_t handle, const void* key, uint32_t key_size) {
+   return intrinsics::get().call<intrinsics::kv_it_lower_bound>(handle, key, key_size);
+}
+
+int32_t kv_it_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
+   return intrinsics::get().call<intrinsics::kv_it_key>(handle, offset, dest, dest_size, actual_size);
+}
+
+int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
+   return intrinsics::get().call<intrinsics::kv_it_value>(handle, offset, dest, dest_size, actual_size);
+}
+
+void kv_idx_store(uint64_t payer, capi_name table, uint32_t index_id,
+                  const void* pri_key, uint32_t pri_key_size,
+                  const void* sec_key, uint32_t sec_key_size) {
+   intrinsics::get().call<intrinsics::kv_idx_store>(payer, table, index_id, pri_key, pri_key_size, sec_key, sec_key_size);
+}
+
+void kv_idx_remove(capi_name table, uint32_t index_id,
+                   const void* pri_key, uint32_t pri_key_size,
+                   const void* sec_key, uint32_t sec_key_size) {
+   intrinsics::get().call<intrinsics::kv_idx_remove>(table, index_id, pri_key, pri_key_size, sec_key, sec_key_size);
+}
+
+void kv_idx_update(uint64_t payer, capi_name table, uint32_t index_id,
+                   const void* pri_key, uint32_t pri_key_size,
+                   const void* old_sec_key, uint32_t old_sec_key_size,
+                   const void* new_sec_key, uint32_t new_sec_key_size) {
+   intrinsics::get().call<intrinsics::kv_idx_update>(payer, table, index_id, pri_key, pri_key_size, old_sec_key, old_sec_key_size, new_sec_key, new_sec_key_size);
+}
+
+int32_t kv_idx_find_secondary(capi_name code, capi_name table, uint32_t index_id,
+                              const void* sec_key, uint32_t sec_key_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_find_secondary>(code, table, index_id, sec_key, sec_key_size);
+}
+
+int32_t kv_idx_lower_bound(capi_name code, capi_name table, uint32_t index_id,
+                           const void* sec_key, uint32_t sec_key_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_lower_bound>(code, table, index_id, sec_key, sec_key_size);
+}
+
+int32_t kv_idx_next(uint32_t handle) {
+   return intrinsics::get().call<intrinsics::kv_idx_next>(handle);
+}
+
+int32_t kv_idx_prev(uint32_t handle) {
+   return intrinsics::get().call<intrinsics::kv_idx_prev>(handle);
+}
+
+int32_t kv_idx_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_key>(handle, offset, dest, dest_size, actual_size);
+}
+
+int32_t kv_idx_primary_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_primary_key>(handle, offset, dest, dest_size, actual_size);
+}
+
+void kv_idx_destroy(uint32_t handle) {
+   intrinsics::get().call<intrinsics::kv_idx_destroy>(handle);
 }

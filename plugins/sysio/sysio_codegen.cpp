@@ -329,6 +329,11 @@ public:
       if (auto* fd = dyn_cast<clang::FunctionDecl>(decl)) {
          if (fd->getNameInfo().getAsString() == "apply" && _decl.isSysioWasmEntry())
             abigen::get().add_wasm_entries(_decl);
+         if (fd->isExternC() && fd->isThisDeclarationADefinition()) {
+            auto name = fd->getNameInfo().getAsString();
+            if (name == "pre_dispatch")  abigen::get().set_has_pre_dispatch();
+            if (name == "post_dispatch") abigen::get().set_has_post_dispatch();
+         }
       } else {
          auto process_global_var = [this]( clang::Decl* d ) {
             if (auto* vd = dyn_cast<VarDecl>(d)) {

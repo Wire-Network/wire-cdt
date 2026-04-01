@@ -22,6 +22,7 @@ extern std::string output;
 namespace sysio { namespace cdt {
    class abigen : public generation_utils {
       std::set<std::string> checked_actions;
+      std::set<std::string> kv_key_structs; // structs referenced by [[sysio::kv_key]], must survive validate_struct
    public:
       using generation_utils::generation_utils;
 
@@ -247,10 +248,6 @@ namespace sysio { namespace cdt {
          _abi.structs.insert(new_struct);
       }
 
-      std::string to_index_type( std::string t ) {
-         return "i64";
-      }
-
       void add_table( const clang::CXXRecordDecl* _decl ) {
          auto decl = clang_wrapper::wrap_decl(_decl);
          tables.insert(_decl);
@@ -264,13 +261,84 @@ namespace sysio { namespace cdt {
          else {
             t.name = t.type;
          }
+
+         // [[sysio::kv_key("struct_name")]] — resolve key struct fields into key_names/key_types
+         if (decl.isSysioKvKey()) {
+            auto key_struct_name = decl.getSysioKvKeyAttr()->getName().str();
+            if (key_struct_name.empty()) {
+               // No argument: use standard KV key layout
+               t.key_names = {"table_name", "scope", "primary_key"};
+               t.key_types = {"name", "name", "uint64"};
+            } else {
+               // Search for key struct: nested types, then enclosing class
+               const clang::CXXRecordDecl* key_record = nullptr;
+               // Check nested types within the table struct
+               for (auto* d : _decl->decls()) {
+                  if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
+                     if (r->getNameAsString() == key_struct_name && r->isCompleteDefinition()) {
+                        key_record = r; break;
+                     }
+                  }
+               }
+               // Check enclosing class (contract)
+               if (!key_record) {
+                  if (auto* ctx = _decl->getDeclContext()) {
+                     for (auto* d : ctx->decls()) {
+                        if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
+                           if (r->getNameAsString() == key_struct_name && r->isCompleteDefinition()) {
+                              key_record = r; break;
+                           }
+                        }
+                     }
+                  }
+               }
+
+               if (key_record) {
+                  // Extract field names/types for key_names/key_types
+                  for (auto* field : key_record->fields()) {
+                     t.key_names.push_back(field->getName().str());
+                     t.key_types.push_back(translate_type(field->getType()));
+                  }
+                  // Add the key struct to ABI structs so clients can reference it
+                  kv_key_structs.insert(key_struct_name);
+                  abi_struct ks;
+                  ks.name = key_struct_name;
+                  for (auto* field : key_record->fields()) {
+                     ks.fields.push_back({field->getName().str(), get_type(field->getType())});
+                     add_type(field->getType());
+                  }
+                  _abi.structs.insert(ks);
+               } else {
+                  // Fallback: check already-processed ABI structs
+                  bool found = false;
+                  for (const auto& s : _abi.structs) {
+                     if (s.name == key_struct_name) {
+                        for (const auto& f : s.fields) {
+                           t.key_names.push_back(f.name);
+                           t.key_types.push_back(f.type);
+                        }
+                        found = true;
+                        break;
+                     }
+                  }
+                  CDT_CHECK_WARN(found, "abigen_warning", _decl->getLocation(),
+                     "kv_key struct '" + key_struct_name + "' not found; key_names/key_types will be empty in ABI");
+               }
+            }
+         }
+
          ctables.insert(t);
       }
 
-      void add_table( uint64_t name, const clang::CXXRecordDecl* decl ) {
+      void add_table( uint64_t name, const clang::CXXRecordDecl* decl, bool is_kv = false ) {
          abi_table t;
          t.type = decl->getNameAsString();
          t.name = name_to_string(name);
+         if (is_kv) {
+            // KV tables use fixed 24-byte big-endian key: [table_name:8B][scope:8B][primary_key:8B]
+            t.key_names = {"table_name", "scope", "primary_key"};
+            t.key_types = {"name", "name", "uint64"};
+         }
          _abi.tables.insert(t);
       }
 
@@ -628,7 +696,11 @@ namespace sysio { namespace cdt {
          o["type"] = t.type;
          o["index_type"] = "i64";
          o["key_names"] = ojson::array();
+         for (const auto& kn : t.key_names)
+            o["key_names"].push_back(kn);
          o["key_types"] = ojson::array();
+         for (const auto& kt : t.key_types)
+            o["key_types"].push_back(kt);
          return o;
       }
 
@@ -667,6 +739,9 @@ namespace sysio { namespace cdt {
          o["handler"] = n.handler;
          return o;
       }
+
+      void set_has_pre_dispatch()  { _abi.has_pre_dispatch  = true; }
+      void set_has_post_dispatch() { _abi.has_post_dispatch = true; }
 
       bool has_wasm_data() const {
          return !_abi.wasm_actions.empty() || !_abi.wasm_notifies.empty() || !_abi.wasm_entries.empty();
@@ -757,6 +832,9 @@ namespace sysio { namespace cdt {
             }
             for( auto t : set_of_tables ) {
                if (as.name == _translate_type(t.type))
+                  return true;
+               // Include structs referenced by [[sysio::kv_key]]
+               if (kv_key_structs.count(as.name))
                   return true;
             }
             for( auto td : _abi.typedefs ) {
@@ -885,6 +963,10 @@ namespace sysio { namespace cdt {
          for (auto& e : pb_types) {
             o["pb_types"].push_back(e);
          }
+         if (_abi.has_pre_dispatch)
+            o["has_pre_dispatch"] = true;
+         if (_abi.has_post_dispatch)
+            o["has_post_dispatch"] = true;
          return o;
       }
 
@@ -985,13 +1067,15 @@ namespace sysio { namespace cdt {
 
          virtual bool VisitDecl(clang::Decl* decl) {
             if (const auto* d = dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
-               if (d->getName() == "multi_index" || d->getName() == "singleton") {
+               if (d->getName() == "multi_index" || d->getName() == "singleton" ||
+                   d->getName() == "kv_multi_index" || d->getName() == "table") {
+                  bool is_kv = (d->getName() == "kv_multi_index" || d->getName() == "table");
                   // second template parameter is table type
                   const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
                   auto table_decl = clang_wrapper::wrap_decl(table_type);
                   if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(d)) {
                      // first parameter is table name
-                     ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type);
+                     ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type, is_kv);
                      if (table_decl.isSysioTable())
                         ag.add_struct(table_type);
                   }

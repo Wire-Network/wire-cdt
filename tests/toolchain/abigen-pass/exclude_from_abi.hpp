@@ -3,7 +3,7 @@
 #include <sysio/sysio.hpp>
 #include <sysio/name.hpp>
 #include <sysio/singleton.hpp>
-#include <sysio/multi_index.hpp>
+#include <sysio/kv_multi_index.hpp>
 
 
 
@@ -11,8 +11,8 @@ struct [[sysio::table]] out_of_class {
     uint64_t id;
     uint64_t primary_key() const { return id; }
 };
-typedef sysio::multi_index<"mi.config55"_n, out_of_class> out_of_class_index;
-using uout_of_class_index = sysio::multi_index<"mi.config551"_n, out_of_class>;
+typedef sysio::kv_multi_index<"mi.config55"_n, out_of_class> out_of_class_index;
+using uout_of_class_index = sysio::kv_multi_index<"mi.config551"_n, out_of_class>;
 
 typedef sysio::singleton<"smpl.conf55"_n, sysio::name> smpl_config55;
 typedef sysio::singleton<"config55"_n, out_of_class> config55;
@@ -45,6 +45,6 @@ class [[sysio::contract("singleton_contract_simple2")]] singleton_contract_simpl
 
 
 
-    typedef sysio::multi_index<"mi.config553"_n, inside_class> inside_class_index;
-    using uinside_class_index = sysio::multi_index<"mi.config554"_n, inside_class>;
+    typedef sysio::kv_multi_index<"mi.config553"_n, inside_class> inside_class_index;
+    using uinside_class_index = sysio::kv_multi_index<"mi.config554"_n, inside_class>;
 };

@@ -117,11 +117,14 @@ class ABIMerger {
       }
 
       static bool table_is_same(ojson a, ojson b) {
+         // key_names/key_types may differ: template-detected tables have them
+         // populated while attribute-only tables have empty arrays. Both are
+         // valid representations of the same table — treat as compatible.
          return a["name"] == b["name"] &&
                 a["type"] == b["type"] &&
                 a["index_type"] == b["index_type"] &&
-                a["key_names"] == b["key_names"] &&
-                a["key_types"] == b["key_types"];
+                (a["key_names"] == b["key_names"] ||
+                 a["key_names"].empty() || b["key_names"].empty());
       }
 
       static bool clause_is_same(ojson a, ojson b) {
@@ -147,13 +150,17 @@ class ABIMerger {
          }
          for (auto obj_b : b[type].array_range()) {
             bool should_skip = false;
-            for (auto obj_a : a[type].array_range()) {
-               if (obj_a[id] == obj_b[id]) {
-                  if (!is_same_func(obj_a, obj_b)) {
-                     throw std::runtime_error(std::string("Error, ABI structs malformed : ")+obj_a[id].as<std::string>()+" already defined");
+            for (size_t i = 0; i < ret.size(); ++i) {
+               if (ret[i][id] == obj_b[id]) {
+                  if (!is_same_func(ret[i], obj_b)) {
+                     throw std::runtime_error(std::string("Error, ABI structs malformed : ")+ret[i][id].as<std::string>()+" already defined");
                   }
-                  else
-                     should_skip = true;
+                  // Prefer the entry with richer key metadata (non-empty key_names)
+                  if (ret[i].count("key_names") && obj_b.count("key_names") &&
+                      ret[i]["key_names"].empty() && !obj_b["key_names"].empty()) {
+                     ret[i] = obj_b;
+                  }
+                  should_skip = true;
                }
             }
             if (!should_skip)

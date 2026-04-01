@@ -28,25 +28,12 @@ extern "C" __attribute__((sysio_wasm_import)) void set_resource_limit(int64_t, i
 extern "C" __attribute__((sysio_wasm_import)) void set_blockchain_parameters_packed( char* data, uint32_t datalen );
 extern "C" __attribute__((sysio_wasm_import)) uint32_t get_blockchain_parameters_packed( char* data, uint32_t datalen );
 
-typedef uint64_t capi_name;
-extern "C" __attribute__((sysio_wasm_import)) int32_t db_store_i64(uint64_t scope, capi_name table, capi_name payer, uint64_t id,  const void* data, uint32_t len);
-extern "C" __attribute__((sysio_wasm_import)) void db_update_i64(int32_t iterator, capi_name payer, const void* data, uint32_t len);
-extern "C" __attribute__((sysio_wasm_import)) void db_remove_i64(int32_t iterator);
-extern "C" __attribute__((sysio_wasm_import)) int32_t db_idx64_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const uint64_t* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx64_update(int32_t iterator, capi_name payer, const uint64_t* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx64_remove(int32_t iterator);
-extern "C" __attribute__((sysio_wasm_import)) int32_t db_idx128_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const uint128_t* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx128_update(int32_t iterator, capi_name payer, const uint128_t* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx128_remove(int32_t iterator);
-extern "C" __attribute__((sysio_wasm_import)) int32_t db_idx256_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const uint128_t* data, uint32_t data_len );
-extern "C" __attribute__((sysio_wasm_import)) void db_idx256_update(int32_t iterator, capi_name payer, const uint128_t* data, uint32_t data_len);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx256_remove(int32_t iterator);
-extern "C" __attribute__((sysio_wasm_import)) int32_t db_idx_double_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const double* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx_double_update(int32_t iterator, capi_name payer, const double* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx_double_remove(int32_t iterator);
-extern "C" __attribute__((sysio_wasm_import)) int32_t db_idx_long_double_store(uint64_t scope, capi_name table, capi_name payer, uint64_t id, const long double* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx_long_double_update(int32_t iterator, capi_name payer, const long double* secondary);
-extern "C" __attribute__((sysio_wasm_import)) void db_idx_long_double_remove(int32_t iterator);
+// KV write intrinsics (must be rejected in read-only actions)
+extern "C" __attribute__((sysio_wasm_import)) int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
+extern "C" __attribute__((sysio_wasm_import)) int64_t kv_erase(uint32_t key_format, const void* key, uint32_t key_size);
+extern "C" __attribute__((sysio_wasm_import)) void kv_idx_store(uint64_t payer, uint64_t table, uint32_t index_id, const void* pri_key, uint32_t pri_key_size, const void* sec_key, uint32_t sec_key_size);
+extern "C" __attribute__((sysio_wasm_import)) void kv_idx_remove(uint64_t table, uint32_t index_id, const void* pri_key, uint32_t pri_key_size, const void* sec_key, uint32_t sec_key_size);
+extern "C" __attribute__((sysio_wasm_import)) void kv_idx_update(uint64_t payer, uint64_t table, uint32_t index_id, const void* pri_key, uint32_t pri_key_size, const void* old_sec_key, uint32_t old_sec_key_size, const void* new_sec_key, uint32_t new_sec_key_size);
 
 extern "C" __attribute__((sysio_wasm_import)) int64_t set_proposed_producers( char*, uint32_t );
 extern "C" __attribute__((sysio_wasm_import)) int64_t set_proposed_producers_ex( uint64_t producer_data_format, char *producer_data, uint32_t producer_data_size );
@@ -101,116 +88,30 @@ public:
       set_privileged("sysio"_n, ispr);      
       return true;
    }
-/*  all tested
-db_store_i64 
-db_update_i64 
-db_remove_i64
-db_idx64_store
-db_idx64_update
-db_idx64_remove
-db_idx128_store
-db_idx128_update
-db_idx128_remove
-db_idx256_store
-db_idx256_update
-db_idx256_remove
-db_idx_double_store
-db_idx_double_update
-db_idx_double_remove
-db_idx_long_double_store
-db_idx_long_double_update
-db_idx_long_double_remove
-*/
-// abcde  means 67890  a4 means 64  12c means 128 so as to no conflict with naming rule
-// Name should be less than 13 characters and only contains the following symbol 12345abcdefghijklmnopqrstuvwxyz
+// KV write operations must be rejected in read-only actions
    ACTION_TYPE
-   bool dbia4s(){
-      db_store_i64(0, 0, 0, 0, NULL, 0);
+   bool kvset(){
+      kv_set(0, 0, "k", 1, "v", 1);
       return true;
    }
    ACTION_TYPE
-   bool dbia4u(){
-      db_update_i64(0, 0, NULL, 0);
+   bool kverase(){
+      kv_erase(0, "k", 1);
       return true;
    }
    ACTION_TYPE
-   bool dbia4r(){
-      db_remove_i64(0);
+   bool kvidxstore(){
+      kv_idx_store(0, 0, 0, "p", 1, "s", 1);
       return true;
    }
    ACTION_TYPE
-   bool dbidxa4s() {
-      db_idx64_store(0, 0, 0, 0, NULL);
+   bool kvidxremove(){
+      kv_idx_remove(0, 0, "p", 1, "s", 1);
       return true;
    }
    ACTION_TYPE
-   bool dbidxa4u() {
-      db_idx64_update(0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxa4r() {
-      db_idx64_remove(0);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidx12cs() {
-      db_idx128_store(0, 0, 0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidx12cu() {
-      db_idx128_update(0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidx12cr() {
-      db_idx128_remove(0);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidx25as() {
-      db_idx256_store(0, 0, 0, 0, NULL, 0);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidx25au() {
-      db_idx256_update(0, 0, NULL, 0);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidx25ar() {
-      db_idx256_remove(0);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxdbs(){
-      db_idx_double_store(0, 0, 0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxdbu(){
-      db_idx_double_update(0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxdbr(){
-      db_idx_double_remove(0);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxldbs (){
-      db_idx_long_double_store(0, 0, 0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxldbu(){
-      db_idx_long_double_update(0, 0, NULL);
-      return true;
-   }
-   ACTION_TYPE
-   bool dbidxldbr(){
-      db_idx_long_double_remove(0);
+   bool kvidxupdate(){
+      kv_idx_update(0, 0, 0, "p", 1, "s", 1, "t", 1);
       return true;
    }
    ACTION_TYPE

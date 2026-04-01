@@ -60,10 +60,17 @@ static bool exists(const char* filename) {
 // (e.g. from SYSIO_DISPATCH) takes priority at link time.
 // When weak=false (standalone dispatch.cpp for link-mode builds), no weak attr.
 static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>& wasm_actions,
-                                 const std::set<wasm_notify>& wasm_notifies, bool weak) {
+                                 const std::set<wasm_notify>& wasm_notifies, bool weak,
+                                 bool has_pre_dispatch, bool has_post_dispatch) {
    ofs << "extern \"C\" {\n";
    ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(uint32_t, uint64_t);";
    ofs << "  void sysio_set_contract_name(uint64_t n);\n";
+   ofs << "}\n"; // close extern "C" for intrinsic declarations
+   if (has_pre_dispatch)
+      ofs << "extern \"C\" bool pre_dispatch(sysio::name, sysio::name, sysio::name);\n";
+   if (has_post_dispatch)
+      ofs << "extern \"C\" void post_dispatch(sysio::name, sysio::name, sysio::name);\n";
+   ofs << "extern \"C\" {\n";
    for (auto& wa : wasm_actions) {
       ofs << "  void " << wa.handler << "(uint64_t r, uint64_t c);\n";
    }
@@ -76,6 +83,8 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
       ofs << "  __attribute__((export_name(\"apply\"), visibility(\"default\")))\n";
    ofs << "  void apply(uint64_t r, uint64_t c, uint64_t a) {\n";
    ofs << "    sysio_set_contract_name(r);\n";
+   if (has_pre_dispatch)
+      ofs << "    if (!pre_dispatch(sysio::name{r}, sysio::name{c}, sysio::name{a})) return;\n";
    ofs << "    if (c == r) {\n";
    if (wasm_actions.size()) {
       ofs << "      switch (a) {\n";
@@ -84,9 +93,14 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
          ofs << "        " << wa.handler << "(r, c);\n";
          ofs << "        break;\n";
       }
-      ofs << "      default:\n"
-          << "        if ( r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n"
-          << "      }\n";
+      ofs << "      default:\n";
+      if (has_post_dispatch) {
+         ofs << "        if (r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n";
+         ofs << "        else post_dispatch(sysio::name{r}, sysio::name{c}, sysio::name{a});\n";
+      } else {
+         ofs << "        if (r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n";
+      }
+      ofs << "      }\n";
    }
    ofs << "    } else {\n";
    if (wasm_notifies.size()) {
@@ -112,6 +126,10 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
       }
       ofs << "        }\n";
       ofs << "      }\n";
+      if (has_post_dispatch)
+         ofs << "      else { post_dispatch(sysio::name{r}, sysio::name{c}, sysio::name{a}); }\n";
+   } else if (has_post_dispatch) {
+      ofs << "      post_dispatch(sysio::name{r}, sysio::name{c}, sysio::name{a});\n";
    }
    ofs << "    }\n";
    ofs << "  }\n";
@@ -120,14 +138,15 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
 
 // Generate a standalone dispatch.cpp file (for link-mode builds via cdt-cpp).
 static void generate_sysio_dispatch(const std::string& output, const std::set<wasm_action>& wasm_actions,
-                                    const std::set<wasm_notify>& wasm_notifies) {
+                                    const std::set<wasm_notify>& wasm_notifies,
+                                    bool has_pre_dispatch, bool has_post_dispatch) {
    try {
       std::ofstream ofs(output);
       if (!ofs)
          throw std::runtime_error("cannot open " + output);
       ofs << "#include <cstdint>\n"
           << "#include <sysio/name.hpp>\n";
-      write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, false);
+      write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, false, has_pre_dispatch, has_post_dispatch);
       ofs.close();
    } catch (...) {
       std::cerr << "Failed to generate sysio dispatcher\n";
@@ -412,6 +431,8 @@ int main(int argc, const char** argv) {
    std::set<wasm_action> wasm_actions;
    std::set<wasm_notify> wasm_notifies;
    bool                  dispatcher_was_found = false;
+   bool                  has_pre_dispatch     = false;
+   bool                  has_post_dispatch    = false;
 
    parse_args(argc, argv);
 
@@ -481,6 +502,10 @@ int main(int argc, const char** argv) {
                   }
                }
             }
+            if (desc.has_key("has_pre_dispatch") && desc["has_pre_dispatch"].as_bool())
+               has_pre_dispatch = true;
+            if (desc.has_key("has_post_dispatch") && desc["has_post_dispatch"].as_bool())
+               has_post_dispatch = true;
          }
       }
 
@@ -598,7 +623,7 @@ int main(int argc, const char** argv) {
                   std::ofstream ofs(actions_file, std::ios::app);
                   if (ofs) {
                      ofs << "\n// --- Auto-generated weak dispatch ---\n";
-                     write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, true);
+                     write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, true, has_pre_dispatch, has_post_dispatch);
                      ofs.close();
                   }
                }
@@ -606,7 +631,7 @@ int main(int argc, const char** argv) {
          } else {
             // Standalone dispatch.cpp for link-mode builds (cdt-cpp handles compilation).
             auto main_file = output_dir + "/" + contract_name + ".dispatch.cpp";
-            generate_sysio_dispatch(main_file, wasm_actions, wasm_notifies);
+            generate_sysio_dispatch(main_file, wasm_actions, wasm_notifies, has_pre_dispatch, has_post_dispatch);
          }
       }
       return 0;

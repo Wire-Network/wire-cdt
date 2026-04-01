@@ -66,6 +66,10 @@ namespace sysio_plugin { namespace clang_wrapper {
             return attrs.find("sysio_table") != attrs.end();
          }
 
+         bool isSysioKvKey() const {
+            return attrs.find("sysio_kv_key") != attrs.end();
+         }
+
          bool isSysioType() const {
             return attrs.find("sysio_type") != attrs.end();
          }
@@ -101,6 +105,10 @@ namespace sysio_plugin { namespace clang_wrapper {
 
          const Attr* getSysioTableAttr() const {
             return isSysioTable() ? &attrs.at("sysio_table") : nullptr;
+         }
+
+         const Attr* getSysioKvKeyAttr() const {
+            return isSysioKvKey() ? &attrs.at("sysio_kv_key") : nullptr;
          }
 
          const Attr* getSysioTypeAttr() const {

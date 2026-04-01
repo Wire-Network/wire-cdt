@@ -1,6 +1,6 @@
 // Verifies that a table with name-typed primary key works
 
-#include <sysio/multi_index.hpp>
+#include <sysio/kv_multi_index.hpp>
 #include <sysio/contract.hpp>
 
 struct [[sysio::table]] name_table {
@@ -9,7 +9,7 @@ struct [[sysio::table]] name_table {
 
     auto primary_key() const { return pk; }
 };
-using name_table_idx = sysio::multi_index<"name.pk"_n, name_table>;
+using name_table_idx = sysio::kv_multi_index<"name.pk"_n, name_table>;
 
 class [[sysio::contract]] name_pk_tests : public sysio::contract {
  public:

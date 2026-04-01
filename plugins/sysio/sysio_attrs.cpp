@@ -86,6 +86,7 @@ SYSIO_ATTR(SysioRicardian, sysio_ricardian,   sysio::ricardian,   1, 0, (!isa<CX
 SYSIO_ATTR(SysioContract,  sysio_contract,    sysio::contract,    0, 1, (!isa<CXXRecordDecl>(D) && !isa<CXXMethodDecl>(D)))
 SYSIO_ATTR(SysioAction,    sysio_action,      sysio::action,      0, 1, (!isa<CXXRecordDecl>(D) && !isa<CXXMethodDecl>(D)))
 SYSIO_ATTR(SysioTable,     sysio_table,       sysio::table,       0, 1, (!isa<CXXRecordDecl>(D)))
+SYSIO_ATTR(SysioKvKey,     sysio_kv_key,      sysio::kv_key,      0, 1, (!isa<CXXRecordDecl>(D)))
 SYSIO_ATTR(SysioWasmAction, sysio_wasm_action, sysio::wasm_action, 0, 1, (!isa<FunctionDecl>(D)))
 SYSIO_ATTR(SysioWasmNotify, sysio_wasm_notify, sysio::wasm_notify, 0, 1, (!isa<FunctionDecl>(D)))
 SYSIO_ATTR(SysioWasmAbi,   sysio_wasm_abi,    sysio::wasm_abi,    0, 1, (!isa<FunctionDecl>(D)))

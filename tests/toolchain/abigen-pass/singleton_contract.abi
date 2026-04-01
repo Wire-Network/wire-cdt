@@ -4,19 +4,9 @@
     "types": [],
     "structs": [
         {
-            "name": "out_of_class",
+            "name": "out_of_class3",
             "base": "",
             "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-           "name": "out_of_class3",
-           "base": "",
-           "fields": [
                 {
                     "name": "id",
                     "type": "uint64"
@@ -52,36 +42,15 @@
     ],
     "tables": [
         {
-            "name": "config",
-            "type": "tbl_config",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "config55",
-            "type": "out_of_class",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
             "name": "mi.config52",
             "type": "out_of_class3",
             "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },            
-        {
-            "name": "smpl.conf5",
-            "type": "name",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
+            "key_names": ["table_name","scope","primary_key"],
+            "key_types": ["name","name","uint64"]
         },
         {
-            "name": "smpl.config",
-            "type": "name",
+            "name": "tbl_config",
+            "type": "tbl_config",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

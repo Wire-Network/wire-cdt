@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.5 )
 
-set(SYSIO_VERSION_MIN "3.1")
+set(SYSIO_VERSION_MIN "1.0")
 set(SYSIO_VERSION_SOFT_MAX "5.0")
 #set(SYSIO_VERSION_HARD_MAX "")
 

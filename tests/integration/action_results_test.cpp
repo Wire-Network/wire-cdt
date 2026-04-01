@@ -25,14 +25,13 @@ BOOST_FIXTURE_TEST_CASE( action_results_tests, tester ) try {
 
    produce_blocks();
    auto trace = push_action("test"_n, "action1"_n, "test"_n, mvo());
-   // need to fix this test after Kevin fixes action_return
-   wdump((trace));
+   BOOST_TEST_MESSAGE(fc::json::to_pretty_string(trace));
 
    trace = push_action("test"_n, "action2"_n, "test"_n, mvo());
-   wdump((trace));
+   BOOST_TEST_MESSAGE(fc::json::to_pretty_string(trace));
 
    trace = push_action("test"_n, "action3"_n, "test"_n, mvo());
-   wdump((trace));
+   BOOST_TEST_MESSAGE(fc::json::to_pretty_string(trace));
 
 } FC_LOG_AND_RETHROW()
 
