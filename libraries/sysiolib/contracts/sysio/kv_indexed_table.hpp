@@ -417,7 +417,7 @@ public:
       const_iterator& operator--() {
          if (_handle < 0) {
             ensure_handle();
-            char max_key[1024]; // 1024 = chain max KV key size
+            char max_key[kv_key_max_bytes];
             memset(max_key, 0xFF, sizeof(max_key));
             ::kv_it_lower_bound(_handle, max_key, sizeof(max_key));
             if (::kv_it_prev(_handle) == 0) { _valid = true; load(); }
@@ -670,7 +670,7 @@ public:
 
          const_iterator& operator--() {
             if (_handle < 0) {
-               char max_sec[1024]; // 1024 = chain max KV key size
+               char max_sec[kv_key_max_bytes];
                memset(max_sec, 0xFF, sizeof(max_sec));
                _handle = ::kv_idx_lower_bound(
                   _tbl->code(), static_cast<uint64_t>(TableName), index_number,
@@ -772,7 +772,7 @@ public:
 
          key_iterator& operator--() {
             if (_handle < 0) {
-               char max_sec[1024]; // 1024 = chain max KV key size
+               char max_sec[kv_key_max_bytes];
                memset(max_sec, 0xFF, sizeof(max_sec));
                _handle = ::kv_idx_lower_bound(
                   _tbl->code(), static_cast<uint64_t>(TableName), index_number,

@@ -820,8 +820,7 @@ public:
                // End sentinel: create real iterator at last entry.
                // Use lower_bound with a maximal key (all 0xFF) to position
                // past all entries, then prev to land on the last one.
-               // 1024 = max configurable secondary key size (on-chain param).
-               char max_sec[1024];
+               char max_sec[kv::kv_key_max_bytes];
                memset(max_sec, 0xFF, sizeof(max_sec));
                _handle = ::kv_idx_lower_bound(
                   _mi->_code.value, static_cast<uint64_t>(TableName), index_number,

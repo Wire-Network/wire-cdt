@@ -17,4 +17,7 @@ inline constexpr uint32_t kv_format_raw      = 0;
 /// contract_row format.
 inline constexpr uint32_t kv_format_standard = 1;
 
+/// Chain-enforced maximum KV key size in bytes.
+inline constexpr size_t kv_key_max_bytes = 1024;
+
 } // namespace sysio::kv

@@ -296,9 +296,9 @@ public:
          if (_handle < 0) {
             // End sentinel: create handle and seek past all entries.
             // Use a maximal key (all 0xFF) to position past the last entry,
-            // then prev to land on it. 1024 = max configurable key size (on-chain param).
+            // then prev to land on it.
             ensure_handle();
-            char max_key[1024];
+            char max_key[kv_key_max_bytes];
             memset(max_key, 0xFF, sizeof(max_key));
             ::kv_it_lower_bound(_handle, max_key, sizeof(max_key));
             if (::kv_it_prev(_handle) == 0) { _valid = true; load(); }
