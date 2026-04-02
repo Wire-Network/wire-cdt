@@ -1,0 +1,9 @@
+{
+    "tests" : [
+       {
+          "expected" : {
+             "abi-file" : "kv_indexed_table_key.abi"
+          }
+       }
+    ]
+ }

@@ -521,4 +521,22 @@ public:
       int64_t delta_erase = uint_store.erase({500});
       check(delta_erase < 0, "ramdelta: erase should return negative delta");
    }
+
+   // ── T6: set with explicit payer ──────────────────────────────────────────
+
+   [[sysio::action]]
+   void setpayer() {
+      // Verify payer overload compiles and works (uses self as payer here;
+      // cross-account payer requires sysio.payer permission, tested at chain level)
+      int64_t delta = uint_store.set({600}, {6000}, get_self());
+      check(delta > 0, "setpayer: set with payer should return positive delta");
+
+      auto val = uint_store.get({600});
+      check(val.has_value(), "setpayer: should find key 600");
+      check(val->v == 6000, "setpayer: value should be 6000");
+
+      // Default payer (receiver) should still work
+      int64_t delta2 = uint_store.set({601}, {6001});
+      check(delta2 > 0, "setpayer: set without payer should also work");
+   }
 };

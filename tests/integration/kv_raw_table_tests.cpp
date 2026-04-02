@@ -52,6 +52,7 @@ KV_RAW_TABLE_TEST( "kvmapl"_n, blobkey )
 KV_RAW_TABLE_TEST( "kvmapn"_n, crossread )
 KV_RAW_TABLE_TEST( "kvmapo"_n, zeroval )
 KV_RAW_TABLE_TEST( "kvmapp"_n, ramdelta )
+KV_RAW_TABLE_TEST( "kvmapq"_n, setpayer )
 
 // Negative test: erase non-existent key should assert (T1/T7)
 BOOST_FIXTURE_TEST_CASE(kv_raw_table_erasebad, TESTER) { try {

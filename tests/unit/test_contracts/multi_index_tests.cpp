@@ -1115,6 +1115,43 @@ public:
         }
     }
 
+    // ── Record with explicit-ctor member (time_point) ────────────────────────
+    // Regression: T obj{} in deserialize_row fails when T has a member whose
+    // constructor is marked explicit (e.g. time_point).  Using T obj; fixes it.
+    struct timepoint_row {
+        uint64_t          id;
+        sysio::time_point ts;
+
+        uint64_t primary_key() const { return id; }
+        SYSLIB_SERIALIZE(timepoint_row, (id)(ts))
+    };
+
+    [[sysio::action("tpdeser")]] void timepoint_deserialize() {
+        sysio::kv_multi_index<"tptbl"_n, timepoint_row> table(get_self(), get_self().value);
+        auto payer = get_self();
+
+        sysio::time_point t1(sysio::microseconds(1000000));
+        sysio::time_point t2(sysio::microseconds(2000000));
+
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.ts = t1; });
+        table.emplace(payer, [&](auto& r) { r.id = 2; r.ts = t2; });
+
+        // find() triggers deserialize_row
+        auto itr = table.find(1);
+        sysio::check(itr != table.end(), "tpdeser: find(1) should succeed");
+        sysio::check(itr->ts == t1, "tpdeser: ts should match t1");
+
+        // iteration also triggers deserialize_row
+        auto itr2 = table.begin();
+        sysio::check(itr2->ts == t1, "tpdeser: begin ts should be t1");
+        ++itr2;
+        sysio::check(itr2->ts == t2, "tpdeser: second ts should be t2");
+
+        // --end() triggers deserialize_row via load_current
+        auto last = --table.end();
+        sysio::check(last->ts == t2, "tpdeser: --end ts should be t2");
+    }
+
     // T3: Verify kv_idx_update — modify secondary key, then verify secondary index reflects the change
     [[sysio::action("s1secupd")]] void idx64_secondary_update() {
         using namespace _test_multi_index;

@@ -5,7 +5,7 @@
  * Automatically selects zero-copy storage for trivially_copyable structs (memcpy,
  * no pack/unpack) or falls back to datastream serialization for complex types.
  *
- * Key encoding: [table:8B BE][scope:8B BE][pk:8B BE] = 24 bytes (SSO fast-path).
+ * Key encoding: [table:8B BE][scope:8B BE][pk:8B BE] = 24 bytes.
  * SHiP compatible: keys can be reverse-mapped to legacy contract_row format.
  */
 

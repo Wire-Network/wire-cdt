@@ -6,7 +6,7 @@
  * of legacy db_*_i64 intrinsics. Same template API, different backend.
  *
  * Key encoding: [table_name: 8B BE][scope: 8B BE][primary_key: 8B BE] = 24 bytes
- * This fits the SSO fast-path in kv_object (≤24 bytes inline, integer comparison).
+ * This enables the integer fast-path comparator in kv_object.
  *
  * The payer parameter is honored — RAM is charged to the specified payer,
  * matching the behavior of the legacy sysio::multi_index.
@@ -250,8 +250,15 @@ class kv_multi_index {
       return b;
    }
 
-   // --- Row serialization ---
+   // --- Row serialization (zero-copy for trivially_copyable types) ---
    static std::vector<char> serialize_row(const T& obj) {
+      if constexpr (std::is_trivially_copyable<T>::value) {
+         if (sizeof(T) == pack_size(obj)) {
+            std::vector<char> buf(sizeof(T));
+            memcpy(buf.data(), &obj, sizeof(T));
+            return buf;
+         }
+      }
       auto sz = pack_size(obj);
       std::vector<char> buf(sz);
       datastream<char*> ds(buf.data(), buf.size());
@@ -261,6 +268,12 @@ class kv_multi_index {
 
    static T deserialize_row(const char* data, size_t size) {
       T obj;
+      if constexpr (std::is_trivially_copyable<T>::value) {
+         if (size == sizeof(T)) {
+            memcpy(&obj, data, sizeof(T));
+            return obj;
+         }
+      }
       datastream<const char*> ds(data, size);
       ds >> obj;
       return obj;
@@ -807,8 +820,7 @@ public:
                // End sentinel: create real iterator at last entry.
                // Use lower_bound with a maximal key (all 0xFF) to position
                // past all entries, then prev to land on the last one.
-               // 1024 = max configurable secondary key size (on-chain param).
-               char max_sec[1024];
+               char max_sec[kv::kv_key_max_bytes];
                memset(max_sec, 0xFF, sizeof(max_sec));
                _handle = ::kv_idx_lower_bound(
                   _mi->_code.value, static_cast<uint64_t>(TableName), index_number,

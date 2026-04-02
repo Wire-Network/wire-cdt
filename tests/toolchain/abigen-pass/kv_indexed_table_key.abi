@@ -1,0 +1,63 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "order_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "tag",
+                    "type": "uint8"
+                },
+                {
+                    "name": "market",
+                    "type": "string"
+                },
+                {
+                    "name": "seq",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "order_val",
+            "base": "",
+            "fields": [
+                {
+                    "name": "trader",
+                    "type": "name"
+                },
+                {
+                    "name": "price",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "orders",
+            "type": "order_val",
+            "index_type": "i64",
+            "key_names": ["tag","market","seq"],
+            "key_types": ["uint8","string","uint64"]
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}
