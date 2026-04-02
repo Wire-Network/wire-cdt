@@ -15,9 +15,9 @@ Several intrinsics accept a `key_format` parameter:
 | Value | Meaning |
 |-------|---------|
 | 0 | Raw key -- arbitrary bytes, no special encoding assumed |
-| 1 | Standard 24-byte key -- `[table:8B BE][scope:8B BE][pk:8B BE]`. Enables SSO fast-path and SHiP translation |
+| 1 | Standard 24-byte key -- `[table:8B BE][scope:8B BE][pk:8B BE]`. Enables integer fast-path comparison and SHiP translation |
 
-The `multi_index` and `kv::table` APIs pass `key_format=1` (standard 24-byte keys). The `kv::raw_table` API passes `key_format=0` (raw keys with variable-length encoding).
+The `multi_index` and `kv::table` APIs pass `key_format=1` (standard 24-byte keys). The `kv::raw_table` and `kv::indexed_table` APIs pass `key_format=0` (raw keys with variable-length encoding).
 
 ### payer parameter
 

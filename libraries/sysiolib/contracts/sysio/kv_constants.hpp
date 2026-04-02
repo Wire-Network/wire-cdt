@@ -13,8 +13,8 @@ namespace sysio::kv {
 inline constexpr uint32_t kv_format_raw      = 0;
 
 /// Standard 24-byte layout: [table:8B BE][scope:8B BE][pk:8B BE].
-/// Enables SSO fast-path (inline storage + integer comparison) and SHiP
-/// translation to legacy contract_row format.
+/// Enables integer fast-path comparison and SHiP translation to legacy
+/// contract_row format.
 inline constexpr uint32_t kv_format_standard = 1;
 
 } // namespace sysio::kv

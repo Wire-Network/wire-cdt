@@ -172,10 +172,9 @@ public:
  * Keys are big-endian encoded for correct memcmp ordering. Values use standard
  * ABI serialization (little-endian) so SHiP clients can decode them via ABI.
  *
- * Performance tip: Keys <= 24 bytes benefit from the SSO (Small String
- * Optimization) fast-path in the host. The host stores keys <= 24 bytes
- * inline (no heap allocation) and uses integer comparison instead of memcmp.
- * If your key struct is <= 24 bytes, consider aligning fields for this path.
+ * Performance tip: Keep keys compact. Key bytes are billed directly to RAM,
+ * so smaller keys reduce per-row storage cost. The host uses an integer
+ * fast-path comparator for 8-byte keys (single bswap64 comparison).
  *
  * Usage:
  *   struct my_key {
@@ -203,6 +202,13 @@ class raw_table {
    }
 
    static std::vector<char> serialize_value(const V& value) {
+      if constexpr (std::is_trivially_copyable<V>::value) {
+         if (sizeof(V) == sysio::pack_size(value)) {
+            std::vector<char> buf(sizeof(V));
+            std::memcpy(buf.data(), &value, sizeof(V));
+            return buf;
+         }
+      }
       auto sz = sysio::pack_size(value);
       std::vector<char> buf(sz);
       sysio::datastream<char*> ds(buf.data(), buf.size());
@@ -211,7 +217,13 @@ class raw_table {
    }
 
    static V deserialize_value(const char* data, size_t size) {
-      V value;
+      V value{};
+      if constexpr (std::is_trivially_copyable<V>::value) {
+         if (size == sizeof(V)) {
+            std::memcpy(&value, data, sizeof(V));
+            return value;
+         }
+      }
       sysio::datastream<const char*> ds(data, size);
       ds >> value;
       return value;
@@ -227,10 +239,10 @@ public:
 
    // --- Point operations ---
 
-   int64_t set(const K& key, const V& value) {
+   int64_t set(const K& key, const V& value, sysio::name payer = sysio::name{}) {
       auto k = make_key(key);
       auto v = serialize_value(value);
-      return ::kv_set(kv_format_raw, 0, k.data(), k.size(), v.data(), v.size());
+      return ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
    }
 
    std::optional<V> get(const K& key) const {
