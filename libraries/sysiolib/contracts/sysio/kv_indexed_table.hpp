@@ -260,7 +260,7 @@ class indexed_table {
    }
 
    static K decode_key(const char* data, size_t size) {
-      K key{};
+      K key;
       be_key_reader rd(data, size);
       rd >> key;
       return key;
@@ -282,7 +282,7 @@ class indexed_table {
    }
 
    static V deserialize_value(const char* data, size_t size) {
-      V value{};
+      V value;
       if constexpr (std::is_trivially_copyable<V>::value) {
          if (size == sizeof(V)) {
             std::memcpy(&value, data, sizeof(V));
@@ -303,7 +303,7 @@ class indexed_table {
 
    template<typename SecKey>
    static SecKey decode_sec_key(const char* data, size_t size) {
-      SecKey key{};
+      SecKey key;
       be_key_reader rd(data, size);
       rd >> key;
       return key;
@@ -417,7 +417,7 @@ public:
       const_iterator& operator--() {
          if (_handle < 0) {
             ensure_handle();
-            char max_key[1024];
+            char max_key[1024]; // 1024 = chain max KV key size
             memset(max_key, 0xFF, sizeof(max_key));
             ::kv_it_lower_bound(_handle, max_key, sizeof(max_key));
             if (::kv_it_prev(_handle) == 0) { _valid = true; load(); }
@@ -462,7 +462,7 @@ public:
       const indexed_table* _tbl = nullptr;
       int32_t              _handle = -1;
       bool                 _valid = false;
-      row                  _row{};
+      row                  _row;
       std::vector<char>    _raw_key;
 
       const_iterator(const indexed_table* t, int32_t h, bool valid)
@@ -670,7 +670,7 @@ public:
 
          const_iterator& operator--() {
             if (_handle < 0) {
-               char max_sec[1024];
+               char max_sec[1024]; // 1024 = chain max KV key size
                memset(max_sec, 0xFF, sizeof(max_sec));
                _handle = ::kv_idx_lower_bound(
                   _tbl->code(), static_cast<uint64_t>(TableName), index_number,
@@ -717,7 +717,7 @@ public:
          indexed_table* _tbl = nullptr;
          int32_t        _handle = -1;
          bool           _valid = false;
-         row            _row{};
+         row            _row;
          std::vector<char> _pri_bytes;
 
          const_iterator(indexed_table* tbl, int32_t handle, bool valid)
@@ -772,7 +772,7 @@ public:
 
          key_iterator& operator--() {
             if (_handle < 0) {
-               char max_sec[1024];
+               char max_sec[1024]; // 1024 = chain max KV key size
                memset(max_sec, 0xFF, sizeof(max_sec));
                _handle = ::kv_idx_lower_bound(
                   _tbl->code(), static_cast<uint64_t>(TableName), index_number,
@@ -819,7 +819,7 @@ public:
          indexed_table* _tbl = nullptr;
          int32_t        _handle = -1;
          bool           _valid = false;
-         key_row        _kr{};
+         key_row        _kr;
          std::vector<char> _pri_bytes;
 
          key_iterator(indexed_table* tbl, int32_t handle, bool valid)
@@ -884,7 +884,12 @@ public:
       template<typename SecKey>
       const_iterator upper_bound(const SecKey& sec_key) const {
          auto sec = encode_sec_key(secondary_key_type(sec_key));
-         sec.push_back('\0'); // strictly greater than any key with same prefix
+         // Appending any byte makes the query strictly greater than the encoded
+         // key under byte comparison, so kv_idx_lower_bound returns the first
+         // entry past the target.  Works for both fixed-size BE keys (extra byte
+         // extends length) and NUL-escape encoded strings (0x00 is the escape
+         // sentinel, so the extended key cannot collide with a valid encoding).
+         sec.push_back('\0');
          int32_t handle = ::kv_idx_lower_bound(
             _tbl->code(), static_cast<uint64_t>(TableName), index_number,
             sec.data(), sec.size());

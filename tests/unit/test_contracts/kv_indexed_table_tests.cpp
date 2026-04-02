@@ -676,6 +676,45 @@ public:
       check(cval->amount == 42, "complex: amount should be 42");
    }
 
+   // ── Explicit-ctor value type (time_point regression) ───────────────────
+   // Regression: V value{} in deserialize_value breaks types whose members
+   // have explicit constructors. Using V value; (default-init) fixes it.
+
+   struct tp_val {
+      time_point ts;
+      uint64_t   seq;
+      SYSLIB_SERIALIZE(tp_val, (ts)(seq))
+   };
+   using tp_table = kv::indexed_table<"tptbl"_n, my_key, tp_val>;
+
+   [[sysio::action]]
+   void tpdeser() {
+      tp_table t;
+      time_point t1(microseconds(1000000));
+      time_point t2(microseconds(2000000));
+
+      t.emplace({1}, {t1, 10});
+      t.emplace({2}, {t2, 20});
+
+      // find → deserialize_value
+      auto it = t.find({1});
+      check(it != t.end(), "tp: find(1) should succeed");
+      check(it->value.ts == t1, "tp: ts should match t1");
+      check(it->value.seq == 10, "tp: seq should be 10");
+
+      // iteration → deserialize_value
+      auto it2 = t.begin();
+      check(it2->value.ts == t1, "tp: begin ts should be t1");
+      ++it2;
+      check(it2->value.ts == t2, "tp: second ts should be t2");
+
+      // --end() → deserialize_value via load
+      // (two-step: indexed_table iterators are move-only)
+      auto last = t.end();
+      --last;
+      check(last->value.ts == t2, "tp: --end ts should be t2");
+   }
+
    // ── Error: erase end iterator ────────────────────────────────────────────
 
    [[sysio::action]]
@@ -704,4 +743,4 @@ SYSIO_DISPATCH(kv_indexed_table_tests, (emplace)(emplpayer)(modify)(modpayer)
                (erasetest)(secfind)(seclbound)(seciter)(secmodify)(secerase)
                (keyiter)(reqfind)(dupkeys)(priiter)(gettest)(overwrite)
                (upsert)(signedkey)(strkey)(dblkey)(multikey)(emptyiter)(reviter)(secrev)(secubound)(zerocopy)
-               (ramdelta)(erasend)(modifyend)(reqmiss))
+               (ramdelta)(tpdeser)(erasend)(modifyend)(reqmiss))

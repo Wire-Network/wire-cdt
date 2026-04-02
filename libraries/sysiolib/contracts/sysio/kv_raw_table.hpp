@@ -217,7 +217,7 @@ class raw_table {
    }
 
    static V deserialize_value(const char* data, size_t size) {
-      V value{};
+      V value;
       if constexpr (std::is_trivially_copyable<V>::value) {
          if (size == sizeof(V)) {
             std::memcpy(&value, data, sizeof(V));
@@ -338,7 +338,7 @@ public:
       const raw_table* _tbl = nullptr;
       int32_t _handle = -1;
       bool _valid = false;
-      V _val{};
+      V _val;
       std::vector<char> _raw_key;
 
       const_iterator(const raw_table* t, int32_t h, bool valid)

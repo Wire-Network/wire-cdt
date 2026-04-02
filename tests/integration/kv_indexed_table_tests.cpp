@@ -63,6 +63,7 @@ KV_INDEXED_TABLE_TEST( "kvidxr"_n, secrev )
 KV_INDEXED_TABLE_TEST( "kvidxs"_n, ramdelta )
 KV_INDEXED_TABLE_TEST( "kvidxx"_n, secubound )
 KV_INDEXED_TABLE_TEST( "kvidxy"_n, zerocopy )
+KV_INDEXED_TABLE_TEST( "kvidxz"_n, tpdeser )
 
 // Negative tests: actions that should assert
 BOOST_FIXTURE_TEST_CASE(kv_indexed_table_erasend, TESTER) { try {
