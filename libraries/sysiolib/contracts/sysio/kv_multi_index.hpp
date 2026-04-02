@@ -267,7 +267,7 @@ class kv_multi_index {
    }
 
    static T deserialize_row(const char* data, size_t size) {
-      T obj{};
+      T obj;
       if constexpr (std::is_trivially_copyable<T>::value) {
          if (size == sizeof(T)) {
             memcpy(&obj, data, sizeof(T));

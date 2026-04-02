@@ -82,6 +82,7 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    push_action( "testapi"_n, "codescope"_n,  "testapi"_n, {} ); // get_code/get_scope
    push_action( "testapi"_n, "crbeginend"_n, "testapi"_n, {} ); // crbegin/crend
    push_action( "testapi"_n, "s1secupd"_n,  "testapi"_n, {} ); // T3: kv_idx_update verification
+   push_action( "testapi"_n, "tpdeser"_n,  "testapi"_n, {} ); // time_point explicit-ctor deserialize regression
 
    BOOST_REQUIRE_EQUAL( validate(), true );
 } FC_LOG_AND_RETHROW() }
