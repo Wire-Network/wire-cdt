@@ -402,7 +402,7 @@ void kv_idx_store(uint64_t payer, uint64_t table, uint32_t index_id,
 | `payer` | `uint64_t` | Account to bill for RAM (0 = receiver) |
 | `table` | `uint64_t` | Logical table name (e.g., `"accounts"_n.value`) |
 | `index_id` | `uint32_t` | Index identifier (0-255, corresponding to the Nth `indexed_by`) |
-| `pri_key` | `const void*` | Primary key bytes (`[scope:8B][pk:8B]` = 16 bytes in CDT) |
+| `pri_key` | `const void*` | Primary key bytes (`[pk:8B]` = 8 bytes in CDT) |
 | `pri_key_size` | `uint32_t` | Primary key size (max 256) |
 | `sec_key` | `const void*` | Secondary key bytes (big-endian encoded) |
 | `sec_key_size` | `uint32_t` | Secondary key size (max 256) |
@@ -621,8 +621,8 @@ int32_t kv_idx_primary_key(uint32_t handle, uint32_t offset,
 **Returns:** `int32_t` -- Status code (0=OK).
 
 **Behavior:**
-- In the CDT multi\_index implementation, the stored primary key is `[scope:8B][pk:8B]` = 16 bytes
-- The caller extracts the 8-byte primary key from offset 8
+- In the CDT multi\_index implementation, the stored primary key is `[pk:8B]` = 8 bytes
+- The caller reads the 8-byte primary key directly from offset 0
 
 ---
 

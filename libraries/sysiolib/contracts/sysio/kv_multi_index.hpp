@@ -236,17 +236,15 @@ class kv_multi_index {
       return p;
    }
 
-   // 16-byte scoped primary key for secondary index: [scope:8B][pk:8B]
-   // Scope must be included so that rows with the same primary key in
-   // different scopes produce distinct secondary-index entries.
+   // 8-byte primary key for secondary index: [pk:8B]
+   // Scope is encoded in the sec_key prefix instead (see store_all).
    struct pk_bytes_buf {
-      char data[16];
+      char data[8];
    };
 
    pk_bytes_buf pk_to_bytes(uint64_t pk) const {
       pk_bytes_buf b;
-      _kv_multi_index_detail::encode_be64(b.data,     _scope);
-      _kv_multi_index_detail::encode_be64(b.data + 8, pk);
+      _kv_multi_index_detail::encode_be64(b.data, pk);
       return b;
    }
 
@@ -296,16 +294,63 @@ class kv_multi_index {
       return raw;
    }
 
+   // Encode [scope:8B BE][secondary_value] using the correct sort-preserving
+   // encoder for each type.  The chain's kv_idx_* intrinsics have no scope
+   // parameter; encoding scope into sec_key provides equivalent isolation to
+   // the legacy db_idx*_find_secondary(code, scope, ...) API.
+   //
+   // Generic version: delegates to _kv_multi_index_detail::encode_secondary()
+   // which has specializations for uint64_t, uint128_t, double, and long double.
+   template<typename SecVal>
+   std::vector<char> encode_scoped_secondary(const SecVal& val) const {
+      auto raw = _kv_multi_index_detail::encode_secondary(val);
+      std::vector<char> buf(8 + raw.size());
+      _kv_multi_index_detail::encode_be64(buf.data(), _scope);
+      memcpy(buf.data() + 8, raw.data(), raw.size());
+      return buf;
+   }
+
+   // Single-allocation fast path for uint64_t.
+   std::vector<char> encode_scoped_secondary(const uint64_t& val) const {
+      std::vector<char> buf(16);
+      _kv_multi_index_detail::encode_be64(buf.data(), _scope);
+      _kv_multi_index_detail::encode_be64(buf.data() + 8, val);
+      return buf;
+   }
+
+   // Single-allocation fast path for uint128_t.
+   std::vector<char> encode_scoped_secondary(const uint128_t& val) const {
+      std::vector<char> buf(24);
+      _kv_multi_index_detail::encode_be64(buf.data(), _scope);
+      _kv_multi_index_detail::encode_be64(buf.data() + 8,  static_cast<uint64_t>(val >> 64));
+      _kv_multi_index_detail::encode_be64(buf.data() + 16, static_cast<uint64_t>(val));
+      return buf;
+   }
+
+   // Single-allocation fast path for double (sort-preserving transform + scope).
+   std::vector<char> encode_scoped_secondary(const double& val) const {
+      uint64_t bits;
+      memcpy(&bits, &val, 8);
+      if (bits & (uint64_t(1) << 63))
+         bits = ~bits;
+      else
+         bits ^= (uint64_t(1) << 63);
+      std::vector<char> buf(16);
+      _kv_multi_index_detail::encode_be64(buf.data(), _scope);
+      _kv_multi_index_detail::encode_be64(buf.data() + 8, bits);
+      return buf;
+   }
+
    // --- Secondary index helpers ---
    template<size_t N, typename Index, typename... Rest>
    struct secondary_ops {
       static void store_all(uint64_t payer, const kv_multi_index& idx, const T& obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
-         auto sec_key = _kv_multi_index_detail::encode_secondary(ext(obj));
+         auto sec_key = idx.encode_scoped_secondary(ext(obj));
          auto pri_key = idx.pk_to_bytes(obj.primary_key());
          ::kv_idx_store(payer, static_cast<uint64_t>(TableName), N,
-                        pri_key.data, 16,
+                        pri_key.data, 8,
                         sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
             secondary_ops<N+1, Rest...>::store_all(payer, idx, obj);
@@ -315,10 +360,10 @@ class kv_multi_index {
       static void remove_all(const kv_multi_index& idx, const T& obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
-         auto sec_key = _kv_multi_index_detail::encode_secondary(ext(obj));
+         auto sec_key = idx.encode_scoped_secondary(ext(obj));
          auto pri_key = idx.pk_to_bytes(obj.primary_key());
          ::kv_idx_remove(static_cast<uint64_t>(TableName), N,
-                         pri_key.data, 16,
+                         pri_key.data, 8,
                          sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
             secondary_ops<N+1, Rest...>::remove_all(idx, obj);
@@ -328,12 +373,12 @@ class kv_multi_index {
       static void update_all(uint64_t payer, const kv_multi_index& idx, const T& old_obj, const T& new_obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
-         auto old_sec = _kv_multi_index_detail::encode_secondary(ext(old_obj));
-         auto new_sec = _kv_multi_index_detail::encode_secondary(ext(new_obj));
+         auto old_sec = idx.encode_scoped_secondary(ext(old_obj));
+         auto new_sec = idx.encode_scoped_secondary(ext(new_obj));
          auto pri_key = idx.pk_to_bytes(old_obj.primary_key());
          if (old_sec != new_sec) {
             ::kv_idx_update(payer, static_cast<uint64_t>(TableName), N,
-                            pri_key.data, 16,
+                            pri_key.data, 8,
                             old_sec.data(), old_sec.size(),
                             new_sec.data(), new_sec.size());
          }
@@ -776,18 +821,20 @@ public:
       using index_type = typename std::tuple_element<index_number, std::tuple<Indices...>>::type;
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
       using secondary_key_type = std::decay_t<typename secondary_extractor_type::result_type>;
+      static_assert(sizeof(secondary_key_type) == pack_size(secondary_key_type{}),
+                    "encoded secondary size must equal sizeof for max_sec buffer sizing");
 
       const kv_multi_index* _mi;
       secondary_index_view(const kv_multi_index& mi) : _mi(&mi) {}
 
-      // Helper: read scoped primary key from secondary iterator handle.
-      // The stored pri_key is [scope:8B][pk:8B] = 16 bytes; we extract the pk.
+      // Helper: read primary key from secondary iterator handle.
+      // The stored pri_key is [pk:8B].
       static bool read_primary_key(uint32_t handle, uint64_t& pk) {
-         char pri_buf[16];
+         char pri_buf[8];
          uint32_t actual = 0;
-         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, 16, &actual);
-         if (status != 0 || actual != 16) return false;
-         pk = _kv_multi_index_detail::decode_be64(pri_buf + 8);
+         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, 8, &actual);
+         if (status != 0 || actual != 8) return false;
+         pk = _kv_multi_index_detail::decode_be64(pri_buf);
          return true;
       }
 
@@ -807,7 +854,7 @@ public:
          const_iterator& operator++() {
             check(_has_obj, "cannot increment end iterator");
             if (!_has_obj || _handle < 0) return *this;
-            if (::kv_idx_next(_handle) == 0) { load_current(); }
+            if (::kv_idx_next(_handle) == 0 && check_scope()) { load_current(); }
             else { _has_obj = false; }
             return *this;
          }
@@ -817,19 +864,22 @@ public:
 
          const_iterator& operator--() {
             if (_handle < 0) {
-               // End sentinel: create real iterator at last entry.
-               // Use lower_bound with a maximal key (all 0xFF) to position
-               // past all entries, then prev to land on the last one.
-               char max_sec[kv::kv_key_max_bytes];
-               memset(max_sec, 0xFF, sizeof(max_sec));
+               // End sentinel: create real iterator at last entry in THIS scope.
+               // Build a maximal sec_key for this scope: [scope:8B][0xFF...]
+               // so lower_bound positions past this scope's entries, then prev
+               // lands on the last entry in the scope.
+               constexpr size_t sec_val_size = sizeof(secondary_key_type);
+               char max_sec[8 + sec_val_size];
+               _kv_multi_index_detail::encode_be64(max_sec, _mi->_scope);
+               memset(max_sec + 8, 0xFF, sec_val_size);
                _handle = ::kv_idx_lower_bound(
                   _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
                   max_sec, sizeof(max_sec));
                if (_handle < 0) { _has_obj = false; }
-               else if (::kv_idx_prev(_handle) == 0) { _has_obj = true; load_current(); }
+               else if (::kv_idx_prev(_handle) == 0 && check_scope()) { _has_obj = true; load_current(); }
                else { _has_obj = false; }
             } else {
-               if (::kv_idx_prev(_handle) == 0) { _has_obj = true; load_current(); }
+               if (::kv_idx_prev(_handle) == 0 && check_scope()) { _has_obj = true; load_current(); }
                else { check(false, "cannot decrement iterator at beginning of index"); }
             }
             return *this;
@@ -870,7 +920,7 @@ public:
             if (o._handle >= 0 && _mi && _has_obj) {
                using extractor_t = typename std::tuple_element<index_number, std::tuple<typename Indices::secondary_extractor_type...>>::type;
                extractor_t ext;
-               auto sec_bytes = _kv_multi_index_detail::encode_secondary(ext(_obj));
+               auto sec_bytes = _mi->encode_scoped_secondary(ext(_obj));
                _handle = ::kv_idx_find_secondary(
                   _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
                   sec_bytes.data(), sec_bytes.size());
@@ -912,6 +962,20 @@ public:
             if (ptr) { _obj = *ptr; _has_obj = true; }
             else { _has_obj = false; }
          }
+
+         // Verify the current sec_key still starts with [scope:8B].
+         // After kv_idx_next/prev, the iterator may have crossed into
+         // another scope — treat that as end-of-range.
+         bool check_scope() const {
+            if (_handle < 0 || !_mi) return false;
+            char scope_buf[8];
+            uint32_t actual = 0;
+            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, 8, &actual);
+            if (status != 0 || actual < 8) return false;
+            char expected[8];
+            _kv_multi_index_detail::encode_be64(expected, _mi->_scope);
+            return memcmp(scope_buf, expected, 8) == 0;
+         }
       };
 
       const_iterator end() const { return const_iterator::make_end(_mi); }
@@ -925,16 +989,22 @@ public:
       const_reverse_iterator crend() const { return rend(); }
 
       const_iterator begin() const {
-         // Lower bound with empty key = first entry
+         // Lower bound with scope prefix = first entry in this scope
+         char scope_prefix[8];
+         _kv_multi_index_detail::encode_be64(scope_prefix, _mi->_scope);
          int32_t handle = ::kv_idx_lower_bound(
-            _mi->_code.value, static_cast<uint64_t>(TableName), index_number, nullptr, 0);
+            _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
+            scope_prefix, 8);
          if (handle < 0) return end();
-         return const_iterator(_mi, handle, true);
+         // Verify we landed in the right scope (may be past it if scope is empty)
+         const_iterator it(_mi, handle, true);
+         if (it._has_obj && !it.check_scope()) return end();
+         return it;
       }
 
       template<typename SecKey>
       const_iterator find(const SecKey& sec_key) const {
-         auto sec_bytes = _kv_multi_index_detail::encode_secondary(secondary_key_type(sec_key));
+         auto sec_bytes = _mi->encode_scoped_secondary(secondary_key_type(sec_key));
          int32_t handle = ::kv_idx_find_secondary(
             _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
             sec_bytes.data(), sec_bytes.size());
@@ -944,12 +1014,14 @@ public:
 
       template<typename SecKey>
       const_iterator lower_bound(const SecKey& sec_key) const {
-         auto sec_bytes = _kv_multi_index_detail::encode_secondary(secondary_key_type(sec_key));
+         auto sec_bytes = _mi->encode_scoped_secondary(secondary_key_type(sec_key));
          int32_t handle = ::kv_idx_lower_bound(
             _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
             sec_bytes.data(), sec_bytes.size());
          if (handle < 0) return end();
-         return const_iterator(_mi, handle, true);
+         const_iterator it(_mi, handle, true);
+         if (it._has_obj && !it.check_scope()) return end();
+         return it;
       }
 
       template<typename SecKey>

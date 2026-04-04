@@ -87,4 +87,22 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    BOOST_REQUIRE_EQUAL( validate(), true );
 } FC_LOG_AND_RETHROW() }
 
+// Cross-scope secondary index isolation tests (separate contract to stay under net limit)
+BOOST_FIXTURE_TEST_CASE(cross_scope_secondary_index_tests, TESTER) { try {
+   produce_blocks(1);
+   create_account( "scopetest"_n );
+   produce_blocks(1);
+   set_code( "scopetest"_n, contracts::mi_scope_tests_wasm() );
+   set_abi( "scopetest"_n, contracts::mi_scope_tests_abi().data() );
+   produce_blocks(1);
+
+   push_action( "scopetest"_n, "xscope"_n,      "scopetest"_n, {} ); // iteration isolated per scope
+   push_action( "scopetest"_n, "xscopefind"_n,  "scopetest"_n, {} ); // find() respects scope
+   push_action( "scopetest"_n, "xscopeerase"_n, "scopetest"_n, {} ); // erase in A doesn't affect B
+   push_action( "scopetest"_n, "xscopeub"_n,    "scopetest"_n, {} ); // upper_bound stops at scope
+   push_action( "scopetest"_n, "xscoperev"_n,   "scopetest"_n, {} ); // reverse iteration within scope
+
+   BOOST_REQUIRE_EQUAL( validate(), true );
+} FC_LOG_AND_RETHROW() }
+
 BOOST_AUTO_TEST_SUITE_END()

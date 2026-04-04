@@ -53,7 +53,8 @@ Properties:
 - Fixed 24 bytes
 - Integer fast-path: 8-byte big-endian keys compared via single `bswap64`
 - SHiP compatible: reversible to legacy `contract_row` format (table, scope, primary\_key)
-- Secondary index keys include scope: `[scope:8B][pk:8B]` = 16 bytes
+- Secondary index keys prepend scope to the secondary value: `[scope:8B BE][secondary_value]`
+- Primary keys stored in secondary index entries are `[pk:8B]` = 8 bytes (scope is in the secondary key)
 
 ### Format=0 (indexed\_table, raw\_table)
 
