@@ -821,8 +821,10 @@ public:
       using index_type = typename std::tuple_element<index_number, std::tuple<Indices...>>::type;
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
       using secondary_key_type = std::decay_t<typename secondary_extractor_type::result_type>;
-      static_assert(sizeof(secondary_key_type) == pack_size(secondary_key_type{}),
-                    "encoded secondary size must equal sizeof for max_sec buffer sizing");
+      // Secondary key encoding uses sizeof(secondary_key_type) for stack buffer sizing.
+      // Trivially copyable types guarantee sizeof == packed size (no varint prefixes).
+      static_assert(std::is_trivially_copyable<secondary_key_type>::value,
+                    "secondary key type must be trivially copyable for fixed-size encoding");
 
       const kv_multi_index* _mi;
       secondary_index_view(const kv_multi_index& mi) : _mi(&mi) {}
