@@ -55,17 +55,9 @@ kv::table<"balances"_n, balance_row> bal(code, scope);
 | `available_primary_key()` | Next auto-increment key |
 | `begin_all_scopes()` / `end_all_scopes()` | Iterate ALL rows across ALL scopes (returns `scoped_row`) |
 
-## Zero-copy path
+## Zero-copy optimization
 
-When `T` satisfies **both** conditions:
-1. `std::is_trivially_copyable<T>` is true
-2. `sizeof(T) == pack_size(T{})` (no struct padding)
-
-...the check is evaluated at **compile time** via the `is_fixed_serializable_v<T>` trait. The compiler generates a single code path that uses a fixed `char[sizeof(T)]` stack buffer and `memcpy` — no dynamic allocation, no size probing, exactly one host call per read or write.
-
-All table APIs (`kv::table`, `kv::indexed_table`, `kv::raw_table`, `kv::global`, `singleton`, and `multi_index`) use zero-copy for qualifying types. The newer APIs (`kv::table`, `indexed_table`, `raw_table`, `global`) additionally eliminate all heap allocation on the hot path — the `multi_index` compatibility layer still uses `std::map` and `std::unique_ptr` for its object cache.
-
-Types with `std::string`, `std::vector`, `std::optional`, or nested structs cannot use the zero-copy path. They fall back to stack-first serialization (`kv_value_stack_size` = 256 bytes inline, heap fallback for larger values).
+See [Zero-Copy Serialization](kv-storage-guide.md#zero-copy-serialization) in the storage guide. This optimization applies to all table APIs — `kv::table`, `kv::indexed_table`, `kv::raw_table`, `kv::global`, `singleton`, and `multi_index`.
 
 ## Example
 

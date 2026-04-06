@@ -53,6 +53,36 @@ KV_RAW_TABLE_TEST( "kvmapn"_n, crossread )
 KV_RAW_TABLE_TEST( "kvmapo"_n, zeroval )
 KV_RAW_TABLE_TEST( "kvmapp"_n, ramdelta )
 KV_RAW_TABLE_TEST( "kvmapq"_n, setpayer )
+KV_RAW_TABLE_TEST( "kvmapr"_n, keymaxfit )
+
+// Negative tests: key overflow
+BOOST_FIXTURE_TEST_CASE(kv_raw_table_keyoverflow, TESTER) { try {
+   produce_blocks(1);
+   create_account( "kvmaps"_n );
+   produce_blocks(1);
+   set_code( "kvmaps"_n, contracts::kv_raw_table_tests_wasm() );
+   set_abi( "kvmaps"_n, contracts::kv_raw_table_tests_abi().data() );
+   produce_blocks(1);
+   BOOST_CHECK_EXCEPTION(
+      push_action( "kvmaps"_n, "keyoverflow"_n, "kvmaps"_n, {} ),
+      sysio_assert_message_exception,
+      sysio_assert_message_is("be_key_stream: key too large")
+   );
+} FC_LOG_AND_RETHROW() }
+
+BOOST_FIXTURE_TEST_CASE(kv_raw_table_keynulover, TESTER) { try {
+   produce_blocks(1);
+   create_account( "kvmapt"_n );
+   produce_blocks(1);
+   set_code( "kvmapt"_n, contracts::kv_raw_table_tests_wasm() );
+   set_abi( "kvmapt"_n, contracts::kv_raw_table_tests_abi().data() );
+   produce_blocks(1);
+   BOOST_CHECK_EXCEPTION(
+      push_action( "kvmapt"_n, "keynulover"_n, "kvmapt"_n, {} ),
+      sysio_assert_message_exception,
+      sysio_assert_message_is("be_key_stream: key too large")
+   );
+} FC_LOG_AND_RETHROW() }
 
 // Negative test: erase non-existent key should assert (T1/T7)
 BOOST_FIXTURE_TEST_CASE(kv_raw_table_erasebad, TESTER) { try {

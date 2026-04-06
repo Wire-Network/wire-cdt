@@ -11,7 +11,7 @@ public:
 
    struct pod_cfg {
       uint64_t rate;
-      uint32_t flags;
+      uint64_t flags;
       SYSLIB_SERIALIZE(pod_cfg, (rate)(flags))
    };
    using pod_global = kv::global<"podcfg"_n, pod_cfg>;
@@ -164,3 +164,6 @@ public:
       g2.remove();
    }
 };
+
+static_assert(sysio::kv::is_fixed_serializable_v<kv_global_tests::pod_cfg>,
+              "pod_cfg must hit the zero-copy fast path");

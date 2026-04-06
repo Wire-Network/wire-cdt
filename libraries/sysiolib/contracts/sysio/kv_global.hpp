@@ -62,43 +62,54 @@ public:
 
    /// Returns the stored value. Asserts if not set.
    T get(const char* msg = "global does not exist") const {
-      auto k = make_key();
       T val;
-      if constexpr (is_fixed_serializable_v<T>) {
-         char vbuf[sizeof(T)];
-         int32_t sz = ::kv_get(kv_format_raw, code(), k.data, 8, vbuf, sizeof(T));
-         sysio::check(sz >= 0, msg);
-         std::memcpy(&val, vbuf, sizeof(T));
-      } else {
-         char stack[kv_value_stack_size];
-         int32_t sz = ::kv_get(kv_format_raw, code(), k.data, 8, stack, kv_value_stack_size);
-         sysio::check(sz >= 0, msg);
-         if (sz <= static_cast<int32_t>(kv_value_stack_size)) {
-            sysio::datastream<const char*> ds(stack, sz);
-            ds >> val;
-         } else {
-            char* heap = new char[sz];
-            ::kv_get(kv_format_raw, code(), k.data, 8, heap, sz);
-            sysio::datastream<const char*> ds(heap, sz);
-            ds >> val;
-            delete[] heap;
-         }
-      }
+      sysio::check(try_get(val), msg);
       return val;
    }
 
    /// Returns the stored value, or \p def if not set.
    T get_or_default(const T& def) const {
-      if (!exists()) return def;
-      return get();
+      T val;
+      if (try_get(val)) return val;
+      return def;
    }
 
    /// Returns the stored value if it exists. Otherwise stores \p def and returns it.
    T get_or_create(sysio::name payer, const T& def) {
-      if (exists()) return get();
+      T val;
+      if (try_get(val)) return val;
       set(def, payer);
       return def;
    }
+
+private:
+   /// Single kv_get call — returns true if found, populates \p out.
+   bool try_get(T& out) const {
+      auto k = make_key();
+      if constexpr (is_fixed_serializable_v<T>) {
+         char vbuf[sizeof(T)];
+         int32_t sz = ::kv_get(kv_format_raw, code(), k.data, 8, vbuf, sizeof(T));
+         if (sz < 0) return false;
+         std::memcpy(&out, vbuf, sizeof(T));
+      } else {
+         char stack[kv_value_stack_size];
+         int32_t sz = ::kv_get(kv_format_raw, code(), k.data, 8, stack, kv_value_stack_size);
+         if (sz < 0) return false;
+         if (sz <= static_cast<int32_t>(kv_value_stack_size)) {
+            sysio::datastream<const char*> ds(stack, sz);
+            ds >> out;
+         } else {
+            char* heap = new char[sz];
+            ::kv_get(kv_format_raw, code(), k.data, 8, heap, sz);
+            sysio::datastream<const char*> ds(heap, sz);
+            ds >> out;
+            delete[] heap;
+         }
+      }
+      return true;
+   }
+
+public:
 
    /// Stores or overwrites the value.
    void set(const T& val, sysio::name payer) {

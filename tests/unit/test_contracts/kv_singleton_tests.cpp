@@ -109,7 +109,7 @@ public:
 
    struct pod_config {
       uint64_t rate;
-      uint32_t flags;
+      uint64_t flags;  // uint64_t (not uint32_t) avoids trailing padding so sizeof==pack_size
       SYSLIB_SERIALIZE(pod_config, (rate)(flags))
    };
    using pod_singleton = singleton<"podcfg"_n, pod_config>;
@@ -166,3 +166,6 @@ public:
       check(cfg2.get().max_supply == 222, "scope2 value should be unchanged");
    }
 };
+
+static_assert(sysio::kv::is_fixed_serializable_v<kv_singleton_tests::pod_config>,
+              "pod_config must hit the zero-copy fast path");

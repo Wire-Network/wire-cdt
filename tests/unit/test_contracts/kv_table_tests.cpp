@@ -314,7 +314,7 @@ public:
    struct [[sysio::table]] pod_row {
       uint64_t id;
       uint64_t amount;
-      uint32_t flags;
+      uint64_t flags;  // uint64_t avoids trailing padding so sizeof==pack_size
 
       uint64_t primary_key() const { return id; }
       SYSLIB_SERIALIZE(pod_row, (id)(amount)(flags))
@@ -388,3 +388,7 @@ public:
       check(count >= 1, "endallscope: should find at least 1 row");
    }
 };
+
+// static_assert after class — friend operators visible via ADL at this point
+static_assert(sysio::kv::is_fixed_serializable_v<kv_table_tests::pod_row>,
+              "pod_row must hit the zero-copy fast path");

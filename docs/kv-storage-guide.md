@@ -125,7 +125,99 @@ At the OC (Optimized Compiler) runtime tier, intrinsic call overhead dominates a
 - **Use `lower_bound` instead of scanning** -- `lower_bound(start_key)` + iterate is much faster than scanning from `begin()`
 - **Use key-only iteration** for scanning -- `indexed_table`'s `key_begin()`/`key_end()` avoids value deserialization
 - **Use `indexed_table` for new contracts** -- format=0 keys save 16 bytes per row vs format=1
-- **Use POD value types** -- all table APIs use zero-copy (memcpy) for `trivially_copyable` values, eliminating serialization overhead
+- **Use POD value types** -- all table APIs use zero-copy (memcpy) for `trivially_copyable` values, eliminating serialization overhead (see [zero-copy optimization](#zero-copy-optimization) below)
+
+### Key Size Limit (`KV_KEY_BUF_CAP`)
+
+Format=0 keys (`raw_table`, `indexed_table`) are encoded on the stack via `be_key_stream`, which uses a fixed buffer. The default capacity is **256 bytes**, matching the default chain `max_kv_key_size`. Keys that exceed this limit will abort with `"be_key_stream: key too large"`.
+
+To increase the limit (e.g., for contracts with long string keys), pass `-DKV_KEY_BUF_CAP=512` to `cdt-cpp`. The chain supports up to 1024 bytes.
+
+```bash
+cdt-cpp -DKV_KEY_BUF_CAP=512 -abigen -o mycontract.wasm mycontract.cpp
+```
+
+**Stack usage note:** Each `be_key_stream` instance uses `KV_KEY_BUF_CAP` bytes on the WASM stack. Contracts with many secondary indices create one instance per index during `emplace`/`modify`/`erase`. With 16 indices at `KV_KEY_BUF_CAP=256`, this is ~4KB of the default 8KB WASM stack. If you increase the buffer and have many indices, you may also need to increase the WASM stack size.
+
+Format=1 keys (`kv::table`, `multi_index`) use fixed 24-byte keys and are not affected by this limit.
+
+### Zero-Copy Serialization
+
+All table APIs automatically use zero-copy `memcpy` serialization for value types that satisfy two compile-time conditions:
+
+1. `std::is_trivially_copyable<T>` — no `std::string`, `std::vector`, `std::optional`, virtual functions, or non-trivial constructors/destructors
+2. `sizeof(T) == pack_size(T{})` — no struct padding (the raw memory layout matches the serialized field layout)
+
+When both conditions hold, `sysio::kv::is_fixed_serializable_v<T>` is `true` and the compiler generates a single code path using a fixed `char[sizeof(T)]` stack buffer and `memcpy` — no dynamic allocation, no size probing, exactly one host call per read or write.
+
+Types that don't qualify fall back to field-by-field datastream serialization with a stack-first buffer (`kv_value_stack_size` = 256 bytes inline, heap fallback for larger values). This is still efficient but involves per-field encoding/decoding and may require a size-probe host call.
+
+#### Verifying your type qualifies
+
+Use `static_assert` with `is_fixed_serializable_v`. The assert **must be placed after the class definition**, not inside it. The `SYSLIB_SERIALIZE` macro generates `constexpr` friend operators that are only visible via argument-dependent lookup (ADL) after the enclosing class is complete. A `static_assert` inside the class body will always evaluate to `false` because the operators aren't defined yet at that point.
+
+```cpp
+class [[sysio::contract]] mycontract : public contract {
+public:
+   using contract::contract;
+
+   struct balance_row {
+      uint64_t account;
+      uint64_t amount;
+      uint64_t primary_key() const { return account; }
+      SYSLIB_SERIALIZE(balance_row, (account)(amount))
+   };
+
+   // WRONG — always fails inside the class body:
+   // static_assert(kv::is_fixed_serializable_v<balance_row>, "...");
+
+   // ... actions ...
+};
+
+// CORRECT — after the closing brace of the class:
+static_assert(sysio::kv::is_fixed_serializable_v<mycontract::balance_row>,
+              "balance_row should qualify for zero-copy serialization");
+```
+
+#### When the check fails: struct padding
+
+The most common reason `is_fixed_serializable_v` is `false` for an all-POD struct is **trailing padding**. The compiler inserts padding bytes at the end of a struct to satisfy the alignment requirement of the largest member:
+
+```cpp
+struct row {
+   uint64_t id;     // 8 bytes at offset 0
+   uint32_t flags;  // 4 bytes at offset 8
+   // 4 bytes PADDING inserted here to align struct to 8 bytes
+};
+// sizeof(row) = 16, pack_size(row{}) = 12 (only the actual fields)
+// is_fixed_serializable_v<row> = false
+```
+
+The zero-copy path stores `sizeof(T)` bytes via `memcpy`. If `sizeof != pack_size`, the stored data would include uninitialized padding bytes that don't correspond to any field.
+
+#### Enabling zero-copy for padded structs
+
+Add an explicit padding field so that `sizeof == pack_size`:
+
+```cpp
+struct row {
+   uint64_t id;
+   uint32_t flags;
+   uint32_t _padding = 0;  // fills the 4-byte gap
+   SYSLIB_SERIALIZE(row, (id)(flags)(_padding))
+};
+// sizeof(row) = 16, pack_size(row{}) = 16
+// is_fixed_serializable_v<row> = true
+```
+
+**The tradeoff:** The padding field costs extra bytes of RAM per row stored on-chain. In this example, 4 bytes per row. For tables with millions of rows this adds up. For small tables, singletons, or globals the cost is negligible.
+
+| Approach | RAM per row | Serialization | Host calls per read |
+|----------|------------|---------------|---------------------|
+| No padding (datastream fallback) | Compact — only field bytes | Field-by-field encode/decode | 1-2 (size probe + read if value > stack buffer) |
+| Explicit padding (zero-copy) | +N padding bytes | Single `memcpy` | 1 (exact `sizeof(T)` buffer) |
+
+**When zero-copy matters most:** Contracts that do heavy iteration (scanning tables, bulk reads in a loop) benefit from eliminating per-field serialization and guaranteeing a single host call per row. Contracts that mostly do point lookups on small tables will see negligible difference — the host call overhead dominates either way.
 
 ---
 

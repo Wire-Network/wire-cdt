@@ -139,8 +139,10 @@ class be_key_reader {
             char next = _data[_pos++];
             if (next == '\0') { out.assign(tmp, n); return; }
             sysio::check(next == '\x01', "be_key_reader: invalid NUL-escape byte");
+            sysio::check(n < be_key_stream::buf_cap, "be_key_reader: string too large");
             tmp[n++] = '\0';
          } else {
+            sysio::check(n < be_key_stream::buf_cap, "be_key_reader: string too large");
             tmp[n++] = c;
          }
       }

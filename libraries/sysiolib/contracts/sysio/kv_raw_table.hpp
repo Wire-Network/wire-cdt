@@ -59,7 +59,7 @@ struct key_buf {
       if (s <= inline_cap) {
          delete[] heap_; heap_ = nullptr;
          if (d && s) std::memcpy(inline_, d, s);
-      } else {
+      } else if (d && s) {
          if (!heap_ || len <= inline_cap || len < s) {
             delete[] heap_; heap_ = new char[s];
          }
@@ -113,6 +113,7 @@ struct ser_buf {
    ser_buf(ser_buf&& o) noexcept : size_(o.size_) {
       if (o.heap_) { heap_ = o.heap_; ptr_ = heap_; o.heap_ = nullptr; }
       else { std::memcpy(stack_, o.stack_, size_); ptr_ = stack_; }
+      o.ptr_ = o.stack_; o.size_ = 0;
    }
    ser_buf(const ser_buf&) = delete;
    ser_buf& operator=(const ser_buf&) = delete;
@@ -151,9 +152,13 @@ inline constexpr bool is_fixed_serializable_v = is_fixed_serializable<T>::value;
 // Works with SYSLIB_SERIALIZE-generated operators: `stream << key`
 // calls operator<< for each field, routing to BE encoding automatically.
 // ---------------------------------------------------------------------------
+#ifndef KV_KEY_BUF_CAP
+#define KV_KEY_BUF_CAP 256
+#endif
+
 class be_key_stream {
 public:
-   static constexpr uint32_t buf_cap = 128;
+   static constexpr uint32_t buf_cap = KV_KEY_BUF_CAP;
 private:
    char buf_[buf_cap];
    uint32_t size_ = 0;
@@ -169,9 +174,15 @@ private:
    }
 
    void write_escaped(const char* data, size_t len) {
+      // Upfront: data bytes + 2-byte terminator (no NUL escapes)
+      sysio::check(size_ + len + 2 <= buf_cap, "be_key_stream: key too large");
       for (size_t i = 0; i < len; ++i) {
          buf_[size_++] = data[i];
-         if (data[i] == '\0') buf_[size_++] = '\x01';
+         if (data[i] == '\0') {
+            // Each NUL adds 1 extra byte; still need room for remaining data + terminator
+            sysio::check(size_ + (len - i - 1) + 1 + 2 <= buf_cap, "be_key_stream: key too large");
+            buf_[size_++] = '\x01';
+         }
       }
       buf_[size_++] = '\0';
       buf_[size_++] = '\0';
@@ -179,6 +190,7 @@ private:
 
 public:
    void write(const char* data, size_t len) {
+      sysio::check(size_ + len <= buf_cap, "be_key_stream: key too large");
       if (len > 0) { std::memcpy(buf_ + size_, data, len); size_ += len; }
    }
 

@@ -140,7 +140,7 @@ namespace _kv_multi_index_detail {
    // Avoids heap allocation for small known-size secondary key encodings.
    template<size_t N>
    struct fixed_buf {
-      char data_[N];
+      char data_[N] = {};
       const char* data() const { return data_; }
       char* data() { return data_; }
       constexpr size_t size() const { return N; }
