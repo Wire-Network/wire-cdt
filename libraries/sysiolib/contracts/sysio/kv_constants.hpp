@@ -20,4 +20,8 @@ inline constexpr uint32_t kv_format_standard = 1;
 /// Chain-enforced maximum KV key size in bytes.
 inline constexpr size_t kv_key_max_bytes = 1024;
 
+/// Stack buffer size for value reads/writes. Values up to this size avoid heap allocation.
+/// Only used for non-trivially-copyable types; trivially-copyable types use sizeof(T) directly.
+inline constexpr uint32_t kv_value_stack_size = 256;
+
 } // namespace sysio::kv

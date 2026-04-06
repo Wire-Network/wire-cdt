@@ -18,6 +18,7 @@ add_contract(kv_table_tests kv_table_tests kv_table_tests.cpp)
 add_contract(kv_raw_table_tests kv_raw_table_tests kv_raw_table_tests.cpp)
 add_contract(kv_indexed_table_tests kv_indexed_table_tests kv_indexed_table_tests.cpp)
 add_contract(kv_singleton_tests kv_singleton_tests kv_singleton_tests.cpp)
+add_contract(kv_global_tests kv_global_tests kv_global_tests.cpp)
 add_contract(capi_tests capi_tests capi/capi.c capi/action.c capi/chain.c capi/crypto.c capi/db.c capi/permission.c
                                    capi/print.c capi/privileged.c capi/system.c capi/transaction.c)
 

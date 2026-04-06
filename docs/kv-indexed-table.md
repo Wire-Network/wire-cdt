@@ -112,7 +112,7 @@ tbl.modify(payer, it, new_value);        // explicit payer
 auto next = tbl.erase(std::move(it));
 ```
 
-`modify` takes the new value directly (not a lambda). The old value is read from the iterator's cache to compute secondary key deltas.
+`modify` takes the new value directly (not a lambda). The old value is read from the iterator's stored row to compute secondary key deltas.
 
 **Important:** `emplace` must only be called for keys that do not already exist. Calling `emplace` on an existing key corrupts secondary indexes — the primary value is overwritten but old secondary index entries are orphaned (see below). Use `upsert()` if the key may already exist, or `modify()` when you have an iterator.
 
@@ -172,7 +172,7 @@ for (auto it = idx.key_begin(); it != idx.key_end(); ++it) {
 - **Move-only**: iterators cannot be copied (avoids expensive handle cloning). Post-increment/decrement are deleted -- use `++it` / `--it`
 - **Dereference returns `row`**: `it->key` and `it->value` for both primary and secondary iterators
 - **Bidirectional**: `--end()` gives the last element; `--it` steps backward
-- **Invalidated after mutation**: calling `modify` through a secondary iterator invalidates it — the cached value is stale, and if the secondary key changed, the iterator's position in the index is also invalid (the underlying entry was moved by `kv_idx_update`). Do not dereference or advance the iterator after `modify`; re-find instead. `erase` consumes the iterator and returns the next one, so this does not apply to erase
+- **Invalidated after mutation**: calling `modify` through a secondary iterator invalidates it — the iterator's stored value is stale, and if the secondary key changed, the iterator's position in the index is also invalid (the underlying entry was moved by `kv_idx_update`). Do not dereference or advance the iterator after `modify`; re-find instead. `erase` consumes the iterator and returns the next one, so this does not apply to erase
 
 ## Extractor consistency note
 

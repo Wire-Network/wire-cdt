@@ -1,5 +1,7 @@
 # sysio::multi\_index
 
+> **Backward compatibility only.** For new contracts, use [`kv::table`](kv-table.md) (no secondary indices), [`kv::indexed_table`](kv-indexed-table.md) (with secondary indices), [`kv::global`](kv-global.md) (non-scoped singleton), or [`singleton`](kv-table.md#singleton) (scoped singleton). See [why upgrade](kv-storage-guide.md#why-upgrade-from-multi_index) for the full comparison.
+
 ## Include
 
 ```cpp
@@ -10,7 +12,7 @@
 
 ## Overview
 
-The API surface is identical to the EOSIO `multi_index`. Under the hood, primary rows are stored as 24-byte KV keys and secondary indices use the `kv_idx_*` intrinsics, but from the contract author's perspective the interface is the same.
+`sysio::multi_index` is a drop-in replacement for the EOSIO `multi_index`. Existing contracts compile and run unchanged. Under the hood, primary rows are stored as 24-byte KV keys and secondary indices use the `kv_idx_*` intrinsics, but from the contract author's perspective the interface is the same.
 
 Key properties:
 

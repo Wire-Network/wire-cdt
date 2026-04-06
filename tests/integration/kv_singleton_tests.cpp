@@ -32,6 +32,7 @@ BOOST_FIXTURE_TEST_CASE(kv_singleton_integration, TESTER) { try {
    push_action( "kvsngl"_n, "removetest"_n,  "kvsngl"_n, {} );
    push_action( "kvsngl"_n, "settwice"_n,    "kvsngl"_n, {} );
    push_action( "kvsngl"_n, "scopetest"_n,   "kvsngl"_n, {} );
+   push_action( "kvsngl"_n, "podsingleton"_n,"kvsngl"_n, {} );  // trivially-copyable fast path
 
    BOOST_REQUIRE_EQUAL( validate(), true );
 } FC_LOG_AND_RETHROW() }

@@ -42,6 +42,7 @@ BOOST_FIXTURE_TEST_CASE(kv_table_integration, TESTER) { try {
    push_action( "kvtest"_n, "setmethod"_n,   "kvtest"_n, {} );
    push_action( "kvtest"_n, "modifyobj"_n,  "kvtest"_n, {} );
    push_action( "kvtest"_n, "endallscope"_n, "kvtest"_n, {} );
+   push_action( "kvtest"_n, "podcrud"_n,    "kvtest"_n, {} );  // trivially-copyable fast path
 
    BOOST_CHECK_EXCEPTION(
       push_action( "kvtest"_n, "reqfindfail"_n, "kvtest"_n, {} ),
