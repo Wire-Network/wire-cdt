@@ -6,7 +6,7 @@
 
 namespace _scope_tests {
 
-struct row {
+struct [[sysio::table("scopetbl")]] row {
    uint64_t id;
    uint64_t sec;
 
