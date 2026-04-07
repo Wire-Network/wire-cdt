@@ -9,6 +9,8 @@
  * SHiP compatible: keys can be reverse-mapped to legacy contract_row format.
  */
 
+#include <cstdint>
+
 // KV intrinsic declarations (primary only — kv::table does not use secondary indices)
 extern "C" {
    __attribute__((sysio_wasm_import))
