@@ -197,7 +197,7 @@ class datastream<size_t> {
        *
        * @param init_size - The initial size
        */
-     datastream( size_t init_size = 0):_size(init_size){}
+     constexpr datastream( size_t init_size = 0):_size(init_size){}
 
      /**
       *  Increment the size by s. This behaves the same as write( const char* ,size_t s ).
@@ -205,7 +205,7 @@ class datastream<size_t> {
       *  @param s - The amount of size to increase
       *  @return true
       */
-     inline bool     skip( size_t s )                 { _size += s; return true;  }
+     constexpr bool  skip( size_t s )                 { _size += s; return true;  }
 
      /**
       *  Increment the size by s. This behaves the same as skip( size_t s )
@@ -213,7 +213,7 @@ class datastream<size_t> {
       *  @param s - The amount of size to increase
       *  @return true
       */
-     inline bool     write( const char* ,size_t s )  { _size += s; return true;  }
+     constexpr bool  write( const char* ,size_t s )  { _size += s; return true;  }
 
      /**
       *  Increment the size by s. This behaves the same as skip( size_t s )
@@ -221,7 +221,7 @@ class datastream<size_t> {
       *  @param s - The amount of size to increase
       *  @return true
       */
-     inline bool     write( char )  { _size++; return true;  }
+     constexpr bool  write( char )  { _size++; return true;  }
 
      /**
       *  Increment the size by s. This behaves the same as skip( size_t s )
@@ -229,7 +229,7 @@ class datastream<size_t> {
       *  @param s - The amount of size to increase
       *  @return true
       */
-     inline bool     write( const void* ,size_t s )  { _size += s; return true;  }
+     constexpr bool  write( const void* ,size_t s )  { _size += s; return true;  }
 
      /**
       *  Increment the size by one
@@ -258,7 +258,7 @@ class datastream<size_t> {
       *
       * @return size_t - The size
       */
-     inline size_t   tellp()const                     { return _size;             }
+     constexpr size_t tellp()const                     { return _size;             }
 
      /**
       * Always returns 0
@@ -997,8 +997,14 @@ DataStream& operator>>( DataStream& ds, T& v ) {
  *  @return datastream<Stream>& - Reference to the datastream
  */
 template<typename Stream, typename T, std::enable_if_t<_datastream_detail::is_primitive<T>()>* = nullptr>
-datastream<Stream>& operator<<( datastream<Stream>& ds, const T& v ) {
-   ds.write( (const char*)&v, sizeof(T) );
+constexpr datastream<Stream>& operator<<( datastream<Stream>& ds, const T& v ) {
+   // datastream<size_t> is a size-counting stream that ignores the pointer;
+   // use skip() to avoid the reinterpret_cast which is illegal in constexpr.
+   if constexpr (std::is_same_v<Stream, size_t>) {
+      ds.skip( sizeof(T) );
+   } else {
+      ds.write( (const char*)&v, sizeof(T) );
+   }
    return ds;
 }
 
@@ -1072,7 +1078,7 @@ T unpack( const std::vector<char>& bytes ) {
  * @return size_t - Size of the packed data
  */
 template<typename T>
-size_t pack_size( const T& value ) {
+constexpr size_t pack_size( const T& value ) {
   datastream<size_t> ps;
   ps << value;
   return ps.tellp();

@@ -40,6 +40,9 @@ namespace sysio::testing {
       static std::vector<uint8_t> test_multi_index_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/test_multi_index.wasm"); }
       static std::vector<char>    test_multi_index_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/test_multi_index.abi"); }
 
+      static std::vector<uint8_t> mi_scope_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/mi_scope_tests.wasm"); }
+      static std::vector<char>    mi_scope_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/mi_scope_tests.abi"); }
+
       static std::vector<uint8_t> kv_table_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_table_tests.wasm"); }
       static std::vector<char>    kv_table_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_table_tests.abi"); }
 
