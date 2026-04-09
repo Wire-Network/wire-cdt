@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(kv_global_example)
+find_package(cdt)
+add_contract( kv_global_example kv_global_example kv_global_example.cpp )
+target_include_directories( kv_global_example PUBLIC ${CMAKE_SOURCE_DIR}/../include )
+target_ricardian_directory( kv_global_example ${CMAKE_SOURCE_DIR}/../ricardian )

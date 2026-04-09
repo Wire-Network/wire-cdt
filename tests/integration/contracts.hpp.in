@@ -40,6 +40,9 @@ namespace sysio::testing {
       static std::vector<uint8_t> test_multi_index_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/test_multi_index.wasm"); }
       static std::vector<char>    test_multi_index_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/test_multi_index.abi"); }
 
+      static std::vector<uint8_t> test_multi_index2_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/test_multi_index2.wasm"); }
+      static std::vector<char>    test_multi_index2_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/test_multi_index2.abi"); }
+
       static std::vector<uint8_t> mi_scope_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/mi_scope_tests.wasm"); }
       static std::vector<char>    mi_scope_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/mi_scope_tests.abi"); }
 
@@ -57,5 +60,8 @@ namespace sysio::testing {
 
       static std::vector<uint8_t> kv_global_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_global_tests.wasm"); }
       static std::vector<char>    kv_global_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_global_tests.abi"); }
+
+      static std::vector<uint8_t> hash_id_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/hash_id_tests.wasm"); }
+      static std::vector<char>    hash_id_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/hash_id_tests.abi"); }
    };
 } //ns sysio::testing

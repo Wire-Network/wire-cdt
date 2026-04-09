@@ -9,7 +9,7 @@ public:
 
    // ── Trivially-copyable value (exercises is_fixed_serializable fast path) ──
 
-   struct pod_cfg {
+   struct [[sysio::table("podcfg")]] pod_cfg {
       uint64_t rate;
       uint64_t flags;
       SYSLIB_SERIALIZE(pod_cfg, (rate)(flags))
@@ -18,7 +18,7 @@ public:
 
    // ── Non-trivially-copyable value (string field, exercises datastream path) ──
 
-   struct str_cfg {
+   struct [[sysio::table("strcfg")]] str_cfg {
       uint64_t    version;
       std::string label;
       SYSLIB_SERIALIZE(str_cfg, (version)(label))
@@ -162,6 +162,45 @@ public:
       check(val.label == "created", "strdefault: existing label");
 
       g2.remove();
+   }
+
+   // ── Explicit payer ───────────────────────────────────────────────────────
+
+   [[sysio::action]]
+   void payertest() {
+      kv::global<"payercfg"_n, pod_cfg> g(get_self());
+
+      // set with explicit payer
+      g.set({77, 0xAB}, get_self());
+      check(g.exists(), "payertest: should exist after set");
+
+      auto val = g.get();
+      check(val.rate == 77, "payertest: rate");
+      check(val.flags == 0xAB, "payertest: flags");
+
+      // get_or_create with explicit payer
+      kv::global<"payergoc"_n, pod_cfg> g2(get_self());
+      auto val2 = g2.get_or_create(get_self(), {88, 0xCD});
+      check(val2.rate == 88, "payertest: get_or_create rate");
+
+      g.remove();
+      g2.remove();
+   }
+
+   // ── Cross-contract read ──────────────────────────────────────────────────
+
+   [[sysio::action]]
+   void crossread() {
+      // Store a value under our own code
+      pod_global g(get_self());
+      g.set({42, 0xFF}, get_self());
+      check(g.exists(), "crossread: own global should exist");
+
+      // A global with same name but different code should be empty
+      pod_global other("othercode"_n);
+      check(!other.exists(), "crossread: other code should not see our data");
+
+      g.remove();
    }
 };
 

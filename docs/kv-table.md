@@ -1,181 +1,161 @@
 # sysio::kv::table
 
+> This is the primary KV table abstraction for new contracts.
+
 ## Include
 
 ```cpp
 #include <sysio/kv_table.hpp>
 ```
 
+For `_i` literal support:
+```cpp
+#include <sysio/hash_id.hpp>
+```
+
 ## Overview
 
-`sysio::kv::table<TableName, T>` provides a simpler, lower-overhead interface for contracts that do not need secondary indices. It uses format=1 keys (`[table:8B][scope:8B][pk:8B]`), the same as `multi_index`.
+`kv::table<TableName, K, V, Indices...>` is a strongly-typed ordered key-value table with optional secondary indices. Keys are user-defined structs serialized to big-endian byte order for correct lexicographic comparison.
 
-Key properties:
+Each table gets a unique `table_id` (uint16, DJB2 hash of template parameter), providing automatic namespace isolation — no key collisions between different tables.
 
-- **Zero-copy** for `trivially_copyable` structs: values are stored/loaded via `memcpy` instead of datastream serialization, provided `sizeof(T) == pack_size(T)` (no struct padding)
-- Falls back to datastream serialization for complex types (vectors, strings, nested structs)
-- No secondary index support -- use `multi_index` or `indexed_table` if you need secondary lookups
-- No object caching -- each `find`/`get` call reads from storage
-- Bidirectional iterators: `begin`/`end`, `lower_bound`/`upper_bound`
-- Cross-scope iteration via `begin_all_scopes()` / `end_all_scopes()` (unique to `kv::table`)
-- Row type must have a `uint64_t primary_key() const` method
+## Template Parameters
 
-## When to use kv::table
+```cpp
+template<name::raw TableName, typename K, typename V, typename... Indices>
+```
 
-Use `kv::table` when you need:
-- Maximum read/write throughput on simple POD structs (zero-copy path)
-- Cross-scope iteration (`begin_all_scopes`)
-- A scope-based table without secondary index overhead
+- **TableName** — table identifier. Both `_n` and `_i` literals work:
+  ```cpp
+  kv::table<"accounts"_n, my_key, my_val>              // short name
+  kv::table<"user_balance_history"_i, my_key, my_val>   // long name (>13 chars)
+  ```
+- **K** — key struct (must have `SYSLIB_SERIALIZE`)
+- **V** — value struct (must have `SYSLIB_SERIALIZE`)
+- **Indices...** — zero or more `kv::index<"name"_n, extractor>` declarations
 
-Do **not** use `kv::table` if you need secondary indices -- use `multi_index` or `kv::indexed_table` instead.
+\*\*ABI annotations are optional for `_n` tables\*\* — the abigen auto-derives the table name, value type, and key metadata from the template parameters. For `_i` tables, `[[sysio::table("long_name")]]` is still required (DJB2 hash can\'t reverse to the original string). `[[sysio::kv_key("struct")]]` can override the auto-derived key metadata if needed.
 
 ## Constructor
 
 ```cpp
-kv::table<"balances"_n, balance_row> bal(code, scope);
+kv::table<"mytbl"_n, K, V> tbl(get_self());   // reads own data
+kv::table<"mytbl"_n, K, V> tbl("other"_n);    // reads another contract's data
 ```
 
-- `code` -- the contract account that owns the data
-- `scope` -- partitions rows within the same table (e.g., use account name as scope for per-account tables)
+## Query Methods
 
-## API reference
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `find(key)` | `const_iterator` | Find by primary key; `end()` if missing |
+| `require_find(key, msg)` | `const_iterator` | Find or assert |
+| `get(key, msg)` | `V` | Get value by key; asserts if missing |
+| `try_get(key)` | `std::optional<V>` | Get value; nullopt if missing |
+| `contains(key)` | `bool` | Check existence |
+| `lower_bound(key)` | `const_iterator` | First entry >= key |
+| `upper_bound(key)` | `const_iterator` | First entry > key |
+| `begin()` / `end()` | `const_iterator` | Full range in key order |
+| `cbegin()` / `cend()` | `const_iterator` | Const aliases |
+| `rbegin()` / `rend()` | `const_reverse_iterator` | Reverse iteration |
+
+## Mutation Methods
 
 | Method | Description |
 |--------|-------------|
-| `find(pk)` | Returns iterator, or `end()` if not found |
-| `require_find(pk, msg)` | find() + assert |
-| `get(pk, msg)` | Returns row by value, asserts if missing |
-| `contains(pk)` | Returns `bool`, single intrinsic call |
-| `lower_bound(pk)` | First entry with key >= pk |
-| `upper_bound(pk)` | First entry with key > pk |
-| `begin()` / `end()` | Forward iteration over all rows in scope |
-| `emplace(payer, constructor)` | Construct and store a new row |
-| `modify(itr, payer, updater)` | Update an existing row |
-| `erase(pk)` / `erase(itr)` | Delete a row |
-| `available_primary_key()` | Next auto-increment key |
-| `begin_all_scopes()` / `end_all_scopes()` | Iterate ALL rows across ALL scopes (returns `scoped_row`) |
+| `emplace(payer, key, value)` | Insert new row. **Asserts if key exists.** |
+| `emplace(payer, key, lambda)` | Lambda emplace: `[](V& v){ v.x = 1; }` |
+| `emplace(key, value)` | Self-payer variant |
+| `upsert(payer, key, value)` | Insert or update (handles secondary index cleanup) |
+| `set(payer, key, value)` | Alias for `upsert` |
+| `modify(payer, iter, value)` | Update via iterator |
+| `modify(payer, key, lambda)` | Update by key + lambda |
+| `erase(iter)` | Erase via iterator; returns next |
+| `erase(key)` | Erase by key; asserts if missing |
 
-## Zero-copy optimization
+## Iterator
 
-See [Zero-Copy Serialization](kv-storage-guide.md#zero-copy-serialization) in the storage guide. This optimization applies to all table APIs — `kv::table`, `kv::indexed_table`, `kv::raw_table`, `kv::global`, `singleton`, and `multi_index`.
+- `*it` returns `const V&` (value only, like multi_index)
+- `it->field` accesses value fields directly
+- `it.key()` returns `const K&` for the key
+- Bidirectional: `++it`, `--it`
+- Copy-constructible (supports `std::reverse_iterator`)
+- Post-increment/decrement deleted
 
-## Example
+## Secondary Indices
+
+Declare with `kv::index`:
 
 ```cpp
+using my_table = kv::table<"users"_n, user_key, user_val,
+   kv::index<"byowner"_n, kv::member_data<user_val, name, &user_val::owner>>,
+   kv::index<"bybal"_n, kv::const_mem_fun<user_val, uint64_t, &user_val::get_balance>>
+>;
+```
+
+Access via `get_index`:
+
+```cpp
+auto idx = tbl.get_index<"byowner"_n>();
+auto it = idx.find("alice"_n);
+auto lb = idx.lower_bound(100);
+```
+
+Secondary iterator: `*it` returns `const V&`, `it.key()` returns `const K&`. Supports `modify`, `erase`, `begin/end`, `rbegin/rend`.
+
+Key-only iteration (no value deserialization): `key_begin()` / `key_end()`.
+
+## Complete Example
+
+```cpp
+#include <sysio/sysio.hpp>
 #include <sysio/kv_table.hpp>
-#include <sysio/sysio.hpp>
 
 using namespace sysio;
 
-struct balance_row {
-   uint64_t account;
-   uint64_t amount;
-
-   uint64_t primary_key() const { return account; }
-
-   SYSLIB_SERIALIZE(balance_row, (account)(amount))
+struct user_key {
+   uint64_t id;
+   SYSLIB_SERIALIZE(user_key, (id))
 };
 
-using balance_table = kv::table<"balances"_n, balance_row>;
-
-class [[sysio::contract]] fasttoken : public contract {
-public:
-   using contract::contract;
-
-   [[sysio::action]]
-   void transfer(name from, name to, uint64_t amount) {
-      require_auth(from);
-      balance_table bal(get_self(), get_self().value);
-
-      // Debit
-      auto sender = bal.get(from.value, "sender not found");
-      check(sender.amount >= amount, "insufficient balance");
-      balance_row updated = sender;
-      updated.amount -= amount;
-      bal.modify(bal.find(from.value), get_self(), [&](auto& r) { r = updated; });
-
-      // Credit
-      auto to_itr = bal.find(to.value);
-      if (to_itr == bal.end()) {
-         bal.emplace(get_self(), [&](auto& r) {
-            r.account = to.value;
-            r.amount = amount;
-         });
-      } else {
-         bal.modify(to_itr, get_self(), [&](auto& r) { r.amount += amount; });
-      }
-   }
-
-   [[sysio::action]]
-   void dumpall() {
-      balance_table bal(get_self(), get_self().value);
-      // Cross-scope iteration: see ALL balances regardless of scope
-      for (auto it = bal.begin_all_scopes(); it != bal.end_all_scopes(); ++it) {
-         print("scope=", it->scope, " pk=", it->primary_key, " amount=", it->obj.amount, "\n");
-      }
-   }
-};
-```
-
----
-
-## Singleton
-
-`sysio::singleton<Name, T>` is built on `kv::table` and stores a single value per scope. It is the scoped equivalent of [`kv::global`](kv-global.md).
-
-### Include
-
-```cpp
-#include <sysio/singleton.hpp>
-```
-
-### API reference
-
-| Method | Description |
-|--------|-------------|
-| `exists()` | Returns true if a value has been stored |
-| `get()` | Returns stored value, asserts if missing |
-| `get_or_default(def)` | Returns stored value or `def` |
-| `get_or_create(payer, def)` | Returns stored value, or stores and returns `def` |
-| `set(value, payer)` | Stores or overwrites the value |
-| `remove()` | Deletes the stored value |
-
-### When to use singleton vs kv::global
-
-- **singleton** -- one value per scope. Use when different scopes need different config (e.g., per-account settings).
-- **[kv::global](kv-global.md)** -- one value per contract, no scope. Use for contract-wide config (rate limits, feature flags). Simpler API, smaller key (8B vs 24B).
-
-### Example
-
-```cpp
-#include <sysio/sysio.hpp>
-#include <sysio/singleton.hpp>
-
-using namespace sysio;
-
-struct app_config {
-   uint64_t version;
-   std::string name;
-   SYSLIB_SERIALIZE(app_config, (version)(name))
+struct [[sysio::table("users")]] user_val {
+   uint64_t balance;
+   name     owner;
+   uint64_t get_balance() const { return balance; }
+   SYSLIB_SERIALIZE(user_val, (balance)(owner))
 };
 
-using config_singleton = singleton<"config"_n, app_config>;
+using users_table = kv::table<"users"_n, user_key, user_val,
+   kv::index<"byowner"_n, kv::member_data<user_val, name, &user_val::owner>>
+>;
 
 class [[sysio::contract]] myapp : public contract {
 public:
    using contract::contract;
+   users_table users{get_self()};
 
    [[sysio::action]]
-   void init() {
-      config_singleton cfg(get_self(), get_self().value);
-      cfg.set({1, "myapp"}, get_self());
+   void adduser(uint64_t id, uint64_t balance, name owner) {
+      users.emplace(get_self(), {id}, {balance, owner});
    }
 
    [[sysio::action]]
-   void getver() {
-      config_singleton cfg(get_self(), get_self().value);
-      auto c = cfg.get_or_default({0, ""});
-      print("version: ", c.version);
+   void pay(uint64_t id, uint64_t amount) {
+      users.modify(get_self(), {id}, [&](user_val& u) {
+         u.balance += amount;
+      });
+   }
+
+   [[sysio::action]]
+   void lookup(name owner) {
+      auto idx = users.get_index<"byowner"_n>();
+      auto it = idx.find(owner);
+      check(it != idx.end(), "user not found");
+      print("balance: ", it->balance);
+   }
+
+   [[sysio::action]]
+   void rmuser(uint64_t id) {
+      users.erase({id});
    }
 };
 ```

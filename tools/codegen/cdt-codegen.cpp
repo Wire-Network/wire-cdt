@@ -4,6 +4,7 @@
 #include <sysio/whereami/whereami.hpp>
 
 #include <fstream>
+#include <map>
 #include <set>
 #include <sstream>
 #include <unistd.h>
@@ -506,6 +507,40 @@ int main(int argc, const char** argv) {
                has_pre_dispatch = true;
             if (desc.has_key("has_post_dispatch") && desc["has_post_dispatch"].as_bool())
                has_post_dispatch = true;
+         }
+      }
+
+      // Validate table_id uniqueness across all tables and secondary indexes.
+      // Two different tables/indices sharing the same table_id would corrupt data.
+      if (abi.has_key("tables") && abi["tables"].size() > 1) {
+         std::map<uint64_t, std::string> seen_ids; // table_id -> owner name
+         for (const auto& tbl : abi["tables"].array_range()) {
+            if (tbl.has_key("table_id")) {
+               auto tid = tbl["table_id"].as<uint64_t>();
+               auto tname = tbl["name"].as<std::string>();
+               auto [it, inserted] = seen_ids.emplace(tid, tname);
+               if (!inserted) {
+                  throw std::runtime_error(
+                     "table_id collision: '" + it->second + "' and '" + tname +
+                     "' both have table_id " + std::to_string(tid) +
+                     ". Rename one of the tables to avoid the collision.");
+               }
+               if (tbl.has_key("secondary_indexes")) {
+                  for (const auto& si : tbl["secondary_indexes"].array_range()) {
+                     if (si.has_key("table_id")) {
+                        auto sid = si["table_id"].as<uint64_t>();
+                        auto sname = tname + "." + si["name"].as<std::string>();
+                        auto [sit, sins] = seen_ids.emplace(sid, sname);
+                        if (!sins) {
+                           throw std::runtime_error(
+                              "table_id collision: '" + sit->second + "' and '" + sname +
+                              "' both have table_id " + std::to_string(sid) +
+                              ". Rename one of the tables/indexes to avoid the collision.");
+                        }
+                     }
+                  }
+               }
+            }
          }
       }
 

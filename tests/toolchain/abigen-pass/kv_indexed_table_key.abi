@@ -54,7 +54,15 @@
             "type": "order_val",
             "index_type": "i64",
             "key_names": ["tag","market","seq"],
-            "key_types": ["uint8","string","uint64"]
+            "key_types": ["uint8","string","uint64"],
+            "table_id": 59847,
+            "secondary_indexes": [
+                {
+                    "name": "byprice",
+                    "key_type": "uint64",
+                    "table_id": 56521
+                }
+            ]
         }
     ],
     "ricardian_clauses": [],

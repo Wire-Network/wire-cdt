@@ -2,7 +2,7 @@
 #include <cstdint>
 
 // RAII wrappers for KV iterator handles.
-// Non-template base — one code copy in WASM per destroy function.
+// Parameterized on destroy function — one WASM code copy per instantiation.
 
 extern "C" {
    __attribute__((sysio_wasm_import))

@@ -1,0 +1,60 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "order_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "region",
+                    "type": "string"
+                },
+                {
+                    "name": "seq",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "order_val",
+            "base": "",
+            "fields": [
+                {
+                    "name": "amount",
+                    "type": "uint64"
+                },
+                {
+                    "name": "buyer",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "orders",
+            "type": "order_val",
+            "index_type": "i64",
+            "key_names": ["region","seq"],
+            "key_types": ["string","uint64"],
+            "table_id": 59847
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

@@ -9,6 +9,27 @@
 #include "ppcallbacks.hpp"
 #include <sysio/abi.hpp>
 
+// DJB2 hash of 8 big-endian bytes of a uint64_t, truncated to uint16.
+// Must match sysio::kv::compute_table_id in kv_constants.hpp.
+static inline uint64_t djbh_hash_raw(uint64_t raw) {
+   uint64_t hash = 5381;
+   for (int i = 0; i < 8; ++i)
+      hash = ((hash << 5) + hash) + static_cast<uint8_t>(raw >> (56 - i * 8));
+   return hash;
+}
+
+static inline uint16_t compute_table_id_from_raw(uint64_t raw) {
+   return static_cast<uint16_t>(djbh_hash_raw(raw) % 65536);
+}
+
+// Must match sysio::kv::compute_sec_table_id in kv_constants.hpp.
+static inline uint16_t compute_sec_table_id_from_raw(uint64_t table_raw, uint64_t index_raw) {
+   uint64_t hash = djbh_hash_raw(table_raw);
+   for (int i = 0; i < 8; ++i)
+      hash = ((hash << 5) + hash) + static_cast<uint8_t>(index_raw >> (56 - i * 8));
+   return static_cast<uint16_t>(hash % 65536);
+}
+
 #include <fstream>
 #include <jsoncons/json.hpp>
 
@@ -255,20 +276,32 @@ namespace sysio { namespace cdt {
          t.type = decl->getNameAsString();
          auto table_name = decl.getSysioTableAttr()->getName();
          if (!table_name.empty()) {
-            validate_name( table_name.str(), [&](auto s) { CDT_ERROR("abigen_error", decl->getLocation(), s); } );
+            // Table names are free-form strings (table_id provides on-chain identity).
+            // No 13-char name restriction — _i literals can use long names.
             t.name = table_name.str();
          }
          else {
             t.name = t.type;
+         }
+         // Compute table_id: if name fits in eosio name encoding, use that.
+         // Otherwise hash the string directly.
+         if (t.name.size() <= 13) {
+            t.table_id = compute_table_id_from_raw(string_to_name(t.name.c_str()));
+         } else {
+            // For long names (_i literals), DJB2 hash the string then hash the raw bytes
+            uint64_t str_hash = 5381;
+            for (char c : t.name)
+               str_hash = ((str_hash << 5) + str_hash) + static_cast<uint8_t>(c);
+            t.table_id = compute_table_id_from_raw(str_hash);
          }
 
          // [[sysio::kv_key("struct_name")]] — resolve key struct fields into key_names/key_types
          if (decl.isSysioKvKey()) {
             auto key_struct_name = decl.getSysioKvKeyAttr()->getName().str();
             if (key_struct_name.empty()) {
-               // No argument: use standard KV key layout
-               t.key_names = {"table_name", "scope", "primary_key"};
-               t.key_types = {"name", "name", "uint64"};
+               // No argument: standard scoped key layout [scope:8B][pk:8B]
+               t.key_names = {"scope", "primary_key"};
+               t.key_types = {"name", "uint64"};
             } else {
                // Search for key struct: nested types, then enclosing class
                const clang::CXXRecordDecl* key_record = nullptr;
@@ -332,16 +365,67 @@ namespace sysio { namespace cdt {
 
       enum class kv_table_kind { legacy, kv_standard, kv_global };
 
+      /// Add a kv::table<Name, K, V> — extracts key metadata from K, uses V as row type.
+      /// If V has [[sysio::kv_key("struct")]] annotation, that overrides K's fields.
+      void add_kv_table( uint64_t name, const clang::CXXRecordDecl* key_decl, const clang::CXXRecordDecl* val_decl,
+                         std::vector<abi_secondary_index> sec_indexes = {} ) {
+         abi_table t;
+         t.type = val_decl->getNameAsString();
+         t.table_id = compute_table_id_from_raw(name);
+
+         // Use [[sysio::table("name")]] from V for the table name if available,
+         // otherwise fall back to name_to_string(template param)
+         auto val_wrap = clang_wrapper::wrap_decl(val_decl);
+         if (val_wrap.isSysioTable()) {
+            auto tbl_name = val_wrap.getSysioTableAttr()->getName();
+            if (!tbl_name.empty())
+               t.name = tbl_name.str();
+            else
+               t.name = name_to_string(name);
+         } else {
+            t.name = name_to_string(name);
+         }
+
+         // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K
+         const clang::CXXRecordDecl* key_source = key_decl;
+         if (val_wrap.isSysioKvKey()) {
+            auto kv_key_name = val_wrap.getSysioKvKeyAttr()->getName().str();
+            if (!kv_key_name.empty()) {
+               // Search for the override key struct
+               const clang::CXXRecordDecl* override_key = nullptr;
+               if (auto* ctx = val_decl->getDeclContext()) {
+                  for (auto* d : ctx->decls()) {
+                     if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
+                        if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
+                           override_key = r; break;
+                        }
+                     }
+                  }
+               }
+               if (override_key) key_source = override_key;
+            }
+         }
+
+         for (auto* field : key_source->fields()) {
+            t.key_names.push_back(field->getName().str());
+            t.key_types.push_back(translate_type(field->getType()));
+         }
+         t.secondary_indexes = std::move(sec_indexes);
+         kv_key_structs.insert(key_decl->getNameAsString());
+         _abi.tables.insert(t);
+      }
+
       void add_table( uint64_t name, const clang::CXXRecordDecl* decl, kv_table_kind kind = kv_table_kind::legacy ) {
          abi_table t;
          t.type = decl->getNameAsString();
          t.name = name_to_string(name);
+         t.table_id = compute_table_id_from_raw(name);
          if (kind == kv_table_kind::kv_standard) {
-            // Format=1: fixed 24-byte big-endian key: [table_name:8B][scope:8B][primary_key:8B]
-            t.key_names = {"table_name", "scope", "primary_key"};
-            t.key_types = {"name", "name", "uint64"};
+            // KV multi_index: key = [scope:8B BE][pk:8B BE], table_id provides isolation
+            t.key_names = {"scope", "primary_key"};
+            t.key_types = {"name", "uint64"};
          } else if (kind == kv_table_kind::kv_global) {
-            // Format=0: single 8-byte big-endian name key
+            // KV global: single 8-byte big-endian name key
             t.key_names = {"name"};
             t.key_types = {"name"};
          }
@@ -707,6 +791,18 @@ namespace sysio { namespace cdt {
          o["key_types"] = ojson::array();
          for (const auto& kt : t.key_types)
             o["key_types"].push_back(kt);
+         if (t.table_id != 0)
+            o["table_id"] = t.table_id;
+         if (!t.secondary_indexes.empty()) {
+            o["secondary_indexes"] = ojson::array();
+            for (const auto& si : t.secondary_indexes) {
+               ojson idx;
+               idx["name"] = si.name;
+               idx["key_type"] = si.key_type;
+               idx["table_id"] = si.table_id;
+               o["secondary_indexes"].push_back(std::move(idx));
+            }
+         }
          return o;
       }
 
@@ -787,21 +883,30 @@ namespace sysio { namespace cdt {
             return name.substr(0,i+1);
          };
 
+         // Merge tables: [[sysio::table]] annotated (ctables) take priority over
+         // auto-detected (_abi.tables) when both have the same name.
          std::set<abi_table> set_of_tables;
          for ( auto t : ctables ) {
-            bool has_multi_index = false;
-            for ( auto u : _abi.tables ) {
-               if (t.type == u.type) {
-                  has_multi_index = true;
+            // Transfer table_id and secondary_indexes from auto-detected entry
+
+            for ( const auto& u : _abi.tables ) {
+               if (u.name == t.name) {
+
+                  if (t.table_id == 0 && u.table_id != 0)
+                     t.table_id = u.table_id;
+                  if (t.secondary_indexes.empty() && !u.secondary_indexes.empty())
+                     t.secondary_indexes = u.secondary_indexes;
+                  if (t.key_names.empty() && !u.key_names.empty()) {
+                     t.key_names = u.key_names;
+                     t.key_types = u.key_types;
+                  }
                   break;
                }
-               set_of_tables.insert(u);
             }
-            if (!has_multi_index)
-               set_of_tables.insert(t);
+            set_of_tables.insert(t);
          }
          for ( auto t : _abi.tables ) {
-            set_of_tables.insert(t);
+            set_of_tables.insert(t); // no-op if name already present from ctables
          }
 
          std::function<std::string(const std::string&)> get_root_name;
@@ -1081,14 +1186,73 @@ namespace sysio { namespace cdt {
                      kind = abigen::kv_table_kind::kv_standard;
                   else if (d->getName() == "global")
                      kind = abigen::kv_table_kind::kv_global;
-                  // second template parameter is table type
-                  const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
-                  auto table_decl = clang_wrapper::wrap_decl(table_type);
-                  if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(d)) {
-                     // first parameter is table name
-                     ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type, kind);
-                     if (table_decl.isSysioTable())
-                        ag.add_struct(table_type);
+                  if (d->getName() == "table" && d->getTemplateArgs().size() >= 3) {
+                     // kv::table<Name, K, V, ...Indices>
+                     const auto* key_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
+                     const auto* val_type = d->getTemplateArgs()[2].getAsType().getTypePtr()->getAsCXXRecordDecl();
+                     auto val_decl = clang_wrapper::wrap_decl(val_type);
+                     if ((val_decl.isSysioTable() && ag.is_sysio_contract(val_decl, ag.get_contract_name())) || defined_in_contract(d)) {
+                        auto table_name_raw = d->getTemplateArgs()[0].getAsIntegral().getLimitedValue();
+
+                        // Extract secondary index info from Indices... (args[3..])
+                        // Variadic packs may appear as individual args OR as a single Pack arg.
+                        std::vector<abi_secondary_index> sec_indexes;
+
+                        auto extract_index = [&](const clang::TemplateArgument& arg) {
+                           if (arg.getKind() == clang::TemplateArgument::Type) {
+                              auto* record = arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
+                              auto* idx_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record);
+                              if (idx_spec->getTemplateArgs().size() < 1) return;
+                              auto first_arg = idx_spec->getTemplateArgs()[0];
+                              if (first_arg.getKind() != clang::TemplateArgument::Integral) return;
+                              auto idx_name_raw = first_arg.getAsIntegral().getLimitedValue();
+                              abi_secondary_index si;
+                              si.name = name_to_string(idx_name_raw);
+                              si.table_id = compute_sec_table_id_from_raw(table_name_raw, idx_name_raw);
+                              // Determine key type from extractor
+                              if (idx_spec->getTemplateArgs().size() >= 2) {
+                                 auto ext_arg = idx_spec->getTemplateArgs()[1];
+                                 if (ext_arg.getKind() == clang::TemplateArgument::Type) {
+                                    auto* ext_record = ext_arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
+                                    if (ext_record) {
+                                       auto* ext_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(ext_record);
+                                       if (ext_spec && ext_spec->getTemplateArgs().size() >= 2) {
+                                          si.key_type = ag.translate_type(ext_spec->getTemplateArgs()[1].getAsType());
+                                       }
+                                    }
+                                 }
+                              }
+                              if (si.key_type.empty()) si.key_type = "bytes";
+                              sec_indexes.push_back(std::move(si));
+                           }
+                        };
+
+
+                        for (size_t i = 3; i < d->getTemplateArgs().size(); ++i) {
+                           auto arg = d->getTemplateArgs()[i];
+                           if (arg.getKind() == clang::TemplateArgument::Pack) {
+                              // Variadic pack — iterate its contents
+                              for (const auto& pack_elem : arg.pack_elements()) {
+                                 extract_index(pack_elem);
+                              }
+                           } else {
+                              extract_index(arg);
+                           }
+                        }
+
+                        ag.add_kv_table(table_name_raw, key_type, val_type, std::move(sec_indexes));
+                        ag.add_struct(val_type);
+                        ag.add_struct(key_type);
+                     }
+                  } else {
+                     // multi_index, singleton, kv_multi_index, global — arg[1] is value type
+                     const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
+                     auto table_decl = clang_wrapper::wrap_decl(table_type);
+                     if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(d)) {
+                        ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type, kind);
+                        if (table_decl.isSysioTable())
+                           ag.add_struct(table_type);
+                     }
                   }
                }
             }

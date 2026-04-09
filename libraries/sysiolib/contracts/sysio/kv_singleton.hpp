@@ -1,12 +1,12 @@
 #pragma once
-#include "kv_table.hpp"
+#include "kv_multi_index.hpp"
 #include "system.hpp"
 
 namespace sysio {
 
    /**
     * KV-backed singleton. Drop-in replacement for sysio::singleton.
-    * Uses sysio::kv::table instead of legacy multi_index.
+    * Backed by kv_multi_index (single-row table with fixed primary key).
     */
    template<name::raw SingletonName, typename T>
    class kv_singleton
@@ -19,7 +19,7 @@ namespace sysio {
          SYSLIB_SERIALIZE( row, (value) )
       };
 
-      typedef sysio::kv::table<SingletonName, row> table;
+      typedef kv_multi_index<SingletonName, row> table;
 
       public:
 

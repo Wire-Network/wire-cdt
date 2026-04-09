@@ -32,11 +32,11 @@ void test_db( void ) {
    kv_it_destroy(h);
 
    // Secondary index operations
-   kv_idx_store(0, 0, 0, "p", 1, "s", 1);
-   kv_idx_update(0, 0, 0, "p", 1, "s", 1, "t", 1);
-   kv_idx_remove(0, 0, "p", 1, "s", 1);
-   int32_t sh = kv_idx_find_secondary(0, 0, 0, "s", 1);
-   int32_t lb = kv_idx_lower_bound(0, 0, 0, "s", 1);
+   kv_idx_store(0, 100, "p", 1, "s", 1);
+   kv_idx_update(0, 100, "p", 1, "s", 1, "t", 1);
+   kv_idx_remove(100, "p", 1, "s", 1);
+   int32_t sh = kv_idx_find_secondary(0, 100, "s", 1);
+   int32_t lb = kv_idx_lower_bound(0, 100, "s", 1);
    (void)lb;
    kv_idx_next(sh);
    kv_idx_prev(sh);
