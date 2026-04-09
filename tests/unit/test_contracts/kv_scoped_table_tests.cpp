@@ -417,4 +417,30 @@ public:
       }
       check(count == 0, "empty table -> 0 scopes");
    }
+
+   // upsert with lambda: insert-or-modify in 2 intrinsic calls
+   [[sysio::action]] void upsertlam() {
+      accounts accts(get_self(), "ul"_n.value);
+
+      // First call: key doesn't exist → inserts default_value
+      accts.upsert(get_self(), pk_key{1}, account{100, "alice"_n},
+         [](account& a) { a.balance += 50; });
+      check(accts.get(pk_key{1}).balance == 100, "first upsert should use default (100)");
+
+      // Second call: key exists → applies updater lambda
+      accts.upsert(get_self(), pk_key{1}, account{100, "alice"_n},
+         [](account& a) { a.balance += 50; });
+      check(accts.get(pk_key{1}).balance == 150, "second upsert should apply lambda (100+50)");
+
+      // Third call: updater accumulates again
+      accts.upsert(get_self(), pk_key{1}, account{100, "alice"_n},
+         [](account& a) { a.balance += 50; });
+      check(accts.get(pk_key{1}).balance == 200, "third upsert (150+50=200)");
+
+      // Verify secondary index reflects final value
+      auto idx = accts.get_index<"bybal"_n>();
+      auto it = idx.find(uint64_t(200));
+      check(it != idx.end(), "sec index should find balance=200");
+      check(it.key().id == 1, "sec index key should be 1");
+   }
 };

@@ -793,6 +793,66 @@ public:
       upsert(name{}, key, value);
    }
 
+   /// Insert with a default value, or update with a lambda.
+   /// If the key does not exist, inserts \p default_value.
+   /// If the key exists, reads the old value, applies \p updater, and writes back.
+   /// Cost: 1 kv_get + 1 kv_set = 2 intrinsic calls (optimal for insert-or-modify).
+   ///
+   /// Example:
+   /// \code
+   ///   tbl.upsert(payer, key, account{initial_deposit},
+   ///      [&](auto& a) { a.balance += deposit; });
+   /// \endcode
+   template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
+   void upsert(name payer, const K& key, const V& default_value, Lambda&& updater) {
+      auto k = make_key(key);
+      if constexpr (is_fixed_serializable_v<V>) {
+         char old_vbuf[sizeof(V)];
+         int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), old_vbuf, sizeof(V));
+         V new_value;
+         if (old_sz >= 0) {
+            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
+            new_value = old_value;
+            updater(new_value);
+            update_secondaries(payer.value, key, old_value, new_value);
+         } else {
+            new_value = default_value;
+            store_secondaries(payer.value, key, new_value);
+         }
+         char vbuf[sizeof(V)];
+         std::memcpy(vbuf, &new_value, sizeof(V));
+         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+      } else {
+         char stack[kv_value_stack_size];
+         int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), stack, kv_value_stack_size);
+         V new_value;
+         if (old_sz >= 0) {
+            const char* old_data = stack;
+            char* heap = nullptr;
+            if (old_sz > static_cast<int32_t>(kv_value_stack_size)) {
+               heap = new char[old_sz];
+               ::kv_get(_table_id, code(), k.data(), k.size(), heap, old_sz);
+               old_data = heap;
+            }
+            V old_value = deserialize_value(old_data, old_sz);
+            delete[] heap;
+            new_value = old_value;
+            updater(new_value);
+            update_secondaries(payer.value, key, old_value, new_value);
+         } else {
+            new_value = default_value;
+            store_secondaries(payer.value, key, new_value);
+         }
+         auto v = serialize_value(new_value);
+         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+      }
+   }
+
+   template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
+   void upsert(const K& key, const V& default_value, Lambda&& updater) {
+      upsert(name{}, key, default_value, std::forward<Lambda>(updater));
+   }
+
    void modify(name payer, const const_iterator& it, const V& new_value) {
       sysio::check(it._valid, "cannot modify end iterator");
       auto k = make_key(it._row.key);

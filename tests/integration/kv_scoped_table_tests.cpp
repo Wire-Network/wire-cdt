@@ -52,5 +52,6 @@ KV_SCOPED_TABLE_TEST( "kvscpi"_n, lambdaempl )
 KV_SCOPED_TABLE_TEST( "kvscpj"_n, prirev )
 KV_SCOPED_TABLE_TEST( "kvscpk"_n, crossread )
 KV_SCOPED_TABLE_TEST( "kvscpl"_n, emptyscope )
+KV_SCOPED_TABLE_TEST( "kvscpm"_n, upsertlam )
 
 BOOST_AUTO_TEST_SUITE_END()

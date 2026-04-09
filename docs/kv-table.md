@@ -66,11 +66,35 @@ kv::table<"mytbl"_n, K, V> tbl("other"_n);    // reads another contract's data
 | `emplace(payer, key, lambda)` | Lambda emplace: `[](V& v){ v.x = 1; }` |
 | `emplace(key, value)` | Self-payer variant |
 | `upsert(payer, key, value)` | Insert or update (handles secondary index cleanup) |
+| `upsert(payer, key, default, lambda)` | Insert default or apply lambda to existing. **2 intrinsic calls — optimal for insert-or-modify patterns.** |
 | `set(payer, key, value)` | Alias for `upsert` |
 | `modify(payer, iter, value)` | Update via iterator |
 | `modify(payer, key, lambda)` | Update by key + lambda |
 | `erase(iter)` | Erase via iterator; returns next |
 | `erase(key)` | Erase by key; asserts if missing |
+
+### Insert-or-modify pattern: `upsert` with lambda
+
+A common pattern is "create a row if it doesn't exist, or update it if it does." For example, adding a token balance:
+
+```cpp
+// Optimal: 2 intrinsic calls (1 kv_get + 1 kv_set)
+tbl.upsert(payer, key,
+   account{deposit},                         // default if key is new
+   [&](account& a) { a.balance += deposit; } // updater if key exists
+);
+```
+
+**Why this is better than alternatives:**
+
+| Approach | Intrinsic calls | Notes |
+|----------|----------------|-------|
+| `upsert(payer, key, default, lambda)` | 2 (1 get + 1 set) | Optimal |
+| `contains` + `emplace`/`modify` | 3-4 | Extra contains + emplace's internal contains |
+| `try_get` + `set` | 4 | try_get reads, set reads again internally |
+| `find` + `emplace`/`modify(iter)` | 3-4 | Iterator creation + positioning overhead |
+
+The lambda variant of `upsert` reads the old value once (to decide insert vs update and handle secondary indexes), applies the lambda if the row exists, and writes exactly once — the theoretical minimum for this operation.
 
 ## Iterator
 
