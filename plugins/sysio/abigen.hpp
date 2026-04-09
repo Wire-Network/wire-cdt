@@ -368,7 +368,7 @@ namespace sysio { namespace cdt {
       /// Add a kv::table<Name, K, V> — extracts key metadata from K, uses V as row type.
       /// If V has [[sysio::kv_key("struct")]] annotation, that overrides K's fields.
       void add_kv_table( uint64_t name, const clang::CXXRecordDecl* key_decl, const clang::CXXRecordDecl* val_decl,
-                         std::vector<abi_secondary_index> sec_indexes = {} ) {
+                         std::vector<abi_secondary_index> sec_indexes, bool scoped ) {
          abi_table t;
          t.type = val_decl->getNameAsString();
          t.table_id = compute_table_id_from_raw(name);
@@ -406,6 +406,10 @@ namespace sysio { namespace cdt {
             }
          }
 
+         if (scoped) {
+            t.key_names.push_back("scope");
+            t.key_types.push_back("name");
+         }
          for (auto* field : key_source->fields()) {
             t.key_names.push_back(field->getName().str());
             t.key_types.push_back(translate_type(field->getType()));
@@ -1180,13 +1184,13 @@ namespace sysio { namespace cdt {
             if (const auto* d = dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
                if (d->getName() == "multi_index" || d->getName() == "singleton" ||
                    d->getName() == "kv_multi_index" || d->getName() == "table" ||
-                   d->getName() == "global") {
+                   d->getName() == "scoped_table" || d->getName() == "global") {
                   abigen::kv_table_kind kind = abigen::kv_table_kind::legacy;
-                  if (d->getName() == "kv_multi_index" || d->getName() == "table")
+                  if (d->getName() == "kv_multi_index")
                      kind = abigen::kv_table_kind::kv_standard;
                   else if (d->getName() == "global")
                      kind = abigen::kv_table_kind::kv_global;
-                  if (d->getName() == "table" && d->getTemplateArgs().size() >= 3) {
+                  if ((d->getName() == "table" || d->getName() == "scoped_table") && d->getTemplateArgs().size() >= 3) {
                      // kv::table<Name, K, V, ...Indices>
                      const auto* key_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
                      const auto* val_type = d->getTemplateArgs()[2].getAsType().getTypePtr()->getAsCXXRecordDecl();
@@ -1240,7 +1244,8 @@ namespace sysio { namespace cdt {
                            }
                         }
 
-                        ag.add_kv_table(table_name_raw, key_type, val_type, std::move(sec_indexes));
+                        ag.add_kv_table(table_name_raw, key_type, val_type, std::move(sec_indexes),
+                                        d->getName() == "scoped_table");
                         ag.add_struct(val_type);
                         ag.add_struct(key_type);
                      }

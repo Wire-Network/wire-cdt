@@ -55,6 +55,9 @@ namespace sysio::testing {
       static std::vector<uint8_t> kv_indexed_table_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_indexed_table_tests.wasm"); }
       static std::vector<char>    kv_indexed_table_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_indexed_table_tests.abi"); }
 
+      static std::vector<uint8_t> kv_scoped_table_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_scoped_table_tests.wasm"); }
+      static std::vector<char>    kv_scoped_table_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_scoped_table_tests.abi"); }
+
       static std::vector<uint8_t> kv_singleton_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_singleton_tests.wasm"); }
       static std::vector<char>    kv_singleton_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_singleton_tests.abi"); }
 

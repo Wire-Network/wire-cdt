@@ -8,7 +8,8 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 
 | Type | Use Case | Header |
 |------|----------|--------|
-| [`kv::table`](kv-table.md) | Multiple rows, custom keys, optional secondary indices | `<sysio/kv_indexed_table.hpp>` |
+| [`kv::table`](kv-table.md) | Multiple rows, custom keys, optional secondary indices | `<sysio/kv_table.hpp>` |
+| [`kv::scoped_table`](kv-scoped-table.md) | Scoped rows (like multi_index, but faster) | `<sysio/kv_scoped_table.hpp>` |
 | [`kv::global`](kv-global.md) | Single value per contract (config, counters) | `<sysio/kv_global.hpp>` |
 
 ### Backward compatibility
@@ -20,17 +21,19 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 
 ## Decision Matrix
 
-| Feature | `kv::table` | `kv::global` | `multi_index` |
-|---------|-------------|--------------|---------------|
-| Key type | User-defined struct | Fixed (name) | `uint64_t` |
-| Multiple rows | Yes | No (single value) | Yes |
-| Secondary indices | Optional (up to 16) | No | Up to 16 |
-| Scope | No (table_id isolation) | No | Yes |
-| Key size | Variable (BE encoded) | 8 bytes | 16 bytes |
-| Long table names (`_i`) | Yes | Yes | No (`_n` only) |
-| Zero-copy | Yes (trivially_copyable) | Yes | Yes |
-| Lambda emplace | Yes | No | Yes |
-| auto-increment PK | No | No | `available_primary_key()` |
+| Feature | `kv::table` | `kv::scoped_table` | `kv::global` | `multi_index` |
+|---------|-------------|---------------------|--------------|---------------|
+| Key type | User-defined struct | User-defined struct | Fixed (name) | `uint64_t` |
+| Multiple rows | Yes | Yes | No (single value) | Yes |
+| Secondary indices | Optional (up to 16) | Optional (up to 16) | No | Up to 16 |
+| Scope | No (table_id isolation) | Yes (required) | No | Yes |
+| Key layout | `[K encoded]` | `[scope:8B][K encoded]` | `[name:8B]` | `[scope:8B][pk:8B]` |
+| Long table names (`_i`) | Yes | Yes | Yes | No (`_n` only) |
+| Zero-copy | Yes (trivially_copyable) | Yes | Yes | Yes |
+| Lambda emplace | Yes | Yes | No | Yes |
+| auto-increment PK | Yes (`primary_key()`) | Yes (`primary_key()`) | No | `available_primary_key()` |
+| Scope iteration | N/A | `scope_lower_bound()` | N/A | `get_table_by_scope` RPC |
+| Object cache | No | No | No | Yes (overhead) |
 
 ## table\_id Namespace Isolation
 

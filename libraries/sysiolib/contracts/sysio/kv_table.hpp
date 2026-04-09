@@ -257,11 +257,11 @@ struct index {
 };
 
 // ---------------------------------------------------------------------------
-// table
+// table_impl — internal implementation; use table<> or scoped_table<> below.
 // ---------------------------------------------------------------------------
 
-template<name::raw TableName, typename K, typename V, typename... Indices>
-class table {
+template<name::raw TableName, typename K, typename V, bool Scoped, typename... Indices>
+class table_impl {
    static_assert(sizeof...(Indices) <= 16, "table supports at most 16 secondary indices");
 
    static constexpr uint32_t _table_id = sysio::kv::compute_table_id(static_cast<uint64_t>(TableName));
@@ -286,17 +286,40 @@ class table {
    uint64_t _code = 0;
    uint64_t code() const { return _code ? _code : sysio::current_receiver().value; }
 
+protected:
+   uint64_t _scope = 0;
+   table_impl(sysio::name code, uint64_t scope) : _code(code.value), _scope(scope) {}
+
+public:
+
    // --- Key / value encoding helpers ---
 
-   static be_key_stream make_key(const K& key) {
+   be_key_stream make_key(const K& key) const {
+      be_key_stream bs;
+      if constexpr (Scoped) bs << _scope;
+      bs << key;
+      return bs;
+   }
+
+   /// Encode key without scope prefix — used for pri_key in secondary index storage.
+   static be_key_stream make_unscoped_key(const K& key) {
       be_key_stream bs;
       bs << key;
       return bs;
    }
 
-   static K decode_key(const char* data, size_t size) {
-      K key;
+   K decode_key(const char* data, size_t size) const {
       be_key_reader rd(data, size);
+      if constexpr (Scoped) { uint64_t dummy; rd >> dummy; }
+      K key;
+      rd >> key;
+      return key;
+   }
+
+   /// Decode key from unscoped bytes (secondary index pri_key).
+   static K decode_unscoped_key(const char* data, size_t size) {
+      be_key_reader rd(data, size);
+      K key;
       rd >> key;
       return key;
    }
@@ -330,18 +353,41 @@ class table {
    }
 
    template<typename SecKey>
-   static be_key_stream encode_sec_key(const SecKey& key) {
+   be_key_stream encode_sec_key(const SecKey& key) const {
       be_key_stream bs;
+      if constexpr (Scoped) bs << _scope;
       bs << key;
       return bs;
    }
 
    template<typename SecKey>
-   static SecKey decode_sec_key(const char* data, size_t size) {
-      SecKey key;
+   SecKey decode_sec_key(const char* data, size_t size) const {
       be_key_reader rd(data, size);
+      if constexpr (Scoped) { uint64_t dummy; rd >> dummy; }
+      SecKey key;
       rd >> key;
       return key;
+   }
+
+   // --- Scoped primary iterator creation ---
+
+   uint32_t create_primary_it() const {
+      if constexpr (Scoped) {
+         char prefix[8];
+         uint64_t s = _scope;
+         for (int i = 7; i >= 0; --i) { prefix[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+         return ::kv_it_create(_table_id, code(), prefix, 8);
+      } else {
+         return ::kv_it_create(_table_id, code(), nullptr, 0);
+      }
+   }
+
+   /// Build the full scoped key from unscoped pri_key bytes (for secondary index lookups).
+   be_key_stream make_full_key_from_pri(const char* pri_data, uint32_t pri_size) const {
+      be_key_stream bs;
+      if constexpr (Scoped) bs << _scope;
+      bs.write(pri_data, pri_size);
+      return bs;
    }
 
    // --- Secondary index management (recursive template) ---
@@ -351,32 +397,35 @@ class table {
       static constexpr uint32_t _sec_tid = sysio::kv::compute_sec_table_id(
          static_cast<uint64_t>(TableName), Index::index_name);
 
-      static void store_all(uint64_t payer, const char* pri_data, uint32_t pri_size, const V& value) {
+      static void store_all(const table_impl& tbl, uint64_t payer,
+                            const char* pri_data, uint32_t pri_size, const V& value) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
-         auto sec = encode_sec_key(ext(value));
+         auto sec = tbl.encode_sec_key(ext(value));
          ::kv_idx_store(payer, _sec_tid,
                         pri_data, pri_size, sec.data(), sec.size());
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::store_all(payer, pri_data, pri_size, value);
+            secondary_ops<N+1, Rest...>::store_all(tbl, payer, pri_data, pri_size, value);
       }
 
-      static void remove_all(const char* pri_data, uint32_t pri_size, const V& value) {
+      static void remove_all(const table_impl& tbl,
+                             const char* pri_data, uint32_t pri_size, const V& value) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
-         auto sec = encode_sec_key(ext(value));
+         auto sec = tbl.encode_sec_key(ext(value));
          ::kv_idx_remove(_sec_tid,
                          pri_data, pri_size, sec.data(), sec.size());
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::remove_all(pri_data, pri_size, value);
+            secondary_ops<N+1, Rest...>::remove_all(tbl, pri_data, pri_size, value);
       }
 
-      static void update_all(uint64_t payer, const char* pri_data, uint32_t pri_size,
+      static void update_all(const table_impl& tbl, uint64_t payer,
+                              const char* pri_data, uint32_t pri_size,
                               const V& old_val, const V& new_val) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
-         auto old_sec = encode_sec_key(ext(old_val));
-         auto new_sec = encode_sec_key(ext(new_val));
+         auto old_sec = tbl.encode_sec_key(ext(old_val));
+         auto new_sec = tbl.encode_sec_key(ext(new_val));
          bool same = (old_sec.size() == new_sec.size()) &&
                      (old_sec.size() == 0 || std::memcmp(old_sec.data(), new_sec.data(), old_sec.size()) == 0);
          if (!same) {
@@ -386,14 +435,14 @@ class table {
                             new_sec.data(), new_sec.size());
          }
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::update_all(payer, pri_data, pri_size, old_val, new_val);
+            secondary_ops<N+1, Rest...>::update_all(tbl, payer, pri_data, pri_size, old_val, new_val);
       }
    };
 
    struct no_secondary_ops {
-      static void store_all(uint64_t, const char*, uint32_t, const V&) {}
-      static void remove_all(const char*, uint32_t, const V&) {}
-      static void update_all(uint64_t, const char*, uint32_t, const V&, const V&) {}
+      static void store_all(const table_impl&, uint64_t, const char*, uint32_t, const V&) {}
+      static void remove_all(const table_impl&, const char*, uint32_t, const V&) {}
+      static void update_all(const table_impl&, uint64_t, const char*, uint32_t, const V&, const V&) {}
    };
 
    template<typename... Is>
@@ -402,17 +451,18 @@ class table {
    struct sec_ops_selector<> { using type = no_secondary_ops; };
    using sec_ops = typename sec_ops_selector<Indices...>::type;
 
+   /// Secondary ops use unscoped pri_key — saves 8B/row vs storing scoped key.
    void store_secondaries(uint64_t payer, const K& key, const V& value) {
-      auto pri = make_key(key);
-      sec_ops::store_all(payer, pri.data(), pri.size(), value);
+      auto pri = make_unscoped_key(key);
+      sec_ops::store_all(*this, payer, pri.data(), pri.size(), value);
    }
    void remove_secondaries(const K& key, const V& value) {
-      auto pri = make_key(key);
-      sec_ops::remove_all(pri.data(), pri.size(), value);
+      auto pri = make_unscoped_key(key);
+      sec_ops::remove_all(*this, pri.data(), pri.size(), value);
    }
    void update_secondaries(uint64_t payer, const K& key, const V& old_val, const V& new_val) {
-      auto pri = make_key(key);
-      sec_ops::update_all(payer, pri.data(), pri.size(), old_val, new_val);
+      auto pri = make_unscoped_key(key);
+      sec_ops::update_all(*this, payer, pri.data(), pri.size(), old_val, new_val);
    }
 
    // Internal insert (no duplicate check — caller must verify)
@@ -436,8 +486,8 @@ class table {
    }
 
 public:
-   /// Construct an table. Reads/iterates against \p code's data (default: current contract).
-   table(sysio::name code = sysio::name{}) : _code(code.value) {}
+   /// Construct a table. Reads/iterates against \p code's data (default: current contract).
+   table_impl(sysio::name code = sysio::name{}) : _code(code.value) {}
 
    name get_code() const { return name(_code ? _code : sysio::current_receiver().value); }
 
@@ -517,7 +567,7 @@ public:
       {
          if (o._valid && !o._raw_key.empty()) {
             _raw_key.assign(o._raw_key.data(), o._raw_key.size());
-            _handle.reset(::kv_it_create(_table_id, _tbl->code(), nullptr, 0));
+            _handle.reset(_tbl->create_primary_it());
             ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
          }
       }
@@ -526,7 +576,7 @@ public:
             _tbl = o._tbl; _valid = o._valid; _row = o._row;
             if (o._valid && !o._raw_key.empty()) {
                _raw_key.assign(o._raw_key.data(), o._raw_key.size());
-               _handle.reset(::kv_it_create(_table_id, _tbl->code(), nullptr, 0));
+               _handle.reset(_tbl->create_primary_it());
                ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
             }
          }
@@ -534,18 +584,18 @@ public:
       }
 
    private:
-      friend class table;
-      const table* _tbl = nullptr;
+      friend class table_impl;
+      const table_impl* _tbl = nullptr;
       kv::detail::it_handle _handle;
       bool                 _valid = false;
       row                  _row;
       key_buf              _raw_key;
 
-      const_iterator(const table* t, int32_t h, bool valid)
+      const_iterator(const table_impl* t, int32_t h, bool valid)
          : _tbl(t), _handle(h), _valid(valid) {
          if (_valid) load();
       }
-      static const_iterator make_end(const table* t) {
+      static const_iterator make_end(const table_impl* t) {
          const_iterator it; it._tbl = t; return it;
       }
 
@@ -563,7 +613,7 @@ public:
             _raw_key.assign(kh, key_size);
             delete[] kh;
          }
-         _row.key = decode_key(_raw_key.data(), _raw_key.size());
+         _row.key = _tbl->decode_key(_raw_key.data(), _raw_key.size());
 
          if constexpr (is_fixed_serializable_v<V>) {
             char vbuf[sizeof(V)];
@@ -588,7 +638,7 @@ public:
       void ensure_handle() {
          if (_handle >= 0) return;
          if (!_tbl) return;
-         _handle.reset(::kv_it_create(_table_id, _tbl->code(), nullptr, 0));
+         _handle.reset(_tbl->create_primary_it());
          if (_valid && !_raw_key.empty())
             ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
       }
@@ -597,7 +647,7 @@ public:
    // --- Primary key operations ---
 
    const_iterator begin() const {
-      uint32_t h = ::kv_it_create(_table_id, code(), nullptr, 0);
+      uint32_t h = create_primary_it();
       return const_iterator(this, h, ::kv_it_status(h) == 0);
    }
 
@@ -607,7 +657,7 @@ public:
       auto k = make_key(key);
       if (!::kv_contains(_table_id, code(), k.data(), k.size()))
          return end();
-      uint32_t h = ::kv_it_create(_table_id, code(), nullptr, 0);
+      uint32_t h = create_primary_it();
       ::kv_it_lower_bound(h, k.data(), k.size());
       return const_iterator(this, h, true);
    }
@@ -655,7 +705,7 @@ public:
 
    const_iterator lower_bound(const K& key) const {
       auto k = make_key(key);
-      uint32_t h = ::kv_it_create(_table_id, code(), nullptr, 0);
+      uint32_t h = create_primary_it();
       int32_t status = ::kv_it_lower_bound(h, k.data(), k.size());
       return const_iterator(this, h, status == 0);
    }
@@ -859,8 +909,8 @@ public:
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
       using secondary_key_type     = std::decay_t<typename secondary_extractor_type::result_type>;
 
-      table* _tbl;
-      secondary_index_view(table& tbl) : _tbl(&tbl) {}
+      table_impl* _tbl;
+      secondary_index_view(table_impl& tbl) : _tbl(&tbl) {}
 
       // --- key_row for key-only iteration ---
       struct key_row {
@@ -884,23 +934,34 @@ public:
 
          const_iterator& operator++() {
             if (!_valid || _handle < 0) return *this;
-            if (::kv_idx_next(_handle) == 0) load_current();
+            if (::kv_idx_next(_handle) == 0 && check_scope()) load_current();
             else _valid = false;
             return *this;
          }
 
          const_iterator& operator--() {
             if (_handle < 0) {
-               char max_sec[kv_key_max_bytes];
-               memset(max_sec, 0xFF, sizeof(max_sec));
-               _handle.reset(::kv_idx_lower_bound(
-                  _tbl->code(), _sec_table_id,
-                  max_sec, sizeof(max_sec)));
+               if constexpr (Scoped) {
+                  // Max sec key for this scope: [scope:8B][0xFF...]
+                  char max_sec[kv_key_max_bytes];
+                  uint64_t s = _tbl->_scope;
+                  for (int i = 7; i >= 0; --i) { max_sec[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+                  memset(max_sec + 8, 0xFF, sizeof(max_sec) - 8);
+                  _handle.reset(::kv_idx_lower_bound(
+                     _tbl->code(), _sec_table_id,
+                     max_sec, sizeof(max_sec)));
+               } else {
+                  char max_sec[kv_key_max_bytes];
+                  memset(max_sec, 0xFF, sizeof(max_sec));
+                  _handle.reset(::kv_idx_lower_bound(
+                     _tbl->code(), _sec_table_id,
+                     max_sec, sizeof(max_sec)));
+               }
                if (_handle < 0) { _valid = false; }
-               else if (::kv_idx_prev(_handle) == 0) { _valid = true; load_current(); }
+               else if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_current(); }
                else { _valid = false; }
             } else {
-               if (::kv_idx_prev(_handle) == 0) { _valid = true; load_current(); }
+               if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_current(); }
                else { _valid = false; }
             }
             return *this;
@@ -933,17 +994,32 @@ public:
 
       private:
          friend struct secondary_index_view;
-         table* _tbl = nullptr;
+
+         bool check_scope() const {
+            if constexpr (!Scoped) return true;
+            else {
+               if (_handle < 0) return false;
+               char scope_buf[8];
+               uint32_t actual = 0;
+               if (::kv_idx_key(_handle, 0, scope_buf, 8, &actual) != 0 || actual < 8)
+                  return false;
+               char expected[8];
+               uint64_t s = _tbl->_scope;
+               for (int i = 7; i >= 0; --i) { expected[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+               return memcmp(scope_buf, expected, 8) == 0;
+            }
+         }
+         table_impl* _tbl = nullptr;
          kv::detail::idx_handle _handle;
          bool           _valid = false;
          row            _row;
          key_buf        _pri_bytes;
 
-         const_iterator(table* tbl, int32_t handle, bool valid)
+         const_iterator(table_impl* tbl, int32_t handle, bool valid)
             : _tbl(tbl), _handle(handle), _valid(valid) {
             if (_valid) load_current();
          }
-         static const_iterator make_end(table* tbl) {
+         static const_iterator make_end(table_impl* tbl) {
             const_iterator it; it._tbl = tbl; return it;
          }
 
@@ -962,19 +1038,23 @@ public:
                _pri_bytes.assign(ph, pri_size);
                delete[] ph;
             }
-            _row.key = decode_key(_pri_bytes.data(), _pri_bytes.size());
+            // pri_bytes is unscoped [K] — decode directly
+            _row.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
+
+            // Reconstruct full scoped key for kv_get
+            auto full = _tbl->make_full_key_from_pri(_pri_bytes.data(), _pri_bytes.size());
 
             if constexpr (is_fixed_serializable_v<V>) {
                char vbuf[sizeof(V)];
                int32_t val_sz = ::kv_get(_table_id, _tbl->code(),
-                                         _pri_bytes.data(), _pri_bytes.size(),
+                                         full.data(), full.size(),
                                          vbuf, sizeof(V));
                if (val_sz < 0) { _valid = false; return; }
                std::memcpy(&_row.value, vbuf, sizeof(V));
             } else {
                char val_stack[kv_value_stack_size];
                int32_t val_sz = ::kv_get(_table_id, _tbl->code(),
-                                         _pri_bytes.data(), _pri_bytes.size(),
+                                         full.data(), full.size(),
                                          val_stack, kv_value_stack_size);
                if (val_sz < 0) { _valid = false; return; }
                if (val_sz <= static_cast<int32_t>(kv_value_stack_size)) {
@@ -982,7 +1062,7 @@ public:
                } else {
                   char* heap = new char[val_sz];
                   ::kv_get(_table_id, _tbl->code(),
-                           _pri_bytes.data(), _pri_bytes.size(), heap, val_sz);
+                           full.data(), full.size(), heap, val_sz);
                   _row.value = deserialize_value(heap, val_sz);
                   delete[] heap;
                }
@@ -1005,23 +1085,33 @@ public:
 
          key_iterator& operator++() {
             if (!_valid || _handle < 0) return *this;
-            if (::kv_idx_next(_handle) == 0) load_keys();
+            if (::kv_idx_next(_handle) == 0 && check_scope()) load_keys();
             else _valid = false;
             return *this;
          }
 
          key_iterator& operator--() {
             if (_handle < 0) {
-               char max_sec[kv_key_max_bytes];
-               memset(max_sec, 0xFF, sizeof(max_sec));
-               _handle.reset(::kv_idx_lower_bound(
-                  _tbl->code(), _sec_table_id,
-                  max_sec, sizeof(max_sec)));
+               if constexpr (Scoped) {
+                  char max_sec[kv_key_max_bytes];
+                  uint64_t s = _tbl->_scope;
+                  for (int i = 7; i >= 0; --i) { max_sec[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+                  memset(max_sec + 8, 0xFF, sizeof(max_sec) - 8);
+                  _handle.reset(::kv_idx_lower_bound(
+                     _tbl->code(), _sec_table_id,
+                     max_sec, sizeof(max_sec)));
+               } else {
+                  char max_sec[kv_key_max_bytes];
+                  memset(max_sec, 0xFF, sizeof(max_sec));
+                  _handle.reset(::kv_idx_lower_bound(
+                     _tbl->code(), _sec_table_id,
+                     max_sec, sizeof(max_sec)));
+               }
                if (_handle < 0) { _valid = false; }
-               else if (::kv_idx_prev(_handle) == 0) { _valid = true; load_keys(); }
+               else if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_keys(); }
                else { _valid = false; }
             } else {
-               if (::kv_idx_prev(_handle) == 0) { _valid = true; load_keys(); }
+               if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_keys(); }
                else { _valid = false; }
             }
             return *this;
@@ -1054,17 +1144,32 @@ public:
 
       private:
          friend struct secondary_index_view;
-         table* _tbl = nullptr;
+
+         bool check_scope() const {
+            if constexpr (!Scoped) return true;
+            else {
+               if (_handle < 0) return false;
+               char scope_buf[8];
+               uint32_t actual = 0;
+               if (::kv_idx_key(_handle, 0, scope_buf, 8, &actual) != 0 || actual < 8)
+                  return false;
+               char expected[8];
+               uint64_t s = _tbl->_scope;
+               for (int i = 7; i >= 0; --i) { expected[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+               return memcmp(scope_buf, expected, 8) == 0;
+            }
+         }
+         table_impl* _tbl = nullptr;
          kv::detail::idx_handle _handle;
          bool           _valid = false;
          key_row        _kr;
          key_buf        _pri_bytes;
 
-         key_iterator(table* tbl, int32_t handle, bool valid)
+         key_iterator(table_impl* tbl, int32_t handle, bool valid)
             : _tbl(tbl), _handle(handle), _valid(valid) {
             if (_valid) load_keys();
          }
-         static key_iterator make_end(table* tbl) {
+         static key_iterator make_end(table_impl* tbl) {
             key_iterator it; it._tbl = tbl; return it;
          }
 
@@ -1083,17 +1188,18 @@ public:
                _pri_bytes.assign(ph, pri_size);
                delete[] ph;
             }
-            _kr.key = decode_key(_pri_bytes.data(), _pri_bytes.size());
+            // pri_bytes is unscoped [K] — decode directly
+            _kr.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
 
             char sec_stack[64];
             uint32_t sec_size = 0;
             ::kv_idx_key(_handle, 0, sec_stack, 64, &sec_size);
             if (sec_size <= 64) {
-               _kr.sec_key = decode_sec_key<secondary_key_type>(sec_stack, sec_size);
+               _kr.sec_key = _tbl->template decode_sec_key<secondary_key_type>(sec_stack, sec_size);
             } else {
                char* heap = new char[sec_size];
                ::kv_idx_key(_handle, 0, heap, sec_size, &sec_size);
-               _kr.sec_key = decode_sec_key<secondary_key_type>(heap, sec_size);
+               _kr.sec_key = _tbl->template decode_sec_key<secondary_key_type>(heap, sec_size);
                delete[] heap;
             }
          }
@@ -1102,17 +1208,30 @@ public:
       // --- Secondary index view API ---
 
       const_iterator begin() const {
-         int32_t handle = ::kv_idx_lower_bound(
-            _tbl->code(), _sec_table_id, nullptr, 0);
+         int32_t handle;
+         if constexpr (Scoped) {
+            char scope_prefix[8];
+            uint64_t s = _tbl->_scope;
+            for (int i = 7; i >= 0; --i) { scope_prefix[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+            handle = ::kv_idx_lower_bound(
+               _tbl->code(), _sec_table_id, scope_prefix, 8);
+         } else {
+            handle = ::kv_idx_lower_bound(
+               _tbl->code(), _sec_table_id, nullptr, 0);
+         }
          if (handle < 0) return end();
-         return const_iterator(_tbl, handle, true);
+         const_iterator it(_tbl, handle, true);
+         if constexpr (Scoped) {
+            if (!it.check_scope()) return end();
+         }
+         return it;
       }
 
       const_iterator end() const { return const_iterator::make_end(_tbl); }
 
       template<typename SecKey>
       const_iterator find(const SecKey& sec_key) const {
-         auto sec = encode_sec_key(secondary_key_type(sec_key));
+         auto sec = _tbl->encode_sec_key(secondary_key_type(sec_key));
          int32_t handle = ::kv_idx_find_secondary(
             _tbl->code(), _sec_table_id,
             sec.data(), sec.size());
@@ -1122,7 +1241,7 @@ public:
 
       template<typename SecKey>
       const_iterator lower_bound(const SecKey& sec_key) const {
-         auto sec = encode_sec_key(secondary_key_type(sec_key));
+         auto sec = _tbl->encode_sec_key(secondary_key_type(sec_key));
          int32_t handle = ::kv_idx_lower_bound(
             _tbl->code(), _sec_table_id,
             sec.data(), sec.size());
@@ -1132,7 +1251,7 @@ public:
 
       template<typename SecKey>
       const_iterator upper_bound(const SecKey& sec_key) const {
-         auto sec = encode_sec_key(secondary_key_type(sec_key));
+         auto sec = _tbl->encode_sec_key(secondary_key_type(sec_key));
          // Append a NUL byte to make the query strictly greater than the encoded
          // key under byte comparison, so kv_idx_lower_bound returns the first
          // entry past the target.  Works for both fixed-size BE keys (extra byte
@@ -1162,7 +1281,7 @@ public:
       /// Do not dereference or advance the iterator after modify; re-find instead.
       void modify(name payer, const const_iterator& itr, const V& new_value) {
          sysio::check(itr._valid, "cannot modify end iterator");
-         auto k = make_key(itr._row.key);
+         auto k = _tbl->make_key(itr._row.key);
          _tbl->update_secondaries(
             payer.value, itr._row.key, itr._row.value, new_value);
          if constexpr (is_fixed_serializable_v<V>) {
@@ -1191,10 +1310,23 @@ public:
 
       // Key-only iteration
       key_iterator key_begin() const {
-         int32_t handle = ::kv_idx_lower_bound(
-            _tbl->code(), _sec_table_id, nullptr, 0);
+         int32_t handle;
+         if constexpr (Scoped) {
+            char scope_prefix[8];
+            uint64_t s = _tbl->_scope;
+            for (int i = 7; i >= 0; --i) { scope_prefix[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+            handle = ::kv_idx_lower_bound(
+               _tbl->code(), _sec_table_id, scope_prefix, 8);
+         } else {
+            handle = ::kv_idx_lower_bound(
+               _tbl->code(), _sec_table_id, nullptr, 0);
+         }
          if (handle < 0) return key_end();
-         return key_iterator(_tbl, handle, true);
+         key_iterator it(_tbl, handle, true);
+         if constexpr (Scoped) {
+            if (!it.check_scope()) return key_end();
+         }
+         return it;
       }
 
       key_iterator key_end() const { return key_iterator::make_end(_tbl); }
@@ -1206,6 +1338,18 @@ public:
    secondary_index_view<IndexName> get_index() {
       return secondary_index_view<IndexName>(*this);
    }
+
+};
+
+// ---------------------------------------------------------------------------
+// table — public unscoped wrapper (Scoped=false).
+// ---------------------------------------------------------------------------
+
+template<name::raw TableName, typename K, typename V, typename... Indices>
+class table : public table_impl<TableName, K, V, false, Indices...> {
+   using base = table_impl<TableName, K, V, false, Indices...>;
+public:
+   table(sysio::name code = sysio::name{}) : base(code) {}
 };
 
 } } // namespace sysio::kv

@@ -1,6 +1,6 @@
 # sysio::multi\_index
 
-> **Backward compatibility only.** For new contracts, use [`kv::table`](kv-table.md) (custom keys, secondary indices), or [`kv::global`](kv-global.md) for [`singleton`](#singleton) (scoped). See the [KV Storage Guide](kv-storage-guide.md) for the full comparison.
+> **Backward compatibility only.** For new scoped contracts, use [`kv::scoped_table`](kv-scoped-table.md) — same scope semantics, byte-identical primary keys, but no object cache overhead. For unscoped contracts, use [`kv::table`](kv-table.md). See the [KV Storage Guide](kv-storage-guide.md) for the full comparison.
 
 ## Include
 
