@@ -374,8 +374,7 @@ public:
    uint32_t create_primary_it() const {
       if constexpr (Scoped) {
          char prefix[8];
-         uint64_t s = _scope;
-         for (int i = 7; i >= 0; --i) { prefix[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+         encode_be64(prefix, _scope);
          return ::kv_it_create(_table_id, code(), prefix, 8);
       } else {
          return ::kv_it_create(_table_id, code(), nullptr, 0);
@@ -721,10 +720,9 @@ public:
 
    /// Insert a new row. Asserts if the key already exists. Use upsert()/set()
    /// for insert-or-update semantics.
-   void emplace(name payer, const K& key, const V& value) {
+   void emplace(name payer, const K& key, const V& value, const char* exists_msg = "key already exists") {
       auto k = make_key(key);
-      sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()),
-                   "emplace: key already exists (use upsert for insert-or-update)");
+      sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()), exists_msg);
       do_insert(payer.value, k, key, value);
    }
 
@@ -734,10 +732,10 @@ public:
 
    /// Lambda emplace: construct the value in-place.
    template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
-   void emplace(name payer, const K& key, Lambda&& constructor) {
+   void emplace(name payer, const K& key, Lambda&& constructor, const char* exists_msg = "key already exists") {
       V value{};
       constructor(value);
-      emplace(payer, key, value);
+      emplace(payer, key, value, exists_msg);
    }
 
    template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
@@ -873,8 +871,8 @@ public:
 
    /// Modify by key + lambda (like multi_index).
    template<typename Lambda>
-   void modify(name payer, const K& key, Lambda&& updater) {
-      V old_val = get(key, "modify: key not found");
+   void modify(name payer, const K& key, Lambda&& updater, const char* not_found_msg = "key not found") {
+      V old_val = get(key, not_found_msg);
       V new_val = old_val;
       updater(new_val);
       auto k = make_key(key);
@@ -904,8 +902,8 @@ public:
    }
 
    /// Erase by key. Asserts if key not found.
-   void erase(const K& key) {
-      V val = get(key, "erase: key not found");
+   void erase(const K& key, const char* not_found_msg = "key not found") {
+      V val = get(key, not_found_msg);
       do_erase(key, val);
    }
 
@@ -972,6 +970,22 @@ public:
       table_impl* _tbl;
       secondary_index_view(table_impl& tbl) : _tbl(&tbl) {}
 
+      /// Check that the secondary index handle points to an entry within the current scope.
+      /// For unscoped tables (Scoped=false), always returns true (compiles away).
+      static bool idx_check_scope(int32_t handle, uint64_t scope) {
+         if constexpr (!Scoped) return true;
+         else {
+            if (handle < 0) return false;
+            char scope_buf[8];
+            uint32_t actual = 0;
+            if (::kv_idx_key(handle, 0, scope_buf, 8, &actual) != 0 || actual < 8)
+               return false;
+            char expected[8];
+            encode_be64(expected, scope);
+            return memcmp(scope_buf, expected, 8) == 0;
+         }
+      }
+
       // --- key_row for key-only iteration ---
       struct key_row {
          K              key;
@@ -1004,8 +1018,7 @@ public:
                if constexpr (Scoped) {
                   // Max sec key for this scope: [scope:8B][0xFF...]
                   char max_sec[kv_key_max_bytes];
-                  uint64_t s = _tbl->_scope;
-                  for (int i = 7; i >= 0; --i) { max_sec[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+                  encode_be64(max_sec, _tbl->_scope);
                   memset(max_sec + 8, 0xFF, sizeof(max_sec) - 8);
                   _handle.reset(::kv_idx_lower_bound(
                      _tbl->code(), _sec_table_id,
@@ -1055,20 +1068,8 @@ public:
       private:
          friend struct secondary_index_view;
 
-         bool check_scope() const {
-            if constexpr (!Scoped) return true;
-            else {
-               if (_handle < 0) return false;
-               char scope_buf[8];
-               uint32_t actual = 0;
-               if (::kv_idx_key(_handle, 0, scope_buf, 8, &actual) != 0 || actual < 8)
-                  return false;
-               char expected[8];
-               uint64_t s = _tbl->_scope;
-               for (int i = 7; i >= 0; --i) { expected[i] = static_cast<char>(s & 0xFF); s >>= 8; }
-               return memcmp(scope_buf, expected, 8) == 0;
-            }
-         }
+         bool check_scope() const { return idx_check_scope(_handle, _tbl->_scope); }
+
          table_impl* _tbl = nullptr;
          kv::detail::idx_handle _handle;
          bool           _valid = false;
@@ -1154,8 +1155,7 @@ public:
             if (_handle < 0) {
                if constexpr (Scoped) {
                   char max_sec[kv_key_max_bytes];
-                  uint64_t s = _tbl->_scope;
-                  for (int i = 7; i >= 0; --i) { max_sec[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+                  encode_be64(max_sec, _tbl->_scope);
                   memset(max_sec + 8, 0xFF, sizeof(max_sec) - 8);
                   _handle.reset(::kv_idx_lower_bound(
                      _tbl->code(), _sec_table_id,
@@ -1205,20 +1205,8 @@ public:
       private:
          friend struct secondary_index_view;
 
-         bool check_scope() const {
-            if constexpr (!Scoped) return true;
-            else {
-               if (_handle < 0) return false;
-               char scope_buf[8];
-               uint32_t actual = 0;
-               if (::kv_idx_key(_handle, 0, scope_buf, 8, &actual) != 0 || actual < 8)
-                  return false;
-               char expected[8];
-               uint64_t s = _tbl->_scope;
-               for (int i = 7; i >= 0; --i) { expected[i] = static_cast<char>(s & 0xFF); s >>= 8; }
-               return memcmp(scope_buf, expected, 8) == 0;
-            }
-         }
+         bool check_scope() const { return idx_check_scope(_handle, _tbl->_scope); }
+
          table_impl* _tbl = nullptr;
          kv::detail::idx_handle _handle;
          bool           _valid = false;
@@ -1271,8 +1259,7 @@ public:
          int32_t handle;
          if constexpr (Scoped) {
             char scope_prefix[8];
-            uint64_t s = _tbl->_scope;
-            for (int i = 7; i >= 0; --i) { scope_prefix[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+            encode_be64(scope_prefix, _tbl->_scope);
             handle = ::kv_idx_lower_bound(
                _tbl->code(), _sec_table_id, scope_prefix, 8);
          } else {
@@ -1288,6 +1275,8 @@ public:
       }
 
       const_iterator end() const { return const_iterator::make_end(_tbl); }
+      const_iterator cbegin() const { return begin(); }
+      const_iterator cend() const { return end(); }
 
       template<typename SecKey>
       const_iterator find(const SecKey& sec_key) const {
@@ -1306,7 +1295,11 @@ public:
             _tbl->code(), _sec_table_id,
             sec.data(), sec.size());
          if (handle < 0) return end();
-         return const_iterator(_tbl, handle, true);
+         const_iterator it(_tbl, handle, true);
+         if constexpr (Scoped) {
+            if (it._valid && !it.check_scope()) return end();
+         }
+         return it;
       }
 
       template<typename SecKey>
@@ -1323,7 +1316,11 @@ public:
             _tbl->code(), _sec_table_id,
             sec.data(), sec.size());
          if (handle < 0) return end();
-         return const_iterator(_tbl, handle, true);
+         const_iterator it(_tbl, handle, true);
+         if constexpr (Scoped) {
+            if (it._valid && !it.check_scope()) return end();
+         }
+         return it;
       }
 
       template<typename SecKey>
@@ -1373,8 +1370,7 @@ public:
          int32_t handle;
          if constexpr (Scoped) {
             char scope_prefix[8];
-            uint64_t s = _tbl->_scope;
-            for (int i = 7; i >= 0; --i) { scope_prefix[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+            encode_be64(scope_prefix, _tbl->_scope);
             handle = ::kv_idx_lower_bound(
                _tbl->code(), _sec_table_id, scope_prefix, 8);
          } else {

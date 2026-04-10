@@ -56,8 +56,7 @@ public:
          }
          uint64_t next = _scope + 1;
          char next_key[8];
-         uint64_t s = next;
-         for (int i = 7; i >= 0; --i) { next_key[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+         kv::encode_be64(next_key, next);
          int32_t status = ::kv_it_lower_bound(_handle, next_key, 8);
          if (status != 0) { _valid = false; return *this; }
          load_scope();
@@ -69,7 +68,7 @@ public:
       friend bool operator==(const scope_iterator& a, const scope_iterator& b) {
          return a._valid == b._valid && (!a._valid || a._scope == b._scope);
       }
-      friend bool operator!=(const scope_iterator& a, const scope_iterator& b) { return !(a == b); }
+
 
       scope_iterator(scope_iterator&& o) noexcept
          : _handle(std::move(o._handle)), _valid(o._valid), _scope(o._scope)
@@ -100,9 +99,7 @@ public:
          if (::kv_it_key(_handle, 0, key_buf, 8, &key_size) != 0 || key_size < 8) {
             _valid = false; return;
          }
-         _scope = 0;
-         for (int i = 0; i < 8; ++i)
-            _scope = (_scope << 8) | static_cast<uint8_t>(key_buf[i]);
+         _scope = kv::decode_be64(key_buf);
       }
    };
 
@@ -111,8 +108,7 @@ public:
       uint64_t c = code.value ? code.value : sysio::current_receiver().value;
       uint32_t h = ::kv_it_create(_table_id, c, nullptr, 0);
       char scope_key[8];
-      uint64_t s = scope;
-      for (int i = 7; i >= 0; --i) { scope_key[i] = static_cast<char>(s & 0xFF); s >>= 8; }
+      kv::encode_be64(scope_key, scope);
       int32_t status = ::kv_it_lower_bound(h, scope_key, 8);
       return scope_iterator(h, status == 0);
    }

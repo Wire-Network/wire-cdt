@@ -50,8 +50,33 @@ KV_SCOPED_TABLE_TEST( "kvscpg"_n, secerase )
 KV_SCOPED_TABLE_TEST( "kvscph"_n, secmod )
 KV_SCOPED_TABLE_TEST( "kvscpi"_n, lambdaempl )
 KV_SCOPED_TABLE_TEST( "kvscpj"_n, prirev )
-KV_SCOPED_TABLE_TEST( "kvscpk"_n, crossread )
+KV_SCOPED_TABLE_TEST( "kvscpk"_n, explcode )
 KV_SCOPED_TABLE_TEST( "kvscpl"_n, emptyscope )
 KV_SCOPED_TABLE_TEST( "kvscpm"_n, upsertlam )
+KV_SCOPED_TABLE_TEST( "kvscpn"_n, seclbbug )
+KV_SCOPED_TABLE_TEST( "kvscpp"_n, secfindiso )
+// Negative tests — verify assertion messages for error paths
+#define KV_SCOPED_NEG_TEST(acct, action_name, expected_msg)                             \
+   BOOST_FIXTURE_TEST_CASE(kv_scoped_table_##action_name, TESTER) { try {              \
+      produce_blocks(1);                                                                \
+      create_account( acct );                                                           \
+      produce_blocks(1);                                                                \
+      set_code( acct, contracts::kv_scoped_table_tests_wasm() );                        \
+      set_abi( acct, contracts::kv_scoped_table_tests_abi().data() );                   \
+      produce_blocks(1);                                                                \
+      BOOST_CHECK_EXCEPTION(                                                            \
+         push_action( acct, #action_name ""_n, acct, {} ),                              \
+         sysio_assert_message_exception,                                                \
+         sysio_assert_message_is(expected_msg)                                          \
+      );                                                                                \
+   } FC_LOG_AND_RETHROW() }
+
+KV_SCOPED_NEG_TEST( "kvneg1"_n, dupemplace,  "key already exists" )
+KV_SCOPED_NEG_TEST( "kvneg2"_n, dupcustom,   "token already exists" )
+KV_SCOPED_NEG_TEST( "kvneg3"_n, erasemiss,   "key not found" )
+KV_SCOPED_NEG_TEST( "kvneg4"_n, modifymiss,  "key not found" )
+KV_SCOPED_NEG_TEST( "kvneg5"_n, getmiss,     "key not found" )
+KV_SCOPED_NEG_TEST( "kvneg6"_n, reqfndmiss,  "unable to find key" )
+KV_SCOPED_NEG_TEST( "kvneg7"_n, derefend,    "deref end iterator" )
 
 BOOST_AUTO_TEST_SUITE_END()

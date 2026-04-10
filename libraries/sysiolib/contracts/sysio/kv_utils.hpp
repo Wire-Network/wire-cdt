@@ -145,6 +145,23 @@ struct is_fixed_serializable<T, std::enable_if_t<
 template<typename T>
 inline constexpr bool is_fixed_serializable_v = is_fixed_serializable<T>::value;
 
+/// Payer constant: pass as payer to keep existing payer unchanged.
+/// Works with kv::table, kv::scoped_table, kv::global, and kv_multi_index.
+inline constexpr name same_payer{};
+
+/// Encode a uint64_t to 8 bytes big-endian.
+inline void encode_be64(char* buf, uint64_t v) {
+   for (int i = 7; i >= 0; --i) { buf[i] = static_cast<char>(v & 0xFF); v >>= 8; }
+}
+
+/// Decode 8 bytes big-endian to uint64_t.
+inline uint64_t decode_be64(const char* buf) {
+   uint64_t v = 0;
+   for (int i = 0; i < 8; ++i)
+      v = (v << 8) | static_cast<uint8_t>(buf[i]);
+   return v;
+}
+
 // ---------------------------------------------------------------------------
 // be_key_stream — Big-endian key encoder (fixed buffer, no heap allocation)
 //

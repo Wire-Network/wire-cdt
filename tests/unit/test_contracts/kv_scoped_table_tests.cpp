@@ -394,17 +394,16 @@ public:
       check(it.key().id == 1, "prev is 1");
    }
 
-   // Cross-contract read (different code)
-   [[sysio::action]] void crossread() {
-      // Write to self
+   // Read via explicit code parameter (verifies code arg works)
+   [[sysio::action]] void explcode() {
       accounts accts(get_self(), "xr"_n.value);
       accts.emplace(get_self(), pk_key{1}, account{100, "alice"_n});
 
-      // Read from self via explicit code
+      // Read same data via explicit code parameter
       accounts reader(get_self(), "xr"_n.value);
       auto val = reader.try_get(pk_key{1});
-      check(val.has_value(), "cross-read should find");
-      check(val->balance == 100, "cross-read balance");
+      check(val.has_value(), "explicit code read should find");
+      check(val->balance == 100, "explicit code balance");
    }
 
    // Empty scope iteration
@@ -442,5 +441,91 @@ public:
       auto it = idx.find(uint64_t(200));
       check(it != idx.end(), "sec index should find balance=200");
       check(it.key().id == 1, "sec index key should be 1");
+   }
+
+   // Negative test actions — each triggers one assertion failure.
+   // Tested from integration harness via BOOST_CHECK_EXCEPTION.
+
+   [[sysio::action]] void dupemplace() {
+      accounts accts(get_self(), "dup"_n.value);
+      accts.emplace(get_self(), pk_key{1}, account{100, "alice"_n});
+      accts.emplace(get_self(), pk_key{1}, account{200, "bob"_n}); // should assert
+   }
+
+   [[sysio::action]] void dupcustom() {
+      accounts accts(get_self(), "dup2"_n.value);
+      accts.emplace(get_self(), pk_key{1}, account{100, "alice"_n});
+      accts.emplace(get_self(), pk_key{1}, account{200, "bob"_n}, "token already exists");
+   }
+
+   [[sysio::action]] void erasemiss() {
+      accounts accts(get_self(), "em"_n.value);
+      accts.erase(pk_key{99}); // should assert
+   }
+
+   [[sysio::action]] void modifymiss() {
+      accounts accts(get_self(), "mm"_n.value);
+      accts.modify(get_self(), pk_key{99}, [](account& a) { a.balance = 0; });
+   }
+
+   [[sysio::action]] void getmiss() {
+      accounts accts(get_self(), "gm"_n.value);
+      accts.get(pk_key{99}); // should assert
+   }
+
+   [[sysio::action]] void reqfndmiss() {
+      accounts accts(get_self(), "rf"_n.value);
+      accts.require_find(pk_key{99}); // should assert
+   }
+
+   [[sysio::action]] void derefend() {
+      accounts accts(get_self(), "de"_n.value);
+      auto it = accts.end();
+      [[maybe_unused]] auto& val = *it; // should assert
+   }
+
+   // Secondary find with same value in two scopes must return correct scope's row
+   [[sysio::action]] void secfindiso() {
+      // Both scopes have balance=100, but different owners
+      accounts s1(get_self(), 1);
+      accounts s2(get_self(), 2);
+      s1.emplace(get_self(), pk_key{10}, account{100, "alice"_n});
+      s2.emplace(get_self(), pk_key{20}, account{100, "bob"_n});
+
+      // find(100) in scope 1 should return alice (pk=10), not bob (pk=20)
+      auto idx1 = s1.get_index<"bybal"_n>();
+      auto it = idx1.find(uint64_t(100));
+      check(it != idx1.end(), "s1 find(100) should find");
+      check(it->owner == "alice"_n, "s1 find(100) should be alice");
+      check(it.key().id == 10, "s1 find(100) pk should be 10");
+
+      // find(100) in scope 2 should return bob (pk=20), not alice (pk=10)
+      auto idx2 = s2.get_index<"bybal"_n>();
+      it = idx2.find(uint64_t(100));
+      check(it != idx2.end(), "s2 find(100) should find");
+      check(it->owner == "bob"_n, "s2 find(100) should be bob");
+      check(it.key().id == 20, "s2 find(100) pk should be 20");
+   }
+
+   // Secondary lower_bound/upper_bound must respect scope boundaries.
+   // If scope A has no match, the result must be end(), not scope B's data.
+   [[sysio::action]] void seclbbug() {
+      // Scope 1: balance=100
+      accounts s1(get_self(), 1);
+      s1.emplace(get_self(), pk_key{1}, account{100, "alice"_n});
+
+      // Scope 2: balance=500
+      accounts s2(get_self(), 2);
+      s2.emplace(get_self(), pk_key{1}, account{500, "bob"_n});
+
+      // Scope 1 secondary lower_bound(200) — no balance >= 200 in scope 1.
+      // Must return end(), NOT scope 2's balance=500.
+      auto idx1 = s1.get_index<"bybal"_n>();
+      auto it = idx1.lower_bound(uint64_t(200));
+      check(it == idx1.end(), "sec lb past scope should be end, not cross-scope");
+
+      // Scope 1 upper_bound(100) — nothing above 100 in scope 1.
+      it = idx1.upper_bound(uint64_t(100));
+      check(it == idx1.end(), "sec ub past scope should be end, not cross-scope");
    }
 };

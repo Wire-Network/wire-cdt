@@ -14,6 +14,7 @@
  */
 
 #include <cstdint>
+#include <sysio/kv_utils.hpp>
 
 // KV intrinsic declarations (primary + secondary — multi_index uses both)
 extern "C" {
@@ -106,11 +107,6 @@ struct const_mem_fun {
    Type operator()(const Class& x) const { return (x.*PtrToMemberFunction)(); }
    Type operator()(const Class* x) const { return (x->*PtrToMemberFunction)(); }
 };
-
-#ifndef SYSIO_SAME_PAYER_DEFINED
-#define SYSIO_SAME_PAYER_DEFINED
-inline constexpr name same_payer{};
-#endif
 
 namespace _kv_multi_index_detail {
 

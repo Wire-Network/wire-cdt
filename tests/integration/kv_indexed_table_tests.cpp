@@ -98,7 +98,7 @@ BOOST_FIXTURE_TEST_CASE(kv_indexed_table_dupempl, TESTER) { try {
    BOOST_CHECK_EXCEPTION(
       push_action( "kvdupempl"_n, "dupempl"_n, "kvdupempl"_n, {} ),
       sysio_assert_message_exception,
-      sysio_assert_message_is("emplace: key already exists (use upsert for insert-or-update)")
+      sysio_assert_message_is("key already exists")
    );
 } FC_LOG_AND_RETHROW() }
 
