@@ -33,6 +33,10 @@
                 {
                     "name": "score",
                     "type": "float64"
+                },
+                {
+                    "name": "hash",
+                    "type": "checksum256"
                 }
             ]
         }
@@ -67,6 +71,11 @@
                     "name": "byscore",
                     "key_type": "float64",
                     "table_id": 8674
+                },
+                {
+                    "name": "byhash",
+                    "key_type": "checksum256",
+                    "table_id": 8581
                 }
             ]
         }

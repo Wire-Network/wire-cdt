@@ -391,7 +391,8 @@ namespace sysio { namespace cdt {
          auto idx_name_raw = first_arg.getAsIntegral().getLimitedValue();
          out.name = name_to_string(idx_name_raw);
          out.table_id = tid;
-         // Determine key type from extractor (e.g. const_mem_fun<T, KeyType, Ptr>)
+         // Determine key type from extractor (e.g. const_mem_fun<T, KeyType, Ptr>).
+         // The extractor's KeyType is the second template arg of const_mem_fun/member_data.
          if (idx_spec->getTemplateArgs().size() >= 2) {
             auto ext_arg = idx_spec->getTemplateArgs()[1];
             if (ext_arg.getKind() == clang::TemplateArgument::Type) {

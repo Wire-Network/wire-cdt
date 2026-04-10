@@ -59,7 +59,7 @@
                 },
                 {
                     "name": "byhash",
-                    "key_type": "fixed_bytes<32>",
+                    "key_type": "checksum256",
                     "table_id": 5103
                 }
             ]
