@@ -30,6 +30,13 @@ static inline uint16_t compute_sec_table_id_from_raw(uint64_t table_raw, uint64_
    return static_cast<uint16_t>(hash % 65536);
 }
 
+// Must match sysio::kv::compute_mi_sec_table_id in kv_constants.hpp.
+// multi_index/kv_multi_index uses positional indices (index_pos + 1 as synthetic raw).
+static inline uint16_t compute_mi_sec_table_id_from_raw(uint64_t table_raw, uint8_t index_pos) {
+   return compute_sec_table_id_from_raw(table_raw, static_cast<uint64_t>(index_pos) + 1);
+}
+
+
 #include <fstream>
 #include <jsoncons/json.hpp>
 
@@ -365,6 +372,42 @@ namespace sysio { namespace cdt {
 
       enum class kv_table_kind { legacy, kv_standard, kv_global };
 
+      /// Extract a single abi_secondary_index from an indexed_by<Name, Extractor> or
+      /// kv::index<Name, Extractor> template specialization. Returns false if the
+      /// argument is not a valid index template specialization.
+      ///
+      /// \p arg   the template argument that should be the indexed_by/kv::index type
+      /// \p tid   precomputed table_id (caller decides positional vs hashed formula)
+      /// \p out   populated with name, key_type, table_id on success
+      bool extract_secondary_index(const clang::TemplateArgument& arg,
+                                   uint16_t tid,
+                                   abi_secondary_index& out) {
+         if (arg.getKind() != clang::TemplateArgument::Type) return false;
+         auto* record = arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
+         auto* idx_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record);
+         if (!idx_spec || idx_spec->getTemplateArgs().size() < 1) return false;
+         auto first_arg = idx_spec->getTemplateArgs()[0];
+         if (first_arg.getKind() != clang::TemplateArgument::Integral) return false;
+         auto idx_name_raw = first_arg.getAsIntegral().getLimitedValue();
+         out.name = name_to_string(idx_name_raw);
+         out.table_id = tid;
+         // Determine key type from extractor (e.g. const_mem_fun<T, KeyType, Ptr>)
+         if (idx_spec->getTemplateArgs().size() >= 2) {
+            auto ext_arg = idx_spec->getTemplateArgs()[1];
+            if (ext_arg.getKind() == clang::TemplateArgument::Type) {
+               auto* ext_record = ext_arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
+               if (ext_record) {
+                  auto* ext_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(ext_record);
+                  if (ext_spec && ext_spec->getTemplateArgs().size() >= 2) {
+                     out.key_type = translate_type(ext_spec->getTemplateArgs()[1].getAsType());
+                  }
+               }
+            }
+         }
+         if (out.key_type.empty()) out.key_type = "bytes";
+         return true;
+      }
+
       /// Add a kv::table<Name, K, V> — extracts key metadata from K, uses V as row type.
       /// If V has [[sysio::kv_key("struct")]] annotation, that overrides K's fields.
       void add_kv_table( uint64_t name, const clang::CXXRecordDecl* key_decl, const clang::CXXRecordDecl* val_decl,
@@ -419,7 +462,8 @@ namespace sysio { namespace cdt {
          _abi.tables.insert(t);
       }
 
-      void add_table( uint64_t name, const clang::CXXRecordDecl* decl, kv_table_kind kind = kv_table_kind::legacy ) {
+      void add_table( uint64_t name, const clang::CXXRecordDecl* decl, kv_table_kind kind = kv_table_kind::legacy,
+                      std::vector<abi_secondary_index> sec_indexes = {} ) {
          abi_table t;
          t.type = decl->getNameAsString();
          t.name = name_to_string(name);
@@ -433,6 +477,7 @@ namespace sysio { namespace cdt {
             t.key_names = {"name"};
             t.key_types = {"name"};
          }
+         t.secondary_indexes = std::move(sec_indexes);
          _abi.tables.insert(t);
       }
 
@@ -1200,35 +1245,23 @@ namespace sysio { namespace cdt {
 
                         // Extract secondary index info from Indices... (args[3..])
                         // Variadic packs may appear as individual args OR as a single Pack arg.
+                        // kv::table uses hashed index name for table_id (compute_sec_table_id_from_raw).
                         std::vector<abi_secondary_index> sec_indexes;
 
                         auto extract_index = [&](const clang::TemplateArgument& arg) {
-                           if (arg.getKind() == clang::TemplateArgument::Type) {
-                              auto* record = arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
-                              auto* idx_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record);
-                              if (idx_spec->getTemplateArgs().size() < 1) return;
-                              auto first_arg = idx_spec->getTemplateArgs()[0];
-                              if (first_arg.getKind() != clang::TemplateArgument::Integral) return;
-                              auto idx_name_raw = first_arg.getAsIntegral().getLimitedValue();
-                              abi_secondary_index si;
-                              si.name = name_to_string(idx_name_raw);
-                              si.table_id = compute_sec_table_id_from_raw(table_name_raw, idx_name_raw);
-                              // Determine key type from extractor
-                              if (idx_spec->getTemplateArgs().size() >= 2) {
-                                 auto ext_arg = idx_spec->getTemplateArgs()[1];
-                                 if (ext_arg.getKind() == clang::TemplateArgument::Type) {
-                                    auto* ext_record = ext_arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
-                                    if (ext_record) {
-                                       auto* ext_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(ext_record);
-                                       if (ext_spec && ext_spec->getTemplateArgs().size() >= 2) {
-                                          si.key_type = ag.translate_type(ext_spec->getTemplateArgs()[1].getAsType());
-                                       }
-                                    }
-                                 }
-                              }
-                              if (si.key_type.empty()) si.key_type = "bytes";
+                           // For kv::table we need the index name to compute the table_id, so
+                           // peek at the first template arg to get the name BEFORE delegating.
+                           if (arg.getKind() != clang::TemplateArgument::Type) return;
+                           auto* record = arg.getAsType().getTypePtr()->getAsCXXRecordDecl();
+                           auto* idx_spec = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(record);
+                           if (!idx_spec || idx_spec->getTemplateArgs().size() < 1) return;
+                           auto first_arg = idx_spec->getTemplateArgs()[0];
+                           if (first_arg.getKind() != clang::TemplateArgument::Integral) return;
+                           auto idx_name_raw = first_arg.getAsIntegral().getLimitedValue();
+                           const uint16_t tid = compute_sec_table_id_from_raw(table_name_raw, idx_name_raw);
+                           abi_secondary_index si;
+                           if (ag.extract_secondary_index(arg, tid, si))
                               sec_indexes.push_back(std::move(si));
-                           }
                         };
 
 
@@ -1254,7 +1287,37 @@ namespace sysio { namespace cdt {
                      const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
                      auto table_decl = clang_wrapper::wrap_decl(table_type);
                      if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(d)) {
-                        ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type, kind);
+                        const auto table_name_raw = d->getTemplateArgs()[0].getAsIntegral().getLimitedValue();
+
+                        // Extract indexed_by<...> secondary indices for multi_index/kv_multi_index.
+                        // Layout: multi_index<TableName, T, indexed_by<Name1, Ext1>, indexed_by<Name2, Ext2>, ...>
+                        // Indices are positional: table_id uses index_pos (compute_mi_sec_table_id).
+                        std::vector<abi_secondary_index> sec_indexes;
+                        if (d->getName() == "multi_index" || d->getName() == "kv_multi_index") {
+                           uint8_t index_pos = 0;
+                           auto extract_indexed_by = [&](const clang::TemplateArgument& arg) {
+                              const uint16_t tid = compute_mi_sec_table_id_from_raw(table_name_raw, index_pos);
+                              abi_secondary_index si;
+                              if (ag.extract_secondary_index(arg, tid, si)) {
+                                 sec_indexes.push_back(std::move(si));
+                                 ++index_pos;
+                              }
+                           };
+
+                           // multi_index template args: [0]=TableName, [1]=T, [2..]=indexed_by<...>
+                           for (size_t i = 2; i < d->getTemplateArgs().size(); ++i) {
+                              auto arg = d->getTemplateArgs()[i];
+                              if (arg.getKind() == clang::TemplateArgument::Pack) {
+                                 for (const auto& pack_elem : arg.pack_elements()) {
+                                    extract_indexed_by(pack_elem);
+                                 }
+                              } else {
+                                 extract_indexed_by(arg);
+                              }
+                           }
+                        }
+
+                        ag.add_table(table_name_raw, table_type, kind, std::move(sec_indexes));
                         if (table_decl.isSysioTable())
                            ag.add_struct(table_type);
                      }
