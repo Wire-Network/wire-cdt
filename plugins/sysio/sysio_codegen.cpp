@@ -368,7 +368,12 @@ public:
    void process_read_only_actions() const {
       for (auto const& ra : read_only_actions) {
          auto it = func_calls.find(ra);
-         if (it != func_calls.end()) {
+         // process_function() inserts every walked function into func_calls with an
+         // initially-empty vector before traversing its body, so a non-end iterator does
+         // not by itself mean the action transitively calls a write host function — only
+         // a non-empty vector does. Without this guard the validator fires on every
+         // read-only action whose body has been processed, regardless of its content.
+         if (it != func_calls.end() && !it->second.empty()) {
             std::string msg = "read-only action cannot call write host function";
             if (warn_action_read_only) {
                CDT_WARN("codegen_warning", ra->getLocation(), msg);
