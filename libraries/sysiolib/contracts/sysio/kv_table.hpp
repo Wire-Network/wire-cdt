@@ -183,12 +183,12 @@ public:
 
    be_key_reader& operator>>(uint128_t& v) {
       uint64_t hi = read_be64(), lo = read_be64();
-      v = (uint128_t(hi) << 64) | lo;
+      v = (static_cast<uint128_t>(hi) << 64) | lo;
       return *this;
    }
    be_key_reader& operator>>(int128_t& v) {
       uint128_t u; *this >> u;
-      v = static_cast<int128_t>(u ^ (uint128_t(1) << 127));
+      v = static_cast<int128_t>(u ^ (static_cast<uint128_t>(1) << 127));
       return *this;
    }
 
