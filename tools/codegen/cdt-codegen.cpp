@@ -424,6 +424,20 @@ static void gen_actions(const std::string& input) {
    auto desc_file = output_dir + "/" + contract_name + "." + basename + ".desc";
    if (exists(raw_desc.c_str())) {
       rename(raw_desc.c_str(), desc_file.c_str());
+      // Stamp the originating source path into the .desc so a later build can
+      // detect it is stale when the source .cpp has been removed or moved.
+      // Without this marker, a stale .desc gets merged into the contract ABI
+      // and produces "ABI structs malformed : <name> already defined" errors.
+      // Only attempt the JSON round-trip when abigen actually produced content;
+      // a failed abigen run leaves an empty .desc that ojson::parse would reject.
+      if (file_size(desc_file.c_str()) > 0) {
+         std::ifstream ifs(desc_file);
+         auto desc = ojson::parse(ifs);
+         ifs.close();
+         desc["____source_file"] = input;
+         std::ofstream ofs(desc_file);
+         ofs << desc.to_string();
+      }
       desc_files.push_back(desc_file);
    }
 }
@@ -477,6 +491,18 @@ int main(int argc, const char** argv) {
             std::ifstream ifs(desc_name);
             auto          desc = ojson::parse(ifs);
             ifs.close();
+
+            // If the .desc records its originating source file and that
+            // source no longer exists, the .desc is stale (from a removed
+            // or renamed .cpp). Merging it in produces duplicate struct
+            // definitions, so skip and delete it to keep the build dir clean.
+            if (desc.has_key("____source_file")) {
+               const std::string src = desc["____source_file"].as_string();
+               if (!src.empty() && !exists(src.c_str())) {
+                  unlink(desc_name.c_str());
+                  continue;
+               }
+            }
 
             abi = ABIMerger(abi, abi_version_major, abi_version_minor).merge(desc);
 
