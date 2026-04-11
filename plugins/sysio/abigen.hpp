@@ -1211,12 +1211,8 @@ namespace sysio { namespace cdt {
          }
 
          bool defined_in_contract(const clang::ClassTemplateSpecializationDecl* decl) {
-
-            if (!contract_class) {
-                  // currently this is unreachable as we do not traverse non-main file translation units
-                  CDT_WARN("codegen_warning", decl->getLocation(), "contract class not found: " + ag.get_contract_name());
-                  return false;
-            }
+            if (!contract_class)
+               return false;
 
             for (const clang::Decl* cur_decl : contract_class->decls()) {
                if (is_same_type(cur_decl, decl))
