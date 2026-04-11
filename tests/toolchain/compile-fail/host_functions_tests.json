@@ -1,10 +1,26 @@
 {
   "tests" : [
-    {        
+    {
       "compile_flags": [],
       "expected" : {
         "exit-code": 255,
-        "stderr": "(codegen error.*){15}"
+        "stderr": [
+          "codegen error.*bool resource",
+          "codegen error.*bool setrelimit",
+          "codegen error.*bool bcpara",
+          "codegen error.*bool setpriv",
+          "codegen error.*bool kvset",
+          "codegen error.*bool kverase",
+          "codegen error.*bool kvidxstore",
+          "codegen error.*bool kvidxremove",
+          "codegen error.*bool kvidxupdate",
+          "codegen error.*bool setpp\\b",
+          "codegen error.*bool setppex",
+          "codegen error.*bool swpp",
+          "codegen error.*bool spp\\b",
+          "codegen error.*bool sendil\\b",
+          "codegen error.*bool sendcfiil"
+        ]
       }
     }
   ]
