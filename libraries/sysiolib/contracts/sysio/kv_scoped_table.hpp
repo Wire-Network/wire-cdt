@@ -55,9 +55,9 @@ public:
             return *this;
          }
          uint64_t next = _scope + 1;
-         char next_key[8];
+         char next_key[kv_scope_size];
          kv::encode_be64(next_key, next);
-         int32_t status = ::kv_it_lower_bound(_handle, next_key, 8);
+         int32_t status = ::kv_it_lower_bound(_handle, next_key, kv_scope_size);
          if (status != 0) { _valid = false; return *this; }
          load_scope();
          return *this;
@@ -94,9 +94,9 @@ public:
       }
 
       void load_scope() {
-         char key_buf[8];
+         char key_buf[kv_scope_size];
          uint32_t key_size = 0;
-         if (::kv_it_key(_handle, 0, key_buf, 8, &key_size) != 0 || key_size < 8) {
+         if (::kv_it_key(_handle, 0, key_buf, kv_scope_size, &key_size) != 0 || key_size < kv_scope_size) {
             _valid = false; return;
          }
          _scope = kv::decode_be64(key_buf);
@@ -107,9 +107,9 @@ public:
    static scope_iterator scope_lower_bound(sysio::name code, uint64_t scope) {
       uint64_t c = code.value ? code.value : sysio::current_receiver().value;
       uint32_t h = ::kv_it_create(_table_id, c, nullptr, 0);
-      char scope_key[8];
+      char scope_key[kv_scope_size];
       kv::encode_be64(scope_key, scope);
-      int32_t status = ::kv_it_lower_bound(h, scope_key, 8);
+      int32_t status = ::kv_it_lower_bound(h, scope_key, kv_scope_size);
       return scope_iterator(h, status == 0);
    }
 

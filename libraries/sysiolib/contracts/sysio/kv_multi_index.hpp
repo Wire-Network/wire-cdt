@@ -116,7 +116,7 @@ namespace _kv_multi_index_detail {
    static constexpr size_t enc_scope = 8;   // scope is one BE uint64_t
 
    inline void encode_be64(char* buf, uint64_t v) {
-      for (int i = 7; i >= 0; --i) {
+      for (int i = enc_u64 - 1; i >= 0; --i) {
          buf[i] = static_cast<char>(v & 0xFF);
          v >>= 8;
       }
@@ -124,7 +124,7 @@ namespace _kv_multi_index_detail {
 
    inline uint64_t decode_be64(const char* buf) {
       uint64_t v = 0;
-      for (int i = 0; i < 8; ++i) {
+      for (size_t i = 0; i < enc_u64; ++i) {
          v = (v << 8) | static_cast<uint8_t>(buf[i]);
       }
       return v;
@@ -229,8 +229,8 @@ class kv_multi_index {
 
    primary_key_buf make_pk(uint64_t pk) const {
       primary_key_buf key;
-      _kv_multi_index_detail::encode_be64(key.data,     _scope);
-      _kv_multi_index_detail::encode_be64(key.data + 8, pk);
+      _kv_multi_index_detail::encode_be64(key.data,               _scope);
+      _kv_multi_index_detail::encode_be64(key.data + prefix_size, pk);
       return key;
    }
 
@@ -759,8 +759,8 @@ public:
 
       // Seek past all possible primary keys
       char max_key[key_size];
-      _kv_multi_index_detail::encode_be64(max_key,     _scope);
-      _kv_multi_index_detail::encode_be64(max_key + 8, std::numeric_limits<uint64_t>::max());
+      _kv_multi_index_detail::encode_be64(max_key,               _scope);
+      _kv_multi_index_detail::encode_be64(max_key + prefix_size, std::numeric_limits<uint64_t>::max());
       ::kv_it_lower_bound(it, max_key, key_size);
 
       // Check if we found max key exactly
@@ -784,7 +784,7 @@ public:
       ::kv_it_key(it, 0, key_buf, key_size, &actual_size);
 
       if (actual_size == key_size) {
-         uint64_t last_pk = _kv_multi_index_detail::decode_be64(key_buf + 8);
+         uint64_t last_pk = _kv_multi_index_detail::decode_be64(key_buf + prefix_size);
          check(last_pk < std::numeric_limits<uint64_t>::max(),
                "next primary key in table is at autoincrement limit");
          _next_primary_key = last_pk + 1;

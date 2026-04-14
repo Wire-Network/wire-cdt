@@ -85,25 +85,25 @@ class be_key_reader {
    size_t      _pos = 0;
 
    uint16_t read_be16() {
-      sysio::check(_pos + 2 <= _size, "be_key_reader underflow");
+      sysio::check(_pos + sizeof(uint16_t) <= _size, "be_key_reader underflow");
       uint16_t v = (static_cast<uint16_t>(static_cast<uint8_t>(_data[_pos])) << 8)
                  |  static_cast<uint16_t>(static_cast<uint8_t>(_data[_pos + 1]));
-      _pos += 2;
+      _pos += sizeof(uint16_t);
       return v;
    }
 
    uint32_t read_be32() {
-      sysio::check(_pos + 4 <= _size, "be_key_reader underflow");
+      sysio::check(_pos + sizeof(uint32_t) <= _size, "be_key_reader underflow");
       uint32_t v = 0;
-      for (int i = 0; i < 4; ++i)
+      for (size_t i = 0; i < sizeof(uint32_t); ++i)
          v = (v << 8) | static_cast<uint8_t>(_data[_pos++]);
       return v;
    }
 
    uint64_t read_be64() {
-      sysio::check(_pos + 8 <= _size, "be_key_reader underflow");
+      sysio::check(_pos + sizeof(uint64_t) <= _size, "be_key_reader underflow");
       uint64_t v = 0;
-      for (int i = 0; i < 8; ++i)
+      for (size_t i = 0; i < sizeof(uint64_t); ++i)
          v = (v << 8) | static_cast<uint8_t>(_data[_pos++]);
       return v;
    }
@@ -149,7 +149,7 @@ public:
    be_key_reader(const char* data, size_t size) : _data(data), _size(size) {}
 
    be_key_reader& operator>>(uint8_t& v) {
-      sysio::check(_pos + 1 <= _size, "be_key_reader underflow");
+      sysio::check(_pos + sizeof(uint8_t) <= _size, "be_key_reader underflow");
       v = static_cast<uint8_t>(_data[_pos++]);
       return *this;
    }
@@ -199,29 +199,32 @@ public:
    }
 
    be_key_reader& operator>>(bool& v) {
-      sysio::check(_pos + 1 <= _size, "be_key_reader underflow");
+      static_assert(sizeof(bool) == 1);
+      sysio::check(_pos + sizeof(bool) <= _size, "be_key_reader underflow");
       v = (_data[_pos++] != 0);
       return *this;
    }
 
    be_key_reader& operator>>(float& v) {
+      static_assert(sizeof(float) == sizeof(uint32_t));
       uint32_t bits = read_be32();
       // Reverse sign-magnitude transform
       if (bits & (uint32_t(1) << 31))
          bits ^= (uint32_t(1) << 31);  // was positive: flip sign bit
       else
          bits = ~bits;                  // was negative: flip all bits
-      std::memcpy(&v, &bits, 4);
+      std::memcpy(&v, &bits, sizeof(float));
       return *this;
    }
 
    be_key_reader& operator>>(double& v) {
+      static_assert(sizeof(double) == sizeof(uint64_t));
       uint64_t bits = read_be64();
       if (bits & (uint64_t(1) << 63))
          bits ^= (uint64_t(1) << 63);
       else
          bits = ~bits;
-      std::memcpy(&v, &bits, 8);
+      std::memcpy(&v, &bits, sizeof(double));
       return *this;
    }
 
@@ -373,9 +376,9 @@ public:
 
    uint32_t create_primary_it() const {
       if constexpr (Scoped) {
-         char prefix[8];
+         char prefix[kv_scope_size];
          encode_be64(prefix, _scope);
-         return ::kv_it_create(_table_id, code(), prefix, 8);
+         return ::kv_it_create(_table_id, code(), prefix, kv_scope_size);
       } else {
          return ::kv_it_create(_table_id, code(), nullptr, 0);
       }
@@ -976,13 +979,13 @@ public:
          if constexpr (!Scoped) return true;
          else {
             if (handle < 0) return false;
-            char scope_buf[8];
+            char scope_buf[kv_scope_size];
             uint32_t actual = 0;
-            if (::kv_idx_key(handle, 0, scope_buf, 8, &actual) != 0 || actual < 8)
+            if (::kv_idx_key(handle, 0, scope_buf, kv_scope_size, &actual) != 0 || actual < kv_scope_size)
                return false;
-            char expected[8];
+            char expected[kv_scope_size];
             encode_be64(expected, scope);
-            return memcmp(scope_buf, expected, 8) == 0;
+            return memcmp(scope_buf, expected, kv_scope_size) == 0;
          }
       }
 
@@ -1019,7 +1022,7 @@ public:
                   // Max sec key for this scope: [scope:8B][0xFF...]
                   char max_sec[kv_key_max_bytes];
                   encode_be64(max_sec, _tbl->_scope);
-                  memset(max_sec + 8, 0xFF, sizeof(max_sec) - 8);
+                  memset(max_sec + kv_scope_size, 0xFF, sizeof(max_sec) - kv_scope_size);
                   _handle.reset(::kv_idx_lower_bound(
                      _tbl->code(), _sec_table_id,
                      max_sec, sizeof(max_sec)));
@@ -1156,7 +1159,7 @@ public:
                if constexpr (Scoped) {
                   char max_sec[kv_key_max_bytes];
                   encode_be64(max_sec, _tbl->_scope);
-                  memset(max_sec + 8, 0xFF, sizeof(max_sec) - 8);
+                  memset(max_sec + kv_scope_size, 0xFF, sizeof(max_sec) - kv_scope_size);
                   _handle.reset(::kv_idx_lower_bound(
                      _tbl->code(), _sec_table_id,
                      max_sec, sizeof(max_sec)));
@@ -1258,10 +1261,10 @@ public:
       const_iterator begin() const {
          int32_t handle;
          if constexpr (Scoped) {
-            char scope_prefix[8];
+            char scope_prefix[kv_scope_size];
             encode_be64(scope_prefix, _tbl->_scope);
             handle = ::kv_idx_lower_bound(
-               _tbl->code(), _sec_table_id, scope_prefix, 8);
+               _tbl->code(), _sec_table_id, scope_prefix, kv_scope_size);
          } else {
             handle = ::kv_idx_lower_bound(
                _tbl->code(), _sec_table_id, nullptr, 0);
@@ -1369,10 +1372,10 @@ public:
       key_iterator key_begin() const {
          int32_t handle;
          if constexpr (Scoped) {
-            char scope_prefix[8];
+            char scope_prefix[kv_scope_size];
             encode_be64(scope_prefix, _tbl->_scope);
             handle = ::kv_idx_lower_bound(
-               _tbl->code(), _sec_table_id, scope_prefix, 8);
+               _tbl->code(), _sec_table_id, scope_prefix, kv_scope_size);
          } else {
             handle = ::kv_idx_lower_bound(
                _tbl->code(), _sec_table_id, nullptr, 0);

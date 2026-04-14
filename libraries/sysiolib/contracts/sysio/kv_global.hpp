@@ -40,14 +40,15 @@ class global {
 
    // Fixed key: big-endian encoding of the Name.
    // 8 bytes, deterministic, no scope.
+   static constexpr uint32_t key_size = sizeof(uint64_t);
    struct key_t {
-      char data[8];
+      char data[key_size];
    };
 
    static key_t make_key() {
       key_t k;
       uint64_t v = static_cast<uint64_t>(Name);
-      for (int i = 7; i >= 0; --i) { k.data[i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      for (int i = key_size - 1; i >= 0; --i) { k.data[i] = static_cast<char>(v & 0xFF); v >>= 8; }
       return k;
    }
 
@@ -58,7 +59,7 @@ public:
    /// Returns true if a value has been stored.
    bool exists() const {
       auto k = make_key();
-      return ::kv_contains(_table_id, code(), k.data, 8) != 0;
+      return ::kv_contains(_table_id, code(), k.data, key_size) != 0;
    }
 
    /// Returns the stored value. Asserts if not set.
@@ -89,19 +90,19 @@ private:
       auto k = make_key();
       if constexpr (is_fixed_serializable_v<T>) {
          char vbuf[sizeof(T)];
-         int32_t sz = ::kv_get(_table_id, code(), k.data, 8, vbuf, sizeof(T));
+         int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, vbuf, sizeof(T));
          if (sz < 0) return false;
          std::memcpy(&out, vbuf, sizeof(T));
       } else {
          char stack[kv_value_stack_size];
-         int32_t sz = ::kv_get(_table_id, code(), k.data, 8, stack, kv_value_stack_size);
+         int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, stack, kv_value_stack_size);
          if (sz < 0) return false;
          if (sz <= static_cast<int32_t>(kv_value_stack_size)) {
             sysio::datastream<const char*> ds(stack, sz);
             ds >> out;
          } else {
             char* heap = new char[sz];
-            ::kv_get(_table_id, code(), k.data, 8, heap, sz);
+            ::kv_get(_table_id, code(), k.data, key_size, heap, sz);
             sysio::datastream<const char*> ds(heap, sz);
             ds >> out;
             delete[] heap;
@@ -118,13 +119,13 @@ public:
       if constexpr (is_fixed_serializable_v<T>) {
          char vbuf[sizeof(T)];
          std::memcpy(vbuf, &val, sizeof(T));
-         ::kv_set(_table_id, payer.value, k.data, 8, vbuf, sizeof(T));
+         ::kv_set(_table_id, payer.value, k.data, key_size, vbuf, sizeof(T));
       } else {
          uint32_t sz = sysio::pack_size(val);
          ser_buf buf(sz);
          sysio::datastream<char*> ds(buf.data(), sz);
          ds << val;
-         ::kv_set(_table_id, payer.value, k.data, 8, buf.data(), sz);
+         ::kv_set(_table_id, payer.value, k.data, key_size, buf.data(), sz);
       }
    }
 
@@ -132,8 +133,8 @@ public:
    void remove() {
       auto k = make_key();
       // kv_erase always operates on current_receiver, so check receiver's data
-      if (!::kv_contains(_table_id, sysio::current_receiver().value, k.data, 8)) return;
-      ::kv_erase(_table_id, k.data, 8);
+      if (!::kv_contains(_table_id, sysio::current_receiver().value, k.data, key_size)) return;
+      ::kv_erase(_table_id, k.data, key_size);
    }
 };
 

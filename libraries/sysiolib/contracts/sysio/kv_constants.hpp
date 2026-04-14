@@ -13,6 +13,10 @@ inline constexpr size_t kv_key_max_bytes = 1024;
 /// Only used for non-trivially-copyable types; trivially-copyable types use sizeof(T) directly.
 inline constexpr uint32_t kv_value_stack_size = 256;
 
+/// Size in bytes of a scope encoded as a big-endian uint64_t (used as a key prefix
+/// in scoped tables). Equivalent to sizeof(uint64_t).
+inline constexpr uint32_t kv_scope_size = sizeof(uint64_t);
+
 // ── table_id computation ─────────────────────────────────────────────────────
 // Each table and each secondary index gets a unique uint16_t table_id.
 // Computed by DJB2-hashing the big-endian bytes of the raw uint64_t template

@@ -151,13 +151,13 @@ inline constexpr name same_payer{};
 
 /// Encode a uint64_t to 8 bytes big-endian.
 inline void encode_be64(char* buf, uint64_t v) {
-   for (int i = 7; i >= 0; --i) { buf[i] = static_cast<char>(v & 0xFF); v >>= 8; }
+   for (int i = sizeof(uint64_t) - 1; i >= 0; --i) { buf[i] = static_cast<char>(v & 0xFF); v >>= 8; }
 }
 
 /// Decode 8 bytes big-endian to uint64_t.
 inline uint64_t decode_be64(const char* buf) {
    uint64_t v = 0;
-   for (int i = 0; i < 8; ++i)
+   for (size_t i = 0; i < sizeof(uint64_t); ++i)
       v = (v << 8) | static_cast<uint8_t>(buf[i]);
    return v;
 }
@@ -187,15 +187,15 @@ private:
    uint32_t size_ = 0;
 
    void write_be32(uint32_t v) {
-      sysio::check(size_ + 4 <= buf_cap, "be_key_stream: key too large");
-      for (int i = 3; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
-      size_ += 4;
+      sysio::check(size_ + sizeof(uint32_t) <= buf_cap, "be_key_stream: key too large");
+      for (int i = sizeof(uint32_t) - 1; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      size_ += sizeof(uint32_t);
    }
 
    void write_be64(uint64_t v) {
-      sysio::check(size_ + 8 <= buf_cap, "be_key_stream: key too large");
-      for (int i = 7; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
-      size_ += 8;
+      sysio::check(size_ + sizeof(uint64_t) <= buf_cap, "be_key_stream: key too large");
+      for (int i = sizeof(uint64_t) - 1; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      size_ += sizeof(uint64_t);
    }
 
    void write_escaped(const char* data, size_t len) {
@@ -219,11 +219,11 @@ public:
       if (len > 0) { std::memcpy(buf_ + size_, data, len); size_ += len; }
    }
 
-   be_key_stream& operator<<(uint8_t v)  { sysio::check(size_ + 1 <= buf_cap, "be_key_stream: key too large"); buf_[size_++] = static_cast<char>(v); return *this; }
+   be_key_stream& operator<<(uint8_t v)  { sysio::check(size_ + sizeof(uint8_t) <= buf_cap, "be_key_stream: key too large"); buf_[size_++] = static_cast<char>(v); return *this; }
    be_key_stream& operator<<(int8_t v)   { return *this << static_cast<uint8_t>(static_cast<uint8_t>(v) ^ 0x80u); }
 
    be_key_stream& operator<<(uint16_t v) {
-      sysio::check(size_ + 2 <= buf_cap, "be_key_stream: key too large");
+      sysio::check(size_ + sizeof(uint16_t) <= buf_cap, "be_key_stream: key too large");
       buf_[size_++] = static_cast<char>((v >> 8) & 0xFF);
       buf_[size_++] = static_cast<char>(v & 0xFF);
       return *this;
@@ -253,8 +253,9 @@ public:
    be_key_stream& operator<<(const name& v) { write_be64(v.value); return *this; }
 
    be_key_stream& operator<<(float v) {
+      static_assert(sizeof(float) == sizeof(uint32_t));
       uint32_t bits;
-      std::memcpy(&bits, &v, 4);
+      std::memcpy(&bits, &v, sizeof(float));
       if (bits >> 31) bits = ~bits;
       else            bits ^= (uint32_t(1) << 31);
       write_be32(bits);
@@ -262,15 +263,21 @@ public:
    }
 
    be_key_stream& operator<<(double v) {
+      static_assert(sizeof(double) == sizeof(uint64_t));
       uint64_t bits;
-      std::memcpy(&bits, &v, 8);
+      std::memcpy(&bits, &v, sizeof(double));
       if (bits >> 63) bits = ~bits;
       else            bits ^= (uint64_t(1) << 63);
       write_be64(bits);
       return *this;
    }
 
-   be_key_stream& operator<<(bool v) { sysio::check(size_ + 1 <= buf_cap, "be_key_stream: key too large"); buf_[size_++] = v ? 1 : 0; return *this; }
+   be_key_stream& operator<<(bool v) {
+      static_assert(sizeof(bool) == 1);
+      sysio::check(size_ + sizeof(bool) <= buf_cap, "be_key_stream: key too large");
+      buf_[size_++] = v ? 1 : 0;
+      return *this;
+   }
 
    be_key_stream& operator<<(const std::string& v) {
       write_escaped(v.data(), v.size());
@@ -286,4 +293,8 @@ public:
    uint32_t size() const { return size_; }
 };
 
-} } // namespace sysio::kv
+} // namespace kv
+
+using kv::same_payer;
+
+} // namespace sysio
