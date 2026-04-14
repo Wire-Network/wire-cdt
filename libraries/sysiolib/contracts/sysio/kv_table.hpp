@@ -207,6 +207,7 @@ public:
 
    be_key_reader& operator>>(float& v) {
       static_assert(sizeof(float) == sizeof(uint32_t));
+      static_assert(std::numeric_limits<float>::is_iec559);
       uint32_t bits = read_be32();
       // Reverse sign-magnitude transform
       if (bits & (uint32_t(1) << 31))
@@ -219,6 +220,7 @@ public:
 
    be_key_reader& operator>>(double& v) {
       static_assert(sizeof(double) == sizeof(uint64_t));
+      static_assert(std::numeric_limits<double>::is_iec559);
       uint64_t bits = read_be64();
       if (bits & (uint64_t(1) << 63))
          bits ^= (uint64_t(1) << 63);

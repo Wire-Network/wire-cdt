@@ -254,6 +254,7 @@ public:
 
    be_key_stream& operator<<(float v) {
       static_assert(sizeof(float) == sizeof(uint32_t));
+      static_assert(std::numeric_limits<float>::is_iec559);
       uint32_t bits;
       std::memcpy(&bits, &v, sizeof(float));
       if (bits >> 31) bits = ~bits;
@@ -264,6 +265,7 @@ public:
 
    be_key_stream& operator<<(double v) {
       static_assert(sizeof(double) == sizeof(uint64_t));
+      static_assert(std::numeric_limits<double>::is_iec559);
       uint64_t bits;
       std::memcpy(&bits, &v, sizeof(double));
       if (bits >> 63) bits = ~bits;

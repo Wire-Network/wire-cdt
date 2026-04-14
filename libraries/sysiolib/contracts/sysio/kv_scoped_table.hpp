@@ -95,8 +95,8 @@ public:
 
       void load_scope() {
          char key_buf[kv_scope_size];
-         uint32_t key_size = 0;
-         if (::kv_it_key(_handle, 0, key_buf, kv_scope_size, &key_size) != 0 || key_size < kv_scope_size) {
+         uint32_t actual = 0;
+         if (::kv_it_key(_handle, 0, key_buf, kv_scope_size, &actual) != 0 || actual < kv_scope_size) {
             _valid = false; return;
          }
          _scope = kv::decode_be64(key_buf);
