@@ -1,6 +1,6 @@
 #pragma once
 /**
- * sysio::kv::global — Non-scoped singleton backed by a single format=0 KV entry.
+ * sysio::kv::global — Non-scoped singleton backed by a single KV entry under a dedicated table_id.
  *
  * Stores exactly one value per contract, keyed by the table name alone.
  * No scope parameter — the entry is global to the contract account.

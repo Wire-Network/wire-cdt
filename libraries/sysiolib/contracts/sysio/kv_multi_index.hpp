@@ -111,12 +111,12 @@ struct const_mem_fun {
 namespace _kv_multi_index_detail {
 
    // Encoded sizes for big-endian KV key components.
-   static constexpr size_t enc_u64   = 8;   // one BE uint64_t
-   static constexpr size_t enc_u128  = 16;  // two BE uint64_t halves
-   static constexpr size_t enc_scope = 8;   // scope is one BE uint64_t
+   static constexpr size_t u64_size   = sizeof(uint64_t);
+   static constexpr size_t u128_size  = sizeof(uint128_t);
+   static constexpr size_t scope_size = sizeof(uint64_t);  // scope is one BE uint64_t
 
    inline void encode_be64(char* buf, uint64_t v) {
-      for (int i = enc_u64 - 1; i >= 0; --i) {
+      for (int i = u64_size - 1; i >= 0; --i) {
          buf[i] = static_cast<char>(v & 0xFF);
          v >>= 8;
       }
@@ -124,7 +124,7 @@ namespace _kv_multi_index_detail {
 
    inline uint64_t decode_be64(const char* buf) {
       uint64_t v = 0;
-      for (size_t i = 0; i < enc_u64; ++i) {
+      for (size_t i = 0; i < u64_size; ++i) {
          v = (v << 8) | static_cast<uint8_t>(buf[i]);
       }
       return v;
@@ -155,39 +155,39 @@ namespace _kv_multi_index_detail {
    // Non-template overloads for fixed-size types — preferred over the template,
    // return fixed_buf instead of vector to avoid heap allocation.
 
-   inline fixed_buf<enc_u64> encode_secondary(const uint64_t& key) {
-      fixed_buf<enc_u64> buf;
+   inline fixed_buf<u64_size> encode_secondary(const uint64_t& key) {
+      fixed_buf<u64_size> buf;
       encode_be64(buf.data(), key);
       return buf;
    }
 
-   inline fixed_buf<enc_u128> encode_secondary(const uint128_t& key) {
-      fixed_buf<enc_u128> buf;
+   inline fixed_buf<u128_size> encode_secondary(const uint128_t& key) {
+      fixed_buf<u128_size> buf;
       encode_be64(buf.data(), static_cast<uint64_t>(key >> 64));
-      encode_be64(buf.data() + enc_u64, static_cast<uint64_t>(key));
+      encode_be64(buf.data() + u64_size, static_cast<uint64_t>(key));
       return buf;
    }
 
-   inline fixed_buf<enc_u64> encode_secondary(const double& key) {
+   inline fixed_buf<u64_size> encode_secondary(const double& key) {
       uint64_t bits;
-      memcpy(&bits, &key, enc_u64);
+      memcpy(&bits, &key, u64_size);
       if (bits & (uint64_t(1) << 63))
          bits = ~bits;
       else
          bits ^= (uint64_t(1) << 63);
-      fixed_buf<enc_u64> buf;
+      fixed_buf<u64_size> buf;
       encode_be64(buf.data(), bits);
       return buf;
    }
 
-   inline fixed_buf<enc_u128> encode_secondary(const long double& key) {
-      char raw[enc_u128];
-      memcpy(raw, &key, enc_u128);
-      fixed_buf<enc_u128> buf;
-      for (int i = 0; i < static_cast<int>(enc_u128); ++i)
-         buf.data_[i] = raw[enc_u128 - 1 - i];
+   inline fixed_buf<u128_size> encode_secondary(const long double& key) {
+      char raw[u128_size];
+      memcpy(raw, &key, u128_size);
+      fixed_buf<u128_size> buf;
+      for (int i = 0; i < static_cast<int>(u128_size); ++i)
+         buf.data_[i] = raw[u128_size - 1 - i];
       if (static_cast<uint8_t>(buf.data_[0]) & 0x80u)
-         for (int i = 0; i < static_cast<int>(enc_u128); ++i) buf.data_[i] = ~buf.data_[i];
+         for (int i = 0; i < static_cast<int>(u128_size); ++i) buf.data_[i] = ~buf.data_[i];
       else
          buf.data_[0] = static_cast<char>(static_cast<uint8_t>(buf.data_[0]) ^ 0x80u);
       return buf;
@@ -248,7 +248,7 @@ class kv_multi_index {
    // Primary key for secondary index: [pk:8B]
    // Scope is encoded in the sec_key prefix instead (see store_all).
    struct pk_bytes_buf {
-      char data[_kv_multi_index_detail::enc_u64];
+      char data[_kv_multi_index_detail::u64_size];
    };
 
    pk_bytes_buf pk_to_bytes(uint64_t pk) const {
@@ -321,40 +321,40 @@ class kv_multi_index {
    template<typename SecVal>
    std::vector<char> encode_scoped_secondary(const SecVal& val) const {
       auto raw = _kv_multi_index_detail::encode_secondary(val);
-      std::vector<char> buf(_kv_multi_index_detail::enc_scope + raw.size());
+      std::vector<char> buf(_kv_multi_index_detail::scope_size + raw.size());
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      memcpy(buf.data() + _kv_multi_index_detail::enc_scope, raw.data(), raw.size());
+      memcpy(buf.data() + _kv_multi_index_detail::scope_size, raw.data(), raw.size());
       return buf;
    }
 
    // Stack fast path for uint64_t.
-   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> encode_scoped_secondary(const uint64_t& val) const {
-      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> buf;
+   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> encode_scoped_secondary(const uint64_t& val) const {
+      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> buf;
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope, val);
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size, val);
       return buf;
    }
 
    // Stack fast path for uint128_t.
-   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u128> encode_scoped_secondary(const uint128_t& val) const {
-      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u128> buf;
+   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u128_size> encode_scoped_secondary(const uint128_t& val) const {
+      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u128_size> buf;
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope, static_cast<uint64_t>(val >> 64));
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64, static_cast<uint64_t>(val));
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size, static_cast<uint64_t>(val >> 64));
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size, static_cast<uint64_t>(val));
       return buf;
    }
 
    // Stack fast path for double (sort-preserving transform + scope).
-   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> encode_scoped_secondary(const double& val) const {
+   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> encode_scoped_secondary(const double& val) const {
       uint64_t bits;
-      memcpy(&bits, &val, _kv_multi_index_detail::enc_u64);
+      memcpy(&bits, &val, _kv_multi_index_detail::u64_size);
       if (bits & (uint64_t(1) << 63))
          bits = ~bits;
       else
          bits ^= (uint64_t(1) << 63);
-      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> buf;
+      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> buf;
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope, bits);
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size, bits);
       return buf;
    }
 
@@ -369,7 +369,7 @@ class kv_multi_index {
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
          auto pri_key = idx.pk_to_bytes(obj.primary_key());
          ::kv_idx_store(payer, _sec_tid,
-                        pri_key.data, _kv_multi_index_detail::enc_u64,
+                        pri_key.data, _kv_multi_index_detail::u64_size,
                         sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
             secondary_ops<N+1, Rest...>::store_all(payer, idx, obj);
@@ -382,7 +382,7 @@ class kv_multi_index {
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
          auto pri_key = idx.pk_to_bytes(obj.primary_key());
          ::kv_idx_remove(_sec_tid,
-                         pri_key.data, _kv_multi_index_detail::enc_u64,
+                         pri_key.data, _kv_multi_index_detail::u64_size,
                          sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
             secondary_ops<N+1, Rest...>::remove_all(idx, obj);
@@ -397,7 +397,7 @@ class kv_multi_index {
          auto pri_key = idx.pk_to_bytes(old_obj.primary_key());
          if (old_sec != new_sec) {
             ::kv_idx_update(payer, _sec_tid,
-                            pri_key.data, _kv_multi_index_detail::enc_u64,
+                            pri_key.data, _kv_multi_index_detail::u64_size,
                             old_sec.data(), old_sec.size(),
                             new_sec.data(), new_sec.size());
          }
@@ -830,10 +830,10 @@ public:
       // Helper: read primary key from secondary iterator handle.
       // The stored pri_key is [pk:8B].
       static bool read_primary_key(uint32_t handle, uint64_t& pk) {
-         char pri_buf[_kv_multi_index_detail::enc_u64];
+         char pri_buf[_kv_multi_index_detail::u64_size];
          uint32_t actual = 0;
-         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, _kv_multi_index_detail::enc_u64, &actual);
-         if (status != 0 || actual != _kv_multi_index_detail::enc_u64) return false;
+         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, _kv_multi_index_detail::u64_size, &actual);
+         if (status != 0 || actual != _kv_multi_index_detail::u64_size) return false;
          pk = _kv_multi_index_detail::decode_be64(pri_buf);
          return true;
       }
@@ -869,9 +869,9 @@ public:
                // so lower_bound positions past this scope's entries, then prev
                // lands on the last entry in the scope.
                constexpr size_t sec_val_size = sizeof(secondary_key_type);
-               char max_sec[_kv_multi_index_detail::enc_scope + sec_val_size];
+               char max_sec[_kv_multi_index_detail::scope_size + sec_val_size];
                _kv_multi_index_detail::encode_be64(max_sec, _mi->_scope);
-               memset(max_sec + _kv_multi_index_detail::enc_scope, 0xFF, sec_val_size);
+               memset(max_sec + _kv_multi_index_detail::scope_size, 0xFF, sec_val_size);
                _handle.reset(::kv_idx_lower_bound(
                   _mi->_code.value, _sec_table_id,
                   max_sec, sizeof(max_sec)));
@@ -965,13 +965,13 @@ public:
          // another scope — treat that as end-of-range.
          bool check_scope() const {
             if (_handle < 0 || !_mi) return false;
-            char scope_buf[_kv_multi_index_detail::enc_scope];
+            char scope_buf[_kv_multi_index_detail::scope_size];
             uint32_t actual = 0;
-            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, _kv_multi_index_detail::enc_scope, &actual);
-            if (status != 0 || actual < _kv_multi_index_detail::enc_scope) return false;
-            char expected[_kv_multi_index_detail::enc_scope];
+            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, _kv_multi_index_detail::scope_size, &actual);
+            if (status != 0 || actual < _kv_multi_index_detail::scope_size) return false;
+            char expected[_kv_multi_index_detail::scope_size];
             _kv_multi_index_detail::encode_be64(expected, _mi->_scope);
-            return memcmp(scope_buf, expected, _kv_multi_index_detail::enc_scope) == 0;
+            return memcmp(scope_buf, expected, _kv_multi_index_detail::scope_size) == 0;
          }
       };
 
@@ -987,11 +987,11 @@ public:
 
       const_iterator begin() const {
          // Lower bound with scope prefix = first entry in this scope
-         char scope_prefix[_kv_multi_index_detail::enc_scope];
+         char scope_prefix[_kv_multi_index_detail::scope_size];
          _kv_multi_index_detail::encode_be64(scope_prefix, _mi->_scope);
          int32_t handle = ::kv_idx_lower_bound(
             _mi->_code.value, _sec_table_id,
-            scope_prefix, _kv_multi_index_detail::enc_scope);
+            scope_prefix, _kv_multi_index_detail::scope_size);
          if (handle < 0) return end();
          // Verify we landed in the right scope (may be past it if scope is empty)
          const_iterator it(_mi, handle, true);

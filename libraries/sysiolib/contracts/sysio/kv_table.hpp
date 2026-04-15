@@ -599,6 +599,7 @@ public:
          : _tbl(t), _handle(h), _valid(valid) {
          if (_valid) load();
       }
+
       static const_iterator make_end(const table_impl* t) {
          const_iterator it; it._tbl = t; return it;
       }
@@ -1085,6 +1086,7 @@ public:
             : _tbl(tbl), _handle(handle), _valid(valid) {
             if (_valid) load_current();
          }
+
          static const_iterator make_end(table_impl* tbl) {
             const_iterator it; it._tbl = tbl; return it;
          }
@@ -1222,6 +1224,7 @@ public:
             : _tbl(tbl), _handle(handle), _valid(valid) {
             if (_valid) load_keys();
          }
+
          static key_iterator make_end(table_impl* tbl) {
             key_iterator it; it._tbl = tbl; return it;
          }

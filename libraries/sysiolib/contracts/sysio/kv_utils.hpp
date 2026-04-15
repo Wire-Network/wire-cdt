@@ -52,7 +52,10 @@ struct key_buf {
    char* heap_ = nullptr;
    uint32_t len = 0;
 
-   const char* data() const { return (len > inline_cap) ? heap_ : inline_; }
+   const char* data() const {
+      return (len > inline_cap) ? heap_ : inline_;
+   }
+
    uint32_t size() const { return len; }
    bool empty() const { return len == 0; }
 
@@ -82,6 +85,7 @@ struct key_buf {
       else if (o.len) { std::memcpy(inline_, o.inline_, o.len); }
       o.len = 0;
    }
+
    key_buf& operator=(key_buf&& o) noexcept {
       if (this != &o) {
          delete[] heap_; heap_ = nullptr;
@@ -92,9 +96,11 @@ struct key_buf {
       }
       return *this;
    }
+
    key_buf(const key_buf& o) : len(0) {
       if (o.len) assign(o.data(), o.len);
    }
+
    key_buf& operator=(const key_buf& o) {
       if (this != &o) { clear(); if (o.len) assign(o.data(), o.len); }
       return *this;
@@ -183,29 +189,35 @@ class be_key_stream {
 public:
    static constexpr uint32_t buf_cap = KV_KEY_BUF_CAP;
 private:
+   static constexpr size_t terminator_size = 2;  // 0x00 0x00 end-marker for escaped strings
+
    char buf_[buf_cap];
    uint32_t size_ = 0;
 
+   void check_capacity(size_t n) {
+      sysio::check(size_ + n <= buf_cap, "be_key_stream: key too large");
+   }
+
    void write_be32(uint32_t v) {
-      sysio::check(size_ + sizeof(uint32_t) <= buf_cap, "be_key_stream: key too large");
+      check_capacity(sizeof(uint32_t));
       for (int i = sizeof(uint32_t) - 1; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
       size_ += sizeof(uint32_t);
    }
 
    void write_be64(uint64_t v) {
-      sysio::check(size_ + sizeof(uint64_t) <= buf_cap, "be_key_stream: key too large");
+      check_capacity(sizeof(uint64_t));
       for (int i = sizeof(uint64_t) - 1; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
       size_ += sizeof(uint64_t);
    }
 
    void write_escaped(const char* data, size_t len) {
       // Upfront: data bytes + 2-byte terminator (no NUL escapes)
-      sysio::check(size_ + len + 2 <= buf_cap, "be_key_stream: key too large");
+      check_capacity(len + terminator_size);
       for (size_t i = 0; i < len; ++i) {
          buf_[size_++] = data[i];
          if (data[i] == '\0') {
-            // Each NUL adds 1 extra byte; still need room for remaining data + terminator
-            sysio::check(size_ + (len - i - 1) + 1 + 2 <= buf_cap, "be_key_stream: key too large");
+            // NUL adds 1 extra byte; still need room for terminator
+            check_capacity(1 + terminator_size);
             buf_[size_++] = '\x01';
          }
       }
@@ -215,15 +227,15 @@ private:
 
 public:
    void write(const char* data, size_t len) {
-      sysio::check(size_ + len <= buf_cap, "be_key_stream: key too large");
+      check_capacity(len);
       if (len > 0) { std::memcpy(buf_ + size_, data, len); size_ += len; }
    }
 
-   be_key_stream& operator<<(uint8_t v)  { sysio::check(size_ + sizeof(uint8_t) <= buf_cap, "be_key_stream: key too large"); buf_[size_++] = static_cast<char>(v); return *this; }
+   be_key_stream& operator<<(uint8_t v)  { check_capacity(sizeof(uint8_t)); buf_[size_++] = static_cast<char>(v); return *this; }
    be_key_stream& operator<<(int8_t v)   { return *this << static_cast<uint8_t>(static_cast<uint8_t>(v) ^ 0x80u); }
 
    be_key_stream& operator<<(uint16_t v) {
-      sysio::check(size_ + sizeof(uint16_t) <= buf_cap, "be_key_stream: key too large");
+      check_capacity(sizeof(uint16_t));
       buf_[size_++] = static_cast<char>((v >> 8) & 0xFF);
       buf_[size_++] = static_cast<char>(v & 0xFF);
       return *this;
@@ -276,7 +288,7 @@ public:
 
    be_key_stream& operator<<(bool v) {
       static_assert(sizeof(bool) == 1);
-      sysio::check(size_ + sizeof(bool) <= buf_cap, "be_key_stream: key too large");
+      check_capacity(sizeof(bool));
       buf_[size_++] = v ? 1 : 0;
       return *this;
    }
