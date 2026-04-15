@@ -25,12 +25,15 @@ inline constexpr uint32_t kv_scope_size = sizeof(uint64_t);
 
 // String-based djbh_hash is in hash_id.hpp (sysio::hash_id::djbh_hash).
 
-/// DJB2-hash the 8 big-endian bytes of a uint64_t.
+/// DJB2 initial hash seed (canonical value from Daniel J. Bernstein's hash function).
+inline constexpr uint64_t djbh_seed = 5381;
+
+/// DJB2-hash the 8 big-endian bytes of a uint64_t, optionally continuing from an existing hash.
 /// Gives good distribution regardless of input bit patterns (unlike raw % 65536
 /// which maps most name::raw values to 0 due to MSB-packed encoding).
-inline constexpr uint64_t djbh_hash_raw(uint64_t raw) {
-   uint64_t hash = 5381;
+inline constexpr uint64_t djbh_hash_raw(uint64_t raw, uint64_t hash = djbh_seed) {
    for (int i = 0; i < 8; ++i)
+      // hash * 33 (2^5 + 1), then add byte
       hash = ((hash << 5) + hash) + static_cast<uint8_t>(raw >> (56 - i * 8));
    return hash;
 }
@@ -50,18 +53,16 @@ inline constexpr uint64_t to_uint64(T v) {
 }
 
 /// Compute primary table_id from a template parameter (name::raw or hash_id::raw).
+/// Narrowing cast to uint16_t truncates to the low 16 bits (well-defined for unsigned).
 inline constexpr uint16_t compute_table_id(uint64_t raw) {
-   return static_cast<uint16_t>(djbh_hash_raw(raw) % 65536);
+   return static_cast<uint16_t>(djbh_hash_raw(raw));
 }
 
 /// Compute secondary index table_id from table + index template parameters.
 /// Both are raw uint64_t values (name::raw or hash_id::raw).
+/// Chains two 8-byte DJB2 passes: first the table bytes, then the index bytes.
 inline constexpr uint16_t compute_sec_table_id(uint64_t table_raw, uint64_t index_raw) {
-   // Continue hashing index bytes after table bytes (single DJB2 chain)
-   uint64_t hash = djbh_hash_raw(table_raw);
-   for (int i = 0; i < 8; ++i)
-      hash = ((hash << 5) + hash) + static_cast<uint8_t>(index_raw >> (56 - i * 8));
-   return static_cast<uint16_t>(hash % 65536);
+   return static_cast<uint16_t>(djbh_hash_raw(index_raw, djbh_hash_raw(table_raw)));
 }
 
 /// Compute secondary index table_id for multi_index (positional indices).

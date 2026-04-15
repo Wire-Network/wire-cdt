@@ -14,7 +14,7 @@ int64_t kv_set(uint32_t table_id, uint64_t payer,
 
 Store a key-value pair. Returns RAM byte delta.
 
-- **table_id** — table namespace identifier (DJB2 hash % 65536)
+- **table_id** — table namespace identifier (lower 16 bits of the DJB2 hash of table name)
 - **payer** — account to bill for RAM (0 = receiver)
 
 ### kv\_get

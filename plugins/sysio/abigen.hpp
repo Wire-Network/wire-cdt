@@ -11,23 +11,27 @@
 
 // DJB2 hash of 8 big-endian bytes of a uint64_t, truncated to uint16.
 // Must match sysio::kv::compute_table_id in kv_constants.hpp.
-static inline uint64_t djbh_hash_raw(uint64_t raw) {
-   uint64_t hash = 5381;
+
+// DJB2 initial hash seed (canonical value from Daniel J. Bernstein's hash function).
+static constexpr uint64_t djbh_seed = 5381;
+
+// DJB2-hash the 8 big-endian bytes of a uint64_t, optionally continuing from an existing hash.
+static inline uint64_t djbh_hash_raw(uint64_t raw, uint64_t hash = djbh_seed) {
    for (int i = 0; i < 8; ++i)
+      // hash * 33 (2^5 + 1), then add byte
       hash = ((hash << 5) + hash) + static_cast<uint8_t>(raw >> (56 - i * 8));
    return hash;
 }
 
+// Narrowing cast to uint16_t truncates to the low 16 bits (well-defined for unsigned).
 static inline uint16_t compute_table_id_from_raw(uint64_t raw) {
-   return static_cast<uint16_t>(djbh_hash_raw(raw) % 65536);
+   return static_cast<uint16_t>(djbh_hash_raw(raw));
 }
 
 // Must match sysio::kv::compute_sec_table_id in kv_constants.hpp.
+// Chains two 8-byte DJB2 passes: first the table bytes, then the index bytes.
 static inline uint16_t compute_sec_table_id_from_raw(uint64_t table_raw, uint64_t index_raw) {
-   uint64_t hash = djbh_hash_raw(table_raw);
-   for (int i = 0; i < 8; ++i)
-      hash = ((hash << 5) + hash) + static_cast<uint8_t>(index_raw >> (56 - i * 8));
-   return static_cast<uint16_t>(hash % 65536);
+   return static_cast<uint16_t>(djbh_hash_raw(index_raw, djbh_hash_raw(table_raw)));
 }
 
 // Must match sysio::kv::compute_mi_sec_table_id in kv_constants.hpp.
