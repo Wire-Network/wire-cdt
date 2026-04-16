@@ -45,15 +45,25 @@
             "name": "mi.config52",
             "type": "out_of_class3",
             "index_type": "i64",
-            "key_names": ["table_name","scope","primary_key"],
-            "key_types": ["name","name","uint64"]
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 9314
+        },
+        {
+            "name": "out_of_class3",
+            "type": "out_of_class3",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": [],
+            "table_id": 8120
         },
         {
             "name": "tbl_config",
             "type": "tbl_config",
             "index_type": "i64",
             "key_names": [],
-            "key_types": []
+            "key_types": [],
+            "table_id": 8868
         }
     ],
     "ricardian_clauses": [],

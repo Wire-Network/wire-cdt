@@ -32,6 +32,7 @@ add_cdt_unit_test(system_tests)
 add_cdt_unit_test(print_tests)
 add_cdt_unit_test(time_tests)
 add_cdt_unit_test(varint_tests)
+add_cdt_unit_test(kv_table_tests)
 
 target_compile_options( rope_tests PUBLIC -g )
 add_subdirectory(test_contracts)

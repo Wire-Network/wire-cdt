@@ -20,8 +20,7 @@ extern "C" {
 /**
  * Store or update a key-value pair.
  *
- * @param key_format - encoding format: 0 = raw bytes, 1 = standard 24-byte
- *   [table:8B BE][scope:8B BE][pk:8B BE] layout
+ * @param table_id - table identifier dispatching to the correct backing store
  * @param payer - account to bill for RAM. Pass 0 to bill the executing contract.
  *   Non-zero payer requires payer authorization at the transaction level.
  * @param key - pointer to key bytes
@@ -31,13 +30,12 @@ extern "C" {
  * @return RAM byte delta (positive for growth, 0 for same-size update)
  */
 __attribute__((sysio_wasm_import))
-int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
+int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
 
 /**
  * Read a value by key. If buffer is too small, returns the actual size without error.
  *
- * @param key_format - encoding format: 0 = raw bytes, 1 = standard 24-byte
- *   [table:8B BE][scope:8B BE][pk:8B BE] layout
+ * @param table_id - table identifier dispatching to the correct backing store
  * @param code - contract account to read from
  * @param key - pointer to key bytes
  * @param key_size - length of key
@@ -46,30 +44,30 @@ int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t ke
  * @return actual value size, or -1 if key not found
  */
 __attribute__((sysio_wasm_import))
-int32_t kv_get(uint32_t key_format, capi_name code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
+int32_t kv_get(uint32_t table_id, capi_name code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
 
 /**
  * Erase a key-value pair. Aborts if key not found.
  *
- * @param key_format - encoding format: 0 = raw bytes, 1 = standard 24-byte layout
+ * @param table_id - table identifier dispatching to the correct backing store
  * @param key - pointer to key bytes
  * @param key_size - length of key
  * @return negative RAM byte delta
  */
 __attribute__((sysio_wasm_import))
-int64_t kv_erase(uint32_t key_format, const void* key, uint32_t key_size);
+int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
 
 /**
  * Check if a key exists.
  *
- * @param key_format - encoding format: 0 = raw bytes, 1 = standard 24-byte layout
+ * @param table_id - table identifier dispatching to the correct backing store
  * @param code - contract account to check
  * @param key - pointer to key bytes
  * @param key_size - length of key
  * @return 1 if key exists, 0 otherwise
  */
 __attribute__((sysio_wasm_import))
-int32_t kv_contains(uint32_t key_format, capi_name code, const void* key, uint32_t key_size);
+int32_t kv_contains(uint32_t table_id, capi_name code, const void* key, uint32_t key_size);
 
 // --- Primary KV Iterators ---
 
@@ -77,14 +75,14 @@ int32_t kv_contains(uint32_t key_format, capi_name code, const void* key, uint32
  * Create an iterator over keys matching a prefix for a given contract.
  * Positions at the first matching key, or end if none match.
  *
- * @param key_format - encoding format: 0 = raw bytes, 1 = standard 24-byte layout
+ * @param table_id - table identifier dispatching to the correct backing store
  * @param code - contract account
  * @param prefix - key prefix bytes (empty = iterate all)
  * @param prefix_size - length of prefix
  * @return iterator handle (0..15)
  */
 __attribute__((sysio_wasm_import))
-uint32_t kv_it_create(uint32_t key_format, capi_name code, const void* prefix, uint32_t prefix_size);
+uint32_t kv_it_create(uint32_t table_id, capi_name code, const void* prefix, uint32_t prefix_size);
 
 /**
  * Destroy an iterator, freeing the slot.
@@ -156,15 +154,14 @@ int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_
 /**
  * Store a secondary index entry.
  * @param payer - account paying for RAM (0 = contract itself)
- * @param table - logical table name
- * @param index_id - index identifier (0-255)
+ * @param table_id - table identifier (encodes table name + index id)
  * @param pri_key - primary key bytes
  * @param pri_key_size - primary key size (max 256)
  * @param sec_key - secondary key bytes
  * @param sec_key_size - secondary key size (max 256)
  */
 __attribute__((sysio_wasm_import))
-void kv_idx_store(uint64_t payer, capi_name table, uint32_t index_id,
+void kv_idx_store(uint64_t payer, uint32_t table_id,
                   const void* pri_key, uint32_t pri_key_size,
                   const void* sec_key, uint32_t sec_key_size);
 
@@ -172,7 +169,7 @@ void kv_idx_store(uint64_t payer, capi_name table, uint32_t index_id,
  * Remove a secondary index entry.
  */
 __attribute__((sysio_wasm_import))
-void kv_idx_remove(capi_name table, uint32_t index_id,
+void kv_idx_remove(uint32_t table_id,
                    const void* pri_key, uint32_t pri_key_size,
                    const void* sec_key, uint32_t sec_key_size);
 
@@ -180,7 +177,7 @@ void kv_idx_remove(capi_name table, uint32_t index_id,
  * Update a secondary index entry (change secondary key, keep primary key).
  */
 __attribute__((sysio_wasm_import))
-void kv_idx_update(uint64_t payer, capi_name table, uint32_t index_id,
+void kv_idx_update(uint64_t payer, uint32_t table_id,
                    const void* pri_key, uint32_t pri_key_size,
                    const void* old_sec_key, uint32_t old_sec_key_size,
                    const void* new_sec_key, uint32_t new_sec_key_size);
@@ -193,7 +190,7 @@ void kv_idx_update(uint64_t payer, capi_name table, uint32_t index_id,
  *   must NOT be called.
  */
 __attribute__((sysio_wasm_import))
-int32_t kv_idx_find_secondary(capi_name code, capi_name table, uint32_t index_id,
+int32_t kv_idx_find_secondary(capi_name code, uint32_t table_id,
                               const void* sec_key, uint32_t sec_key_size);
 
 /**
@@ -202,11 +199,11 @@ int32_t kv_idx_find_secondary(capi_name code, capi_name table, uint32_t index_id
  * @return handle >= 0 positioned at the first entry with sec_key >= bound,
  *   or handle >= 0 in iterator_end state when bound is past all entries but
  *   the table is non-empty (enables kv_idx_prev to reach the last entry).
- *   Returns -1 only when the table has no entries for this (code, table, index_id).
+ *   Returns -1 only when the table has no entries for this (code, table_id).
  *   When -1 is returned no handle is allocated and kv_idx_destroy must NOT be called.
  */
 __attribute__((sysio_wasm_import))
-int32_t kv_idx_lower_bound(capi_name code, capi_name table, uint32_t index_id,
+int32_t kv_idx_lower_bound(capi_name code, uint32_t table_id,
                            const void* sec_key, uint32_t sec_key_size);
 
 /**

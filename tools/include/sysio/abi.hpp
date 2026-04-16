@@ -32,12 +32,20 @@ struct abi_action {
    bool operator<(const abi_action& s) const { return name < s.name; }
 };
 
+struct abi_secondary_index {
+   std::string name;
+   std::string key_type;
+   uint16_t    table_id = 0;
+};
+
 struct abi_table {
    std::string name;
    std::string type;
    std::string index_type;
    std::vector<std::string> key_names;
    std::vector<std::string> key_types;
+   uint16_t table_id = 0;
+   std::vector<abi_secondary_index> secondary_indexes;
    bool operator<(const abi_table& t) const { return name < t.name; }
 };
 

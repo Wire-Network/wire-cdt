@@ -353,6 +353,24 @@ struct generation_utils {
       return is_specialization;
    }
 
+   // Returns true when type is a class template specialization in any form, including
+   // the canonical RecordType form that has had its TemplateSpecializationType sugar
+   // stripped (e.g. when retrieved via getTemplateArgs()[i].getAsType()).
+   // Optionally filters by template name; an empty names list matches any template.
+   inline bool is_class_template_specialization_decl( const clang::QualType& type,
+                                                      const std::vector<std::string>& names = {} ) {
+      auto rt = llvm::dyn_cast<clang::RecordType>(type.getCanonicalType().getTypePtr());
+      if (!rt) return false;
+      auto cts = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(rt->getDecl());
+      if (!cts) return false;
+      if (names.empty()) return true;
+      auto tname = cts->getSpecializedTemplate()->getName();
+      for (const auto& n : names) {
+         if (tname == n) return true;
+      }
+      return false;
+   }
+
    using template_arg_t = std::variant<clang::QualType, clang::Expr*, llvm::APSInt>;
 
    inline template_arg_t get_template_argument( const clang::QualType& type, int index = 0 ) {
@@ -775,6 +793,34 @@ struct generation_utils {
          }
          return _translate_type(replace_in_name(ret));
       }
+      // Canonical class template specialization form (typedef stripped — e.g. when a
+      // template arg is retrieved via getTemplateArgs()[i].getAsType(), Clang returns
+      // the canonical type which has the TemplateSpecializationType sugar removed).
+      // Build the template_name_arg0_arg1... string directly from the
+      // ClassTemplateSpecializationDecl and run through the alias table — but only
+      // use the result if an alias was actually found, so we don't trample on types
+      // like `std::string` whose typedef-preserved name (`basic_string<char>`) is
+      // already in the alias table.
+      if ( is_class_template_specialization_decl( type ) ) {
+         auto rt = llvm::dyn_cast<clang::RecordType>(type.getCanonicalType().getTypePtr());
+         auto cts = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(rt->getDecl());
+         std::string ret = cts->getSpecializedTemplate()->getName().str() + "_";
+         const auto& args = cts->getTemplateArgs();
+         for (unsigned i = 0; i < args.size(); ++i) {
+            const auto& arg = args[i];
+            if (arg.getKind() == clang::TemplateArgument::Integral) {
+               ret += std::to_string(arg.getAsIntegral().getLimitedValue());
+            } else if (arg.getKind() == clang::TemplateArgument::Type) {
+               ret += translate_type(arg.getAsType());
+            }
+            if (i + 1 < args.size()) ret += "_";
+         }
+         std::string canonical_key = replace_in_name(ret);
+         std::string aliased = _translate_type(canonical_key);
+         if (aliased != canonical_key) {
+            return aliased;
+         }
+      }
       return _translate_type( type );
    }
 
@@ -922,24 +968,11 @@ struct generation_utils {
          "set_blockchain_parameters_packed",
          "set_parameters_packed",
          "set_privileged",
-         "db_store_i64",
-         "db_update_i64",
-         "db_remove_i64",
-         "db_idx64_store",
-         "db_idx64_update",
-         "db_idx64_remove",
-         "db_idx128_store",
-         "db_idx128_update",
-         "db_idx128_remove",
-         "db_idx256_store",
-         "db_idx256_update",
-         "db_idx256_remove",
-         "db_idx_double_store",
-         "db_idx_double_update",
-         "db_idx_double_remove",
-         "db_idx_long_double_store",
-         "db_idx_long_double_update",
-         "db_idx_long_double_remove",
+         "kv_set",
+         "kv_erase",
+         "kv_idx_store",
+         "kv_idx_remove",
+         "kv_idx_update",
          "send_inline",
          "send_context_free_inline",
          "set_finalizers"

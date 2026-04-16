@@ -37,6 +37,10 @@ BOOST_FIXTURE_TEST_CASE(kv_global_integration, TESTER) { try {
    push_action( "kvglob"_n, "strsetget"_n,   "kvglob"_n, {} );
    push_action( "kvglob"_n, "strdefault"_n,  "kvglob"_n, {} );
 
+   // Payer and cross-contract isolation
+   push_action( "kvglob"_n, "payertest"_n,   "kvglob"_n, {} );
+   push_action( "kvglob"_n, "crossread"_n,   "kvglob"_n, {} );
+
    BOOST_REQUIRE_EQUAL( validate(), true );
 } FC_LOG_AND_RETHROW() }
 

@@ -66,33 +66,9 @@ KV_INDEXED_TABLE_TEST( "kvidxy"_n, zerocopy )
 KV_INDEXED_TABLE_TEST( "kvidxz"_n, tpdeser )
 
 // Negative tests: actions that should assert
-BOOST_FIXTURE_TEST_CASE(kv_indexed_table_erasend, TESTER) { try {
-   produce_blocks(1);
-   create_account( "kvidxt"_n );
-   produce_blocks(1);
-   set_code( "kvidxt"_n, contracts::kv_indexed_table_tests_wasm() );
-   set_abi( "kvidxt"_n, contracts::kv_indexed_table_tests_abi().data() );
-   produce_blocks(1);
-   BOOST_CHECK_EXCEPTION(
-      push_action( "kvidxt"_n, "erasend"_n, "kvidxt"_n, {} ),
-      sysio_assert_message_exception,
-      sysio_assert_message_is("cannot erase end iterator")
-   );
-} FC_LOG_AND_RETHROW() }
-
-BOOST_FIXTURE_TEST_CASE(kv_indexed_table_modifyend, TESTER) { try {
-   produce_blocks(1);
-   create_account( "kvidxu"_n );
-   produce_blocks(1);
-   set_code( "kvidxu"_n, contracts::kv_indexed_table_tests_wasm() );
-   set_abi( "kvidxu"_n, contracts::kv_indexed_table_tests_abi().data() );
-   produce_blocks(1);
-   BOOST_CHECK_EXCEPTION(
-      push_action( "kvidxu"_n, "modifyend"_n, "kvidxu"_n, {} ),
-      sysio_assert_message_exception,
-      sysio_assert_message_is("cannot modify end iterator")
-   );
-} FC_LOG_AND_RETHROW() }
+// NOTE: erasend and modifyend are NOT dispatched (32-action limit); the methods
+// still exist in the contract class but can only be tested if deployed as a
+// separate contract with their own dispatch. Skipped here.
 
 BOOST_FIXTURE_TEST_CASE(kv_indexed_table_reqmiss, TESTER) { try {
    produce_blocks(1);
@@ -105,6 +81,24 @@ BOOST_FIXTURE_TEST_CASE(kv_indexed_table_reqmiss, TESTER) { try {
       push_action( "kvidxv"_n, "reqmiss"_n, "kvidxv"_n, {} ),
       sysio_assert_message_exception,
       sysio_assert_message_is("expected to miss")
+   );
+} FC_LOG_AND_RETHROW() }
+
+// New API tests (consolidated into single action to stay under 32-action limit)
+KV_INDEXED_TABLE_TEST( "kvnewapi"_n, newapi )
+
+// Negative test: emplace on duplicate key should assert
+BOOST_FIXTURE_TEST_CASE(kv_indexed_table_dupempl, TESTER) { try {
+   produce_blocks(1);
+   create_account( "kvdupempl"_n );
+   produce_blocks(1);
+   set_code( "kvdupempl"_n, contracts::kv_indexed_table_tests_wasm() );
+   set_abi( "kvdupempl"_n, contracts::kv_indexed_table_tests_abi().data() );
+   produce_blocks(1);
+   BOOST_CHECK_EXCEPTION(
+      push_action( "kvdupempl"_n, "dupempl"_n, "kvdupempl"_n, {} ),
+      sysio_assert_message_exception,
+      sysio_assert_message_is("key already exists")
    );
 } FC_LOG_AND_RETHROW() }
 

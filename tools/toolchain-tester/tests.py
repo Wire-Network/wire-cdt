@@ -90,13 +90,15 @@ class Test(ABC):
         if expected.get("stderr"):
             expected_stderr = expected["stderr"]
             actual_stderr = res.stderr.decode("utf-8")
+            patterns = expected_stderr if isinstance(expected_stderr, list) else [expected_stderr]
 
-            if expected_stderr not in actual_stderr and not re.search(expected_stderr, actual_stderr, flags=re.S):
-                self.success = False
-                raise TestFailure(
-                    f"expected {expected_stderr} stderr but got {actual_stderr}",
-                    failing_test=self,
-                )
+            for pat in patterns:
+                if pat not in actual_stderr and not re.search(pat, actual_stderr, flags=re.S):
+                    self.success = False
+                    raise TestFailure(
+                        f"expected {pat} stderr but got {actual_stderr}",
+                        failing_test=self,
+                    )
 
         if expected.get("abi") or expected.get("abi-file"):
             if expected.get("abi"):

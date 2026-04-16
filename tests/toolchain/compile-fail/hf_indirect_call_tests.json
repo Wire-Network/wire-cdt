@@ -4,7 +4,28 @@
       "compile_flags": [],
       "expected" : {
         "exit-code": 255,
-        "stderr": "(codegen error.*){20}"
+        "stderr": [
+          "codegen error.*bool tlambda\\b",
+          "codegen error.*bool tlambdap\\b",
+          "codegen error.*bool tlambdap2",
+          "codegen error.*bool talias\\b",
+          "codegen error.*bool taliasg1",
+          "codegen error.*bool taliasg3\\b",
+          "codegen error.*bool taliasg3re1",
+          "codegen error.*bool taliasg3re3",
+          "codegen error.*bool taliasm1",
+          "codegen error.*bool taliasm3\\b",
+          "codegen error.*bool taliasm3re1",
+          "codegen error.*bool taliasm3re3",
+          "codegen error.*bool taliasma",
+          "codegen error.*bool tdefine\\b",
+          "codegen error.*bool tdefinep\\b",
+          "codegen error.*bool tdefinepi",
+          "codegen error.*bool combine\\b",
+          "codegen error.*bool combinea",
+          "codegen error.*bool combinec\\b",
+          "codegen error.*bool combinecp"
+        ]
       }
     }
   ]

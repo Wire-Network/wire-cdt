@@ -43,10 +43,6 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    push_action( "testapi"_n, "s2autoinc"_n,  "testapi"_n, {} );  // idx128_autoincrement_test
    push_action( "testapi"_n, "s2autoinc1"_n,  "testapi"_n, {} ); // idx128_autoincrement_test_part1
    push_action( "testapi"_n, "s2autoinc2"_n,  "testapi"_n, {} ); // idx128_autoincrement_test_part2
-   push_action( "testapi"_n, "s3g"_n,  "testapi"_n, {} );        // idx256_general
-   push_action( "testapi"_n, "sdg"_n,  "testapi"_n, {} );        // idx_double_general
-   push_action( "testapi"_n, "sldg"_n,  "testapi"_n, {} );       // idx_long_double_general
-
    check_failure( "s1pkend"_n, "cannot increment end iterator" );
    check_failure( "s1skend"_n, "cannot increment end iterator" );
    check_failure( "s1pkbegin"_n, "cannot decrement iterator at beginning of table" );
@@ -73,16 +69,32 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    push_action( "testapi"_n, "s1skcache"_n,  "testapi"_n, {} ); // idx64_sk_cache_pk_lookup
    push_action( "testapi"_n, "s1pkcache"_n,  "testapi"_n, {} ); // idx64_pk_cache_sk_lookup
 
+   BOOST_REQUIRE_EQUAL( validate(), true );
+} FC_LOG_AND_RETHROW() }
+
+// Second contract — split from main_multi_index_tests to stay under tx net limit
+BOOST_FIXTURE_TEST_CASE(multi_index_tests_part2, TESTER) { try {
+   produce_blocks(1);
+   create_account( "testapi2"_n );
+   produce_blocks(1);
+   set_code( "testapi2"_n, contracts::test_multi_index2_wasm() );
+   set_abi( "testapi2"_n, contracts::test_multi_index2_abi().data() );
+   produce_blocks(1);
+
+   push_action( "testapi2"_n, "s3g"_n,  "testapi2"_n, {} );        // idx256_general
+   push_action( "testapi2"_n, "sdg"_n,  "testapi2"_n, {} );        // idx_double_general
+   push_action( "testapi2"_n, "sldg"_n,  "testapi2"_n, {} );       // idx_long_double_general
+
    // secondary iterator edge cases
-   push_action( "testapi"_n, "s1clone"_n,    "testapi"_n, {} ); // sec iterator clone with duplicate keys
-   push_action( "testapi"_n, "s1secrb"_n,    "testapi"_n, {} ); // sec rbegin/rend (uint64_t)
-   push_action( "testapi"_n, "s2secrb"_n,    "testapi"_n, {} ); // sec rbegin/rend (uint128_t)
-   push_action( "testapi"_n, "namepk"_n,     "testapi"_n, {} ); // name-typed primary key
-   push_action( "testapi"_n, "cbegincend"_n, "testapi"_n, {} ); // cbegin/cend
-   push_action( "testapi"_n, "codescope"_n,  "testapi"_n, {} ); // get_code/get_scope
-   push_action( "testapi"_n, "crbeginend"_n, "testapi"_n, {} ); // crbegin/crend
-   push_action( "testapi"_n, "s1secupd"_n,  "testapi"_n, {} ); // T3: kv_idx_update verification
-   push_action( "testapi"_n, "tpdeser"_n,  "testapi"_n, {} ); // time_point explicit-ctor deserialize regression
+   push_action( "testapi2"_n, "s1clone"_n,    "testapi2"_n, {} ); // sec iterator clone with duplicate keys
+   push_action( "testapi2"_n, "s1secrb"_n,    "testapi2"_n, {} ); // sec rbegin/rend (uint64_t)
+   push_action( "testapi2"_n, "s2secrb"_n,    "testapi2"_n, {} ); // sec rbegin/rend (uint128_t)
+   push_action( "testapi2"_n, "namepk"_n,     "testapi2"_n, {} ); // name-typed primary key
+   push_action( "testapi2"_n, "cbegincend"_n, "testapi2"_n, {} ); // cbegin/cend
+   push_action( "testapi2"_n, "codescope"_n,  "testapi2"_n, {} ); // get_code/get_scope
+   push_action( "testapi2"_n, "crbeginend"_n, "testapi2"_n, {} ); // crbegin/crend
+   push_action( "testapi2"_n, "s1secupd"_n,  "testapi2"_n, {} ); // T3: kv_idx_update verification
+   push_action( "testapi2"_n, "tpdeser"_n,  "testapi2"_n, {} ); // time_point explicit-ctor deserialize regression
 
    BOOST_REQUIRE_EQUAL( validate(), true );
 } FC_LOG_AND_RETHROW() }

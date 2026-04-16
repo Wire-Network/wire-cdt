@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(hash_id_example)
+find_package(cdt)
+add_contract( hash_id_example hash_id_example hash_id_example.cpp )
+target_include_directories( hash_id_example PUBLIC ${CMAKE_SOURCE_DIR}/../include )
+target_ricardian_directory( hash_id_example ${CMAKE_SOURCE_DIR}/../ricardian )

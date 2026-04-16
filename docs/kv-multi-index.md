@@ -1,126 +1,59 @@
 # sysio::multi\_index
 
-> **Backward compatibility only.** For new contracts, use [`kv::table`](kv-table.md) (no secondary indices), [`kv::indexed_table`](kv-indexed-table.md) (with secondary indices), [`kv::global`](kv-global.md) (non-scoped singleton), or [`singleton`](kv-table.md#singleton) (scoped singleton). See [why upgrade](kv-storage-guide.md#why-upgrade-from-multi_index) for the full comparison.
+> **Backward compatibility only.** For new scoped contracts, use [`kv::scoped_table`](kv-scoped-table.md) — same scope semantics, byte-identical primary keys, but no object cache overhead. For unscoped contracts, use [`kv::table`](kv-table.md). See the [KV Storage Guide](kv-storage-guide.md) for the full comparison.
 
 ## Include
 
 ```cpp
 #include <sysio/multi_index.hpp>   // explicit
-// or automatically via:
-#include <sysio/sysio.hpp>
+#include <sysio/sysio.hpp>          // or via umbrella
 ```
 
 ## Overview
 
-`sysio::multi_index` is a drop-in replacement for the EOSIO `multi_index`. Existing contracts compile and run unchanged. Under the hood, primary rows are stored as 24-byte KV keys and secondary indices use the `kv_idx_*` intrinsics, but from the contract author's perspective the interface is the same.
+`sysio::multi_index` is a drop-in replacement for the EOSIO `multi_index`. Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*` intrinsics.
 
-Key properties:
+Each table gets a `table_id` (uint16) computed via `compute_table_id(name::raw)` from the template parameter.
+
+Key layout (16 bytes):
+
+| Offset | Size | Field |
+|--------|------|-------|
+| 0 | 8B | `scope` (BE uint64) |
+| 8 | 8B | `primary_key` (BE uint64) |
+
+The table name is conveyed by `table_id`, not embedded in the key.
+
+## Key Features
 
 - Up to **16 secondary indices** via `indexed_by` / `const_mem_fun`
-- Full bidirectional iterator support: `begin`/`end`, `rbegin`/`rend`, `cbegin`/`cend`
-- `find`, `require_find`, `get`, `lower_bound`, `upper_bound`, `iterator_to`
-- `emplace`, `modify`, `erase` (erase returns next iterator)
+- `find`, `require_find`, `get`, `lower_bound`, `upper_bound`
+- `emplace`, `modify`, `erase` (returns next iterator)
 - `available_primary_key()` for auto-increment
-- Object caching: repeated access to the same primary key returns the cached pointer
-- `payer` parameter is honored -- RAM is charged to the specified payer (cross-account billing requires `sysio.payer` permission)
-- Row types must use `SYSLIB_SERIALIZE`
-- Post-increment (`it++`) and post-decrement (`it--`) are deleted -- use `++it` / `--it`
+- Object caching for repeated access
+- `payer` parameter honored for RAM billing
+- `rbegin/rend`, `cbegin/cend` support
 
-## Singleton support
+## Singleton
 
 ```cpp
 #include <sysio/singleton.hpp>
 ```
 
-`sysio::singleton<Name, T>` is now an alias for `sysio::kv_singleton`, backed by the KV database. The API is unchanged:
+`sysio::singleton<Name, T>` is backed by `kv_multi_index`. API: `exists`, `get`, `get_or_default`, `get_or_create`, `set`, `remove`.
 
-| Method | Description |
-|--------|-------------|
-| `exists()` | Returns true if a value has been stored |
-| `get()` | Returns stored value, asserts if missing |
-| `get_or_default(def)` | Returns stored value or `def` |
-| `get_or_create(payer, def)` | Returns stored value, or stores and returns `def` |
-| `set(value, payer)` | Stores or updates the value |
-| `remove()` | Deletes the stored value |
-
-## Secondary index views
-
-Access a secondary index with `get_index<"indexname"_n>()`. The returned view supports:
-
-| Method | Description |
-|--------|-------------|
-| `find(sec_key)` | Exact match on secondary key |
-| `lower_bound(sec_key)` | First entry >= sec\_key |
-| `require_find(sec_key, msg)` | find() + assert |
-| `begin()` / `end()` | Full range in secondary key order |
-| `rbegin()` / `rend()` | Reverse iteration |
-| `modify(itr, payer, updater)` | Modify the primary row via secondary iterator |
-| `erase(itr)` | Erase the primary row, returns next secondary iterator |
-
-Supported secondary key types: `uint64_t`, `uint128_t`, `double`, `long double`, and any serializable type.
-
-## Example: token-like contract with secondary index
+## Example
 
 ```cpp
-#include <sysio/sysio.hpp>
-
-using namespace sysio;
-
-class [[sysio::contract]] mytoken : public contract {
-public:
-   using contract::contract;
-
-   struct [[sysio::table]] account {
-      name     owner;
-      uint64_t balance;
-
-      uint64_t primary_key() const { return owner.value; }
-      uint64_t by_balance()  const { return balance; }
-
-      SYSLIB_SERIALIZE(account, (owner)(balance))
-   };
-
-   using accounts_table = multi_index<"accounts"_n, account,
-      indexed_by<"bybalance"_n, const_mem_fun<account, uint64_t, &account::by_balance>>
-   >;
-
-   [[sysio::action]]
-   void transfer(name from, name to, uint64_t amount) {
-      require_auth(from);
-
-      accounts_table accts(get_self(), get_self().value);
-
-      // Debit sender
-      auto from_itr = accts.require_find(from.value, "sender not found");
-      check(from_itr->balance >= amount, "insufficient balance");
-      accts.modify(from_itr, same_payer, [&](auto& a) {
-         a.balance -= amount;
-      });
-
-      // Credit receiver
-      auto to_itr = accts.find(to.value);
-      if (to_itr == accts.end()) {
-         accts.emplace(get_self(), [&](auto& a) {
-            a.owner = to;
-            a.balance = amount;
-         });
-      } else {
-         accts.modify(to_itr, same_payer, [&](auto& a) {
-            a.balance += amount;
-         });
-      }
-   }
-
-   [[sysio::action]]
-   void topbalances(uint32_t limit) {
-      accounts_table accts(get_self(), get_self().value);
-      auto idx = accts.get_index<"bybalance"_n>();
-
-      // Iterate in reverse (highest balance first)
-      uint32_t count = 0;
-      for (auto it = idx.rbegin(); it != idx.rend() && count < limit; ++it, ++count) {
-         print(it->owner, ": ", it->balance, "\n");
-      }
-   }
+struct [[sysio::table]] account {
+   name     owner;
+   uint64_t balance;
+   uint64_t primary_key() const { return owner.value; }
+   uint64_t by_balance()  const { return balance; }
+   SYSLIB_SERIALIZE(account, (owner)(balance))
 };
+
+using accounts_table = multi_index<"accounts"_n, account,
+   indexed_by<"bybalance"_n, const_mem_fun<account, uint64_t, &account::by_balance>>
+>;
 ```

@@ -2,115 +2,131 @@
 
 ## Overview
 
-The generated ABI includes key layout metadata in the `key_names` and `key_types` fields of each table entry. This allows SHiP clients (e.g., Hyperion) to decode raw KV key bytes using the contract's ABI.
+The generated ABI includes key layout metadata in `key_names`, `key_types`, and `table_id` fields for each table entry. This allows SHiP clients (e.g., Hyperion) to decode raw KV key bytes and route deltas to the correct table.
 
-Key metadata is generated in two ways:
+## table\_id
 
-1. **Automatically** for tables used in `kv_multi_index`, `multi_index`, `singleton`, or `kv::table` templates — standard 24-byte key layout.
-2. **Explicitly** via `[[sysio::kv_key("key_struct")]]` for tables backed by `kv::raw_table` — custom key layout from the named struct's fields.
-
-## Automatic Key Metadata (kv\_multi\_index)
-
-For tables used in a `kv_multi_index` (or `multi_index`) template:
-
-```cpp
-struct [[sysio::table]] account {
-    asset    balance;
-    uint64_t primary_key() const { return balance.symbol.code().raw(); }
-};
-typedef kv_multi_index<"accounts"_n, account> accounts_table;
-```
-
-CDT generates the standard 24-byte key layout:
+Each table gets a unique `table_id` (uint16) computed from the template parameter via DJB2 hash. The `table_id` is passed as the first parameter to all KV intrinsics and appears in the ABI:
 
 ```json
 {
-    "name": "accounts",
-    "type": "account",
-    "key_names": ["table_name", "scope", "primary_key"],
-    "key_types": ["name", "name", "uint64"]
+   "name": "accounts",
+   "type": "account",
+   "table_id": 25660,
+   "key_names": ["scope", "primary_key"],
+   "key_types": ["name", "uint64"]
 }
 ```
 
-## Custom Key Metadata (\[\[sysio::kv\_key\]\])
+## Auto-Generated Key Metadata
 
-For tables backed by `kv::raw_table` with custom key types, annotate the value struct:
+All table ABI entries are auto-generated from template parameters — **no annotations required** for `_n` tables.
 
-```cpp
-struct my_key {
-    std::string region;
-    uint64_t    id;
-    SYSLIB_SERIALIZE(my_key, (region)(id))
-};
+### multi\_index / singleton
 
-struct [[sysio::table("geodata"), sysio::kv_key("my_key")]] my_value {
-    std::string payload;
-    uint64_t    amount;
-    SYSLIB_SERIALIZE(my_value, (payload)(amount))
-};
-
-kv::raw_table<my_key, my_value> geodata;
-```
-
-CDT generates key metadata from the named struct's fields and adds the key struct to the ABI:
+CDT auto-generates the standard 16-byte scoped key layout:
 
 ```json
+"key_names": ["scope", "primary_key"],
+"key_types": ["name", "uint64"]
+```
+
+### kv::table
+
+For `kv::table<Name, K, V>`, CDT auto-derives `key_names` and `key_types` from the K template parameter's fields:
+
+```cpp
+struct order_key {
+   std::string region;
+   uint64_t    seq;
+   SYSLIB_SERIALIZE(order_key, (region)(seq))
+};
+
+struct order_val {
+   uint64_t amount;
+   SYSLIB_SERIALIZE(order_val, (amount))
+};
+
+// No annotations — everything derived from template params
+using orders = kv::table<"orders"_n, order_key, order_val>;
+```
+
+ABI output:
+```json
 {
-    "name": "geodata",
-    "type": "my_value",
-    "key_names": ["region", "id"],
-    "key_types": ["string", "uint64"]
+   "name": "orders",
+   "type": "order_val",
+   "table_id": 12345,
+   "key_names": ["region", "seq"],
+   "key_types": ["string", "uint64"]
 }
 ```
 
-Using `[[sysio::kv_key]]` without an argument produces the standard 24-byte layout (same as automatic).
+### kv::global
+
+CDT auto-generates a single 8-byte name key:
+
+```json
+"key_names": ["name"],
+"key_types": ["name"]
+```
+
+## When Annotations Are Needed
+
+| Scenario | Annotation | Why |
+|----------|-----------|-----|
+| `_n` table, default key metadata | None | Auto-derived from template |
+| `_i` table (long name) | `[[sysio::table("long_name")]]` on V | DJB2 hash can't reverse to string |
+| Override key field names in ABI | `[[sysio::kv_key("alt_struct")]]` on V | Use different names than K's fields |
+| Both long name + override | Both annotations on V | |
+
+### Override example
+
+`[[sysio::kv_key]]` overrides the auto-derived key metadata when you want the ABI to expose different field names than the actual key struct:
+
+```cpp
+struct real_key { uint64_t category; uint64_t id; SYSLIB_SERIALIZE(real_key, (category)(id)) };
+struct abi_key  { uint64_t cat; uint64_t item_id; SYSLIB_SERIALIZE(abi_key, (cat)(item_id)) };
+
+struct [[sysio::table("items"), sysio::kv_key("abi_key")]] item_val {
+   std::string name;
+   SYSLIB_SERIALIZE(item_val, (name))
+};
+
+using items = kv::table<"items"_n, real_key, item_val>;
+// ABI key_names: ["cat", "item_id"] (from abi_key, NOT real_key)
+```
+
+## The `_i` Literal and Long Table Names
+
+Table names can exceed 13 characters using `_i`:
+
+```cpp
+kv::table<"user_preferences"_i, pref_key, pref_val> prefs(get_self());
+```
+
+Requires `[[sysio::table("user_preferences")]]` on the value struct so CDT can emit the human-readable name in the ABI.
 
 ## Key Encoding
 
-All KV keys use big-endian encoding for correct `memcmp`-based ordering.
+All KV keys use big-endian encoding. The `table_id` is **not** part of the key bytes — it is passed separately to intrinsics.
 
-### Standard layout (kv\_multi\_index)
+### Legacy multi_index layout (16 bytes)
 
-| Offset | Size | Field | Type |
-|--------|------|-------|------|
-| 0 | 8 bytes | `table_name` | `name` (BE uint64) |
-| 8 | 8 bytes | `scope` | `name` (BE uint64) |
-| 16 | 8 bytes | `primary_key` | `uint64` (BE) |
+| Offset | Size | Field |
+|--------|------|-------|
+| 0 | 8B | `scope` (BE uint64) |
+| 8 | 8B | `primary_key` (BE uint64) |
 
-### Custom layout (kv::raw_table)
+### Custom layout (kv::table)
 
-Fields are concatenated in `SYSLIB_SERIALIZE` declaration order:
+Fields concatenated in SYSLIB_SERIALIZE order:
 
 | Type | Encoding |
 |------|----------|
-| `uint8` | 1 byte |
-| `uint16` | 2 bytes BE |
-| `uint32` | 4 bytes BE |
-| `uint64` / `name` | 8 bytes BE |
-| `uint128` | 16 bytes BE |
-| `double` | 8 bytes (IEEE 754 with sign-flip for sort order) |
-| `string` | Raw bytes + `0x00` terminator (no embedded nulls) |
+| `uint8/16/32/64` | Big-endian |
+| `int8/16/32/64` | Sign-flip + BE |
+| `double` / `float` | IEEE754 sign-flip |
+| `string` | NUL-escaped + terminated |
+| `name` | 8B big-endian |
 | `bool` | 1 byte (0 or 1) |
-
-## How SHiP Clients Use This
-
-### Format=1 (`contract_row` delta)
-
-SHiP pre-decomposes the 24-byte key into named fields (`table`, `scope`, `primary_key`). Clients receive these directly and decode the `value` using the table's `type` field from the ABI. Key metadata is informational.
-
-### Format=0 (`contract_row_kv` delta)
-
-SHiP sends `{code, payer, key, value}` with the raw key as opaque bytes. Clients:
-
-1. Load the contract ABI
-2. Find the table entry with populated `key_names`/`key_types`
-3. Decode key fields as big-endian per the declared types
-4. Decode the value using `abieos` with the table's `type` field
-
-## Value Encoding
-
-Values use standard ABI serialization (little-endian) for both format=0 and format=1. Clients decode them using `abieos` with the struct type from the table's `type` field.
-
-## Backward Compatibility
-
-The `key_names` and `key_types` fields have always been present in the ABI schema but were previously empty arrays. Populating them is backward-compatible — existing parsers that ignore these fields are unaffected.

@@ -5,27 +5,29 @@
  * Drop-in replacement for sysio::multi_index that uses KV intrinsics instead
  * of legacy db_*_i64 intrinsics. Same template API, different backend.
  *
- * Key encoding: [table_name: 8B BE][scope: 8B BE][primary_key: 8B BE] = 24 bytes
- * This enables the integer fast-path comparator in kv_object.
+ * Key encoding: [scope: 8B BE][primary_key: 8B BE] = 16 bytes.
+ * Table name is encoded in table_id (DJB2 hash of raw template parameter),
+ * which provides namespace isolation without per-row key overhead.
  *
  * The payer parameter is honored — RAM is charged to the specified payer,
  * matching the behavior of the legacy sysio::multi_index.
  */
 
 #include <cstdint>
+#include <sysio/kv_utils.hpp>
 
 // KV intrinsic declarations (primary + secondary — multi_index uses both)
 extern "C" {
    __attribute__((sysio_wasm_import))
-   int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
+   int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
    __attribute__((sysio_wasm_import))
-   int32_t kv_get(uint32_t key_format, uint64_t code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
+   int32_t kv_get(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
    __attribute__((sysio_wasm_import))
-   int64_t kv_erase(uint32_t key_format, const void* key, uint32_t key_size);
+   int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
    __attribute__((sysio_wasm_import))
-   int32_t kv_contains(uint32_t key_format, uint64_t code, const void* key, uint32_t key_size);
+   int32_t kv_contains(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size);
    __attribute__((sysio_wasm_import))
-   uint32_t kv_it_create(uint32_t key_format, uint64_t code, const void* prefix, uint32_t prefix_size);
+   uint32_t kv_it_create(uint32_t table_id, uint64_t code, const void* prefix, uint32_t prefix_size);
    __attribute__((sysio_wasm_import))
    void kv_it_destroy(uint32_t handle);
    __attribute__((sysio_wasm_import))
@@ -41,23 +43,23 @@ extern "C" {
    __attribute__((sysio_wasm_import))
    int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_store(uint64_t payer, uint64_t table, uint32_t index_id,
+   void kv_idx_store(uint64_t payer, uint32_t table_id,
                      const void* pri_key, uint32_t pri_key_size,
                      const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_remove(uint64_t table, uint32_t index_id,
+   void kv_idx_remove(uint32_t table_id,
                       const void* pri_key, uint32_t pri_key_size,
                       const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_update(uint64_t payer, uint64_t table, uint32_t index_id,
+   void kv_idx_update(uint64_t payer, uint32_t table_id,
                       const void* pri_key, uint32_t pri_key_size,
                       const void* old_sec_key, uint32_t old_sec_key_size,
                       const void* new_sec_key, uint32_t new_sec_key_size);
    __attribute__((sysio_wasm_import))
-   int32_t kv_idx_find_secondary(uint64_t code, uint64_t table, uint32_t index_id,
+   int32_t kv_idx_find_secondary(uint64_t code, uint32_t table_id,
                                  const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   int32_t kv_idx_lower_bound(uint64_t code, uint64_t table, uint32_t index_id,
+   int32_t kv_idx_lower_bound(uint64_t code, uint32_t table_id,
                               const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
    int32_t kv_idx_next(uint32_t handle);
@@ -87,18 +89,15 @@ extern "C" {
 
 #include <sysio/kv_constants.hpp>
 #include <sysio/kv_it_handle.hpp>
-#include <sysio/kv_raw_table.hpp>  // for sysio::kv::ser_buf
+#include <sysio/kv_utils.hpp>
 
 namespace sysio {
-
-using sysio::kv::kv_format_raw;
-using sysio::kv::kv_format_standard;
 
 // Type definitions needed by contracts using secondary indices.
 // These are pure type templates with no legacy db_* dependencies.
 template<name::raw IndexName, typename Extractor>
 struct indexed_by {
-   enum constants { index_name = static_cast<uint64_t>(IndexName) };
+   enum constants : uint64_t { index_name = static_cast<uint64_t>(IndexName) };
    typedef Extractor secondary_extractor_type;
 };
 
@@ -109,20 +108,15 @@ struct const_mem_fun {
    Type operator()(const Class* x) const { return (x->*PtrToMemberFunction)(); }
 };
 
-#ifndef SYSIO_SAME_PAYER_DEFINED
-#define SYSIO_SAME_PAYER_DEFINED
-inline constexpr name same_payer{};
-#endif
-
 namespace _kv_multi_index_detail {
 
    // Encoded sizes for big-endian KV key components.
-   static constexpr size_t enc_u64   = 8;   // one BE uint64_t
-   static constexpr size_t enc_u128  = 16;  // two BE uint64_t halves
-   static constexpr size_t enc_scope = 8;   // scope is one BE uint64_t
+   static constexpr size_t u64_size   = sizeof(uint64_t);
+   static constexpr size_t u128_size  = sizeof(uint128_t);
+   static constexpr size_t scope_size = sizeof(uint64_t);  // scope is one BE uint64_t
 
    inline void encode_be64(char* buf, uint64_t v) {
-      for (int i = 7; i >= 0; --i) {
+      for (int i = u64_size - 1; i >= 0; --i) {
          buf[i] = static_cast<char>(v & 0xFF);
          v >>= 8;
       }
@@ -130,7 +124,7 @@ namespace _kv_multi_index_detail {
 
    inline uint64_t decode_be64(const char* buf) {
       uint64_t v = 0;
-      for (int i = 0; i < 8; ++i) {
+      for (size_t i = 0; i < u64_size; ++i) {
          v = (v << 8) | static_cast<uint8_t>(buf[i]);
       }
       return v;
@@ -161,39 +155,39 @@ namespace _kv_multi_index_detail {
    // Non-template overloads for fixed-size types — preferred over the template,
    // return fixed_buf instead of vector to avoid heap allocation.
 
-   inline fixed_buf<enc_u64> encode_secondary(const uint64_t& key) {
-      fixed_buf<enc_u64> buf;
+   inline fixed_buf<u64_size> encode_secondary(const uint64_t& key) {
+      fixed_buf<u64_size> buf;
       encode_be64(buf.data(), key);
       return buf;
    }
 
-   inline fixed_buf<enc_u128> encode_secondary(const uint128_t& key) {
-      fixed_buf<enc_u128> buf;
+   inline fixed_buf<u128_size> encode_secondary(const uint128_t& key) {
+      fixed_buf<u128_size> buf;
       encode_be64(buf.data(), static_cast<uint64_t>(key >> 64));
-      encode_be64(buf.data() + enc_u64, static_cast<uint64_t>(key));
+      encode_be64(buf.data() + u64_size, static_cast<uint64_t>(key));
       return buf;
    }
 
-   inline fixed_buf<enc_u64> encode_secondary(const double& key) {
+   inline fixed_buf<u64_size> encode_secondary(const double& key) {
       uint64_t bits;
-      memcpy(&bits, &key, enc_u64);
+      memcpy(&bits, &key, u64_size);
       if (bits & (uint64_t(1) << 63))
          bits = ~bits;
       else
          bits ^= (uint64_t(1) << 63);
-      fixed_buf<enc_u64> buf;
+      fixed_buf<u64_size> buf;
       encode_be64(buf.data(), bits);
       return buf;
    }
 
-   inline fixed_buf<enc_u128> encode_secondary(const long double& key) {
-      char raw[enc_u128];
-      memcpy(raw, &key, enc_u128);
-      fixed_buf<enc_u128> buf;
-      for (int i = 0; i < static_cast<int>(enc_u128); ++i)
-         buf.data_[i] = raw[enc_u128 - 1 - i];
+   inline fixed_buf<u128_size> encode_secondary(const long double& key) {
+      char raw[u128_size];
+      memcpy(raw, &key, u128_size);
+      fixed_buf<u128_size> buf;
+      for (int i = 0; i < static_cast<int>(u128_size); ++i)
+         buf.data_[i] = raw[u128_size - 1 - i];
       if (static_cast<uint8_t>(buf.data_[0]) & 0x80u)
-         for (int i = 0; i < static_cast<int>(enc_u128); ++i) buf.data_[i] = ~buf.data_[i];
+         for (int i = 0; i < static_cast<int>(u128_size); ++i) buf.data_[i] = ~buf.data_[i];
       else
          buf.data_[0] = static_cast<char>(static_cast<uint8_t>(buf.data_[0]) ^ 0x80u);
       return buf;
@@ -208,6 +202,9 @@ template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {
    static_assert(sizeof...(Indices) <= 16, "multi_index supports at most 16 secondary indices");
 
+   /// table_id computed at compile time from the template parameter.
+   static constexpr uint32_t _table_id = sysio::kv::compute_table_id(static_cast<uint64_t>(TableName));
+
    // Helper: convert primary_key() result to uint64_t regardless of return type (uint64_t or name)
    static uint64_t to_pk_uint64(uint64_t pk) { return pk; }
    static uint64_t to_pk_uint64(name pk) { return pk.value; }
@@ -221,34 +218,37 @@ class kv_multi_index {
    mutable std::map<uint64_t, std::unique_ptr<T>> _items;
 
    // --- Key encoding ---
+   // Key layout: [scope:8B BE][pk:8B BE] = 16 bytes.
+   // Table name is encoded in table_id (passed to intrinsics), not in the key.
+   static constexpr size_t key_size    = 16;
+   static constexpr size_t prefix_size = 8;
+
    struct primary_key_buf {
-      char data[24];
+      char data[key_size];
    };
 
    primary_key_buf make_pk(uint64_t pk) const {
       primary_key_buf key;
-      _kv_multi_index_detail::encode_be64(key.data,      static_cast<uint64_t>(TableName));
-      _kv_multi_index_detail::encode_be64(key.data + 8,  _scope);
-      _kv_multi_index_detail::encode_be64(key.data + 16, pk);
+      _kv_multi_index_detail::encode_be64(key.data,               _scope);
+      _kv_multi_index_detail::encode_be64(key.data + prefix_size, pk);
       return key;
    }
 
-   // 16-byte prefix for iteration (table + scope)
+   // 8-byte prefix for iteration (scope only — table_id provides isolation)
    struct prefix_buf {
-      char data[16];
+      char data[prefix_size];
    };
 
    prefix_buf make_prefix() const {
       prefix_buf p;
-      _kv_multi_index_detail::encode_be64(p.data,     static_cast<uint64_t>(TableName));
-      _kv_multi_index_detail::encode_be64(p.data + 8, _scope);
+      _kv_multi_index_detail::encode_be64(p.data, _scope);
       return p;
    }
 
    // Primary key for secondary index: [pk:8B]
    // Scope is encoded in the sec_key prefix instead (see store_all).
    struct pk_bytes_buf {
-      char data[_kv_multi_index_detail::enc_u64];
+      char data[_kv_multi_index_detail::u64_size];
    };
 
    pk_bytes_buf pk_to_bytes(uint64_t pk) const {
@@ -292,7 +292,7 @@ class kv_multi_index {
 
       auto key = make_pk(pk);
       char stack[sysio::kv::kv_value_stack_size];
-      int32_t sz = ::kv_get(kv_format_standard, _code.value, key.data, 24, stack, sysio::kv::kv_value_stack_size);
+      int32_t sz = ::kv_get(_table_id, _code.value, key.data, key_size, stack, sysio::kv::kv_value_stack_size);
       if (sz < 0) return nullptr;
 
       T obj;
@@ -300,7 +300,7 @@ class kv_multi_index {
          obj = deserialize_row(stack, sz);
       } else {
          char* heap = new char[sz];
-         ::kv_get(kv_format_standard, _code.value, key.data, 24, heap, sz);
+         ::kv_get(_table_id, _code.value, key.data, key_size, heap, sz);
          obj = deserialize_row(heap, sz);
          delete[] heap;
       }
@@ -321,53 +321,55 @@ class kv_multi_index {
    template<typename SecVal>
    std::vector<char> encode_scoped_secondary(const SecVal& val) const {
       auto raw = _kv_multi_index_detail::encode_secondary(val);
-      std::vector<char> buf(_kv_multi_index_detail::enc_scope + raw.size());
+      std::vector<char> buf(_kv_multi_index_detail::scope_size + raw.size());
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      memcpy(buf.data() + _kv_multi_index_detail::enc_scope, raw.data(), raw.size());
+      memcpy(buf.data() + _kv_multi_index_detail::scope_size, raw.data(), raw.size());
       return buf;
    }
 
    // Stack fast path for uint64_t.
-   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> encode_scoped_secondary(const uint64_t& val) const {
-      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> buf;
+   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> encode_scoped_secondary(const uint64_t& val) const {
+      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> buf;
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope, val);
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size, val);
       return buf;
    }
 
    // Stack fast path for uint128_t.
-   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u128> encode_scoped_secondary(const uint128_t& val) const {
-      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u128> buf;
+   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u128_size> encode_scoped_secondary(const uint128_t& val) const {
+      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u128_size> buf;
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope, static_cast<uint64_t>(val >> 64));
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64, static_cast<uint64_t>(val));
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size, static_cast<uint64_t>(val >> 64));
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size, static_cast<uint64_t>(val));
       return buf;
    }
 
    // Stack fast path for double (sort-preserving transform + scope).
-   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> encode_scoped_secondary(const double& val) const {
+   _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> encode_scoped_secondary(const double& val) const {
       uint64_t bits;
-      memcpy(&bits, &val, _kv_multi_index_detail::enc_u64);
+      memcpy(&bits, &val, _kv_multi_index_detail::u64_size);
       if (bits & (uint64_t(1) << 63))
          bits = ~bits;
       else
          bits ^= (uint64_t(1) << 63);
-      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::enc_scope + _kv_multi_index_detail::enc_u64> buf;
+      _kv_multi_index_detail::fixed_buf<_kv_multi_index_detail::scope_size + _kv_multi_index_detail::u64_size> buf;
       _kv_multi_index_detail::encode_be64(buf.data(), _scope);
-      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::enc_scope, bits);
+      _kv_multi_index_detail::encode_be64(buf.data() + _kv_multi_index_detail::scope_size, bits);
       return buf;
    }
 
    // --- Secondary index helpers ---
    template<size_t N, typename Index, typename... Rest>
    struct secondary_ops {
+      static constexpr uint32_t _sec_tid = sysio::kv::compute_mi_sec_table_id(static_cast<uint64_t>(TableName), N);
+
       static void store_all(uint64_t payer, const kv_multi_index& idx, const T& obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
          auto pri_key = idx.pk_to_bytes(obj.primary_key());
-         ::kv_idx_store(payer, static_cast<uint64_t>(TableName), N,
-                        pri_key.data, _kv_multi_index_detail::enc_u64,
+         ::kv_idx_store(payer, _sec_tid,
+                        pri_key.data, _kv_multi_index_detail::u64_size,
                         sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
             secondary_ops<N+1, Rest...>::store_all(payer, idx, obj);
@@ -379,8 +381,8 @@ class kv_multi_index {
          extractor_t ext;
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
          auto pri_key = idx.pk_to_bytes(obj.primary_key());
-         ::kv_idx_remove(static_cast<uint64_t>(TableName), N,
-                         pri_key.data, _kv_multi_index_detail::enc_u64,
+         ::kv_idx_remove(_sec_tid,
+                         pri_key.data, _kv_multi_index_detail::u64_size,
                          sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
             secondary_ops<N+1, Rest...>::remove_all(idx, obj);
@@ -394,8 +396,8 @@ class kv_multi_index {
          auto new_sec = idx.encode_scoped_secondary(ext(new_obj));
          auto pri_key = idx.pk_to_bytes(old_obj.primary_key());
          if (old_sec != new_sec) {
-            ::kv_idx_update(payer, static_cast<uint64_t>(TableName), N,
-                            pri_key.data, _kv_multi_index_detail::enc_u64,
+            ::kv_idx_update(payer, _sec_tid,
+                            pri_key.data, _kv_multi_index_detail::u64_size,
                             old_sec.data(), old_sec.size(),
                             new_sec.data(), new_sec.size());
          }
@@ -480,12 +482,12 @@ public:
          if (_handle < 0) {
             // End iterator: create a real iterator and seek to last element
             auto prefix = _idx->make_prefix();
-            _handle.reset(::kv_it_create(kv_format_standard, _idx->_code.value, prefix.data, 16));
+            _handle.reset(::kv_it_create(_table_id, _idx->_code.value, prefix.data, prefix_size));
             // Seek past the end of this table's prefix range by using a max key
-            char max_key[24];
-            memcpy(max_key, prefix.data, 16);
-            memset(max_key + 16, 0xFF, 8);
-            ::kv_it_lower_bound(_handle, max_key, 24);
+            char max_key[key_size];
+            memcpy(max_key, prefix.data, prefix_size);
+            memset(max_key + prefix_size, 0xFF, key_size - prefix_size);
+            ::kv_it_lower_bound(_handle, max_key, key_size);
             // Now prev to get the last element
             int32_t status = ::kv_it_prev(_handle);
             if (status == 0) {
@@ -539,10 +541,10 @@ public:
       const_iterator(const const_iterator& o) : _idx(o._idx), _valid(o._valid), _obj(o._obj) {
          if (o._handle >= 0 && _idx) {
             auto prefix = _idx->make_prefix();
-            _handle.reset(::kv_it_create(kv_format_standard, _idx->_code.value, prefix.data, 16));
+            _handle.reset(::kv_it_create(_table_id, _idx->_code.value, prefix.data, prefix_size));
             if (_valid && _obj) {
                auto key = _idx->make_pk(to_pk_uint64(_obj->primary_key()));
-               ::kv_it_lower_bound(_handle, key.data, 24);
+               ::kv_it_lower_bound(_handle, key.data, key_size);
             }
          }
       }
@@ -554,10 +556,10 @@ public:
             _obj = o._obj;
             if (o._handle >= 0 && _idx) {
                auto prefix = _idx->make_prefix();
-               _handle.reset(::kv_it_create(kv_format_standard, _idx->_code.value, prefix.data, 16));
+               _handle.reset(::kv_it_create(_table_id, _idx->_code.value, prefix.data, prefix_size));
                if (_valid && _obj) {
                   auto key = _idx->make_pk(to_pk_uint64(_obj->primary_key()));
-                  ::kv_it_lower_bound(_handle, key.data, 24);
+                  ::kv_it_lower_bound(_handle, key.data, key_size);
                }
             } else {
                _handle.reset();
@@ -580,16 +582,16 @@ public:
 
       void load_current() {
          if (!_valid || _handle < 0) { _obj = nullptr; return; }
-         // Read the primary key from the KV key (last 8 bytes of 24-byte key)
-         char key_buf[24];
+         // Read the primary key from the KV key (last 8 bytes of 16-byte key)
+         char key_buf[key_size];
          uint32_t actual_size = 0;
-         int32_t status = ::kv_it_key(_handle, 0, key_buf, 24, &actual_size);
-         if (status != 0 || actual_size != 24) {
+         int32_t status = ::kv_it_key(_handle, 0, key_buf, key_size, &actual_size);
+         if (status != 0 || actual_size != key_size) {
             _valid = false;
             _obj = nullptr;
             return;
          }
-         uint64_t pk = _kv_multi_index_detail::decode_be64(key_buf + 16);
+         uint64_t pk = _kv_multi_index_detail::decode_be64(key_buf + prefix_size);
          _obj = _idx->load_object(pk);
          if (!_obj) {
             _valid = false;
@@ -601,7 +603,7 @@ public:
 
    const_iterator begin() const {
       auto prefix = make_prefix();
-      uint32_t handle = ::kv_it_create(kv_format_standard, _code.value, prefix.data, 16);
+      uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
       int32_t status = ::kv_it_status(handle);
       return const_iterator(this, handle, status == 0);
    }
@@ -622,12 +624,12 @@ public:
    const_iterator find(name primary) const { return find(primary.value); }
    const_iterator find(uint64_t primary) const {
       auto key = make_pk(primary);
-      if (!::kv_contains(kv_format_standard, _code.value, key.data, 24)) return end();
+      if (!::kv_contains(_table_id, _code.value, key.data, key_size)) return end();
 
       // Create iterator positioned at this key
       auto prefix = make_prefix();
-      uint32_t handle = ::kv_it_create(kv_format_standard, _code.value, prefix.data, 16);
-      ::kv_it_lower_bound(handle, key.data, 24);
+      uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
+      ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, true);
    }
 
@@ -648,8 +650,8 @@ public:
    const_iterator lower_bound(uint64_t primary) const {
       auto key = make_pk(primary);
       auto prefix = make_prefix();
-      uint32_t handle = ::kv_it_create(kv_format_standard, _code.value, prefix.data, 16);
-      int32_t status = ::kv_it_lower_bound(handle, key.data, 24);
+      uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
+      int32_t status = ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, status == 0);
    }
 
@@ -664,8 +666,8 @@ public:
             "object passed to iterator_to is not in multi_index");
       auto key = make_pk(pk);
       auto prefix = make_prefix();
-      uint32_t handle = ::kv_it_create(kv_format_standard, _code.value, prefix.data, 16);
-      ::kv_it_lower_bound(handle, key.data, 24);
+      uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
+      ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, true);
    }
 
@@ -680,7 +682,7 @@ public:
       auto key = make_pk(pk);
       auto value = serialize_row(obj);
 
-      ::kv_set(1, payer.value, key.data, 24, value.data(), value.size());
+      ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
       store_secondaries(payer.value, obj);
 
       // Cache the object
@@ -714,7 +716,7 @@ public:
       uint64_t pk = to_pk_uint64(mutable_obj.primary_key());
       auto key = make_pk(pk);
       auto value = serialize_row(mutable_obj);
-      ::kv_set(1, payer.value, key.data, 24, value.data(), value.size());
+      ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
 
       update_secondaries(payer.value, old_obj, mutable_obj);
 
@@ -736,7 +738,7 @@ public:
       auto key = make_pk(pk);
 
       remove_secondaries(obj);
-      ::kv_erase(kv_format_standard, key.data, 24);
+      ::kv_erase(_table_id, key.data, key_size);
       _items.erase(pk);
    }
 
@@ -747,31 +749,23 @@ public:
 
       // Find the last key in the table
       auto prefix = make_prefix();
-      uint32_t handle = ::kv_it_create(kv_format_standard, _code.value, prefix.data, 16);
-      int32_t status = ::kv_it_status(handle);
+      kv::detail::it_handle it(::kv_it_create(_table_id, _code.value, prefix.data, prefix_size));
 
-      if (status != 0) {
+      if (::kv_it_status(it) != 0) {
          // Empty table
-         ::kv_it_destroy(handle);
          _next_primary_key = 0;
          return 0;
       }
 
-      ::kv_it_destroy(handle);
-
-      // Create iterator and seek past all possible primary keys
-      handle = ::kv_it_create(kv_format_standard, _code.value, prefix.data, 16);
-      char max_key[24];
-      _kv_multi_index_detail::encode_be64(max_key,      static_cast<uint64_t>(TableName));
-      _kv_multi_index_detail::encode_be64(max_key + 8,  _scope);
-      _kv_multi_index_detail::encode_be64(max_key + 16, std::numeric_limits<uint64_t>::max());
-      ::kv_it_lower_bound(handle, max_key, 24);
+      // Seek past all possible primary keys
+      char max_key[key_size];
+      _kv_multi_index_detail::encode_be64(max_key,               _scope);
+      _kv_multi_index_detail::encode_be64(max_key + prefix_size, std::numeric_limits<uint64_t>::max());
+      ::kv_it_lower_bound(it, max_key, key_size);
 
       // Check if we found max key exactly
-      status = ::kv_it_status(handle);
-      if (status == 0) {
+      if (::kv_it_status(it) == 0) {
          // The max key exists — can't auto-increment past max
-         ::kv_it_destroy(handle);
          _next_primary_key = 0;
          _next_primary_key_cached = false;
          check(false, "next primary key in table is at autoincrement limit");
@@ -779,21 +773,18 @@ public:
       }
 
       // Go back to find the actual last key
-      status = ::kv_it_prev(handle);
-      if (status != 0) {
+      if (::kv_it_prev(it) != 0) {
          // Empty table
-         ::kv_it_destroy(handle);
          _next_primary_key = 0;
          return 0;
       }
 
-      char key_buf[24];
+      char key_buf[key_size];
       uint32_t actual_size = 0;
-      ::kv_it_key(handle, 0, key_buf, 24, &actual_size);
-      ::kv_it_destroy(handle);
+      ::kv_it_key(it, 0, key_buf, key_size, &actual_size);
 
-      if (actual_size == 24) {
-         uint64_t last_pk = _kv_multi_index_detail::decode_be64(key_buf + 16);
+      if (actual_size == key_size) {
+         uint64_t last_pk = _kv_multi_index_detail::decode_be64(key_buf + prefix_size);
          check(last_pk < std::numeric_limits<uint64_t>::max(),
                "next primary key in table is at autoincrement limit");
          _next_primary_key = last_pk + 1;
@@ -823,6 +814,7 @@ public:
 
       static constexpr size_t index_number = find_index_number<0, Indices...>::value;
       static_assert(index_number < sizeof...(Indices), "invalid secondary index name");
+      static constexpr uint32_t _sec_table_id = sysio::kv::compute_mi_sec_table_id(static_cast<uint64_t>(TableName), index_number);
 
       using index_type = typename std::tuple_element<index_number, std::tuple<Indices...>>::type;
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
@@ -838,10 +830,10 @@ public:
       // Helper: read primary key from secondary iterator handle.
       // The stored pri_key is [pk:8B].
       static bool read_primary_key(uint32_t handle, uint64_t& pk) {
-         char pri_buf[_kv_multi_index_detail::enc_u64];
+         char pri_buf[_kv_multi_index_detail::u64_size];
          uint32_t actual = 0;
-         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, _kv_multi_index_detail::enc_u64, &actual);
-         if (status != 0 || actual != _kv_multi_index_detail::enc_u64) return false;
+         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, _kv_multi_index_detail::u64_size, &actual);
+         if (status != 0 || actual != _kv_multi_index_detail::u64_size) return false;
          pk = _kv_multi_index_detail::decode_be64(pri_buf);
          return true;
       }
@@ -877,11 +869,11 @@ public:
                // so lower_bound positions past this scope's entries, then prev
                // lands on the last entry in the scope.
                constexpr size_t sec_val_size = sizeof(secondary_key_type);
-               char max_sec[_kv_multi_index_detail::enc_scope + sec_val_size];
+               char max_sec[_kv_multi_index_detail::scope_size + sec_val_size];
                _kv_multi_index_detail::encode_be64(max_sec, _mi->_scope);
-               memset(max_sec + _kv_multi_index_detail::enc_scope, 0xFF, sec_val_size);
+               memset(max_sec + _kv_multi_index_detail::scope_size, 0xFF, sec_val_size);
                _handle.reset(::kv_idx_lower_bound(
-                  _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
+                  _mi->_code.value, _sec_table_id,
                   max_sec, sizeof(max_sec)));
                if (_handle < 0) { _has_obj = false; }
                else if (::kv_idx_prev(_handle) == 0 && check_scope()) { _has_obj = true; load_current(); }
@@ -927,7 +919,7 @@ public:
                extractor_t ext;
                auto sec_bytes = _mi->encode_scoped_secondary(ext(_obj));
                _handle.reset(::kv_idx_find_secondary(
-                  _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
+                  _mi->_code.value, _sec_table_id,
                   sec_bytes.data(), sec_bytes.size()));
                if (_handle < 0) return;
                // kv_idx_find_secondary lands on the first row with this
@@ -973,13 +965,13 @@ public:
          // another scope — treat that as end-of-range.
          bool check_scope() const {
             if (_handle < 0 || !_mi) return false;
-            char scope_buf[_kv_multi_index_detail::enc_scope];
+            char scope_buf[_kv_multi_index_detail::scope_size];
             uint32_t actual = 0;
-            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, _kv_multi_index_detail::enc_scope, &actual);
-            if (status != 0 || actual < _kv_multi_index_detail::enc_scope) return false;
-            char expected[_kv_multi_index_detail::enc_scope];
+            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, _kv_multi_index_detail::scope_size, &actual);
+            if (status != 0 || actual < _kv_multi_index_detail::scope_size) return false;
+            char expected[_kv_multi_index_detail::scope_size];
             _kv_multi_index_detail::encode_be64(expected, _mi->_scope);
-            return memcmp(scope_buf, expected, _kv_multi_index_detail::enc_scope) == 0;
+            return memcmp(scope_buf, expected, _kv_multi_index_detail::scope_size) == 0;
          }
       };
 
@@ -995,11 +987,11 @@ public:
 
       const_iterator begin() const {
          // Lower bound with scope prefix = first entry in this scope
-         char scope_prefix[_kv_multi_index_detail::enc_scope];
+         char scope_prefix[_kv_multi_index_detail::scope_size];
          _kv_multi_index_detail::encode_be64(scope_prefix, _mi->_scope);
          int32_t handle = ::kv_idx_lower_bound(
-            _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
-            scope_prefix, _kv_multi_index_detail::enc_scope);
+            _mi->_code.value, _sec_table_id,
+            scope_prefix, _kv_multi_index_detail::scope_size);
          if (handle < 0) return end();
          // Verify we landed in the right scope (may be past it if scope is empty)
          const_iterator it(_mi, handle, true);
@@ -1011,7 +1003,7 @@ public:
       const_iterator find(const SecKey& sec_key) const {
          auto sec_bytes = _mi->encode_scoped_secondary(secondary_key_type(sec_key));
          int32_t handle = ::kv_idx_find_secondary(
-            _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
+            _mi->_code.value, _sec_table_id,
             sec_bytes.data(), sec_bytes.size());
          if (handle < 0) return end();
          return const_iterator(_mi, handle, true);
@@ -1021,7 +1013,7 @@ public:
       const_iterator lower_bound(const SecKey& sec_key) const {
          auto sec_bytes = _mi->encode_scoped_secondary(secondary_key_type(sec_key));
          int32_t handle = ::kv_idx_lower_bound(
-            _mi->_code.value, static_cast<uint64_t>(TableName), index_number,
+            _mi->_code.value, _sec_table_id,
             sec_bytes.data(), sec_bytes.size());
          if (handle < 0) return end();
          const_iterator it(_mi, handle, true);

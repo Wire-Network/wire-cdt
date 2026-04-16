@@ -1,0 +1,71 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "user_obj",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                },
+                {
+                    "name": "hash",
+                    "type": "checksum256"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "users",
+            "type": "user_obj",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 59372,
+            "secondary_indexes": [
+                {
+                    "name": "byowner",
+                    "key_type": "uint64",
+                    "table_id": 5101
+                },
+                {
+                    "name": "bybal",
+                    "key_type": "uint64",
+                    "table_id": 5102
+                },
+                {
+                    "name": "byhash",
+                    "key_type": "checksum256",
+                    "table_id": 5103
+                }
+            ]
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

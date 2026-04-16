@@ -4,6 +4,7 @@
 #include <sysio/whereami/whereami.hpp>
 
 #include <fstream>
+#include <map>
 #include <set>
 #include <sstream>
 #include <unistd.h>
@@ -423,6 +424,20 @@ static void gen_actions(const std::string& input) {
    auto desc_file = output_dir + "/" + contract_name + "." + basename + ".desc";
    if (exists(raw_desc.c_str())) {
       rename(raw_desc.c_str(), desc_file.c_str());
+      // Stamp the originating source path into the .desc so a later build can
+      // detect it is stale when the source .cpp has been removed or moved.
+      // Without this marker, a stale .desc gets merged into the contract ABI
+      // and produces "ABI structs malformed : <name> already defined" errors.
+      // Only attempt the JSON round-trip when abigen actually produced content;
+      // a failed abigen run leaves an empty .desc that ojson::parse would reject.
+      if (file_size(desc_file.c_str()) > 0) {
+         std::ifstream ifs(desc_file);
+         auto desc = ojson::parse(ifs);
+         ifs.close();
+         desc["____source_file"] = input;
+         std::ofstream ofs(desc_file);
+         ofs << desc.to_string();
+      }
       desc_files.push_back(desc_file);
    }
 }
@@ -477,6 +492,18 @@ int main(int argc, const char** argv) {
             auto          desc = ojson::parse(ifs);
             ifs.close();
 
+            // If the .desc records its originating source file and that
+            // source no longer exists, the .desc is stale (from a removed
+            // or renamed .cpp). Merging it in produces duplicate struct
+            // definitions, so skip and delete it to keep the build dir clean.
+            if (desc.has_key("____source_file")) {
+               const std::string src = desc["____source_file"].as_string();
+               if (!src.empty() && !exists(src.c_str())) {
+                  unlink(desc_name.c_str());
+                  continue;
+               }
+            }
+
             abi = ABIMerger(abi, abi_version_major, abi_version_minor).merge(desc);
 
             for (auto wa : desc["wasm_actions"].array_range()) {
@@ -506,6 +533,40 @@ int main(int argc, const char** argv) {
                has_pre_dispatch = true;
             if (desc.has_key("has_post_dispatch") && desc["has_post_dispatch"].as_bool())
                has_post_dispatch = true;
+         }
+      }
+
+      // Validate table_id uniqueness across all tables and secondary indexes.
+      // Two different tables/indices sharing the same table_id would corrupt data.
+      if (abi.has_key("tables") && abi["tables"].size() > 1) {
+         std::map<uint64_t, std::string> seen_ids; // table_id -> owner name
+         for (const auto& tbl : abi["tables"].array_range()) {
+            if (tbl.has_key("table_id")) {
+               auto tid = tbl["table_id"].as<uint64_t>();
+               auto tname = tbl["name"].as<std::string>();
+               auto [it, inserted] = seen_ids.emplace(tid, tname);
+               if (!inserted) {
+                  throw std::runtime_error(
+                     "table_id collision: '" + it->second + "' and '" + tname +
+                     "' both have table_id " + std::to_string(tid) +
+                     ". Rename one of the tables to avoid the collision.");
+               }
+               if (tbl.has_key("secondary_indexes")) {
+                  for (const auto& si : tbl["secondary_indexes"].array_range()) {
+                     if (si.has_key("table_id")) {
+                        auto sid = si["table_id"].as<uint64_t>();
+                        auto sname = tname + "." + si["name"].as<std::string>();
+                        auto [sit, sins] = seen_ids.emplace(sid, sname);
+                        if (!sins) {
+                           throw std::runtime_error(
+                              "table_id collision: '" + sit->second + "' and '" + sname +
+                              "' both have table_id " + std::to_string(sid) +
+                              ". Rename one of the tables/indexes to avoid the collision.");
+                        }
+                     }
+                  }
+               }
+            }
          }
       }
 

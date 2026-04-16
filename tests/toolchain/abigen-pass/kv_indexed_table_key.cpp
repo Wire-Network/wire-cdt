@@ -1,9 +1,9 @@
 #include <sysio/sysio.hpp>
-#include <sysio/kv_indexed_table.hpp>
+#include <sysio/kv_table.hpp>
 
 using namespace sysio;
 
-// Test: kv::indexed_table with [[sysio::kv_key]] generates correct ABI
+// Test: kv::table with [[sysio::kv_key]] generates correct ABI
 // key metadata for multi-field key structs.
 class [[sysio::contract("kv_indexed_table_key")]] kv_indexed_table_key : public contract {
    public:
@@ -24,7 +24,7 @@ class [[sysio::contract("kv_indexed_table_key")]] kv_indexed_table_key : public 
          SYSLIB_SERIALIZE(order_val, (trader)(price))
       };
 
-      using orders = kv::indexed_table<"orders"_n, order_key, order_val,
+      using orders = kv::table<"orders"_n, order_key, order_val,
          kv::index<"byprice"_n, const_mem_fun<order_val, uint64_t, &order_val::get_price>>
       >;
 
