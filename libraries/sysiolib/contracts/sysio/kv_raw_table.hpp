@@ -38,59 +38,168 @@ extern "C" {
 #include <utility>
 
 #include <sysio/kv_constants.hpp>
+#include <sysio/kv_it_handle.hpp>
 
 namespace sysio { namespace kv {
 
-/**
- * Big-endian key encoder for ordered KV storage.
- *
- * Writes each field in big-endian byte order so that memcmp-based key
- * comparison produces correct lexicographic ordering.
- *
- * Variable-length fields (string, vector<char>) use NUL-escape encoding:
- *   0x00 -> 0x00 0x01, terminated by 0x00 0x00
- * This preserves sort order for arbitrary byte sequences including embedded NULs.
- *
- * Works with SYSLIB_SERIALIZE-generated operators: `stream << key`
- * calls operator<< for each field, routing to BE encoding automatically.
- */
+// ---------------------------------------------------------------------------
+// key_buf — small-buffer key storage (64B inline, heap fallback for large keys)
+// ---------------------------------------------------------------------------
+struct key_buf {
+   static constexpr uint32_t inline_cap = 64;
+   char inline_[inline_cap];
+   char* heap_ = nullptr;
+   uint32_t len = 0;
+
+   const char* data() const { return (len > inline_cap) ? heap_ : inline_; }
+   uint32_t size() const { return len; }
+   bool empty() const { return len == 0; }
+
+   void assign(const char* d, uint32_t s) {
+      if (s <= inline_cap) {
+         delete[] heap_; heap_ = nullptr;
+         if (d && s) std::memcpy(inline_, d, s);
+      } else if (d && s) {
+         if (!heap_ || len <= inline_cap || len < s) {
+            delete[] heap_; heap_ = new char[s];
+         }
+         std::memcpy(heap_, d, s);
+      }
+      len = s;
+   }
+
+   void clear() { delete[] heap_; heap_ = nullptr; len = 0; }
+
+   bool equals(const char* d, uint32_t s) const {
+      return len == s && (len == 0 || std::memcmp(data(), d, len) == 0);
+   }
+
+   ~key_buf() { delete[] heap_; }
+   key_buf() = default;
+   key_buf(key_buf&& o) noexcept : len(o.len) {
+      if (o.len > inline_cap) { heap_ = o.heap_; o.heap_ = nullptr; }
+      else if (o.len) { std::memcpy(inline_, o.inline_, o.len); }
+      o.len = 0;
+   }
+   key_buf& operator=(key_buf&& o) noexcept {
+      if (this != &o) {
+         delete[] heap_; heap_ = nullptr;
+         len = o.len;
+         if (o.len > inline_cap) { heap_ = o.heap_; o.heap_ = nullptr; }
+         else if (o.len) { std::memcpy(inline_, o.inline_, o.len); }
+         o.len = 0;
+      }
+      return *this;
+   }
+   key_buf(const key_buf&) = delete;
+   key_buf& operator=(const key_buf&) = delete;
+
+   friend bool operator==(const key_buf& a, const key_buf& b) { return a.equals(b.data(), b.len); }
+   friend bool operator!=(const key_buf& a, const key_buf& b) { return !(a == b); }
+};
+
+// ---------------------------------------------------------------------------
+// ser_buf — stack-first serialization buffer (kv_value_stack_size inline, heap fallback)
+// ---------------------------------------------------------------------------
+struct ser_buf {
+   char stack_[kv_value_stack_size];
+   char* heap_ = nullptr;
+   char* ptr_;
+   uint32_t size_;
+   explicit ser_buf(uint32_t sz) : size_(sz) {
+      ptr_ = (sz <= kv_value_stack_size) ? stack_ : (heap_ = new char[sz]);
+   }
+   ~ser_buf() { delete[] heap_; }
+   ser_buf(ser_buf&& o) noexcept : size_(o.size_) {
+      if (o.heap_) { heap_ = o.heap_; ptr_ = heap_; o.heap_ = nullptr; }
+      else { std::memcpy(stack_, o.stack_, size_); ptr_ = stack_; }
+      o.ptr_ = o.stack_; o.size_ = 0;
+   }
+   ser_buf(const ser_buf&) = delete;
+   ser_buf& operator=(const ser_buf&) = delete;
+   ser_buf& operator=(ser_buf&&) = delete;
+   char* data() { return ptr_; }
+   const char* data() const { return ptr_; }
+   uint32_t size() const { return size_; }
+};
+
+// ---------------------------------------------------------------------------
+// Compile-time check: is T trivially copyable with sizeof == pack_size?
+// When true, serialization is just memcpy of sizeof(T) bytes — no dynamic sizing.
+// ---------------------------------------------------------------------------
+template<typename T, typename = void>
+struct is_fixed_serializable : std::false_type {};
+
+template<typename T>
+struct is_fixed_serializable<T, std::enable_if_t<
+   std::is_trivially_copyable_v<T> && std::is_default_constructible_v<T>
+   && (sizeof(T) == sysio::pack_size(T{}))
+>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_fixed_serializable_v = is_fixed_serializable<T>::value;
+
+// ---------------------------------------------------------------------------
+// be_key_stream — Big-endian key encoder (fixed buffer, no heap allocation)
+//
+// Writes each field in big-endian byte order so that memcmp-based key
+// comparison produces correct lexicographic ordering.
+//
+// Variable-length fields (string, vector<char>) use NUL-escape encoding:
+//   0x00 -> 0x00 0x01, terminated by 0x00 0x00
+// This preserves sort order for arbitrary byte sequences including embedded NULs.
+//
+// Works with SYSLIB_SERIALIZE-generated operators: `stream << key`
+// calls operator<< for each field, routing to BE encoding automatically.
+// ---------------------------------------------------------------------------
+#ifndef KV_KEY_BUF_CAP
+#define KV_KEY_BUF_CAP 256
+#endif
+
 class be_key_stream {
-   std::vector<char> buf_;
+public:
+   static constexpr uint32_t buf_cap = KV_KEY_BUF_CAP;
+private:
+   char buf_[buf_cap];
+   uint32_t size_ = 0;
 
    void write_be32(uint32_t v) {
-      size_t off = buf_.size();
-      buf_.resize(off + 4);
-      for (int i = 3; i >= 0; --i) { buf_[off + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      for (int i = 3; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      size_ += 4;
    }
 
    void write_be64(uint64_t v) {
-      size_t off = buf_.size();
-      buf_.resize(off + 8);
-      for (int i = 7; i >= 0; --i) { buf_[off + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      for (int i = 7; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      size_ += 8;
    }
 
-   // NUL-escape encoding: 0x00 -> 0x00,0x01 + 0x00,0x00 terminator.
-   // Preserves lexicographic ordering for arbitrary byte sequences.
    void write_escaped(const char* data, size_t len) {
+      // Upfront: data bytes + 2-byte terminator (no NUL escapes)
+      sysio::check(size_ + len + 2 <= buf_cap, "be_key_stream: key too large");
       for (size_t i = 0; i < len; ++i) {
-         buf_.push_back(data[i]);
-         if (data[i] == '\0') buf_.push_back('\x01');
+         buf_[size_++] = data[i];
+         if (data[i] == '\0') {
+            // Each NUL adds 1 extra byte; still need room for remaining data + terminator
+            sysio::check(size_ + (len - i - 1) + 1 + 2 <= buf_cap, "be_key_stream: key too large");
+            buf_[size_++] = '\x01';
+         }
       }
-      buf_.push_back('\0');
-      buf_.push_back('\0');
+      buf_[size_++] = '\0';
+      buf_[size_++] = '\0';
    }
 
 public:
    void write(const char* data, size_t len) {
-      if (len > 0) buf_.insert(buf_.end(), data, data + len);
+      sysio::check(size_ + len <= buf_cap, "be_key_stream: key too large");
+      if (len > 0) { std::memcpy(buf_ + size_, data, len); size_ += len; }
    }
 
-   be_key_stream& operator<<(uint8_t v)  { buf_.push_back(static_cast<char>(v)); return *this; }
+   be_key_stream& operator<<(uint8_t v)  { buf_[size_++] = static_cast<char>(v); return *this; }
    be_key_stream& operator<<(int8_t v)   { return *this << static_cast<uint8_t>(static_cast<uint8_t>(v) ^ 0x80u); }
 
    be_key_stream& operator<<(uint16_t v) {
-      buf_.push_back(static_cast<char>((v >> 8) & 0xFF));
-      buf_.push_back(static_cast<char>(v & 0xFF));
+      buf_[size_++] = static_cast<char>((v >> 8) & 0xFF);
+      buf_[size_++] = static_cast<char>(v & 0xFF);
       return *this;
    }
    be_key_stream& operator<<(int16_t v) { return *this << static_cast<uint16_t>(static_cast<uint16_t>(v) ^ 0x8000u); }
@@ -135,7 +244,7 @@ public:
       return *this;
    }
 
-   be_key_stream& operator<<(bool v) { buf_.push_back(v ? 1 : 0); return *this; }
+   be_key_stream& operator<<(bool v) { buf_[size_++] = v ? 1 : 0; return *this; }
 
    be_key_stream& operator<<(const std::string& v) {
       write_escaped(v.data(), v.size());
@@ -147,9 +256,8 @@ public:
       return *this;
    }
 
-   std::vector<char> release() { return std::move(buf_); }
-   const char* data() const { return buf_.data(); }
-   size_t size() const { return buf_.size(); }
+   const char* data() const { return buf_; }
+   uint32_t size() const { return size_; }
 };
 
 /**
@@ -195,22 +303,22 @@ public:
  */
 template<typename K, typename V>
 class raw_table {
-   static std::vector<char> make_key(const K& key) {
+   static be_key_stream make_key(const K& key) {
       be_key_stream bs;
       bs << key;
-      return bs.release();
+      return bs;
    }
 
-   static std::vector<char> serialize_value(const V& value) {
+   static ser_buf serialize_value(const V& value) {
       if constexpr (std::is_trivially_copyable<V>::value) {
          if (sizeof(V) == sysio::pack_size(value)) {
-            std::vector<char> buf(sizeof(V));
+            ser_buf buf(sizeof(V));
             std::memcpy(buf.data(), &value, sizeof(V));
             return buf;
          }
       }
-      auto sz = sysio::pack_size(value);
-      std::vector<char> buf(sz);
+      uint32_t sz = sysio::pack_size(value);
+      ser_buf buf(sz);
       sysio::datastream<char*> ds(buf.data(), buf.size());
       ds << value;
       return buf;
@@ -241,21 +349,36 @@ public:
 
    int64_t set(const K& key, const V& value, sysio::name payer = sysio::name{}) {
       auto k = make_key(key);
-      auto v = serialize_value(value);
-      return ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+      if constexpr (is_fixed_serializable_v<V>) {
+         char vbuf[sizeof(V)];
+         std::memcpy(vbuf, &value, sizeof(V));
+         return ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+      } else {
+         auto v = serialize_value(value);
+         return ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+      }
    }
 
    std::optional<V> get(const K& key) const {
       auto k = make_key(key);
-      std::optional<V> result;
-
-      int32_t sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), nullptr, 0);
-      if (sz < 0) return result;
-
-      std::vector<char> buf(sz);
-      ::kv_get(kv_format_raw, code(), k.data(), k.size(), buf.data(), buf.size());
-      result.emplace(deserialize_value(buf.data(), buf.size()));
-      return result;
+      if constexpr (is_fixed_serializable_v<V>) {
+         char vbuf[sizeof(V)];
+         int32_t sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), vbuf, sizeof(V));
+         if (sz < 0) return {};
+         V val; std::memcpy(&val, vbuf, sizeof(V));
+         return val;
+      } else {
+         char stack[kv_value_stack_size];
+         int32_t sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), stack, kv_value_stack_size);
+         if (sz < 0) return {};
+         if (sz <= static_cast<int32_t>(kv_value_stack_size))
+            return deserialize_value(stack, sz);
+         char* heap = new char[sz];
+         ::kv_get(kv_format_raw, code(), k.data(), k.size(), heap, sz);
+         V val = deserialize_value(heap, sz);
+         delete[] heap;
+         return val;
+      }
    }
 
    bool contains(const K& key) const {
@@ -314,19 +437,16 @@ public:
       }
       friend bool operator!=(const const_iterator& a, const const_iterator& b) { return !(a == b); }
 
-      ~const_iterator() { if (_handle >= 0) ::kv_it_destroy(_handle); }
-
       const_iterator(const_iterator&& o) noexcept
-         : _tbl(o._tbl), _handle(o._handle), _valid(o._valid),
+         : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid),
            _val(std::move(o._val)), _raw_key(std::move(o._raw_key))
-      { o._handle = -1; o._valid = false; }
+      { o._valid = false; }
 
       const_iterator& operator=(const_iterator&& o) noexcept {
          if (this != &o) {
-            if (_handle >= 0) ::kv_it_destroy(_handle);
-            _tbl = o._tbl; _handle = o._handle; _valid = o._valid;
+            _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid;
             _val = std::move(o._val); _raw_key = std::move(o._raw_key);
-            o._handle = -1; o._valid = false;
+            o._valid = false;
          }
          return *this;
       }
@@ -336,10 +456,10 @@ public:
    private:
       friend class raw_table;
       const raw_table* _tbl = nullptr;
-      int32_t _handle = -1;
+      kv::detail::it_handle _handle;
       bool _valid = false;
       V _val;
-      std::vector<char> _raw_key;
+      key_buf _raw_key;
 
       const_iterator(const raw_table* t, int32_t h, bool valid)
          : _tbl(t), _handle(h), _valid(valid) {
@@ -348,26 +468,46 @@ public:
       static const_iterator make_end(const raw_table* m) { const_iterator it; it._tbl = m; return it; }
 
       void load() {
-         // Read key for equality comparison
+         // Read key (stack-buffer-first: 1 host call for keys <= 64B)
+         char key_stack[key_buf::inline_cap];
          uint32_t key_size = 0;
-         ::kv_it_key(_handle, 0, nullptr, 0, &key_size);
-         _raw_key.resize(key_size);
-         if (::kv_it_key(_handle, 0, _raw_key.data(), key_size, &key_size) != 0) {
+         if (::kv_it_key(_handle, 0, key_stack, key_buf::inline_cap, &key_size) != 0) {
             _valid = false; return;
          }
+         if (key_size <= key_buf::inline_cap) {
+            _raw_key.assign(key_stack, key_size);
+         } else {
+            char* kh = new char[key_size];
+            ::kv_it_key(_handle, 0, kh, key_size, &key_size);
+            _raw_key.assign(kh, key_size);
+            delete[] kh;
+         }
          // Read and deserialize value
-         uint32_t val_size = 0;
-         ::kv_it_value(_handle, 0, nullptr, 0, &val_size);
-         std::vector<char> vbuf(val_size);
-         ::kv_it_value(_handle, 0, vbuf.data(), val_size, &val_size);
-         _val = deserialize_value(vbuf.data(), vbuf.size());
+         if constexpr (is_fixed_serializable_v<V>) {
+            char vbuf[sizeof(V)];
+            uint32_t val_size = 0;
+            ::kv_it_value(_handle, 0, vbuf, sizeof(V), &val_size);
+            std::memcpy(&_val, vbuf, sizeof(V));
+         } else {
+            char val_stack[kv_value_stack_size];
+            uint32_t val_size = 0;
+            ::kv_it_value(_handle, 0, val_stack, kv_value_stack_size, &val_size);
+            if (val_size <= kv_value_stack_size) {
+               _val = deserialize_value(val_stack, val_size);
+            } else {
+               char* heap = new char[val_size];
+               ::kv_it_value(_handle, 0, heap, val_size, &val_size);
+               _val = deserialize_value(heap, val_size);
+               delete[] heap;
+            }
+         }
       }
 
       void ensure_handle() {
          if (_handle >= 0) return;
          if (!_tbl) return;
          // Empty prefix: iterate all format=0 entries in this contract
-         _handle = ::kv_it_create(kv_format_raw, _tbl->code(), nullptr, 0);
+         _handle.reset(::kv_it_create(kv_format_raw, _tbl->code(), nullptr, 0));
          if (_valid && !_raw_key.empty()) {
             ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
          }
@@ -393,7 +533,8 @@ public:
    /// First entry with key > given key.
    const_iterator upper_bound(const K& key) const {
       auto it = lower_bound(key);
-      if (it != end() && it._raw_key == make_key(key)) ++it;
+      auto encoded = make_key(key);
+      if (it != end() && it._raw_key.equals(encoded.data(), encoded.size())) ++it;
       return it;
    }
 };

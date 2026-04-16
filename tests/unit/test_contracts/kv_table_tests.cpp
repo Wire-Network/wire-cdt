@@ -309,6 +309,65 @@ public:
       t.modify(itr, get_self(), [](tbl_row& r) { r.id = 999; }); // should abort: cannot change pk
    }
 
+   // ── Trivially-copyable value type (exercises is_fixed_serializable fast path) ──
+
+   struct [[sysio::table]] pod_row {
+      uint64_t id;
+      uint64_t amount;
+      uint64_t flags;  // uint64_t avoids trailing padding so sizeof==pack_size
+
+      uint64_t primary_key() const { return id; }
+      SYSLIB_SERIALIZE(pod_row, (id)(amount)(flags))
+   };
+   using pod_table = kv::table<"podtbl"_n, pod_row>;
+
+   [[sysio::action]]
+   void podcrud() {
+      pod_table t(get_self(), get_self().value);
+
+      // Emplace
+      t.emplace(get_self(), [](pod_row& r) { r.id = 1; r.amount = 1000; r.flags = 0x01; });
+      t.emplace(get_self(), [](pod_row& r) { r.id = 2; r.amount = 2000; r.flags = 0x02; });
+
+      // Get
+      auto row = t.get(1);
+      check(row.amount == 1000, "podcrud: get amount");
+      check(row.flags == 0x01, "podcrud: get flags");
+
+      // Find + dereference
+      auto it = t.find(2);
+      check(it != t.end(), "podcrud: find");
+      check(it->amount == 2000, "podcrud: find amount");
+
+      // Modify via iterator
+      t.modify(it, get_self(), [](pod_row& r) { r.amount = 9999; r.flags = 0xFF; });
+      auto updated = t.get(2);
+      check(updated.amount == 9999, "podcrud: modify amount");
+      check(updated.flags == 0xFF, "podcrud: modify flags");
+
+      // Iterate
+      uint32_t count = 0;
+      for (auto i = t.begin(); i != t.end(); ++i) ++count;
+      check(count == 2, "podcrud: iterate count");
+
+      // Lower/upper bound
+      auto lb = t.lower_bound(2);
+      check(lb != t.end() && lb->id == 2, "podcrud: lower_bound");
+      auto ub = t.upper_bound(1);
+      check(ub != t.end() && ub->id == 2, "podcrud: upper_bound");
+
+      // Contains
+      check(t.contains(1), "podcrud: contains");
+      check(!t.contains(999), "podcrud: !contains");
+
+      // Erase
+      t.erase(1);
+      check(!t.contains(1), "podcrud: erase");
+
+      // Available primary key
+      check(t.available_primary_key() == 3, "podcrud: available_pk");
+   }
+
    [[sysio::action]]
    void endallscope() {
       eas_table t(get_self(), 0);
@@ -329,3 +388,7 @@ public:
       check(count >= 1, "endallscope: should find at least 1 row");
    }
 };
+
+// static_assert after class — friend operators visible via ADL at this point
+static_assert(sysio::kv::is_fixed_serializable_v<kv_table_tests::pod_row>,
+              "pod_row must hit the zero-copy fast path");

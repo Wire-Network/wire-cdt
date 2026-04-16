@@ -129,6 +129,26 @@ class be_key_reader {
       sysio::check(false, "be_key_reader: unterminated NUL-escape string");
    }
 
+   void read_escaped(key_buf& out) {
+      char tmp[be_key_stream::buf_cap];
+      uint32_t n = 0;
+      while (_pos < _size) {
+         char c = _data[_pos++];
+         if (c == '\0') {
+            sysio::check(_pos < _size, "be_key_reader: truncated NUL-escape");
+            char next = _data[_pos++];
+            if (next == '\0') { out.assign(tmp, n); return; }
+            sysio::check(next == '\x01', "be_key_reader: invalid NUL-escape byte");
+            sysio::check(n < be_key_stream::buf_cap, "be_key_reader: string too large");
+            tmp[n++] = '\0';
+         } else {
+            sysio::check(n < be_key_stream::buf_cap, "be_key_reader: string too large");
+            tmp[n++] = c;
+         }
+      }
+      sysio::check(false, "be_key_reader: unterminated NUL-escape string");
+   }
+
 public:
    be_key_reader(const char* data, size_t size) : _data(data), _size(size) {}
 
@@ -210,7 +230,7 @@ public:
    }
 
    be_key_reader& operator>>(std::string& v) {
-      std::vector<char> tmp;
+      key_buf tmp;
       read_escaped(tmp);
       v.assign(tmp.data(), tmp.size());
       return *this;
@@ -253,10 +273,10 @@ class indexed_table {
 
    // --- Key / value encoding helpers ---
 
-   static std::vector<char> make_key(const K& key) {
+   static be_key_stream make_key(const K& key) {
       be_key_stream bs;
       bs << key;
-      return bs.release();
+      return bs;
    }
 
    static K decode_key(const char* data, size_t size) {
@@ -266,16 +286,16 @@ class indexed_table {
       return key;
    }
 
-   static std::vector<char> serialize_value(const V& value) {
+   static ser_buf serialize_value(const V& value) {
       if constexpr (std::is_trivially_copyable<V>::value) {
          if (sizeof(V) == sysio::pack_size(value)) {
-            std::vector<char> buf(sizeof(V));
+            ser_buf buf(sizeof(V));
             std::memcpy(buf.data(), &value, sizeof(V));
             return buf;
          }
       }
-      auto sz = sysio::pack_size(value);
-      std::vector<char> buf(sz);
+      uint32_t sz = sysio::pack_size(value);
+      ser_buf buf(sz);
       sysio::datastream<char*> ds(buf.data(), buf.size());
       ds << value;
       return buf;
@@ -295,10 +315,10 @@ class indexed_table {
    }
 
    template<typename SecKey>
-   static std::vector<char> encode_sec_key(const SecKey& key) {
+   static be_key_stream encode_sec_key(const SecKey& key) {
       be_key_stream bs;
       bs << key;
-      return bs.release();
+      return bs;
    }
 
    template<typename SecKey>
@@ -313,47 +333,49 @@ class indexed_table {
 
    template<size_t N, typename Index, typename... Rest>
    struct secondary_ops {
-      static void store_all(uint64_t payer, const std::vector<char>& pri, const V& value) {
+      static void store_all(uint64_t payer, const char* pri_data, uint32_t pri_size, const V& value) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
          auto sec = encode_sec_key(ext(value));
          ::kv_idx_store(payer, static_cast<uint64_t>(TableName), N,
-                        pri.data(), pri.size(), sec.data(), sec.size());
+                        pri_data, pri_size, sec.data(), sec.size());
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::store_all(payer, pri, value);
+            secondary_ops<N+1, Rest...>::store_all(payer, pri_data, pri_size, value);
       }
 
-      static void remove_all(const std::vector<char>& pri, const V& value) {
+      static void remove_all(const char* pri_data, uint32_t pri_size, const V& value) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
          auto sec = encode_sec_key(ext(value));
          ::kv_idx_remove(static_cast<uint64_t>(TableName), N,
-                         pri.data(), pri.size(), sec.data(), sec.size());
+                         pri_data, pri_size, sec.data(), sec.size());
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::remove_all(pri, value);
+            secondary_ops<N+1, Rest...>::remove_all(pri_data, pri_size, value);
       }
 
-      static void update_all(uint64_t payer, const std::vector<char>& pri,
+      static void update_all(uint64_t payer, const char* pri_data, uint32_t pri_size,
                               const V& old_val, const V& new_val) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
          auto old_sec = encode_sec_key(ext(old_val));
          auto new_sec = encode_sec_key(ext(new_val));
-         if (old_sec != new_sec) {
+         bool same = (old_sec.size() == new_sec.size()) &&
+                     (old_sec.size() == 0 || std::memcmp(old_sec.data(), new_sec.data(), old_sec.size()) == 0);
+         if (!same) {
             ::kv_idx_update(payer, static_cast<uint64_t>(TableName), N,
-                            pri.data(), pri.size(),
+                            pri_data, pri_size,
                             old_sec.data(), old_sec.size(),
                             new_sec.data(), new_sec.size());
          }
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::update_all(payer, pri, old_val, new_val);
+            secondary_ops<N+1, Rest...>::update_all(payer, pri_data, pri_size, old_val, new_val);
       }
    };
 
    struct no_secondary_ops {
-      static void store_all(uint64_t, const std::vector<char>&, const V&) {}
-      static void remove_all(const std::vector<char>&, const V&) {}
-      static void update_all(uint64_t, const std::vector<char>&, const V&, const V&) {}
+      static void store_all(uint64_t, const char*, uint32_t, const V&) {}
+      static void remove_all(const char*, uint32_t, const V&) {}
+      static void update_all(uint64_t, const char*, uint32_t, const V&, const V&) {}
    };
 
    template<typename... Is>
@@ -364,15 +386,15 @@ class indexed_table {
 
    void store_secondaries(uint64_t payer, const K& key, const V& value) {
       auto pri = make_key(key);
-      sec_ops::store_all(payer, pri, value);
+      sec_ops::store_all(payer, pri.data(), pri.size(), value);
    }
    void remove_secondaries(const K& key, const V& value) {
       auto pri = make_key(key);
-      sec_ops::remove_all(pri, value);
+      sec_ops::remove_all(pri.data(), pri.size(), value);
    }
    void update_secondaries(uint64_t payer, const K& key, const V& old_val, const V& new_val) {
       auto pri = make_key(key);
-      sec_ops::update_all(payer, pri, old_val, new_val);
+      sec_ops::update_all(payer, pri.data(), pri.size(), old_val, new_val);
    }
 
    // Internal erase used by both primary and secondary erase paths
@@ -437,19 +459,16 @@ public:
       }
       friend bool operator!=(const const_iterator& a, const const_iterator& b) { return !(a == b); }
 
-      ~const_iterator() { if (_handle >= 0) ::kv_it_destroy(_handle); }
-
       const_iterator(const_iterator&& o) noexcept
-         : _tbl(o._tbl), _handle(o._handle), _valid(o._valid),
+         : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid),
            _row(std::move(o._row)), _raw_key(std::move(o._raw_key))
-      { o._handle = -1; o._valid = false; }
+      { o._valid = false; }
 
       const_iterator& operator=(const_iterator&& o) noexcept {
          if (this != &o) {
-            if (_handle >= 0) ::kv_it_destroy(_handle);
-            _tbl = o._tbl; _handle = o._handle; _valid = o._valid;
+            _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid;
             _row = std::move(o._row); _raw_key = std::move(o._raw_key);
-            o._handle = -1; o._valid = false;
+            o._valid = false;
          }
          return *this;
       }
@@ -460,10 +479,10 @@ public:
    private:
       friend class indexed_table;
       const indexed_table* _tbl = nullptr;
-      int32_t              _handle = -1;
+      kv::detail::it_handle _handle;
       bool                 _valid = false;
       row                  _row;
-      std::vector<char>    _raw_key;
+      key_buf              _raw_key;
 
       const_iterator(const indexed_table* t, int32_t h, bool valid)
          : _tbl(t), _handle(h), _valid(valid) {
@@ -474,27 +493,45 @@ public:
       }
 
       void load() {
-         // Read raw key
+         char key_stack[key_buf::inline_cap];
          uint32_t key_size = 0;
-         ::kv_it_key(_handle, 0, nullptr, 0, &key_size);
-         _raw_key.resize(key_size);
-         if (::kv_it_key(_handle, 0, _raw_key.data(), key_size, &key_size) != 0) {
+         if (::kv_it_key(_handle, 0, key_stack, key_buf::inline_cap, &key_size) != 0) {
             _valid = false; return;
+         }
+         if (key_size <= key_buf::inline_cap) {
+            _raw_key.assign(key_stack, key_size);
+         } else {
+            char* kh = new char[key_size];
+            ::kv_it_key(_handle, 0, kh, key_size, &key_size);
+            _raw_key.assign(kh, key_size);
+            delete[] kh;
          }
          _row.key = decode_key(_raw_key.data(), _raw_key.size());
 
-         // Read and deserialize value
-         uint32_t val_size = 0;
-         ::kv_it_value(_handle, 0, nullptr, 0, &val_size);
-         std::vector<char> vbuf(val_size);
-         ::kv_it_value(_handle, 0, vbuf.data(), val_size, &val_size);
-         _row.value = deserialize_value(vbuf.data(), vbuf.size());
+         if constexpr (is_fixed_serializable_v<V>) {
+            char vbuf[sizeof(V)];
+            uint32_t val_size = 0;
+            ::kv_it_value(_handle, 0, vbuf, sizeof(V), &val_size);
+            std::memcpy(&_row.value, vbuf, sizeof(V));
+         } else {
+            char val_stack[kv_value_stack_size];
+            uint32_t val_size = 0;
+            ::kv_it_value(_handle, 0, val_stack, 256, &val_size);
+            if (val_size <= kv_value_stack_size) {
+               _row.value = deserialize_value(val_stack, val_size);
+            } else {
+               char* heap = new char[val_size];
+               ::kv_it_value(_handle, 0, heap, val_size, &val_size);
+               _row.value = deserialize_value(heap, val_size);
+               delete[] heap;
+            }
+         }
       }
 
       void ensure_handle() {
          if (_handle >= 0) return;
          if (!_tbl) return;
-         _handle = ::kv_it_create(kv_format_raw, _tbl->code(), nullptr, 0);
+         _handle.reset(::kv_it_create(kv_format_raw, _tbl->code(), nullptr, 0));
          if (_valid && !_raw_key.empty())
             ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
       }
@@ -526,11 +563,24 @@ public:
 
    std::optional<V> get(const K& key) const {
       auto k = make_key(key);
-      int32_t sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), nullptr, 0);
-      if (sz < 0) return {};
-      std::vector<char> buf(sz);
-      ::kv_get(kv_format_raw, code(), k.data(), k.size(), buf.data(), buf.size());
-      return deserialize_value(buf.data(), buf.size());
+      if constexpr (is_fixed_serializable_v<V>) {
+         char vbuf[sizeof(V)];
+         int32_t sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), vbuf, sizeof(V));
+         if (sz < 0) return {};
+         V val; std::memcpy(&val, vbuf, sizeof(V));
+         return val;
+      } else {
+         char stack[kv_value_stack_size];
+         int32_t sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), stack, kv_value_stack_size);
+         if (sz < 0) return {};
+         if (sz <= static_cast<int32_t>(kv_value_stack_size))
+            return deserialize_value(stack, sz);
+         char* heap = new char[sz];
+         ::kv_get(kv_format_raw, code(), k.data(), k.size(), heap, sz);
+         V result = deserialize_value(heap, sz);
+         delete[] heap;
+         return result;
+      }
    }
 
    bool contains(const K& key) const {
@@ -547,7 +597,8 @@ public:
 
    const_iterator upper_bound(const K& key) const {
       auto it = lower_bound(key);
-      if (it != end() && it._raw_key == make_key(key)) ++it;
+      auto encoded = make_key(key);
+      if (it != end() && it._raw_key.equals(encoded.data(), encoded.size())) ++it;
       return it;
    }
 
@@ -559,8 +610,14 @@ public:
    /// or modify() to update via an iterator.
    void emplace(name payer, const K& key, const V& value) {
       auto k = make_key(key);
-      auto v = serialize_value(value);
-      ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+      if constexpr (is_fixed_serializable_v<V>) {
+         char vbuf[sizeof(V)];
+         std::memcpy(vbuf, &value, sizeof(V));
+         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+      } else {
+         auto v = serialize_value(value);
+         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+      }
       store_secondaries(payer.value, key, value);
    }
 
@@ -574,19 +631,38 @@ public:
    /// path to check for existence.
    void upsert(name payer, const K& key, const V& value) {
       auto k = make_key(key);
-      int32_t old_sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), nullptr, 0);
-      if (old_sz >= 0) {
-         // Key exists — read old value for secondary index update
-         std::vector<char> old_buf(old_sz);
-         ::kv_get(kv_format_raw, code(), k.data(), k.size(), old_buf.data(), old_buf.size());
-         V old_value = deserialize_value(old_buf.data(), old_buf.size());
-         update_secondaries(payer.value, key, old_value, value);
+      if constexpr (is_fixed_serializable_v<V>) {
+         char old_vbuf[sizeof(V)];
+         int32_t old_sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), old_vbuf, sizeof(V));
+         if (old_sz >= 0) {
+            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
+            update_secondaries(payer.value, key, old_value, value);
+         } else {
+            store_secondaries(payer.value, key, value);
+         }
+         char vbuf[sizeof(V)];
+         std::memcpy(vbuf, &value, sizeof(V));
+         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), vbuf, sizeof(V));
       } else {
-         // New key — store secondary entries
-         store_secondaries(payer.value, key, value);
+         char stack[kv_value_stack_size];
+         int32_t old_sz = ::kv_get(kv_format_raw, code(), k.data(), k.size(), stack, kv_value_stack_size);
+         if (old_sz >= 0) {
+            const char* old_data = stack;
+            char* heap = nullptr;
+            if (old_sz > static_cast<int32_t>(kv_value_stack_size)) {
+               heap = new char[old_sz];
+               ::kv_get(kv_format_raw, code(), k.data(), k.size(), heap, old_sz);
+               old_data = heap;
+            }
+            V old_value = deserialize_value(old_data, old_sz);
+            delete[] heap;
+            update_secondaries(payer.value, key, old_value, value);
+         } else {
+            store_secondaries(payer.value, key, value);
+         }
+         auto v = serialize_value(value);
+         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
       }
-      auto v = serialize_value(value);
-      ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
    }
 
    void upsert(const K& key, const V& value) {
@@ -596,9 +672,15 @@ public:
    void modify(name payer, const const_iterator& it, const V& new_value) {
       sysio::check(it._valid, "cannot modify end iterator");
       auto k = make_key(it._row.key);
-      auto v = serialize_value(new_value);
       update_secondaries(payer.value, it._row.key, it._row.value, new_value);
-      ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+      if constexpr (is_fixed_serializable_v<V>) {
+         char vbuf[sizeof(V)];
+         std::memcpy(vbuf, &new_value, sizeof(V));
+         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+      } else {
+         auto v = serialize_value(new_value);
+         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+      }
    }
 
    void modify(const const_iterator& it, const V& new_value) {
@@ -672,9 +754,9 @@ public:
             if (_handle < 0) {
                char max_sec[kv_key_max_bytes];
                memset(max_sec, 0xFF, sizeof(max_sec));
-               _handle = ::kv_idx_lower_bound(
+               _handle.reset(::kv_idx_lower_bound(
                   _tbl->code(), static_cast<uint64_t>(TableName), index_number,
-                  max_sec, sizeof(max_sec));
+                  max_sec, sizeof(max_sec)));
                if (_handle < 0) { _valid = false; }
                else if (::kv_idx_prev(_handle) == 0) { _valid = true; load_current(); }
                else { _valid = false; }
@@ -695,17 +777,15 @@ public:
          }
          friend bool operator!=(const const_iterator& a, const const_iterator& b) { return !(a == b); }
 
-         ~const_iterator() { if (_handle >= 0) ::kv_idx_destroy(_handle); }
          const_iterator(const_iterator&& o) noexcept
-            : _tbl(o._tbl), _handle(o._handle), _valid(o._valid),
+            : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid),
               _row(std::move(o._row)), _pri_bytes(std::move(o._pri_bytes))
-         { o._handle = -1; o._valid = false; }
+         { o._valid = false; }
          const_iterator& operator=(const_iterator&& o) noexcept {
             if (this != &o) {
-               if (_handle >= 0) ::kv_idx_destroy(_handle);
-               _tbl = o._tbl; _handle = o._handle; _valid = o._valid;
+               _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid;
                _row = std::move(o._row); _pri_bytes = std::move(o._pri_bytes);
-               o._handle = -1; o._valid = false;
+               o._valid = false;
             }
             return *this;
          }
@@ -715,10 +795,10 @@ public:
       private:
          friend struct secondary_index_view;
          indexed_table* _tbl = nullptr;
-         int32_t        _handle = -1;
+         kv::detail::idx_handle _handle;
          bool           _valid = false;
          row            _row;
-         std::vector<char> _pri_bytes;
+         key_buf        _pri_bytes;
 
          const_iterator(indexed_table* tbl, int32_t handle, bool valid)
             : _tbl(tbl), _handle(handle), _valid(valid) {
@@ -730,23 +810,44 @@ public:
 
          void load_current() {
             if (_handle < 0) { _valid = false; return; }
-            // Read primary key bytes
+            char pri_stack[key_buf::inline_cap];
             uint32_t pri_size = 0;
-            ::kv_idx_primary_key(_handle, 0, nullptr, 0, &pri_size);
-            _pri_bytes.resize(pri_size);
-            if (::kv_idx_primary_key(_handle, 0, _pri_bytes.data(), pri_size, &pri_size) != 0) {
+            if (::kv_idx_primary_key(_handle, 0, pri_stack, key_buf::inline_cap, &pri_size) != 0) {
                _valid = false; return;
+            }
+            if (pri_size <= key_buf::inline_cap) {
+               _pri_bytes.assign(pri_stack, pri_size);
+            } else {
+               char* ph = new char[pri_size];
+               ::kv_idx_primary_key(_handle, 0, ph, pri_size, &pri_size);
+               _pri_bytes.assign(ph, pri_size);
+               delete[] ph;
             }
             _row.key = decode_key(_pri_bytes.data(), _pri_bytes.size());
 
-            // Fetch the full value via primary key lookup
-            int32_t val_sz = ::kv_get(kv_format_raw, _tbl->code(),
-                                      _pri_bytes.data(), _pri_bytes.size(), nullptr, 0);
-            if (val_sz < 0) { _valid = false; return; }
-            std::vector<char> vbuf(val_sz);
-            ::kv_get(kv_format_raw, _tbl->code(),
-                     _pri_bytes.data(), _pri_bytes.size(), vbuf.data(), vbuf.size());
-            _row.value = deserialize_value(vbuf.data(), vbuf.size());
+            if constexpr (is_fixed_serializable_v<V>) {
+               char vbuf[sizeof(V)];
+               int32_t val_sz = ::kv_get(kv_format_raw, _tbl->code(),
+                                         _pri_bytes.data(), _pri_bytes.size(),
+                                         vbuf, sizeof(V));
+               if (val_sz < 0) { _valid = false; return; }
+               std::memcpy(&_row.value, vbuf, sizeof(V));
+            } else {
+               char val_stack[kv_value_stack_size];
+               int32_t val_sz = ::kv_get(kv_format_raw, _tbl->code(),
+                                         _pri_bytes.data(), _pri_bytes.size(),
+                                         val_stack, kv_value_stack_size);
+               if (val_sz < 0) { _valid = false; return; }
+               if (val_sz <= static_cast<int32_t>(kv_value_stack_size)) {
+                  _row.value = deserialize_value(val_stack, val_sz);
+               } else {
+                  char* heap = new char[val_sz];
+                  ::kv_get(kv_format_raw, _tbl->code(),
+                           _pri_bytes.data(), _pri_bytes.size(), heap, val_sz);
+                  _row.value = deserialize_value(heap, val_sz);
+                  delete[] heap;
+               }
+            }
          }
       };
 
@@ -774,9 +875,9 @@ public:
             if (_handle < 0) {
                char max_sec[kv_key_max_bytes];
                memset(max_sec, 0xFF, sizeof(max_sec));
-               _handle = ::kv_idx_lower_bound(
+               _handle.reset(::kv_idx_lower_bound(
                   _tbl->code(), static_cast<uint64_t>(TableName), index_number,
-                  max_sec, sizeof(max_sec));
+                  max_sec, sizeof(max_sec)));
                if (_handle < 0) { _valid = false; }
                else if (::kv_idx_prev(_handle) == 0) { _valid = true; load_keys(); }
                else { _valid = false; }
@@ -797,17 +898,15 @@ public:
          }
          friend bool operator!=(const key_iterator& a, const key_iterator& b) { return !(a == b); }
 
-         ~key_iterator() { if (_handle >= 0) ::kv_idx_destroy(_handle); }
          key_iterator(key_iterator&& o) noexcept
-            : _tbl(o._tbl), _handle(o._handle), _valid(o._valid),
+            : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid),
               _kr(std::move(o._kr)), _pri_bytes(std::move(o._pri_bytes))
-         { o._handle = -1; o._valid = false; }
+         { o._valid = false; }
          key_iterator& operator=(key_iterator&& o) noexcept {
             if (this != &o) {
-               if (_handle >= 0) ::kv_idx_destroy(_handle);
-               _tbl = o._tbl; _handle = o._handle; _valid = o._valid;
+               _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid;
                _kr = std::move(o._kr); _pri_bytes = std::move(o._pri_bytes);
-               o._handle = -1; o._valid = false;
+               o._valid = false;
             }
             return *this;
          }
@@ -817,10 +916,10 @@ public:
       private:
          friend struct secondary_index_view;
          indexed_table* _tbl = nullptr;
-         int32_t        _handle = -1;
+         kv::detail::idx_handle _handle;
          bool           _valid = false;
          key_row        _kr;
-         std::vector<char> _pri_bytes;
+         key_buf        _pri_bytes;
 
          key_iterator(indexed_table* tbl, int32_t handle, bool valid)
             : _tbl(tbl), _handle(handle), _valid(valid) {
@@ -832,21 +931,32 @@ public:
 
          void load_keys() {
             if (_handle < 0) { _valid = false; return; }
-            // Read primary key
+            char pri_stack[key_buf::inline_cap];
             uint32_t pri_size = 0;
-            ::kv_idx_primary_key(_handle, 0, nullptr, 0, &pri_size);
-            _pri_bytes.resize(pri_size);
-            if (::kv_idx_primary_key(_handle, 0, _pri_bytes.data(), pri_size, &pri_size) != 0) {
+            if (::kv_idx_primary_key(_handle, 0, pri_stack, key_buf::inline_cap, &pri_size) != 0) {
                _valid = false; return;
+            }
+            if (pri_size <= key_buf::inline_cap) {
+               _pri_bytes.assign(pri_stack, pri_size);
+            } else {
+               char* ph = new char[pri_size];
+               ::kv_idx_primary_key(_handle, 0, ph, pri_size, &pri_size);
+               _pri_bytes.assign(ph, pri_size);
+               delete[] ph;
             }
             _kr.key = decode_key(_pri_bytes.data(), _pri_bytes.size());
 
-            // Read secondary key
+            char sec_stack[64];
             uint32_t sec_size = 0;
-            ::kv_idx_key(_handle, 0, nullptr, 0, &sec_size);
-            std::vector<char> sec_buf(sec_size);
-            ::kv_idx_key(_handle, 0, sec_buf.data(), sec_size, &sec_size);
-            _kr.sec_key = decode_sec_key<secondary_key_type>(sec_buf.data(), sec_buf.size());
+            ::kv_idx_key(_handle, 0, sec_stack, 64, &sec_size);
+            if (sec_size <= 64) {
+               _kr.sec_key = decode_sec_key<secondary_key_type>(sec_stack, sec_size);
+            } else {
+               char* heap = new char[sec_size];
+               ::kv_idx_key(_handle, 0, heap, sec_size, &sec_size);
+               _kr.sec_key = decode_sec_key<secondary_key_type>(heap, sec_size);
+               delete[] heap;
+            }
          }
       };
 
@@ -884,12 +994,13 @@ public:
       template<typename SecKey>
       const_iterator upper_bound(const SecKey& sec_key) const {
          auto sec = encode_sec_key(secondary_key_type(sec_key));
-         // Appending any byte makes the query strictly greater than the encoded
+         // Append a NUL byte to make the query strictly greater than the encoded
          // key under byte comparison, so kv_idx_lower_bound returns the first
          // entry past the target.  Works for both fixed-size BE keys (extra byte
          // extends length) and NUL-escape encoded strings (0x00 is the escape
          // sentinel, so the extended key cannot collide with a valid encoding).
-         sec.push_back('\0');
+         char nul = '\0';
+         sec.write(&nul, 1);
          int32_t handle = ::kv_idx_lower_bound(
             _tbl->code(), static_cast<uint64_t>(TableName), index_number,
             sec.data(), sec.size());
@@ -913,10 +1024,16 @@ public:
       void modify(name payer, const const_iterator& itr, const V& new_value) {
          sysio::check(itr._valid, "cannot modify end iterator");
          auto k = make_key(itr._row.key);
-         auto v = serialize_value(new_value);
          _tbl->update_secondaries(
             payer.value, itr._row.key, itr._row.value, new_value);
-         ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+         if constexpr (is_fixed_serializable_v<V>) {
+            char vbuf[sizeof(V)];
+            std::memcpy(vbuf, &new_value, sizeof(V));
+            ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         } else {
+            auto v = serialize_value(new_value);
+            ::kv_set(kv_format_raw, payer.value, k.data(), k.size(), v.data(), v.size());
+         }
       }
 
       void modify(const const_iterator& itr, const V& new_value) {

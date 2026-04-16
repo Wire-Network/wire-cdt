@@ -330,14 +330,20 @@ namespace sysio { namespace cdt {
          ctables.insert(t);
       }
 
-      void add_table( uint64_t name, const clang::CXXRecordDecl* decl, bool is_kv = false ) {
+      enum class kv_table_kind { legacy, kv_standard, kv_global };
+
+      void add_table( uint64_t name, const clang::CXXRecordDecl* decl, kv_table_kind kind = kv_table_kind::legacy ) {
          abi_table t;
          t.type = decl->getNameAsString();
          t.name = name_to_string(name);
-         if (is_kv) {
-            // KV tables use fixed 24-byte big-endian key: [table_name:8B][scope:8B][primary_key:8B]
+         if (kind == kv_table_kind::kv_standard) {
+            // Format=1: fixed 24-byte big-endian key: [table_name:8B][scope:8B][primary_key:8B]
             t.key_names = {"table_name", "scope", "primary_key"};
             t.key_types = {"name", "name", "uint64"};
+         } else if (kind == kv_table_kind::kv_global) {
+            // Format=0: single 8-byte big-endian name key
+            t.key_names = {"name"};
+            t.key_types = {"name"};
          }
          _abi.tables.insert(t);
       }
@@ -1068,14 +1074,19 @@ namespace sysio { namespace cdt {
          virtual bool VisitDecl(clang::Decl* decl) {
             if (const auto* d = dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
                if (d->getName() == "multi_index" || d->getName() == "singleton" ||
-                   d->getName() == "kv_multi_index" || d->getName() == "table") {
-                  bool is_kv = (d->getName() == "kv_multi_index" || d->getName() == "table");
+                   d->getName() == "kv_multi_index" || d->getName() == "table" ||
+                   d->getName() == "global") {
+                  abigen::kv_table_kind kind = abigen::kv_table_kind::legacy;
+                  if (d->getName() == "kv_multi_index" || d->getName() == "table")
+                     kind = abigen::kv_table_kind::kv_standard;
+                  else if (d->getName() == "global")
+                     kind = abigen::kv_table_kind::kv_global;
                   // second template parameter is table type
                   const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
                   auto table_decl = clang_wrapper::wrap_decl(table_type);
                   if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(d)) {
                      // first parameter is table name
-                     ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type, is_kv);
+                     ag.add_table(d->getTemplateArgs()[0].getAsIntegral().getLimitedValue(), table_type, kind);
                      if (table_decl.isSysioTable())
                         ag.add_struct(table_type);
                   }

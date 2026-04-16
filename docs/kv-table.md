@@ -55,15 +55,9 @@ kv::table<"balances"_n, balance_row> bal(code, scope);
 | `available_primary_key()` | Next auto-increment key |
 | `begin_all_scopes()` / `end_all_scopes()` | Iterate ALL rows across ALL scopes (returns `scoped_row`) |
 
-## Zero-copy path
+## Zero-copy optimization
 
-When `T` satisfies **both** conditions:
-1. `std::is_trivially_copyable<T>` is true
-2. `sizeof(T) == pack_size(T)` (no struct padding)
-
-...values are stored and loaded via `memcpy` instead of datastream serialization. This eliminates pack/unpack overhead entirely. Note: all four table APIs (`multi_index`, `indexed_table`, `kv::table`, `raw_table`) now use zero-copy for trivially copyable types.
-
-Types with `std::string`, `std::vector`, `std::optional`, or nested structs cannot use the zero-copy path and fall back to standard serialization (equivalent performance to `multi_index`).
+See [Zero-Copy Serialization](kv-storage-guide.md#zero-copy-serialization) in the storage guide. This optimization applies to all table APIs — `kv::table`, `kv::indexed_table`, `kv::raw_table`, `kv::global`, `singleton`, and `multi_index`.
 
 ## Example
 
@@ -119,6 +113,69 @@ public:
       for (auto it = bal.begin_all_scopes(); it != bal.end_all_scopes(); ++it) {
          print("scope=", it->scope, " pk=", it->primary_key, " amount=", it->obj.amount, "\n");
       }
+   }
+};
+```
+
+---
+
+## Singleton
+
+`sysio::singleton<Name, T>` is built on `kv::table` and stores a single value per scope. It is the scoped equivalent of [`kv::global`](kv-global.md).
+
+### Include
+
+```cpp
+#include <sysio/singleton.hpp>
+```
+
+### API reference
+
+| Method | Description |
+|--------|-------------|
+| `exists()` | Returns true if a value has been stored |
+| `get()` | Returns stored value, asserts if missing |
+| `get_or_default(def)` | Returns stored value or `def` |
+| `get_or_create(payer, def)` | Returns stored value, or stores and returns `def` |
+| `set(value, payer)` | Stores or overwrites the value |
+| `remove()` | Deletes the stored value |
+
+### When to use singleton vs kv::global
+
+- **singleton** -- one value per scope. Use when different scopes need different config (e.g., per-account settings).
+- **[kv::global](kv-global.md)** -- one value per contract, no scope. Use for contract-wide config (rate limits, feature flags). Simpler API, smaller key (8B vs 24B).
+
+### Example
+
+```cpp
+#include <sysio/sysio.hpp>
+#include <sysio/singleton.hpp>
+
+using namespace sysio;
+
+struct app_config {
+   uint64_t version;
+   std::string name;
+   SYSLIB_SERIALIZE(app_config, (version)(name))
+};
+
+using config_singleton = singleton<"config"_n, app_config>;
+
+class [[sysio::contract]] myapp : public contract {
+public:
+   using contract::contract;
+
+   [[sysio::action]]
+   void init() {
+      config_singleton cfg(get_self(), get_self().value);
+      cfg.set({1, "myapp"}, get_self());
+   }
+
+   [[sysio::action]]
+   void getver() {
+      config_singleton cfg(get_self(), get_self().value);
+      auto c = cfg.get_or_default({0, ""});
+      print("version: ", c.version);
    }
 };
 ```

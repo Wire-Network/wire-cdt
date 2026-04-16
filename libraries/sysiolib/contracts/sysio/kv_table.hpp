@@ -9,6 +9,8 @@
  * SHiP compatible: keys can be reverse-mapped to legacy contract_row format.
  */
 
+#include <cstdint>
+
 // KV intrinsic declarations (primary only — kv::table does not use secondary indices)
 extern "C" {
    __attribute__((sysio_wasm_import))
@@ -38,6 +40,8 @@ extern "C" {
 }
 
 #include <sysio/kv_constants.hpp>
+#include <sysio/kv_it_handle.hpp>
+#include <sysio/kv_raw_table.hpp>  // for is_fixed_serializable_v, ser_buf
 
 #include <sysio/name.hpp>
 #include <sysio/serialize.hpp>
@@ -45,7 +49,6 @@ extern "C" {
 #include <sysio/check.hpp>
 #include <sysio/action.hpp>
 
-#include <memory>
 #include <cstring>
 #include <limits>
 #include <type_traits>
@@ -116,7 +119,6 @@ class table {
    static constexpr uint32_t key_size        = 24;
    static constexpr uint32_t prefix_size     = 16;
    static constexpr uint32_t tbl_prefix_size = 8;
-   static constexpr uint32_t stack_buf_size  = 256;
 
    uint64_t _code;
    uint64_t _scope;
@@ -141,17 +143,25 @@ class table {
       return p;
    }
 
-   // Common kv_get + deserialize. Stack-allocates for values <= stack_buf_size.
+   // Common kv_get + deserialize.
    bool get_value(const pk_buf& key, T& out) const {
-      char buf[stack_buf_size];
-      int32_t sz = ::kv_get(kv_format_standard, _code, key.data, key_size, buf, stack_buf_size);
-      if (sz < 0) return false;
-      if (static_cast<uint32_t>(sz) <= stack_buf_size) {
-         detail::load_value(out, buf, sz);
+      if constexpr (is_fixed_serializable_v<T>) {
+         char vbuf[sizeof(T)];
+         int32_t sz = ::kv_get(kv_format_standard, _code, key.data, key_size, vbuf, sizeof(T));
+         if (sz < 0) return false;
+         std::memcpy(&out, vbuf, sizeof(T));
       } else {
-         auto heap = std::make_unique<char[]>(sz);
-         ::kv_get(kv_format_standard, _code, key.data, key_size, heap.get(), sz);
-         detail::load_value(out, heap.get(), sz);
+         char buf[kv_value_stack_size];
+         int32_t sz = ::kv_get(kv_format_standard, _code, key.data, key_size, buf, kv_value_stack_size);
+         if (sz < 0) return false;
+         if (static_cast<uint32_t>(sz) <= kv_value_stack_size) {
+            detail::load_value(out, buf, sz);
+         } else {
+            char* heap = new char[sz];
+            ::kv_get(kv_format_standard, _code, key.data, key_size, heap, sz);
+            detail::load_value(out, heap, sz);
+            delete[] heap;
+         }
       }
       return true;
    }
@@ -170,15 +180,22 @@ class table {
 
    void store_row(uint64_t payer, uint64_t pk, const T& obj) const {
       auto key = make_pk(pk);
-      uint32_t sz = detail::value_size(obj);
-      if (sz <= stack_buf_size) {
-         char buf[stack_buf_size];
-         detail::store_value(obj, buf, stack_buf_size);
-         ::kv_set(kv_format_standard, payer, key.data, key_size, buf, sz);
+      if constexpr (is_fixed_serializable_v<T>) {
+         char vbuf[sizeof(T)];
+         std::memcpy(vbuf, &obj, sizeof(T));
+         ::kv_set(kv_format_standard, payer, key.data, key_size, vbuf, sizeof(T));
       } else {
-         auto heap = std::make_unique<char[]>(sz);
-         detail::store_value(obj, heap.get(), sz);
-         ::kv_set(kv_format_standard, payer, key.data, key_size, heap.get(), sz);
+         uint32_t sz = detail::value_size(obj);
+         if (sz <= kv_value_stack_size) {
+            char buf[kv_value_stack_size];
+            detail::store_value(obj, buf, kv_value_stack_size);
+            ::kv_set(kv_format_standard, payer, key.data, key_size, buf, sz);
+         } else {
+            char* heap = new char[sz];
+            detail::store_value(obj, heap, sz);
+            ::kv_set(kv_format_standard, payer, key.data, key_size, heap, sz);
+            delete[] heap;
+         }
       }
    }
 
@@ -224,15 +241,13 @@ public:
       }
       friend bool operator!=(const const_iterator& a, const const_iterator& b) { return !(a == b); }
 
-      ~const_iterator() { if (_handle >= 0) ::kv_it_destroy(_handle); }
       const_iterator(const_iterator&& o) noexcept
-         : _tbl(o._tbl), _handle(o._handle), _has_obj(o._has_obj), _obj(std::move(o._obj))
-         { o._handle = -1; o._has_obj = false; }
+         : _tbl(o._tbl), _handle(std::move(o._handle)), _has_obj(o._has_obj), _obj(std::move(o._obj))
+         { o._has_obj = false; }
       const_iterator& operator=(const_iterator&& o) noexcept {
          if (this != &o) {
-            if (_handle >= 0) ::kv_it_destroy(_handle);
-            _tbl = o._tbl; _handle = o._handle; _has_obj = o._has_obj; _obj = std::move(o._obj);
-            o._handle = -1; o._has_obj = false;
+            _tbl = o._tbl; _handle = std::move(o._handle); _has_obj = o._has_obj; _obj = std::move(o._obj);
+            o._has_obj = false;
          }
          return *this;
       }
@@ -242,7 +257,7 @@ public:
    private:
       friend class table;
       const table* _tbl = nullptr;
-      int32_t _handle = -1;
+      detail::it_handle _handle;
       bool _has_obj = false;
       T _obj;
 
@@ -262,7 +277,7 @@ public:
       void ensure_handle() {
          if (_handle >= 0) return;
          if (!_tbl) return;
-         _handle = ::kv_it_create(kv_format_standard, _tbl->_code, _tbl->_prefix.data, prefix_size);
+         _handle.reset(::kv_it_create(kv_format_standard, _tbl->_code, _tbl->_prefix.data, prefix_size));
          if (_has_obj) {
             auto key = _tbl->make_pk(_obj.primary_key());
             ::kv_it_lower_bound(_handle, key.data, key_size);
@@ -315,15 +330,13 @@ public:
       }
       friend bool operator!=(const scoped_iterator& a, const scoped_iterator& b) { return !(a == b); }
 
-      ~scoped_iterator() { if (_handle >= 0) ::kv_it_destroy(_handle); }
       scoped_iterator(scoped_iterator&& o) noexcept
-         : _tbl(o._tbl), _handle(o._handle), _has_obj(o._has_obj), _row(std::move(o._row))
-         { o._handle = -1; o._has_obj = false; }
+         : _tbl(o._tbl), _handle(std::move(o._handle)), _has_obj(o._has_obj), _row(std::move(o._row))
+         { o._has_obj = false; }
       scoped_iterator& operator=(scoped_iterator&& o) noexcept {
          if (this != &o) {
-            if (_handle >= 0) ::kv_it_destroy(_handle);
-            _tbl = o._tbl; _handle = o._handle; _has_obj = o._has_obj; _row = std::move(o._row);
-            o._handle = -1; o._has_obj = false;
+            _tbl = o._tbl; _handle = std::move(o._handle); _has_obj = o._has_obj; _row = std::move(o._row);
+            o._has_obj = false;
          }
          return *this;
       }
@@ -333,7 +346,7 @@ public:
    private:
       friend class table;
       const table* _tbl = nullptr;
-      int32_t _handle = -1;
+      detail::it_handle _handle;
       bool _has_obj = false;
       scoped_row _row;
 
@@ -444,19 +457,16 @@ public:
    }
 
    uint64_t available_primary_key() const {
-      uint32_t h = ::kv_it_create(kv_format_standard, _code, _prefix.data, prefix_size);
-      if (::kv_it_status(h) != 0) { ::kv_it_destroy(h); return 0; }
+      detail::it_handle h(::kv_it_create(kv_format_standard, _code, _prefix.data, prefix_size));
+      if (::kv_it_status(h) != 0) return 0;
       char max_key[key_size];
       detail::encode_be64(max_key,                static_cast<uint64_t>(TableName));
       detail::encode_be64(max_key + scope_offset, _scope);
       detail::encode_be64(max_key + pk_offset,    std::numeric_limits<uint64_t>::max());
-      // lower_bound with UINT64_MAX pk positions at iterator_end (past all entries).
-      // Return value only indicates exact-match; iterator is validly positioned either way.
       ::kv_it_lower_bound(h, max_key, key_size);
-      if (::kv_it_prev(h) != 0) { ::kv_it_destroy(h); return 0; }
+      if (::kv_it_prev(h) != 0) return 0;
       char key_buf[key_size]; uint32_t actual = 0;
       ::kv_it_key(h, 0, key_buf, key_size, &actual);
-      ::kv_it_destroy(h);
       if (actual != key_size) return 0;
       uint64_t last_pk = detail::decode_be64(key_buf + pk_offset);
       sysio::check(last_pk < std::numeric_limits<uint64_t>::max(),

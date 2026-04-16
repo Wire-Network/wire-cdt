@@ -105,6 +105,49 @@ public:
       cfg.get(); // should abort: "singleton does not exist"
    }
 
+   // ── Trivially-copyable singleton (exercises is_fixed_serializable fast path) ──
+
+   struct pod_config {
+      uint64_t rate;
+      uint64_t flags;  // uint64_t (not uint32_t) avoids trailing padding so sizeof==pack_size
+      SYSLIB_SERIALIZE(pod_config, (rate)(flags))
+   };
+   using pod_singleton = singleton<"podcfg"_n, pod_config>;
+
+   [[sysio::action]]
+   void podsingleton() {
+      pod_singleton cfg(get_self(), get_self().value);
+
+      check(!cfg.exists(), "podsingleton: should not exist");
+
+      cfg.set({42, 0xFF}, get_self());
+      check(cfg.exists(), "podsingleton: should exist after set");
+
+      auto val = cfg.get();
+      check(val.rate == 42, "podsingleton: rate");
+      check(val.flags == 0xFF, "podsingleton: flags");
+
+      // Overwrite
+      cfg.set({99, 0x01}, get_self());
+      val = cfg.get();
+      check(val.rate == 99, "podsingleton: overwrite rate");
+
+      // get_or_default
+      pod_singleton cfg2(get_self(), "pod2"_n.value);
+      val = cfg2.get_or_default({7, 0});
+      check(val.rate == 7, "podsingleton: default rate");
+
+      // get_or_create
+      val = cfg2.get_or_create(get_self(), {8, 0});
+      check(val.rate == 8, "podsingleton: created rate");
+      val = cfg2.get_or_create(get_self(), {9, 0});
+      check(val.rate == 8, "podsingleton: existing rate");
+
+      // Remove
+      cfg.remove();
+      check(!cfg.exists(), "podsingleton: removed");
+   }
+
    [[sysio::action]]
    void scopetest() {
       config_singleton cfg1(get_self(), "scope1"_n.value);
@@ -123,3 +166,6 @@ public:
       check(cfg2.get().max_supply == 222, "scope2 value should be unchanged");
    }
 };
+
+static_assert(sysio::kv::is_fixed_serializable_v<kv_singleton_tests::pod_config>,
+              "pod_config must hit the zero-copy fast path");

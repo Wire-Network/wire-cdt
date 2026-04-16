@@ -522,6 +522,45 @@ public:
       check(delta_erase < 0, "ramdelta: erase should return negative delta");
    }
 
+   // ── T6: be_key_stream boundary tests ──────────────────────────────────────
+   // Default KV_KEY_BUF_CAP is 256. Tests use that default.
+
+   struct longstr_key {
+      uint64_t tag;
+      std::string s;
+      SYSLIB_SERIALIZE(longstr_key, (tag)(s))
+   };
+
+   kv::raw_table<longstr_key, tiny_val> longstr_store;
+
+   [[sysio::action]]
+   void keymaxfit() {
+      // 8 (tag BE) + 246 (string chars) + 2 (NUL-escape terminator) = 256 = buf_cap exactly
+      std::string maxstr(246, 'x');
+      longstr_store.set({1, maxstr}, {1});
+      check(longstr_store.contains({1, maxstr}), "keymaxfit: should store max-fit key");
+      auto val = longstr_store.get({1, maxstr});
+      check(val.has_value(), "keymaxfit: should read back");
+   }
+
+   [[sysio::action]]
+   void keyoverflow() {
+      // 8 (tag BE) + 247 (string chars) + 2 (terminator) = 257 > 256 = overflow
+      std::string toostr(247, 'x');
+      longstr_store.set({1, toostr}, {1});
+      // Should abort with "be_key_stream: key too large" before reaching here
+      check(false, "keyoverflow: should have aborted");
+   }
+
+   [[sysio::action]]
+   void keynulover() {
+      // String with embedded NULs: each NUL adds 1 extra byte
+      // 8 (tag) + 230 chars (all NUL) + 230 NUL escapes + 2 terminator = 470 > 256
+      std::string nuls(230, '\0');
+      longstr_store.set({1, nuls}, {1});
+      check(false, "keynulover: should have aborted");
+   }
+
    // ── T6: set with explicit payer ──────────────────────────────────────────
 
    [[sysio::action]]
