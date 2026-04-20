@@ -142,15 +142,20 @@ namespace _test_multi_index
         }
 
         // iterate backward starting with second bob
+        // kv_index_object now uses primary_id (chainbase insertion order) as
+        // the sec-index tiebreaker instead of pri_key bytes. Within the two
+        // bob rows, id=781 was inserted before id=540 (see idx64_store_only
+        // insertion order), so id=781 now sorts before id=540 in the sec
+        // index, reversing the old pri_key-lex ordering.
         {
-            auto pk_itr = table.find(781);
+            auto pk_itr = table.find(540);
             sysio::check(pk_itr != table.end() && pk_itr->sec == "bob"_n.value, "idx64_general - table.find() of existing primary key");
 
             auto itr = secondary_index.iterator_to(*pk_itr);
-            sysio::check(itr->id == 781 && itr->sec == "bob"_n.value, "idx64_general - iterator to existing object in secondary index");
+            sysio::check(itr->id == 540 && itr->sec == "bob"_n.value, "idx64_general - iterator to existing object in secondary index");
 
             --itr;
-            sysio::check(itr != secondary_index.end() && itr->id == 540 && itr->sec == "bob"_n.value, "idx64_general - decrement secondary iterator");
+            sysio::check(itr != secondary_index.end() && itr->id == 781 && itr->sec == "bob"_n.value, "idx64_general - decrement secondary iterator");
 
             --itr;
             sysio::check(itr != secondary_index.end() && itr->id == 650 && itr->sec == "allyson"_n.value, "idx64_general - decrement secondary iterator again");
@@ -160,8 +165,9 @@ namespace _test_multi_index
         }
 
         // iterate backward starting with emily using const_reverse_iterator
+        // Bob's two rows appear in insertion-order: 781 (inserted first) then 540.
         {
-            std::array<uint64_t, 6> pks{{976, 234, 781, 540, 650, 265}};
+            std::array<uint64_t, 6> pks{{976, 234, 540, 781, 650, 265}};
 
             auto pk_itr = pks.begin();
 
@@ -175,14 +181,16 @@ namespace _test_multi_index
             sysio::check(pk_itr == pks.end(), "idx64_general - did not iterate backwards through secondary index properly");
         }
 
-        // require_find secondary key
+        // require_find secondary key.
+        // Under the new primary_id tiebreaker, the first bob in sec order is
+        // id=781 (inserted before id=540); the second is id=540.
         {
             auto itr = secondary_index.require_find("bob"_n.value);
             sysio::check(itr != secondary_index.end(), "idx64_general - require_find must never return end iterator");
-            sysio::check(itr->id == 540, "idx64_general - require_find test");
+            sysio::check(itr->id == 781, "idx64_general - require_find test");
 
             ++itr;
-            sysio::check(itr->id == 781, "idx64_general - require_find secondary key test");
+            sysio::check(itr->id == 540, "idx64_general - require_find secondary key test");
         }
 
         // modify and erase
@@ -522,25 +530,30 @@ public:
         auto table = _test_multi_index::idx64_table<"indextable1"_n.value, "bysecondary"_n.value>( get_self() );
 
         auto sec_index = table.get_index<"bysecondary"_n>();
+        // Under the primary_id tiebreaker, the first bob in sec order is the
+        // row inserted first (id=781).
         auto sk_itr = sec_index.find("bob"_n.value);
-        sysio::check( sk_itr != sec_index.end() && sk_itr->id == 540, "idx64_sk_cache_pk_lookup - sec_index.find() of existing secondary key" );
+        sysio::check( sk_itr != sec_index.end() && sk_itr->id == 781, "idx64_sk_cache_pk_lookup - sec_index.find() of existing secondary key" );
 
         auto pk_itr = table.iterator_to(*sk_itr);
+        // Primary index iteration is by pk (id), so --from(781) on the primary
+        // index lands on 650 (allyson).
         auto prev_itr = --pk_itr;
-        sysio::check( prev_itr->id == 265 && prev_itr->sec == "alice"_n.value, "idx64_sk_cache_pk_lookup - previous record" );
+        sysio::check( prev_itr->id == 650 && prev_itr->sec == "allyson"_n.value, "idx64_sk_cache_pk_lookup - previous record" );
     }
 
     [[sysio::action("s1pkcache")]] void idx64_pk_cache_sk_lookup() {
         auto table = _test_multi_index::idx64_table<"indextable1"_n.value, "bysecondary"_n.value>( get_self() );
 
-
-        auto pk_itr = table.find(540);
+        // bob(id=781) is the first bob in the sec index (inserted before 540);
+        // ++itr across the sec iterator advances to the second bob (id=540).
+        auto pk_itr = table.find(781);
         sysio::check( pk_itr != table.end() && pk_itr->sec == "bob"_n.value, "idx64_pk_cache_sk_lookup - table.find() of existing primary key" );
 
         auto sec_index = table.get_index<"bysecondary"_n>();
         auto sk_itr = sec_index.iterator_to(*pk_itr);
         auto next_itr = ++sk_itr;
-        sysio::check( next_itr->id == 781 && next_itr->sec == "bob"_n.value, "idx64_pk_cache_sk_lookup - next record" );
+        sysio::check( next_itr->id == 540 && next_itr->sec == "bob"_n.value, "idx64_pk_cache_sk_lookup - next record" );
     }
 
     [[sysio::action("s2g")]] void idx128_general() {
