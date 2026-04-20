@@ -27,7 +27,9 @@ extern "C" {
  * @param key_size - length of key in bytes (max 256)
  * @param value - pointer to value bytes
  * @param value_size - length of value in bytes (max 256 KiB)
- * @return RAM byte delta (positive for growth, 0 for same-size update)
+ * @return chainbase id of the primary row. Thread this value into
+ *   kv_idx_store/kv_idx_update so secondary rows reference the primary
+ *   by id rather than by key bytes.
  */
 __attribute__((sysio_wasm_import))
 int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
@@ -52,7 +54,9 @@ int32_t kv_get(uint32_t table_id, capi_name code, const void* key, uint32_t key_
  * @param table_id - table identifier dispatching to the correct backing store
  * @param key - pointer to key bytes
  * @param key_size - length of key
- * @return negative RAM byte delta
+ * @return chainbase id of the deleted primary row. Callers with secondary
+ *   indexes should call kv_erase BEFORE kv_idx_remove and thread the
+ *   returned id into each secondary removal.
  */
 __attribute__((sysio_wasm_import))
 int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
@@ -152,33 +156,35 @@ int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_
 // --- Secondary KV Index ---
 
 /**
- * Store a secondary index entry.
+ * Store a secondary index entry referencing a primary row by id.
  * @param payer - account paying for RAM (0 = contract itself)
- * @param table_id - table identifier (encodes table name + index id)
- * @param pri_key - primary key bytes
- * @param pri_key_size - primary key size (max 256)
+ * @param table_id - secondary index identifier (encodes table name + index id)
+ * @param primary_id - chainbase id of the primary kv row (returned by kv_set)
  * @param sec_key - secondary key bytes
  * @param sec_key_size - secondary key size (max 256)
  */
 __attribute__((sysio_wasm_import))
-void kv_idx_store(uint64_t payer, uint32_t table_id,
-                  const void* pri_key, uint32_t pri_key_size,
+void kv_idx_store(uint64_t payer, uint32_t table_id, int64_t primary_id,
                   const void* sec_key, uint32_t sec_key_size);
 
 /**
  * Remove a secondary index entry.
+ *
+ * @param table_id - secondary index identifier
+ * @param primary_id - chainbase id of the referenced primary row (obtain via
+ *   kv_erase before deleting the primary, or cache from a prior kv_set)
+ * @param sec_key - secondary key bytes
+ * @param sec_key_size - secondary key size
  */
 __attribute__((sysio_wasm_import))
-void kv_idx_remove(uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
+void kv_idx_remove(uint32_t table_id, int64_t primary_id,
                    const void* sec_key, uint32_t sec_key_size);
 
 /**
- * Update a secondary index entry (change secondary key, keep primary key).
+ * Update a secondary index entry (change secondary key, keep primary_id).
  */
 __attribute__((sysio_wasm_import))
-void kv_idx_update(uint64_t payer, uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
+void kv_idx_update(uint64_t payer, uint32_t table_id, int64_t primary_id,
                    const void* old_sec_key, uint32_t old_sec_key_size,
                    const void* new_sec_key, uint32_t new_sec_key_size);
 

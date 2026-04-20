@@ -43,16 +43,13 @@
 // is also included.
 extern "C" {
    __attribute__((sysio_wasm_import))
-   void kv_idx_store(uint64_t payer, uint32_t table_id,
-                     const void* pri_key, uint32_t pri_key_size,
+   void kv_idx_store(uint64_t payer, uint32_t table_id, int64_t primary_id,
                      const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_remove(uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
+   void kv_idx_remove(uint32_t table_id, int64_t primary_id,
                       const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_update(uint64_t payer, uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
+   void kv_idx_update(uint64_t payer, uint32_t table_id, int64_t primary_id,
                       const void* old_sec_key, uint32_t old_sec_key_size,
                       const void* new_sec_key, uint32_t new_sec_key_size);
    __attribute__((sysio_wasm_import))
@@ -402,29 +399,27 @@ public:
          static_cast<uint64_t>(TableName), Index::index_name);
 
       static void store_all(const table_impl& tbl, uint64_t payer,
-                            const char* pri_data, uint32_t pri_size, const V& value) {
+                            int64_t primary_id, const V& value) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
          auto sec = tbl.encode_sec_key(ext(value));
-         ::kv_idx_store(payer, _sec_tid,
-                        pri_data, pri_size, sec.data(), sec.size());
+         ::kv_idx_store(payer, _sec_tid, primary_id, sec.data(), sec.size());
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::store_all(tbl, payer, pri_data, pri_size, value);
+            secondary_ops<N+1, Rest...>::store_all(tbl, payer, primary_id, value);
       }
 
       static void remove_all(const table_impl& tbl,
-                             const char* pri_data, uint32_t pri_size, const V& value) {
+                             int64_t primary_id, const V& value) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
          auto sec = tbl.encode_sec_key(ext(value));
-         ::kv_idx_remove(_sec_tid,
-                         pri_data, pri_size, sec.data(), sec.size());
+         ::kv_idx_remove(_sec_tid, primary_id, sec.data(), sec.size());
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::remove_all(tbl, pri_data, pri_size, value);
+            secondary_ops<N+1, Rest...>::remove_all(tbl, primary_id, value);
       }
 
       static void update_all(const table_impl& tbl, uint64_t payer,
-                              const char* pri_data, uint32_t pri_size,
+                              int64_t primary_id,
                               const V& old_val, const V& new_val) {
          using ext_t = typename Index::secondary_extractor_type;
          ext_t ext;
@@ -433,20 +428,19 @@ public:
          bool same = (old_sec.size() == new_sec.size()) &&
                      (old_sec.size() == 0 || std::memcmp(old_sec.data(), new_sec.data(), old_sec.size()) == 0);
          if (!same) {
-            ::kv_idx_update(payer, _sec_tid,
-                            pri_data, pri_size,
+            ::kv_idx_update(payer, _sec_tid, primary_id,
                             old_sec.data(), old_sec.size(),
                             new_sec.data(), new_sec.size());
          }
          if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::update_all(tbl, payer, pri_data, pri_size, old_val, new_val);
+            secondary_ops<N+1, Rest...>::update_all(tbl, payer, primary_id, old_val, new_val);
       }
    };
 
    struct no_secondary_ops {
-      static void store_all(const table_impl&, uint64_t, const char*, uint32_t, const V&) {}
-      static void remove_all(const table_impl&, const char*, uint32_t, const V&) {}
-      static void update_all(const table_impl&, uint64_t, const char*, uint32_t, const V&, const V&) {}
+      static void store_all(const table_impl&, uint64_t, int64_t, const V&) {}
+      static void remove_all(const table_impl&, int64_t, const V&) {}
+      static void update_all(const table_impl&, uint64_t, int64_t, const V&, const V&) {}
    };
 
    template<typename... Is>
@@ -455,38 +449,42 @@ public:
    struct sec_ops_selector<> { using type = no_secondary_ops; };
    using sec_ops = typename sec_ops_selector<Indices...>::type;
 
-   /// Secondary ops use unscoped pri_key — saves 8B/row vs storing scoped key.
-   void store_secondaries(uint64_t payer, const K& key, const V& value) {
-      auto pri = make_unscoped_key(key);
-      sec_ops::store_all(*this, payer, pri.data(), pri.size(), value);
+   // Secondary rows reference the primary row by chainbase id (returned by
+   // kv_set/kv_erase). The primary-key bytes themselves are no longer copied
+   // into each secondary row, which saves RAM proportional to pri_key size x
+   // number of secondary indexes.
+   void store_secondaries(uint64_t payer, int64_t primary_id, const V& value) {
+      sec_ops::store_all(*this, payer, primary_id, value);
    }
-   void remove_secondaries(const K& key, const V& value) {
-      auto pri = make_unscoped_key(key);
-      sec_ops::remove_all(*this, pri.data(), pri.size(), value);
+   void remove_secondaries(int64_t primary_id, const V& value) {
+      sec_ops::remove_all(*this, primary_id, value);
    }
-   void update_secondaries(uint64_t payer, const K& key, const V& old_val, const V& new_val) {
-      auto pri = make_unscoped_key(key);
-      sec_ops::update_all(*this, payer, pri.data(), pri.size(), old_val, new_val);
+   void update_secondaries(uint64_t payer, int64_t primary_id, const V& old_val, const V& new_val) {
+      sec_ops::update_all(*this, payer, primary_id, old_val, new_val);
    }
 
-   // Internal insert (no duplicate check — caller must verify)
-   void do_insert(uint64_t payer, const be_key_stream& k, const K& key, const V& value) {
+   // Internal insert (no duplicate check — caller must verify). kv_set returns
+   // the newly-assigned primary_id which we thread into each secondary row.
+   void do_insert(uint64_t payer, const be_key_stream& k, const V& value) {
+      int64_t primary_id;
       if constexpr (is_fixed_serializable_v<V>) {
          char vbuf[sizeof(V)];
          std::memcpy(vbuf, &value, sizeof(V));
-         ::kv_set(_table_id, payer, k.data(), k.size(), vbuf, sizeof(V));
+         primary_id = ::kv_set(_table_id, payer, k.data(), k.size(), vbuf, sizeof(V));
       } else {
          auto v = serialize_value(value);
-         ::kv_set(_table_id, payer, k.data(), k.size(), v.data(), v.size());
+         primary_id = ::kv_set(_table_id, payer, k.data(), k.size(), v.data(), v.size());
       }
-      store_secondaries(payer, key, value);
+      store_secondaries(payer, primary_id, value);
    }
 
-   // Internal erase used by both primary and secondary erase paths
+   // Internal erase used by both primary and secondary erase paths. kv_erase
+   // runs first so we learn the primary_id needed to find each secondary row
+   // under the composite (code, sec_tid, sec_key, primary_id) key.
    void do_erase(const K& key, const V& value) {
-      remove_secondaries(key, value);
       auto pri = make_key(key);
-      ::kv_erase(_table_id, pri.data(), pri.size());
+      int64_t primary_id = ::kv_erase(_table_id, pri.data(), pri.size());
+      remove_secondaries(primary_id, value);
    }
 
 public:
@@ -729,7 +727,7 @@ public:
    void emplace(name payer, const K& key, const V& value, const char* exists_msg = "key already exists") {
       auto k = make_key(key);
       sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()), exists_msg);
-      do_insert(payer.value, k, key, value);
+      do_insert(payer.value, k, value);
    }
 
    void emplace(const K& key, const V& value) {
@@ -762,18 +760,19 @@ public:
       if constexpr (is_fixed_serializable_v<V>) {
          char old_vbuf[sizeof(V)];
          int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), old_vbuf, sizeof(V));
-         if (old_sz >= 0) {
-            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
-            update_secondaries(payer.value, key, old_value, value);
-         } else {
-            store_secondaries(payer.value, key, value);
-         }
          char vbuf[sizeof(V)];
          std::memcpy(vbuf, &value, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         int64_t primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         if (old_sz >= 0) {
+            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
+            update_secondaries(payer.value, primary_id, old_value, value);
+         } else {
+            store_secondaries(payer.value, primary_id, value);
+         }
       } else {
          char stack[kv_value_stack_size];
          int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), stack, kv_value_stack_size);
+         V old_value;
          if (old_sz >= 0) {
             const char* old_data = stack;
             char* heap = nullptr;
@@ -782,14 +781,16 @@ public:
                ::kv_get(_table_id, code(), k.data(), k.size(), heap, old_sz);
                old_data = heap;
             }
-            V old_value = deserialize_value(old_data, old_sz);
+            old_value = deserialize_value(old_data, old_sz);
             delete[] heap;
-            update_secondaries(payer.value, key, old_value, value);
-         } else {
-            store_secondaries(payer.value, key, value);
          }
          auto v = serialize_value(value);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         int64_t primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         if (old_sz >= 0) {
+            update_secondaries(payer.value, primary_id, old_value, value);
+         } else {
+            store_secondaries(payer.value, primary_id, value);
+         }
       }
    }
 
@@ -814,22 +815,27 @@ public:
          char old_vbuf[sizeof(V)];
          int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), old_vbuf, sizeof(V));
          V new_value;
+         V old_value;
          if (old_sz >= 0) {
-            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
+            std::memcpy(&old_value, old_vbuf, sizeof(V));
             new_value = old_value;
             updater(new_value);
-            update_secondaries(payer.value, key, old_value, new_value);
          } else {
             new_value = default_value;
-            store_secondaries(payer.value, key, new_value);
          }
          char vbuf[sizeof(V)];
          std::memcpy(vbuf, &new_value, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         int64_t primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         if (old_sz >= 0) {
+            update_secondaries(payer.value, primary_id, old_value, new_value);
+         } else {
+            store_secondaries(payer.value, primary_id, new_value);
+         }
       } else {
          char stack[kv_value_stack_size];
          int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), stack, kv_value_stack_size);
          V new_value;
+         V old_value;
          if (old_sz >= 0) {
             const char* old_data = stack;
             char* heap = nullptr;
@@ -838,17 +844,20 @@ public:
                ::kv_get(_table_id, code(), k.data(), k.size(), heap, old_sz);
                old_data = heap;
             }
-            V old_value = deserialize_value(old_data, old_sz);
+            old_value = deserialize_value(old_data, old_sz);
             delete[] heap;
             new_value = old_value;
             updater(new_value);
-            update_secondaries(payer.value, key, old_value, new_value);
          } else {
             new_value = default_value;
-            store_secondaries(payer.value, key, new_value);
          }
          auto v = serialize_value(new_value);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         int64_t primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         if (old_sz >= 0) {
+            update_secondaries(payer.value, primary_id, old_value, new_value);
+         } else {
+            store_secondaries(payer.value, primary_id, new_value);
+         }
       }
    }
 
@@ -860,15 +869,16 @@ public:
    void modify(name payer, const const_iterator& it, const V& new_value) {
       sysio::check(it._valid, "cannot modify end iterator");
       auto k = make_key(it._row.key);
-      update_secondaries(payer.value, it._row.key, it._row.value, new_value);
+      int64_t primary_id;
       if constexpr (is_fixed_serializable_v<V>) {
          char vbuf[sizeof(V)];
          std::memcpy(vbuf, &new_value, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
       } else {
          auto v = serialize_value(new_value);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
       }
+      update_secondaries(payer.value, primary_id, it._row.value, new_value);
    }
 
    void modify(const const_iterator& it, const V& new_value) {
@@ -882,15 +892,16 @@ public:
       V new_val = old_val;
       updater(new_val);
       auto k = make_key(key);
-      update_secondaries(payer.value, key, old_val, new_val);
+      int64_t primary_id;
       if constexpr (is_fixed_serializable_v<V>) {
          char vbuf[sizeof(V)];
          std::memcpy(vbuf, &new_val, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+         primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
       } else {
          auto v = serialize_value(new_val);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
       }
+      update_secondaries(payer.value, primary_id, old_val, new_val);
    }
 
    template<typename Lambda>
@@ -1093,44 +1104,49 @@ public:
 
          void load_current() {
             if (_handle < 0) { _valid = false; return; }
-            char pri_stack[key_buf::inline_cap];
-            uint32_t pri_size = 0;
-            if (::kv_idx_primary_key(_handle, 0, pri_stack, key_buf::inline_cap, &pri_size) != 0) {
+            // kv_idx_primary_key returns the FULL primary kv_object key bytes,
+            // i.e. the scope prefix plus the in-scope key bytes for scoped
+            // tables. Strip the scope prefix to recover the unscoped bytes
+            // the contract originally emitted.
+            constexpr uint32_t scope_sz = Scoped ? kv_scope_size : 0;
+            char pri_stack[key_buf::inline_cap + kv_scope_size];
+            uint32_t full_size = 0;
+            if (::kv_idx_primary_key(_handle, 0, pri_stack, sizeof(pri_stack), &full_size) != 0) {
                _valid = false; return;
             }
-            if (pri_size <= key_buf::inline_cap) {
-               _pri_bytes.assign(pri_stack, pri_size);
+            if (full_size <= sizeof(pri_stack)) {
+               if (full_size < scope_sz) { _valid = false; return; }
+               _pri_bytes.assign(pri_stack + scope_sz, full_size - scope_sz);
             } else {
-               char* ph = new char[pri_size];
-               ::kv_idx_primary_key(_handle, 0, ph, pri_size, &pri_size);
-               _pri_bytes.assign(ph, pri_size);
+               char* ph = new char[full_size];
+               ::kv_idx_primary_key(_handle, 0, ph, full_size, &full_size);
+               if (full_size < scope_sz) { delete[] ph; _valid = false; return; }
+               _pri_bytes.assign(ph + scope_sz, full_size - scope_sz);
                delete[] ph;
             }
-            // pri_bytes is unscoped [K] — decode directly
+            // pri_bytes now holds the unscoped [K] portion — decode directly.
             _row.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
 
-            // Reconstruct full scoped key for kv_get
-            auto full = _tbl->make_full_key_from_pri(_pri_bytes.data(), _pri_bytes.size());
-
+            // Fetch the row's value directly via the secondary iterator
+            // (kv_it_value accepts secondary handles and uses the cached
+            // primary_id for an O(1) by_id lookup — faster than kv_get's
+            // by_code_key walk and avoids reconstructing the scoped key).
             if constexpr (is_fixed_serializable_v<V>) {
                char vbuf[sizeof(V)];
-               int32_t val_sz = ::kv_get(_table_id, _tbl->code(),
-                                         full.data(), full.size(),
-                                         vbuf, sizeof(V));
-               if (val_sz < 0) { _valid = false; return; }
+               uint32_t val_sz = 0;
+               int32_t st = ::kv_it_value(_handle, 0, vbuf, sizeof(V), &val_sz);
+               if (st != 0) { _valid = false; return; }
                std::memcpy(&_row.value, vbuf, sizeof(V));
             } else {
                char val_stack[kv_value_stack_size];
-               int32_t val_sz = ::kv_get(_table_id, _tbl->code(),
-                                         full.data(), full.size(),
-                                         val_stack, kv_value_stack_size);
-               if (val_sz < 0) { _valid = false; return; }
-               if (val_sz <= static_cast<int32_t>(kv_value_stack_size)) {
+               uint32_t val_sz = 0;
+               int32_t st = ::kv_it_value(_handle, 0, val_stack, kv_value_stack_size, &val_sz);
+               if (st != 0) { _valid = false; return; }
+               if (val_sz <= kv_value_stack_size) {
                   _row.value = deserialize_value(val_stack, val_sz);
                } else {
                   char* heap = new char[val_sz];
-                  ::kv_get(_table_id, _tbl->code(),
-                           full.data(), full.size(), heap, val_sz);
+                  ::kv_it_value(_handle, 0, heap, val_sz, &val_sz);
                   _row.value = deserialize_value(heap, val_sz);
                   delete[] heap;
                }
@@ -1231,20 +1247,26 @@ public:
 
          void load_keys() {
             if (_handle < 0) { _valid = false; return; }
-            char pri_stack[key_buf::inline_cap];
-            uint32_t pri_size = 0;
-            if (::kv_idx_primary_key(_handle, 0, pri_stack, key_buf::inline_cap, &pri_size) != 0) {
+            // kv_idx_primary_key returns the full scoped key; strip the scope
+            // prefix (8 bytes for scoped tables, 0 otherwise) to recover the
+            // unscoped bytes the contract originally emitted.
+            constexpr uint32_t scope_sz = Scoped ? kv_scope_size : 0;
+            char pri_stack[key_buf::inline_cap + kv_scope_size];
+            uint32_t full_size = 0;
+            if (::kv_idx_primary_key(_handle, 0, pri_stack, sizeof(pri_stack), &full_size) != 0) {
                _valid = false; return;
             }
-            if (pri_size <= key_buf::inline_cap) {
-               _pri_bytes.assign(pri_stack, pri_size);
+            if (full_size <= sizeof(pri_stack)) {
+               if (full_size < scope_sz) { _valid = false; return; }
+               _pri_bytes.assign(pri_stack + scope_sz, full_size - scope_sz);
             } else {
-               char* ph = new char[pri_size];
-               ::kv_idx_primary_key(_handle, 0, ph, pri_size, &pri_size);
-               _pri_bytes.assign(ph, pri_size);
+               char* ph = new char[full_size];
+               ::kv_idx_primary_key(_handle, 0, ph, full_size, &full_size);
+               if (full_size < scope_sz) { delete[] ph; _valid = false; return; }
+               _pri_bytes.assign(ph + scope_sz, full_size - scope_sz);
                delete[] ph;
             }
-            // pri_bytes is unscoped [K] — decode directly
+            // pri_bytes now holds the unscoped [K] portion — decode directly.
             _kr.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
 
             char sec_stack[64];
@@ -1347,16 +1369,16 @@ public:
       void modify(name payer, const const_iterator& itr, const V& new_value) {
          sysio::check(itr._valid, "cannot modify end iterator");
          auto k = _tbl->make_key(itr._row.key);
-         _tbl->update_secondaries(
-            payer.value, itr._row.key, itr._row.value, new_value);
+         int64_t primary_id;
          if constexpr (is_fixed_serializable_v<V>) {
             char vbuf[sizeof(V)];
             std::memcpy(vbuf, &new_value, sizeof(V));
-            ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+            primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
          } else {
             auto v = serialize_value(new_value);
-            ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+            primary_id = ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
          }
+         _tbl->update_secondaries(payer.value, primary_id, itr._row.value, new_value);
       }
 
       void modify(const const_iterator& itr, const V& new_value) {

@@ -855,23 +855,20 @@ int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_
    return intrinsics::get().call<intrinsics::kv_it_value>(handle, offset, dest, dest_size, actual_size);
 }
 
-void kv_idx_store(uint64_t payer, uint32_t table_id,
-                  const void* pri_key, uint32_t pri_key_size,
+void kv_idx_store(uint64_t payer, uint32_t table_id, int64_t primary_id,
                   const void* sec_key, uint32_t sec_key_size) {
-   intrinsics::get().call<intrinsics::kv_idx_store>(payer, table_id, pri_key, pri_key_size, sec_key, sec_key_size);
+   intrinsics::get().call<intrinsics::kv_idx_store>(payer, table_id, primary_id, sec_key, sec_key_size);
 }
 
-void kv_idx_remove(uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
+void kv_idx_remove(uint32_t table_id, int64_t primary_id,
                    const void* sec_key, uint32_t sec_key_size) {
-   intrinsics::get().call<intrinsics::kv_idx_remove>(table_id, pri_key, pri_key_size, sec_key, sec_key_size);
+   intrinsics::get().call<intrinsics::kv_idx_remove>(table_id, primary_id, sec_key, sec_key_size);
 }
 
-void kv_idx_update(uint64_t payer, uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
+void kv_idx_update(uint64_t payer, uint32_t table_id, int64_t primary_id,
                    const void* old_sec_key, uint32_t old_sec_key_size,
                    const void* new_sec_key, uint32_t new_sec_key_size) {
-   intrinsics::get().call<intrinsics::kv_idx_update>(payer, table_id, pri_key, pri_key_size, old_sec_key, old_sec_key_size, new_sec_key, new_sec_key_size);
+   intrinsics::get().call<intrinsics::kv_idx_update>(payer, table_id, primary_id, old_sec_key, old_sec_key_size, new_sec_key, new_sec_key_size);
 }
 
 int32_t kv_idx_find_secondary(capi_name code, uint32_t table_id,

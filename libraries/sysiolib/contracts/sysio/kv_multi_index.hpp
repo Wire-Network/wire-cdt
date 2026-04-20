@@ -43,16 +43,13 @@ extern "C" {
    __attribute__((sysio_wasm_import))
    int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_store(uint64_t payer, uint32_t table_id,
-                     const void* pri_key, uint32_t pri_key_size,
+   void kv_idx_store(uint64_t payer, uint32_t table_id, int64_t primary_id,
                      const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_remove(uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
+   void kv_idx_remove(uint32_t table_id, int64_t primary_id,
                       const void* sec_key, uint32_t sec_key_size);
    __attribute__((sysio_wasm_import))
-   void kv_idx_update(uint64_t payer, uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
+   void kv_idx_update(uint64_t payer, uint32_t table_id, int64_t primary_id,
                       const void* old_sec_key, uint32_t old_sec_key_size,
                       const void* new_sec_key, uint32_t new_sec_key_size);
    __attribute__((sysio_wasm_import))
@@ -363,55 +360,48 @@ class kv_multi_index {
    struct secondary_ops {
       static constexpr uint32_t _sec_tid = sysio::kv::compute_mi_sec_table_id(static_cast<uint64_t>(TableName), N);
 
-      static void store_all(uint64_t payer, const kv_multi_index& idx, const T& obj) {
+      static void store_all(uint64_t payer, const kv_multi_index& idx, int64_t primary_id, const T& obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
-         auto pri_key = idx.pk_to_bytes(obj.primary_key());
-         ::kv_idx_store(payer, _sec_tid,
-                        pri_key.data, _kv_multi_index_detail::u64_size,
-                        sec_key.data(), sec_key.size());
+         ::kv_idx_store(payer, _sec_tid, primary_id, sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
-            secondary_ops<N+1, Rest...>::store_all(payer, idx, obj);
+            secondary_ops<N+1, Rest...>::store_all(payer, idx, primary_id, obj);
          }
       }
 
-      static void remove_all(const kv_multi_index& idx, const T& obj) {
+      static void remove_all(const kv_multi_index& idx, int64_t primary_id, const T& obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
-         auto pri_key = idx.pk_to_bytes(obj.primary_key());
-         ::kv_idx_remove(_sec_tid,
-                         pri_key.data, _kv_multi_index_detail::u64_size,
-                         sec_key.data(), sec_key.size());
+         ::kv_idx_remove(_sec_tid, primary_id, sec_key.data(), sec_key.size());
          if constexpr (sizeof...(Rest) > 0) {
-            secondary_ops<N+1, Rest...>::remove_all(idx, obj);
+            secondary_ops<N+1, Rest...>::remove_all(idx, primary_id, obj);
          }
       }
 
-      static void update_all(uint64_t payer, const kv_multi_index& idx, const T& old_obj, const T& new_obj) {
+      static void update_all(uint64_t payer, const kv_multi_index& idx,
+                             int64_t primary_id, const T& old_obj, const T& new_obj) {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
          auto old_sec = idx.encode_scoped_secondary(ext(old_obj));
          auto new_sec = idx.encode_scoped_secondary(ext(new_obj));
-         auto pri_key = idx.pk_to_bytes(old_obj.primary_key());
          if (old_sec != new_sec) {
-            ::kv_idx_update(payer, _sec_tid,
-                            pri_key.data, _kv_multi_index_detail::u64_size,
+            ::kv_idx_update(payer, _sec_tid, primary_id,
                             old_sec.data(), old_sec.size(),
                             new_sec.data(), new_sec.size());
          }
          if constexpr (sizeof...(Rest) > 0) {
-            secondary_ops<N+1, Rest...>::update_all(payer, idx, old_obj, new_obj);
+            secondary_ops<N+1, Rest...>::update_all(payer, idx, primary_id, old_obj, new_obj);
          }
       }
    };
 
    // Base case — no indices
    struct no_secondary_ops {
-      static void store_all(uint64_t, const kv_multi_index&, const T&) {}
-      static void remove_all(const kv_multi_index&, const T&) {}
-      static void update_all(uint64_t, const kv_multi_index&, const T&, const T&) {}
+      static void store_all(uint64_t, const kv_multi_index&, int64_t, const T&) {}
+      static void remove_all(const kv_multi_index&, int64_t, const T&) {}
+      static void update_all(uint64_t, const kv_multi_index&, int64_t, const T&, const T&) {}
    };
 
    template<typename... Is>
@@ -420,16 +410,16 @@ class kv_multi_index {
    struct sec_ops_selector<> { using type = no_secondary_ops; };
    using sec_ops = typename sec_ops_selector<Indices...>::type;
 
-   void store_secondaries(uint64_t payer, const T& obj) const {
-      sec_ops::store_all(payer, *this, obj);
+   void store_secondaries(uint64_t payer, int64_t primary_id, const T& obj) const {
+      sec_ops::store_all(payer, *this, primary_id, obj);
    }
 
-   void remove_secondaries(const T& obj) const {
-      sec_ops::remove_all(*this, obj);
+   void remove_secondaries(int64_t primary_id, const T& obj) const {
+      sec_ops::remove_all(*this, primary_id, obj);
    }
 
-   void update_secondaries(uint64_t payer, const T& old_obj, const T& new_obj) const {
-      sec_ops::update_all(payer, *this, old_obj, new_obj);
+   void update_secondaries(uint64_t payer, int64_t primary_id, const T& old_obj, const T& new_obj) const {
+      sec_ops::update_all(payer, *this, primary_id, old_obj, new_obj);
    }
 
 public:
@@ -682,8 +672,8 @@ public:
       auto key = make_pk(pk);
       auto value = serialize_row(obj);
 
-      ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
-      store_secondaries(payer.value, obj);
+      int64_t primary_id = ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
+      store_secondaries(payer.value, primary_id, obj);
 
       // Cache the object
       auto ptr = std::make_unique<T>(std::move(obj));
@@ -716,9 +706,9 @@ public:
       uint64_t pk = to_pk_uint64(mutable_obj.primary_key());
       auto key = make_pk(pk);
       auto value = serialize_row(mutable_obj);
-      ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
+      int64_t primary_id = ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
 
-      update_secondaries(payer.value, old_obj, mutable_obj);
+      update_secondaries(payer.value, primary_id, old_obj, mutable_obj);
 
       // Update cache
       _items[pk] = std::make_unique<T>(mutable_obj);
@@ -737,8 +727,10 @@ public:
       uint64_t pk = to_pk_uint64(obj.primary_key());
       auto key = make_pk(pk);
 
-      remove_secondaries(obj);
-      ::kv_erase(_table_id, key.data, key_size);
+      // kv_erase returns the primary_id needed to locate each secondary row
+      // under the new (code, sec_tid, sec_key, primary_id) composite key.
+      int64_t primary_id = ::kv_erase(_table_id, key.data, key_size);
+      remove_secondaries(primary_id, obj);
       _items.erase(pk);
    }
 
@@ -828,13 +820,19 @@ public:
       secondary_index_view(const kv_multi_index& mi) : _mi(&mi) {}
 
       // Helper: read primary key from secondary iterator handle.
-      // The stored pri_key is [pk:8B].
+      // kv_idx_primary_key returns the full kv_object key bytes — for
+      // kv_multi_index the primary row's key is [scope:8B][pk:8B] (16 bytes).
+      // We read both, verify the scope matches this view's scope, and return
+      // the unscoped pk portion so the caller sees the same uint64 they'd
+      // get from the row's primary_key() accessor.
       static bool read_primary_key(uint32_t handle, uint64_t& pk) {
-         char pri_buf[_kv_multi_index_detail::u64_size];
+         constexpr uint32_t full_size = _kv_multi_index_detail::scope_size
+                                      + _kv_multi_index_detail::u64_size;
+         char pri_buf[full_size];
          uint32_t actual = 0;
-         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, _kv_multi_index_detail::u64_size, &actual);
-         if (status != 0 || actual != _kv_multi_index_detail::u64_size) return false;
-         pk = _kv_multi_index_detail::decode_be64(pri_buf);
+         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, full_size, &actual);
+         if (status != 0 || actual != full_size) return false;
+         pk = _kv_multi_index_detail::decode_be64(pri_buf + _kv_multi_index_detail::scope_size);
          return true;
       }
 
