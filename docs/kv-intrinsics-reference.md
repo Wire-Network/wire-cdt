@@ -12,7 +12,9 @@ int64_t kv_set(uint32_t table_id, uint64_t payer,
                const void* value, uint32_t value_size);
 ```
 
-Store a key-value pair. Returns RAM byte delta.
+Store or update a key-value pair. Returns the primary row's chainbase id.
+Thread the returned id into `kv_idx_store`/`kv_idx_update` so secondary rows
+reference the primary by id.
 
 - **table_id** — table namespace identifier (lower 16 bits of the DJB2 hash of table name)
 - **payer** — account to bill for RAM (0 = receiver)
@@ -33,7 +35,9 @@ Read value by key. Returns actual value size, or -1 if not found.
 int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
 ```
 
-Erase a key-value pair. Returns negative RAM delta.
+Erase a key-value pair. Returns the deleted primary row's chainbase id.
+Callers with secondary indexes should call `kv_erase` BEFORE `kv_idx_remove`
+and thread the returned id into each secondary removal.
 
 ### kv\_contains
 
@@ -70,26 +74,29 @@ int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_
 ### kv\_idx\_store
 
 ```c
-void kv_idx_store(uint64_t payer, uint32_t table_id,
-                  const void* pri_key, uint32_t pri_key_size,
+void kv_idx_store(uint64_t payer, uint32_t table_id, int64_t primary_id,
                   const void* sec_key, uint32_t sec_key_size);
 ```
 
-Insert secondary index entry. `table_id` identifies the secondary index namespace.
+Insert a secondary index entry referencing a primary row by id. `table_id`
+identifies the secondary index namespace. `primary_id` is the chainbase id
+of the referenced primary row, returned by the preceding `kv_set`.
 
 ### kv\_idx\_remove
 
 ```c
-void kv_idx_remove(uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
+void kv_idx_remove(uint32_t table_id, int64_t primary_id,
                    const void* sec_key, uint32_t sec_key_size);
 ```
+
+`primary_id` must match the id stored when the secondary row was inserted.
+Obtain it from the preceding `kv_erase` (erase primary first), or cache it
+from a prior `kv_set`.
 
 ### kv\_idx\_update
 
 ```c
-void kv_idx_update(uint64_t payer, uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
+void kv_idx_update(uint64_t payer, uint32_t table_id, int64_t primary_id,
                    const void* old_sec_key, uint32_t old_sec_key_size,
                    const void* new_sec_key, uint32_t new_sec_key_size);
 ```

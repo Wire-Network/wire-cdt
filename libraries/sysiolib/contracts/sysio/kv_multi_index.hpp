@@ -14,60 +14,16 @@
  */
 
 #include <cstdint>
-#include <sysio/kv_utils.hpp>
+#include <sysio/kv_utils.hpp>                   // primary KV + iterator intrinsics
+#include <sysio/detail/kv_idx_intrinsics.hpp>   // secondary-index intrinsics
 
-// KV intrinsic declarations (primary + secondary — multi_index uses both)
+// kv_get is used for the primary-row-cache load path but is not declared in
+// kv_utils.hpp; keep the single extern here.
 extern "C" {
    __attribute__((sysio_wasm_import))
-   int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_get(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
-   __attribute__((sysio_wasm_import))
-   int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_contains(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   uint32_t kv_it_create(uint32_t table_id, uint64_t code, const void* prefix, uint32_t prefix_size);
-   __attribute__((sysio_wasm_import))
-   void kv_it_destroy(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_status(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_next(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_prev(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_lower_bound(uint32_t handle, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_store(uint64_t payer, uint32_t table_id, int64_t primary_id,
-                     const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_remove(uint32_t table_id, int64_t primary_id,
-                      const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_update(uint64_t payer, uint32_t table_id, int64_t primary_id,
-                      const void* old_sec_key, uint32_t old_sec_key_size,
-                      const void* new_sec_key, uint32_t new_sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_find_secondary(uint64_t code, uint32_t table_id,
-                                 const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_lower_bound(uint64_t code, uint32_t table_id,
-                              const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_next(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_prev(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_primary_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_destroy(uint32_t handle);
+   int32_t kv_get(uint32_t table_id, uint64_t code,
+                  const void* key, uint32_t key_size,
+                  void* value, uint32_t value_size);
 }
 
 #include <sysio/name.hpp>
@@ -822,9 +778,11 @@ public:
       // Helper: read primary key from secondary iterator handle.
       // kv_idx_primary_key returns the full kv_object key bytes — for
       // kv_multi_index the primary row's key is [scope:8B][pk:8B] (16 bytes).
-      // We read both, verify the scope matches this view's scope, and return
-      // the unscoped pk portion so the caller sees the same uint64 they'd
-      // get from the row's primary_key() accessor.
+      // The scope prefix is assumed to match this view's scope: kv_multi_index
+      // writes both the sec row and the referenced primary in the same scope,
+      // so any sec handle reachable from this view points at a primary in the
+      // same scope. We return the unscoped pk portion so the caller sees the
+      // same uint64 they'd get from the row's primary_key() accessor.
       static bool read_primary_key(uint32_t handle, uint64_t& pk) {
          constexpr uint32_t full_size = _kv_multi_index_detail::scope_size
                                       + _kv_multi_index_detail::u64_size;
