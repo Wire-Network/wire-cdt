@@ -39,7 +39,7 @@ kv::scoped_table<"accounts"_n, K, V> tbl("sysio.token"_n, owner.value);
 
 Primary keys are `[scope:8B BE][K encoded]` — byte-identical to `multi_index`'s `[scope:8B BE][pk:8B BE]` when `K` is a single `uint64_t`.
 
-Secondary keys are `[scope:8B BE][secondary_value encoded]`. Secondary rows reference the primary row by its chainbase id (8 bytes), not by a copy of the primary key bytes — iterator operations resolve the primary via an O(1) by_id lookup, and primary-key bytes are materialized lazily only when the contract reads them via `kv_idx_primary_key`.
+Secondary keys are `[scope:8B BE][secondary_value encoded]`. Secondary rows reference the primary row by its chainbase id (8 bytes), not by a copy of the primary key bytes — iterator operations resolve the primary via a by_id lookup, and primary-key bytes are materialized lazily only when the contract reads them via `kv_idx_primary_key`.
 
 ## API
 

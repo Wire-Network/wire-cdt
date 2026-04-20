@@ -1101,7 +1101,7 @@ public:
 
             // Fetch the row's value directly via the secondary iterator
             // (kv_it_value accepts secondary handles and uses the cached
-            // primary_id for an O(1) by_id lookup — faster than kv_get's
+            // primary_id for a by_id lookup — faster than kv_get's
             // by_code_key walk and avoids reconstructing the scoped key).
             if constexpr (is_fixed_serializable_v<V>) {
                char vbuf[sizeof(V)];
