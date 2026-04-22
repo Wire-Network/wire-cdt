@@ -35,9 +35,41 @@ Read value by key. Returns actual value size, or -1 if not found.
 int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
 ```
 
-Erase a key-value pair. Returns the deleted primary row's chainbase id.
-Callers with secondary indexes should call `kv_erase` BEFORE `kv_idx_remove`
-and thread the returned id into each secondary removal.
+Erase a key-value pair. Returns the deleted primary row's chainbase id. The id
+is captured before the `kv_object` is removed, so it remains a valid lookup
+key for locating secondary rows that still reference the now-deleted primary.
+
+**Required call order for tables with secondary indexes:**
+
+1. `kv_erase(table_id, pk, pk_size)` → `primary_id`
+2. One `kv_idx_remove(sec_table_id, primary_id, sec_key, sec_key_size)` per
+   secondary index defined on the primary row.
+
+Secondary rows are keyed by `(code, sec_table_id, sec_key, primary_id)`; the
+contract cannot locate them until it learns `primary_id` from the erase return
+value. This is the inverse of the pre-`primary_id` convention (which removed
+secondaries first, then the primary) — pre-existing contracts that hand-call
+the raw intrinsics must be updated.
+
+The host does not cascade. Skipping step 2 leaves orphan `kv_index_object`
+rows that still reference `primary_id`. Consequences:
+
+- **RAM:** the sec row's RAM remains billed to its payer; `kv_erase` does not
+  refund it.
+- **Contract-side sec reads:** `kv_it_value` and `kv_idx_primary_key` on an
+  iterator pointing at the orphan return `iterator_erased` (see the Read /
+  iterator path table below) rather than aborting.
+- **RPC `get_table_rows`** secondary scans abort on the missing primary —
+  calls against the affected sec index fail loudly rather than silently
+  skipping rows.
+- **SHiP** serialization materializes `pri_key` from the primary and aborts
+  on the missing row; deltas for the affected table cannot be emitted.
+- **Recovery** is possible only if the contract (or an operator) can
+  determine the leaked `primary_id` out of band; the host does not export a
+  sec iterator's cached `primary_id`.
+
+The `kv_multi_index` and `kv_table` wrappers in this CDT enforce the order
+automatically; contracts built on the high-level APIs do not need to manage it.
 
 ### kv\_contains
 
@@ -89,9 +121,12 @@ void kv_idx_remove(uint32_t table_id, int64_t primary_id,
                    const void* sec_key, uint32_t sec_key_size);
 ```
 
-`primary_id` must match the id stored when the secondary row was inserted.
-Obtain it from the preceding `kv_erase` (erase primary first), or cache it
-from a prior `kv_set`.
+Remove a secondary index entry. `primary_id` must match the id stored when
+the secondary row was inserted; the composite `(code, table_id, sec_key,
+primary_id)` tuple must exist or the call aborts with `kv_key_not_found`.
+Obtain `primary_id` from the preceding `kv_erase` (erase primary first, per
+the [ordering requirement](#kv_erase)), or cache it from a prior `kv_set`.
+Call once per secondary index defined on the primary row.
 
 ### kv\_idx\_update
 
