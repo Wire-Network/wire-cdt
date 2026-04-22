@@ -34,6 +34,14 @@ The table name is conveyed by `table_id`, not embedded in the key.
 - `payer` parameter honored for RAM billing
 - `rbegin/rend`, `cbegin/cend` support
 
+## Secondary Index Storage and Ordering
+
+Secondary rows store an 8-byte `primary_id` (the referenced primary row's chainbase id), not a copy of the primary-key bytes. Iteration resolves the primary lazily via a by_id lookup, and `kv_idx_primary_key` materializes the primary-key bytes on demand.
+
+Within duplicate secondary keys, iteration order is **chainbase insertion order** (the order rows were inserted) rather than primary-key byte-lex order. Do not rely on a specific ordering for rows whose secondary keys collide; if you need deterministic per-key ordering, sort in the contract after collecting matches.
+
+This is baseline behavior at launch. Wire has no pre-existing `kv_multi_index` chain state, so no protocol feature gate or migration is involved.
+
 ## Singleton
 
 ```cpp

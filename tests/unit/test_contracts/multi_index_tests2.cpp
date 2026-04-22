@@ -264,6 +264,102 @@ public:
         sysio::check(it->id == 20, "clone: original should still be pk 20");
     }
 
+    // ── Composite-key tiebreaker: insertion order within duplicate sec keys ─
+    //
+    // Within rows whose secondary key is equal, iteration order is the order
+    // rows were inserted (their chainbase ids), not primary-key byte-lex. To
+    // tell the two apart this test inserts pk values in non-monotonic order
+    // (40, 10, 30, 20 — all with sec=99), so a pk-lex tiebreaker would yield
+    // (10, 20, 30, 40) while the insertion-order tiebreaker yields the
+    // insertion sequence (40, 10, 30, 20). The test also covers reverse
+    // traversal, erase of a middle duplicate, and modifying a duplicate to
+    // move it out of the group — each verifying the remaining duplicates
+    // keep their original insertion-order positions.
+    [[sysio::action("s1tieb")]] void idx64_sec_tiebreaker() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"tiebtbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+
+        auto payer = get_self();
+
+        // Insert 4 rows with non-monotonic pks, all sharing sec=99.
+        // Insertion order: 40, 10, 30, 20.
+        table.emplace(payer, [](auto& r) { r.id = 40; r.sec = 99; });
+        table.emplace(payer, [](auto& r) { r.id = 10; r.sec = 99; });
+        table.emplace(payer, [](auto& r) { r.id = 30; r.sec = 99; });
+        table.emplace(payer, [](auto& r) { r.id = 20; r.sec = 99; });
+
+        auto idx = table.get_index<"bysecondary"_n>();
+
+        // Forward iteration — must match insertion order, not pk-lex order.
+        {
+            uint64_t expected[] = {40, 10, 30, 20};
+            size_t i = 0;
+            for (auto it = idx.begin(); it != idx.end(); ++it, ++i) {
+                sysio::check(i < 4, "tieb: forward iter ran past end of duplicate group");
+                sysio::check(it->id == expected[i], "tieb: forward iter pk mismatch (expected insertion order)");
+                sysio::check(it->sec == 99, "tieb: forward iter sec mismatch");
+            }
+            sysio::check(i == 4, "tieb: forward iter stopped before end of duplicate group");
+        }
+
+        // Reverse iteration — must be reverse of insertion order.
+        {
+            uint64_t expected[] = {20, 30, 10, 40};
+            size_t i = 0;
+            for (auto rit = idx.rbegin(); rit != idx.rend(); ++rit, ++i) {
+                sysio::check(i < 4, "tieb: reverse iter ran past rend of duplicate group");
+                sysio::check(rit->id == expected[i], "tieb: reverse iter pk mismatch (expected reverse insertion order)");
+            }
+            sysio::check(i == 4, "tieb: reverse iter stopped before rend of duplicate group");
+        }
+
+        // Erase the middle duplicate (pk=30). Remaining insertion order: 40, 10, 20.
+        {
+            auto it = table.find(30);
+            sysio::check(it != table.end(), "tieb: pk=30 must exist before erase");
+            table.erase(it);
+        }
+
+        {
+            uint64_t expected[] = {40, 10, 20};
+            size_t i = 0;
+            for (auto it = idx.begin(); it != idx.end(); ++it, ++i) {
+                sysio::check(i < 3, "tieb: forward iter after erase ran past end");
+                sysio::check(it->id == expected[i], "tieb: forward iter after erase pk mismatch");
+            }
+            sysio::check(i == 3, "tieb: forward iter after erase stopped before end");
+        }
+
+        // Modify pk=10 to change its sec from 99 -> 77. It leaves the sec=99
+        // group; the remaining duplicates (40, 20) must keep their relative order.
+        {
+            auto it = table.find(10);
+            sysio::check(it != table.end(), "tieb: pk=10 must exist before modify");
+            table.modify(it, payer, [](auto& r) { r.sec = 77; });
+        }
+
+        // After the sec change, sec=99 group should be (40, 20).
+        {
+            uint64_t expected[] = {40, 20};
+            size_t i = 0;
+            for (auto it = idx.lower_bound(99); it != idx.end() && it->sec == 99; ++it, ++i) {
+                sysio::check(i < 2, "tieb: sec=99 group has more rows than expected after modify");
+                sysio::check(it->id == expected[i], "tieb: sec=99 group pk mismatch after modify");
+            }
+            sysio::check(i == 2, "tieb: sec=99 group has fewer rows than expected after modify");
+        }
+
+        // pk=10 must be reachable via its new sec_key.
+        {
+            auto it = idx.find(77);
+            sysio::check(it != idx.end() && it->id == 10, "tieb: pk=10 must be findable via sec=77 after modify");
+        }
+    }
+
     // ── Secondary rbegin/rend ───────────────────────────────────────────────
     [[sysio::action("s1secrb")]] void idx64_sec_rbegin() {
         using namespace _test_multi_index;

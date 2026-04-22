@@ -87,6 +87,7 @@ BOOST_FIXTURE_TEST_CASE(multi_index_tests_part2, TESTER) { try {
 
    // secondary iterator edge cases
    push_action( "testapi2"_n, "s1clone"_n,    "testapi2"_n, {} ); // sec iterator clone with duplicate keys
+   push_action( "testapi2"_n, "s1tieb"_n,     "testapi2"_n, {} ); // sec tiebreaker is chainbase insertion order (duplicate sec keys)
    push_action( "testapi2"_n, "s1secrb"_n,    "testapi2"_n, {} ); // sec rbegin/rend (uint64_t)
    push_action( "testapi2"_n, "s2secrb"_n,    "testapi2"_n, {} ); // sec rbegin/rend (uint128_t)
    push_action( "testapi2"_n, "namepk"_n,     "testapi2"_n, {} ); // name-typed primary key

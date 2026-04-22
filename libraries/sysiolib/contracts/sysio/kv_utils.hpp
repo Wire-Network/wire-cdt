@@ -10,37 +10,26 @@
 extern "C" {
    __attribute__((sysio_wasm_import))
    int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_get(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
-
    __attribute__((sysio_wasm_import))
    int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_contains(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size);
-
    __attribute__((sysio_wasm_import))
    uint32_t kv_it_create(uint32_t table_id, uint64_t code, const void* prefix, uint32_t prefix_size);
-
    __attribute__((sysio_wasm_import))
    void kv_it_destroy(uint32_t handle);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_it_status(uint32_t handle);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_it_next(uint32_t handle);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_it_prev(uint32_t handle);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_it_lower_bound(uint32_t handle, const void* key, uint32_t key_size);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_it_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-
    __attribute__((sysio_wasm_import))
    int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
 }

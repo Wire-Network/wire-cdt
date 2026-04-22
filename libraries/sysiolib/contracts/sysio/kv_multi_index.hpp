@@ -14,17 +14,8 @@
  */
 
 #include <cstdint>
-#include <sysio/kv_utils.hpp>                   // primary KV + iterator intrinsics
+#include <sysio/kv_utils.hpp>                   // primary KV + iterator intrinsics (declares kv_get)
 #include <sysio/detail/kv_idx_intrinsics.hpp>   // secondary-index intrinsics
-
-// kv_get is used for the primary-row-cache load path but is not declared in
-// kv_utils.hpp; keep the single extern here.
-extern "C" {
-   __attribute__((sysio_wasm_import))
-   int32_t kv_get(uint32_t table_id, uint64_t code,
-                  const void* key, uint32_t key_size,
-                  void* value, uint32_t value_size);
-}
 
 #include <sysio/name.hpp>
 #include <sysio/serialize.hpp>
@@ -154,6 +145,8 @@ namespace _kv_multi_index_detail {
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {
    static_assert(sizeof...(Indices) <= 16, "multi_index supports at most 16 secondary indices");
+   static_assert(std::is_default_constructible_v<T>,
+                 "kv_multi_index row type must be default-constructible; add a default ctor to T");
 
    /// table_id computed at compile time from the template parameter.
    static constexpr uint32_t _table_id = sysio::kv::compute_table_id(static_cast<uint64_t>(TableName));
@@ -252,10 +245,9 @@ class kv_multi_index {
       if (sz <= static_cast<int32_t>(sysio::kv::kv_value_stack_size)) {
          obj = deserialize_row(stack, sz);
       } else {
-         char* heap = new char[sz];
-         ::kv_get(_table_id, _code.value, key.data, key_size, heap, sz);
-         obj = deserialize_row(heap, sz);
-         delete[] heap;
+         sysio::kv::ser_buf heap_buf(static_cast<uint32_t>(sz));
+         ::kv_get(_table_id, _code.value, key.data, key_size, heap_buf.data(), sz);
+         obj = deserialize_row(heap_buf.data(), sz);
       }
 
       auto ptr = std::make_unique<T>(std::move(obj));
@@ -778,18 +770,22 @@ public:
       // Helper: read primary key from secondary iterator handle.
       // kv_idx_primary_key returns the full kv_object key bytes — for
       // kv_multi_index the primary row's key is [scope:8B][pk:8B] (16 bytes).
-      // The scope prefix is assumed to match this view's scope: kv_multi_index
-      // writes both the sec row and the referenced primary in the same scope,
-      // so any sec handle reachable from this view points at a primary in the
-      // same scope. We return the unscoped pk portion so the caller sees the
-      // same uint64 they'd get from the row's primary_key() accessor.
-      static bool read_primary_key(uint32_t handle, uint64_t& pk) {
+      // kv_multi_index writes both the sec row and its referenced primary in
+      // the same scope, so any sec handle reachable from a given view must
+      // resolve to a primary in that view's scope. The caller passes the
+      // expected scope and we check() that the decoded scope matches before
+      // returning the pk portion — a cross-scope resolution is a host or
+      // wrapper bug, not a normal end-of-range condition.
+      static bool read_primary_key(uint32_t handle, uint64_t expected_scope, uint64_t& pk) {
          constexpr uint32_t full_size = _kv_multi_index_detail::scope_size
                                       + _kv_multi_index_detail::u64_size;
          char pri_buf[full_size];
          uint32_t actual = 0;
          int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, full_size, &actual);
          if (status != 0 || actual != full_size) return false;
+         const uint64_t got_scope = _kv_multi_index_detail::decode_be64(pri_buf);
+         check(got_scope == expected_scope,
+               "kv_multi_index: secondary handle resolved to primary in a different scope");
          pk = _kv_multi_index_detail::decode_be64(pri_buf + _kv_multi_index_detail::scope_size);
          return true;
       }
@@ -882,10 +878,10 @@ public:
                // secondary key, but the source iterator may point to a later
                // duplicate. Advance until we find the matching primary key.
                uint64_t found_pk = 0;
-               if (read_primary_key(_handle, found_pk) && found_pk == _pk)
+               if (read_primary_key(_handle, _mi->_scope, found_pk) && found_pk == _pk)
                   return;
                while (::kv_idx_next(_handle) == 0) {
-                  if (read_primary_key(_handle, found_pk) && found_pk == _pk)
+                  if (read_primary_key(_handle, _mi->_scope, found_pk) && found_pk == _pk)
                      return;
                }
             } else {
@@ -910,7 +906,7 @@ public:
 
          void load_current() {
             if (_handle < 0) { _has_obj = false; return; }
-            if (!read_primary_key(_handle, _pk)) { _has_obj = false; return; }
+            if (!read_primary_key(_handle, _mi->_scope, _pk)) { _has_obj = false; return; }
             auto* ptr = _mi->load_object(_pk);
             if (ptr) { _obj = *ptr; _has_obj = true; }
             else { _has_obj = false; }
