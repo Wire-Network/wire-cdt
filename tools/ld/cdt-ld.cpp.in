@@ -2,6 +2,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -12,6 +13,50 @@ using namespace clang::tooling;
 using namespace llvm;
 #define ONLY_LD
 #include <compiler_options.hpp>
+
+namespace {
+// Substrings that, if present in wasm-ld stderr, indicate the contract is reaching
+// softfloat-backed compiler builtins without --use-rt. Two layers:
+//   1. compiler-rt entry points (__multf3, __fixtfti, ...) -- unresolved if librt.a
+//      itself isn't linked. Default link includes -lrt, so this layer typically does
+//      not fire, but the names are listed for robustness in custom link setups.
+//   2. softfloat helpers (f128_mul, ui64_to_f128, ...) -- unresolved when librt.a
+//      IS linked (default) but libsf.a is not (opt-in via --use-rt). librt's
+//      __multf3 etc. delegate into these helpers, so this is the layer typically
+//      seen in practice.
+constexpr const char* softfloat_builtin_triggers[] = {
+   // Layer 1: compiler-rt entry points
+   "__addtf3", "__subtf3", "__multf3", "__divtf3", "__negtf2",
+   "__eqtf2",  "__netf2",  "__getf2",  "__gttf2",  "__lttf2",
+   "__letf2",  "__cmptf2", "__unordtf2",
+   "__floatsitf",  "__floatunsitf",  "__floatditf",  "__floatunditf",
+   "__floattidf",  "__floatuntidf",  "__floatsidf",
+   "__extendsftf2", "__extenddftf2",
+   "__fixtfti",   "__fixtfdi",   "__fixtfsi",
+   "__fixunstfti","__fixunstfdi","__fixunstfsi",
+   "__fixsfti",   "__fixdfti",   "__fixunssfti","__fixunsdfti",
+   "__trunctfdf2","__trunctfsf2",
+   // Layer 2: softfloat helper substrings (f128_mul, f128_to_f64, ui64_to_f128, ...)
+   "f128_", "i32_to_f", "i64_to_f", "ui32_to_f", "ui64_to_f",
+   "f32_to_f128", "f64_to_f128",
+};
+
+// Replays captured wasm-ld stderr to the terminal, then returns true if any
+// softfloat-builtin trigger symbol appeared in the output.
+bool replay_stderr_and_check_softfloat(const std::string& stderr_path) {
+   std::ifstream in(stderr_path);
+   if (!in)
+      return false;
+   std::string contents((std::istreambuf_iterator<char>(in)),
+                         std::istreambuf_iterator<char>());
+   std::cerr << contents;
+   for (const char* sym : softfloat_builtin_triggers) {
+      if (contents.find(sym) != std::string::npos)
+         return true;
+   }
+   return false;
+}
+} // namespace
 
 int main(int argc, const char **argv) {
 
@@ -30,8 +75,29 @@ int main(int argc, const char **argv) {
 #endif
          return -1;
   } else {
-      if (!sysio::cdt::environment::exec_subprogram("wasm-ld", opts.ld_options)) {
+      // Capture wasm-ld stderr so we can detect specific unresolved-symbol patterns
+      // (softfloat builtins -> hint to pass --use-rt) and still echo the original
+      // diagnostics through to the terminal.
+      llvm::SmallString<64> stderr_path;
+      if (llvm::sys::fs::createTemporaryFile("cdt-ld-stderr", "log", stderr_path)) {
+         std::cerr << "cdt-ld: failed to create temp file for wasm-ld stderr capture" << std::endl;
+         return -1;
+      }
+      auto delete_stderr = llvm::make_scope_exit([&]{ llvm::sys::fs::remove(stderr_path); });
+
+      bool wasmld_ok = sysio::cdt::environment::exec_subprogram(
+            "wasm-ld", opts.ld_options, false, std::nullopt, std::nullopt,
+            std::string(stderr_path.str()));
+
+      bool softfloat_unresolved = replay_stderr_and_check_softfloat(std::string(stderr_path.str()));
+
+      if (!wasmld_ok) {
          std::cerr << "Exit due to wasm-ld failure" << std::endl;
+         if (softfloat_unresolved && !use_rt_opt) {
+            std::cerr << "\ncdt-ld: the contract references softfloat-backed compiler builtins\n"
+                         "(long double / float128 ops). Pass --use-rt to link libsf into the\n"
+                         "contract; it is opt-in because softfloat is large." << std::endl;
+         }
          return -1;
       }
   }
