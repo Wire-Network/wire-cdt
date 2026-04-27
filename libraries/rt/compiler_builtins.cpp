@@ -9,32 +9,29 @@ void __ashlti3(__int128& ret, uint64_t low, uint64_t high, uint32_t shift) {
    uint128_t i = high;
    i <<= 64;
    i |= low;
-   i <<= shift;
-   ret = i;
+   ret = (shift >= 128) ? 0 : (unsigned __int128)(i << shift);
 }
 
 void __ashrti3(__int128& ret, uint64_t low, uint64_t high, uint32_t shift) {
-   // retain the signedness
-   ret = high;
-   ret <<= 64;
-   ret |= low;
-   ret >>= shift;
+   // C++20 [expr.shift]/3 defines signed `>>` as arithmetic shift (sign-extending) for
+   // both non-negative and negative values; only shift counts >= the type width are UB.
+   // Saturate the out-of-range case to the sign bit: 0 for non-negative, -1 for negative.
+   __int128 i = (static_cast<__int128>(high) << 64) | low;
+   ret = (shift >= 128) ? (i >> 127) : (i >> shift);
 }
 
 void __lshlti3(__int128& ret, uint64_t low, uint64_t high, uint32_t shift) {
    uint128_t i = high;
    i <<= 64;
    i |= low;
-   i <<= shift;
-   ret = (unsigned __int128)i;
+   ret = (shift >= 128) ? 0 : (unsigned __int128)(i << shift);
 }
 
 void __lshrti3(__int128& ret, uint64_t low, uint64_t high, uint32_t shift) {
    uint128_t i = high;
    i <<= 64;
    i |= low;
-   i >>= shift;
-   ret = (unsigned __int128)i;
+   ret = (shift >= 128) ? 0 : (unsigned __int128)(i >> shift);
 }
 
 void __divti3(__int128& ret, uint64_t la, uint64_t ha, uint64_t lb, uint64_t hb) {
@@ -46,8 +43,14 @@ void __divti3(__int128& ret, uint64_t la, uint64_t ha, uint64_t lb, uint64_t hb)
 
    rhs <<= 64;
    rhs |=  lb;
-   //if ( rhs == 0 )
-   //   sysio_assert(false, "divide by zero");
+
+   sysio_assert(rhs != 0, "divide by zero");
+
+   // INT128_MIN / -1 is signed-overflow UB; force the canonical wrap-around result.
+   if (lhs == ((__int128)1 << 127) && rhs == -1) {
+      ret = lhs;
+      return;
+   }
 
    lhs /= rhs;
 
@@ -63,8 +66,8 @@ void __udivti3(unsigned __int128& ret, uint64_t la, uint64_t ha, uint64_t lb, ui
 
    rhs <<= 64;
    rhs |=  lb;
-   //if ( rhs == 0 )
-   //   sysio_assert(false, "divide by zero");
+
+   sysio_assert(rhs != 0, "divide by zero");
 
    lhs /= rhs;
    ret = lhs;
@@ -93,8 +96,14 @@ void __modti3(__int128& ret, uint64_t la, uint64_t ha, uint64_t lb, uint64_t hb)
 
    rhs <<= 64;
    rhs |=  lb;
-   //if ( rhs == 0 )
-   //   sysio_assert(false, "divide by zero");
+
+   sysio_assert(rhs != 0, "divide by zero");
+
+   // INT128_MIN % -1 is signed-overflow UB; mathematical result is 0.
+   if (lhs == ((__int128)1 << 127) && rhs == -1) {
+      ret = 0;
+      return;
+   }
 
    lhs %= rhs;
    ret = lhs;
@@ -109,8 +118,8 @@ void __umodti3(unsigned __int128& ret, uint64_t la, uint64_t ha, uint64_t lb, ui
 
    rhs <<= 64;
    rhs |=  lb;
-   //if ( rhs == 0 )
-   //   sysio_assert(false, "divide by zero");
+
+   sysio_assert(rhs != 0, "divide by zero");
 
    lhs %= rhs;
    ret = lhs;
