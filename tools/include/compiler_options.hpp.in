@@ -531,8 +531,16 @@ static void GetLdDefaults(std::vector<std::string>& ldopts) {
       else
          ldopts.emplace_back("-lsysio_dsm");
 
+      // librt provides the int128 compiler builtins (__divti3, __multi3, __ashrti3, etc.).
+      // Default-linked because contracts that use non-inlinable 128-bit ops would otherwise
+      // get an unresolved-symbol link error (the corresponding entries were removed from
+      // cdt.imports). DCE strips unused builtins, so contracts that don't need them pay zero.
+      ldopts.emplace_back("-lrt");
+      // libsf is softfloat, used by long double / float128 ops. Kept opt-in via --use-rt
+      // because softfloat is large (tens of KB) and long double usage is rare. Contracts
+      // that use long double need to pass --use-rt explicitly; otherwise they get a clean
+      // link error pointing at the missing symbols.
       if (use_rt_opt || fquery_opt || fquery_server_opt || fquery_client_opt) {
-         ldopts.emplace_back("-lrt");
          ldopts.emplace_back("-lsf");
       }
       if (fquery_opt || fquery_server_opt || fquery_client_opt)
