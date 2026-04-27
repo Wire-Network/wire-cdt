@@ -1,0 +1,13 @@
+{
+   "tests": [
+      {
+         "name": "long-double link without --use-rt fails with hint",
+         "expected": {
+            "stderr": [
+               "softfloat-backed compiler builtins",
+               "Pass --use-rt"
+            ]
+         }
+      }
+   ]
+}
