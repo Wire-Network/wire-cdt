@@ -43,6 +43,13 @@ cmake-build-debug/
 examples/multi_index_example/build
 examples/hello/build
 
+# Toolchain test inputs whose dir names start with "build-" must not be
+# ignored by the [Bb]uild*/ pattern above.
+!tests/toolchain/build-fail/
+!tests/toolchain/build-fail/**
+!tests/toolchain/build-pass/
+!tests/toolchain/build-pass/**
+
 # Python
 __pycache__/
 .mypy_cache/

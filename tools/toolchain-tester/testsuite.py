@@ -66,7 +66,7 @@ class TestSuite:
                 if self.test_type == TestType.BUILD_PASS:
                     self.tests.append(tests.BuildPassTest(*args))
                 elif self.test_type == TestType.BUILD_FAIL:
-                    self.tests.append(tests.BuildPassTest(*args))
+                    self.tests.append(tests.BuildFailTest(*args))
                 elif self.test_type == TestType.COMPILE_PASS:
                     self.tests.append(tests.CompilePassTest(*args))
                 elif self.test_type == TestType.COMPILE_FAIL:
