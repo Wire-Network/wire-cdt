@@ -770,22 +770,19 @@ public:
       // Helper: read primary key from secondary iterator handle.
       // kv_idx_primary_key returns the full kv_object key bytes — for
       // kv_multi_index the primary row's key is [scope:8B][pk:8B] (16 bytes).
-      // kv_multi_index writes both the sec row and its referenced primary in
-      // the same scope, so any sec handle reachable from a given view must
-      // resolve to a primary in that view's scope. The caller passes the
-      // expected scope and we check() that the decoded scope matches before
-      // returning the pk portion — a cross-scope resolution is a host or
-      // wrapper bug, not a normal end-of-range condition.
+      // Returns false on read error or scope mismatch. Iterator advancement
+      // (kv_idx_lower_bound landing past the scope, kv_idx_next walking off
+      // the duplicate group) can legitimately land us on a primary in a
+      // different scope; callers treat that as end-of-range.
       static bool read_primary_key(uint32_t handle, uint64_t expected_scope, uint64_t& pk) {
          constexpr uint32_t full_size = _kv_multi_index_detail::scope_size
                                       + _kv_multi_index_detail::u64_size;
          char pri_buf[full_size];
-         uint32_t actual = 0;
-         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, full_size, &actual);
-         if (status != 0 || actual != full_size) return false;
-         const uint64_t got_scope = _kv_multi_index_detail::decode_be64(pri_buf);
-         check(got_scope == expected_scope,
-               "kv_multi_index: secondary handle resolved to primary in a different scope");
+         uint32_t actual_size = 0;
+         int32_t status = ::kv_idx_primary_key(handle, 0, pri_buf, full_size, &actual_size);
+         if (status != 0 || actual_size != full_size) return false;
+         const uint64_t actual_scope = _kv_multi_index_detail::decode_be64(pri_buf);
+         if (actual_scope != expected_scope) return false;
          pk = _kv_multi_index_detail::decode_be64(pri_buf + _kv_multi_index_detail::scope_size);
          return true;
       }
@@ -877,6 +874,8 @@ public:
                // kv_idx_find_secondary lands on the first row with this
                // secondary key, but the source iterator may point to a later
                // duplicate. Advance until we find the matching primary key.
+               // read_primary_key returns false once we've walked past the
+               // duplicate group (different scope), ending the search.
                uint64_t found_pk = 0;
                if (read_primary_key(_handle, _mi->_scope, found_pk) && found_pk == _pk)
                   return;
@@ -918,9 +917,9 @@ public:
          bool check_scope() const {
             if (_handle < 0 || !_mi) return false;
             char scope_buf[_kv_multi_index_detail::scope_size];
-            uint32_t actual = 0;
-            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, _kv_multi_index_detail::scope_size, &actual);
-            if (status != 0 || actual < _kv_multi_index_detail::scope_size) return false;
+            uint32_t actual_size = 0;
+            int32_t status = ::kv_idx_key(_handle, 0, scope_buf, _kv_multi_index_detail::scope_size, &actual_size);
+            if (status != 0 || actual_size < _kv_multi_index_detail::scope_size) return false;
             char expected[_kv_multi_index_detail::scope_size];
             _kv_multi_index_detail::encode_be64(expected, _mi->_scope);
             return memcmp(scope_buf, expected, _kv_multi_index_detail::scope_size) == 0;
@@ -938,17 +937,16 @@ public:
       const_reverse_iterator crend() const { return rend(); }
 
       const_iterator begin() const {
-         // Lower bound with scope prefix = first entry in this scope
+         // Lower bound with scope prefix = first entry in this scope.
+         // The iterator constructor verifies scope before loading, so an
+         // out-of-scope landing produces an end-equivalent iterator.
          char scope_prefix[_kv_multi_index_detail::scope_size];
          _kv_multi_index_detail::encode_be64(scope_prefix, _mi->_scope);
          int32_t handle = ::kv_idx_lower_bound(
             _mi->_code.value, _sec_table_id,
             scope_prefix, _kv_multi_index_detail::scope_size);
          if (handle < 0) return end();
-         // Verify we landed in the right scope (may be past it if scope is empty)
-         const_iterator it(_mi, handle, true);
-         if (it._has_obj && !it.check_scope()) return end();
-         return it;
+         return const_iterator(_mi, handle, true);
       }
 
       template<typename SecKey>
@@ -968,9 +966,7 @@ public:
             _mi->_code.value, _sec_table_id,
             sec_bytes.data(), sec_bytes.size());
          if (handle < 0) return end();
-         const_iterator it(_mi, handle, true);
-         if (it._has_obj && !it.check_scope()) return end();
-         return it;
+         return const_iterator(_mi, handle, true);
       }
 
       template<typename SecKey>

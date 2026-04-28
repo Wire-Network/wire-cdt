@@ -972,6 +972,33 @@ public:
          }
       }
 
+      /// Load the unscoped primary key bytes for the row referenced by a
+      /// secondary handle. kv_idx_primary_key returns the FULL primary
+      /// kv_object key (scope prefix + unscoped bytes for scoped tables;
+      /// just the unscoped bytes otherwise); this strips the scope prefix
+      /// and writes the result to `out`. Returns false on read error or a
+      /// short result that can't contain the scope prefix.
+      static bool load_unscoped_primary(int32_t handle, key_buf& out) {
+         constexpr uint32_t scope_sz = Scoped ? kv_scope_size : 0;
+         // Sized so any unscoped key that fits in key_buf::inline_cap also
+         // fits here with the scope prefix; spill to heap below otherwise.
+         char stack[key_buf::inline_cap + kv_scope_size];
+         uint32_t full_size = 0;
+         if (::kv_idx_primary_key(handle, 0, stack, sizeof(stack), &full_size) != 0) return false;
+
+         const char* full_key = stack;
+         char* heap = nullptr;
+         if (full_size > sizeof(stack)) {
+            heap = new char[full_size];
+            ::kv_idx_primary_key(handle, 0, heap, full_size, &full_size);
+            full_key = heap;
+         }
+         const bool ok = full_size >= scope_sz;
+         if (ok) out.assign(full_key + scope_sz, full_size - scope_sz);
+         delete[] heap;
+         return ok;
+      }
+
       // --- key_row for key-only iteration ---
       struct key_row {
          K              key;
@@ -1073,30 +1100,9 @@ public:
 
          void load_current() {
             if (_handle < 0) { _valid = false; return; }
-            // kv_idx_primary_key returns the FULL primary kv_object key bytes,
-            // i.e. the scope prefix plus the in-scope key bytes for scoped
-            // tables. Strip the scope prefix to recover the unscoped bytes
-            // the contract originally emitted.
-            constexpr uint32_t scope_sz = Scoped ? kv_scope_size : 0;
-            // Stack buffer sized so any key that fits in key_buf::inline_cap
-            // when unscoped still fits here once the scope prefix is included;
-            // spill to heap via the else branch if the key is larger.
-            char pri_stack[key_buf::inline_cap + kv_scope_size];
-            uint32_t full_size = 0;
-            if (::kv_idx_primary_key(_handle, 0, pri_stack, sizeof(pri_stack), &full_size) != 0) {
+            if (!secondary_index_view::load_unscoped_primary(_handle, _pri_bytes)) {
                _valid = false; return;
             }
-            if (full_size <= sizeof(pri_stack)) {
-               if (full_size < scope_sz) { _valid = false; return; }
-               _pri_bytes.assign(pri_stack + scope_sz, full_size - scope_sz);
-            } else {
-               char* ph = new char[full_size];
-               ::kv_idx_primary_key(_handle, 0, ph, full_size, &full_size);
-               if (full_size < scope_sz) { delete[] ph; _valid = false; return; }
-               _pri_bytes.assign(ph + scope_sz, full_size - scope_sz);
-               delete[] ph;
-            }
-            // pri_bytes now holds the unscoped [K] portion — decode directly.
             _row.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
 
             // Fetch the row's value directly via the secondary iterator
@@ -1219,29 +1225,9 @@ public:
 
          void load_keys() {
             if (_handle < 0) { _valid = false; return; }
-            // kv_idx_primary_key returns the full scoped key; strip the scope
-            // prefix (8 bytes for scoped tables, 0 otherwise) to recover the
-            // unscoped bytes the contract originally emitted.
-            constexpr uint32_t scope_sz = Scoped ? kv_scope_size : 0;
-            // Stack buffer sized so any key that fits in key_buf::inline_cap
-            // when unscoped still fits here once the scope prefix is included;
-            // spill to heap via the else branch if the key is larger.
-            char pri_stack[key_buf::inline_cap + kv_scope_size];
-            uint32_t full_size = 0;
-            if (::kv_idx_primary_key(_handle, 0, pri_stack, sizeof(pri_stack), &full_size) != 0) {
+            if (!secondary_index_view::load_unscoped_primary(_handle, _pri_bytes)) {
                _valid = false; return;
             }
-            if (full_size <= sizeof(pri_stack)) {
-               if (full_size < scope_sz) { _valid = false; return; }
-               _pri_bytes.assign(pri_stack + scope_sz, full_size - scope_sz);
-            } else {
-               char* ph = new char[full_size];
-               ::kv_idx_primary_key(_handle, 0, ph, full_size, &full_size);
-               if (full_size < scope_sz) { delete[] ph; _valid = false; return; }
-               _pri_bytes.assign(ph + scope_sz, full_size - scope_sz);
-               delete[] ph;
-            }
-            // pri_bytes now holds the unscoped [K] portion — decode directly.
             _kr.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
 
             char sec_stack[64];
