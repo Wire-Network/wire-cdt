@@ -14,64 +14,8 @@
  */
 
 #include <cstdint>
-#include <sysio/kv_utils.hpp>
-
-// KV intrinsic declarations (primary + secondary — multi_index uses both)
-extern "C" {
-   __attribute__((sysio_wasm_import))
-   int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_get(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
-   __attribute__((sysio_wasm_import))
-   int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_contains(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   uint32_t kv_it_create(uint32_t table_id, uint64_t code, const void* prefix, uint32_t prefix_size);
-   __attribute__((sysio_wasm_import))
-   void kv_it_destroy(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_status(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_next(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_prev(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_lower_bound(uint32_t handle, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_store(uint64_t payer, uint32_t table_id,
-                     const void* pri_key, uint32_t pri_key_size,
-                     const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_remove(uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
-                      const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_update(uint64_t payer, uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
-                      const void* old_sec_key, uint32_t old_sec_key_size,
-                      const void* new_sec_key, uint32_t new_sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_find_secondary(uint64_t code, uint32_t table_id,
-                                 const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_lower_bound(uint64_t code, uint32_t table_id,
-                              const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_next(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_prev(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_primary_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_destroy(uint32_t handle);
-}
+#include <sysio/kv_utils.hpp>                   // primary KV + iterator intrinsics
+#include <sysio/detail/kv_idx_intrinsics.hpp>   // secondary-index intrinsics
 
 #include <sysio/name.hpp>
 #include <sysio/serialize.hpp>
@@ -201,6 +145,8 @@ namespace _kv_multi_index_detail {
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {
    static_assert(sizeof...(Indices) <= 16, "multi_index supports at most 16 secondary indices");
+   static_assert(std::is_default_constructible_v<T>,
+                 "kv_multi_index row type must be default-constructible; add a default ctor to T");
 
    /// table_id computed at compile time from the template parameter.
    static constexpr uint32_t _table_id = sysio::kv::compute_table_id(static_cast<uint64_t>(TableName));
@@ -299,10 +245,9 @@ class kv_multi_index {
       if (sz <= static_cast<int32_t>(sysio::kv::kv_value_stack_size)) {
          obj = deserialize_row(stack, sz);
       } else {
-         char* heap = new char[sz];
-         ::kv_get(_table_id, _code.value, key.data, key_size, heap, sz);
-         obj = deserialize_row(heap, sz);
-         delete[] heap;
+         sysio::kv::ser_buf heap_buf(static_cast<uint32_t>(sz));
+         ::kv_get(_table_id, _code.value, key.data, key_size, heap_buf.data(), sz);
+         obj = deserialize_row(heap_buf.data(), sz);
       }
 
       auto ptr = std::make_unique<T>(std::move(obj));
