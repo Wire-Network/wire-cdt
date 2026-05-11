@@ -97,6 +97,57 @@ Note: the chain enforces a separate maximum key size (`max_kv_key_size`, default
 [name:8B BE] = 8 bytes
 ```
 
+## Choosing a Primary Key When Using Secondary Indexes
+
+Every secondary-index row stores a copy of the primary key bytes as a reference back to the primary row. The smaller the primary key, the cheaper each secondary row.
+
+**Default rule:** the primary key should be the smallest unique identifier for the row. For most tables that means a `uint64`.
+
+### Picking the primary
+
+**Have a uint64 natural unique identifier already (name, id, etc.)?**
+
+Use it. Add secondaries for the other lookups you need.
+
+**Have only larger natural unique candidates (strings, composites)?**
+
+You can either keep the natural field as the primary or switch to a `uint64` surrogate and demote the natural field to a secondary.
+
+Switching to a surrogate has two effects per primary row:
+
+- **It saves** `(natural_size - 8)` bytes on every secondary row, because secondaries now point at an 8-byte surrogate instead of the full natural key.
+- **It costs** about 128 bytes for the one extra secondary you now need (to look up by the natural field that used to be the primary).
+
+The surrogate becomes the cheaper layout once the per-row savings on the existing secondaries outweigh the cost of the one added secondary. Concrete break-even points:
+
+| Number of lookup paths total | Natural primary stays cheaper if its size is at most |
+|---|---|
+| 2 | ~136 B |
+| 3 | ~72 B |
+| 4 | ~50 B |
+| 5 | ~40 B |
+| 10 | ~22 B |
+| 20+ | always switch to surrogate |
+
+When in doubt, go with the surrogate - it is harder to be surprised by future growth (each new secondary makes the surrogate relatively cheaper).
+
+**Have no natural unique identifier at all (log, queue, append-only)?**
+
+Introduce a surrogate `uint64` - a sequence counter, hash-truncated id, or auto-incrementing identifier. It is the smallest possible primary, guarantees uniqueness, future-proofs against later secondaries, and gives you a stable handle for cross-table references.
+
+Do **not** pick an arbitrary larger field "because it's there." The primary key is duplicated onto every secondary row, so picking a 30 B field with no query reason costs you 30 bytes per (row * sec index) plus the field on the primary itself.
+
+### Scaling
+
+Extra RAM versus the 8 B uint64 baseline grows linearly in row count, secondary index count, and primary key size. At 1M rows with 3 secondary indexes:
+
+| `pri_key_size` | Extra sec RAM |
+|----------------|---------------|
+| 8 B (uint64) | baseline |
+| 32 B | ~72 MB |
+| 64 B | ~168 MB |
+| 128 B | ~360 MB |
+
 ## Zero-Copy Serialization
 
 When `V` is `trivially_copyable` and `sizeof(V) == pack_size(V)`, the value is stored and retrieved via direct `memcpy` — no datastream encoding. This eliminates serialization overhead for POD structs:

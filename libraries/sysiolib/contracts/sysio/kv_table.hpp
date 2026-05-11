@@ -29,7 +29,8 @@
  *   auto it  = idx.find("alice"_n);
  */
 
-#include <sysio/kv_utils.hpp>
+#include <sysio/kv_utils.hpp>                   // primary KV + iterator intrinsics
+#include <sysio/detail/kv_idx_intrinsics.hpp>   // secondary-index intrinsics
 #include <sysio/check.hpp>
 
 #include <cstring>
@@ -37,41 +38,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-// Secondary index intrinsic declarations (not in kv_utils.hpp).
-// Duplicate extern "C" declarations are harmless if kv_multi_index.hpp
-// is also included.
-extern "C" {
-   __attribute__((sysio_wasm_import))
-   void kv_idx_store(uint64_t payer, uint32_t table_id,
-                     const void* pri_key, uint32_t pri_key_size,
-                     const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_remove(uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
-                      const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_update(uint64_t payer, uint32_t table_id,
-                      const void* pri_key, uint32_t pri_key_size,
-                      const void* old_sec_key, uint32_t old_sec_key_size,
-                      const void* new_sec_key, uint32_t new_sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_find_secondary(uint64_t code, uint32_t table_id,
-                                 const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_lower_bound(uint64_t code, uint32_t table_id,
-                              const void* sec_key, uint32_t sec_key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_next(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_prev(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_idx_primary_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   void kv_idx_destroy(uint32_t handle);
-}
 
 namespace sysio { namespace kv {
 
