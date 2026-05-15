@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-24.04
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
     steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v5
           with:
             submodules: recursive
         - name: Cache ccache
