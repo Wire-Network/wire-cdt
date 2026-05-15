@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Discover Platforms
         id: discover
-        uses: Wire-Network/discover-platforms-action@v1
+        uses: Wire-Network/discover-platforms-action@v2
         with:
           platform-file: .cicd/platforms.json
           password: ${{secrets.GH_TOKEN}}
@@ -69,34 +69,37 @@ jobs:
         - uses: actions/checkout@v3
           with:
             submodules: recursive
-        # - name: Download leap-dev.deb (Ubuntu 20 only)
-        #   if: matrix.platform == 'ubuntu20'
-        #   uses: AntelopeIO/asset-artifact-download-action@v2
-        #   with:
-        #     owner: AntelopeIO
-        #     repo: leap
-        #     file: 'leap-dev.*(x86_64|amd64).deb'
-        #     target: 4.0
-        #     artifact-name: leap-dev-ubuntu20-amd64
-        #     container-package: experimental-binaries
-        #     token: ${{github.token}}
-        # - name: Install leap-dev.deb (Ubuntu 20 only)
-        #   if: matrix.platform == 'ubuntu20'
-        #   run: |
-        #     apt-get update && apt-get upgrade -y
-        #     apt install -y ./leap-dev*.deb
-        #     rm ./leap-dev*.deb
+        - name: Cache ccache
+          uses: actions/cache@v5
+          with:
+            path: .ccache
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+            restore-keys: |
+              ${{ runner.os }}-${{ matrix.platform }}-ccache-
+        - name: Cache vcpkg downloads
+          uses: actions/cache@v5
+          with:
+            path: |
+              vcpkg/downloads
+              ~/.cache/vcpkg/archives
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+            restore-keys: |
+              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-
         - name: Build & Test
           run: |
             echo $PWD
             ls -la
 
-            rm -rf vcpkg/downloads vcpkg/packages vcpkg/buildtrees
-            
             export CC=/usr/bin/clang-18
             export CXX=/usr/bin/clang++-18
             export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
+            export VCPKG_TARGET_TRIPLET=x64-linux-release
+            export VCPKG_HOST_TRIPLET=x64-linux-release
+            export VCPKG_OVERLAY_TRIPLETS=$PWD/.github/vcpkg-triplets
+            export CCACHE_DIR=$PWD/.ccache
+            export CCACHE_MAXSIZE=5G
             cmake --version 
+            ccache --version
             ./vcpkg/bootstrap-vcpkg.sh
             
             chown -R $(id -u):$(id -g) $PWD
@@ -108,31 +111,15 @@ jobs:
               -DCMAKE_MAKE_PROGRAM=$CMAKE_MAKE_PROGRAM \
               -DCMAKE_TOOLCHAIN_FILE=$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake \
               -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_PREFIX_PATH=/opt/llvm/llvm-11 
+              -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET \
+              -DVCPKG_HOST_TRIPLET=$VCPKG_HOST_TRIPLET \
+              -DVCPKG_OVERLAY_TRIPLETS=$VCPKG_OVERLAY_TRIPLETS
             
             cmake --build build -- -j $(nproc)
 
             cd build/tests 
 
             ctest -j $(nproc) --output-on-failure
-          # run: |
-          #   mkdir build
-          #   cd build
-          #   cmake -DCMAKE_BUILD_TYPE=Release ..
-          #   make -j $(nproc)
-          #   cd tests
-          #   ctest -j $(nproc) --output-on-failure
-        # - name: Package (Ubuntu 18 only)
-        #   if: matrix.platform == 'ubuntu18'
-        #   run: |
-        #     cd build/packages
-        #     bash generate_package.sh deb ubuntu amd64
-        # - name: Upload (Ubuntu 18 only)
-        #   if: matrix.platform == 'ubuntu18'
-        #   uses: actions/upload-artifact@v3
-        #   with:
-        #     name: cdt_ubuntu_package_amd64
-        #     path: build/packages/cdt*amd64.deb
   notification:
     name: Send Notification
     needs: [discover, build]
@@ -146,5 +133,5 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           notification-type: 1
           workflow-name: "CDT Build & Test"
-          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result }} Build:${{ needs.Build.result }}"
+          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result }} build:${{ needs.build.result }}"
           github-context: ${{ toJSON(github) }}
