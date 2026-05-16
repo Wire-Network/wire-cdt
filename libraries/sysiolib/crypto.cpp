@@ -40,6 +40,10 @@ extern "C" {
                     size_t siglen, char* pub, size_t publen );
 
    __attribute__((sysio_wasm_import))
+   int recover_key_nothrow( const capi_checksum256* digest, const char* sig,
+                            size_t siglen, char* pub, size_t publen );
+
+   __attribute__((sysio_wasm_import))
    void assert_recover_key( const capi_checksum256* digest, const char* sig,
                             size_t siglen, const char* pub, size_t publen );
 }
@@ -117,6 +121,46 @@ namespace sysio {
          if( max_stack_buffer_size < pubkey_size ) {
             free(pubkey_data);
          }
+      }
+      return pubkey;
+   }
+
+   std::optional<sysio::public_key> recover_key_nothrow( const sysio::checksum256& digest,
+                                                         const sysio::signature& sig ) {
+      auto digest_data = digest.extract_as_byte_array();
+      auto sig_data    = sysio::pack(sig);
+
+      char optimistic_pubkey_data[256];
+      int rc = ::recover_key_nothrow(
+         reinterpret_cast<const capi_checksum256*>(digest_data.data()),
+         sig_data.data(), sig_data.size(),
+         optimistic_pubkey_data, sizeof(optimistic_pubkey_data) );
+      if ( rc < 0 ) return std::nullopt;
+
+      const size_t pubkey_size = static_cast<size_t>(rc);
+      sysio::public_key pubkey;
+      if ( pubkey_size <= sizeof(optimistic_pubkey_data) ) {
+         sysio::datastream<const char*> pubkey_ds( optimistic_pubkey_data, pubkey_size );
+         pubkey_ds >> pubkey;
+      } else {
+         constexpr static size_t max_stack_buffer_size = 512;
+         void* pubkey_data = (max_stack_buffer_size < pubkey_size)
+                              ? malloc(pubkey_size)
+                              : alloca(pubkey_size);
+
+         int rc2 = ::recover_key_nothrow(
+            reinterpret_cast<const capi_checksum256*>(digest_data.data()),
+            sig_data.data(), sig_data.size(),
+            reinterpret_cast<char*>(pubkey_data), pubkey_size );
+         if ( rc2 < 0 ) {
+            if ( max_stack_buffer_size < pubkey_size ) free(pubkey_data);
+            return std::nullopt;
+         }
+         sysio::datastream<const char*> pubkey_ds(
+            reinterpret_cast<const char*>(pubkey_data), pubkey_size );
+         pubkey_ds >> pubkey;
+
+         if ( max_stack_buffer_size < pubkey_size ) free(pubkey_data);
       }
       return pubkey;
    }

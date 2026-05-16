@@ -59,6 +59,7 @@ intrinsic_macro(preactivate_feature) \
 intrinsic_macro(get_active_producers) \
 intrinsic_macro(assert_recover_key) \
 intrinsic_macro(recover_key) \
+intrinsic_macro(recover_key_nothrow) \
 intrinsic_macro(assert_sha256) \
 intrinsic_macro(assert_sha1) \
 intrinsic_macro(assert_sha512) \

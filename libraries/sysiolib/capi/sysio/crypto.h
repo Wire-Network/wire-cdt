@@ -205,6 +205,32 @@ __attribute__((sysio_wasm_import))
 int recover_key( const struct capi_checksum256* digest, const char* sig, size_t siglen, char* pub, size_t publen );
 
 /**
+ *  Non-throwing variant of `recover_key`. Catches every exception the
+ *  host crypto path can raise (malformed signature bytes, unactivated
+ *  signature type, recovery math failure, subjective-size limit, etc.)
+ *  and returns -1 instead of halting the contract. On success returns
+ *  the same byte count as `recover_key`.
+ *
+ *  CDT contracts compile with `-fno-exceptions`, so a throwing
+ *  intrinsic call from inside a contract halts dispatch — there is no
+ *  try/catch around it. Inbound-attestation handlers
+ *  (`feedback_opp_handlers_never_throw.md`) MUST NOT halt; they need
+ *  this nothrow variant when verifying attacker-controlled signature
+ *  bytes (e.g. the underwriter race resolver in `sysio.uwrit`).
+ *
+ *  @param digest - Pre-hashed message to recover against
+ *  @param sig    - Packed signature bytes (sysio::signature wire format)
+ *  @param siglen - Signature byte count
+ *  @param pub    - Destination buffer for the recovered packed public key
+ *  @param publen - Capacity of `pub` in bytes
+ *
+ *  @return Bytes written to `pub` on success; -1 on any host-side error
+ *          (no exception escapes the call).
+ */
+__attribute__((sysio_wasm_import))
+int recover_key_nothrow( const struct capi_checksum256* digest, const char* sig, size_t siglen, char* pub, size_t publen );
+
+/**
  *  Tests a given public key with the generated key from digest and the signature.
  *
  *  @param digest - What the key will be generated from

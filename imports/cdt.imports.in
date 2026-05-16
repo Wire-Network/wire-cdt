@@ -124,6 +124,7 @@ publication_time
 read_action_data
 read_transaction
 recover_key
+recover_key_nothrow
 remove_security_group_participants
 require_auth
 require_auth2

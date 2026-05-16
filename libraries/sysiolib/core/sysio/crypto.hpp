@@ -9,6 +9,7 @@
 #include "serialize.hpp"
 
 #include <array>
+#include <optional>
 
 namespace sysio {
 
@@ -452,6 +453,24 @@ namespace sysio {
     *  @return sysio::public_key - Recovered public key
     */
    sysio::public_key recover_key( const sysio::checksum256& digest, const sysio::signature& sig );
+
+   /**
+    *  Non-throwing variant of `recover_key`. Returns the recovered key on
+    *  success, `std::nullopt` if the host caught any exception (malformed
+    *  signature bytes, unactivated signature type, recovery math failure,
+    *  subjective-size limit, etc.). Use this from CDT contracts that MUST
+    *  NOT halt on attacker-controlled signature bytes — see
+    *  `feedback_opp_handlers_never_throw.md`. CDT compiles with
+    *  `-fno-exceptions` so the throwing variant cannot be wrapped in
+    *  contract-side `try/catch`; the host-side wrapper catches instead.
+    *
+    *  @ingroup crypto
+    *  @param digest - Digest of the message that was signed
+    *  @param sig - Signature
+    *  @return Recovered public key, or `std::nullopt` on any failure.
+    */
+   std::optional<sysio::public_key> recover_key_nothrow( const sysio::checksum256& digest,
+                                                          const sysio::signature& sig );
 
    /**
     *  Tests a given public key with the recovered public key from digest and signature.
