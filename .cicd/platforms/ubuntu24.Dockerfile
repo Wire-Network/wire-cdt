@@ -30,7 +30,8 @@ RUN apt-get update && apt-get upgrade -y && \
     zip                  \
     unzip                \
     tar                  \
-    sudo                 \ 
+    sudo                 \
+    mono-complete        \
     golang               \
     python3-dev          \
     libffi-dev           \
