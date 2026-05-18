@@ -12,7 +12,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y
 RUN apt-get update
 
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc && \
-    add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main"
+    add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main"
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y build-essential      \
