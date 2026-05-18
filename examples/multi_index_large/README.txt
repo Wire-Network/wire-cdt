@@ -13,7 +13,8 @@
 
  -- How to build with cdt-cpp --
    - cd into the 'build' directory
-   - run the command 'cdt-cpp -abigen ../src/multi_index_large.cpp -o multi_index_large.wasm -I ../include/'
+   - run the command 'cdt-cpp -abigen --use-rt ../src/multi_index_large.cpp -o multi_index_large.wasm -I ../include/'
+     (--use-rt is required because the contract uses 'long double'; PR #51 makes softfloat opt-in)
 
  - After build -
    - The built smart contract is in the 'build' directory

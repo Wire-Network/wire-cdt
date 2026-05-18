@@ -28,6 +28,14 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/capi/capi_tests.abi ${CMAKE_CURRENT_
 
 target_link_libraries(old_malloc_tests PUBLIC --use-freeing-malloc)
 
+# These tests exercise long double (multi-index secondary keys, malloc alignment).
+# After the cdt.imports prune, contracts that use long double need --use-rt so that
+# libsf.a (softfloat) gets linked locally to satisfy the float128 compiler builtins.
+target_link_libraries(malloc_tests PUBLIC --use-rt)
+target_link_libraries(old_malloc_tests PUBLIC --use-rt)
+target_link_libraries(test_multi_index PUBLIC --use-rt)
+target_link_libraries(test_multi_index2 PUBLIC --use-rt)
+
 add_contract(permission_tests permission_tests permission_tests.cpp)
 
 # Protobuf test contract
