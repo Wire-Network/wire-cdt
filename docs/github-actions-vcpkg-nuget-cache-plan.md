@@ -32,7 +32,7 @@ Expected behavior:
 - Pull requests and branch builds restore matching binary packages when available.
 - Trusted writes, such as pushes to `master`, release branches, and manual runs, publish new binary packages.
 - Forked pull requests should use read-only or local-only caching because their `GITHUB_TOKEN` cannot reliably write packages and should not be given package-write secrets.
-- `actions/cache` remains for vcpkg downloads and ccache, but compiled vcpkg package reuse moves to the NuGet binary cache.
+- `actions/cache` remains for vcpkg downloads and project-level ccache, but compiled vcpkg package reuse moves to the NuGet binary cache.
 
 ## Implementation Plan
 
@@ -146,6 +146,7 @@ The binary package ABI will already account for compiler, triplet, port versions
 - continue using `.github/vcpkg-triplets/x64-linux-release.cmake`
 - avoid mutating compiler variables between configure runs
 - keep `CC`, `CXX`, `VCPKG_TARGET_TRIPLET`, `VCPKG_HOST_TRIPLET`, and `VCPKG_OVERLAY_TRIPLETS` in one shared setup step
+- avoid configuring ccache as a vcpkg port compiler launcher once NuGet binary cache restores are validated
 
 ### 7. Package Feed Naming and Retention
 
