@@ -107,13 +107,22 @@ namespace sysio {
 
          auto sig_data = sysio::pack(sig);
 
+         // capi_checksum256 is declared alignas(16); digest_data is byte-array
+         // storage (alignment 1). reinterpret_cast'ing its data to
+         // capi_checksum256* is a misaligned-pointer access -- UB that can
+         // trap or be miscompiled on strict / native targets (this path is
+         // also exercised natively by the unit tests). Copy into a properly
+         // aligned local and pass that instead.
+         capi_checksum256 capi_digest{};
+         std::memcpy( capi_digest.hash, digest_data.data(), sizeof(capi_digest.hash) );
+
          char optimistic_pubkey_data[256];
          // `::recover_key` returns int: the required public-key size on
          // success, or a negative code on a contract-observable failure.
          // Capturing it as signed first is essential -- assigning the -1
          // sentinel straight into a size_t yields SIZE_MAX and walks the
          // large-buffer path with a bogus length.
-         int rc = ::recover_key( reinterpret_cast<const capi_checksum256*>(digest_data.data()),
+         int rc = ::recover_key( &capi_digest,
                                  sig_data.data(), sig_data.size(),
                                  optimistic_pubkey_data, sizeof(optimistic_pubkey_data) );
          if ( rc < 0 )
@@ -132,7 +141,7 @@ namespace sysio {
             // aborts rather than masquerading as an unrecoverable signature.
             sysio::check( pubkey_data != nullptr, "recover_key: public-key buffer allocation failed" );
 
-            int refill_rc = ::recover_key( reinterpret_cast<const capi_checksum256*>(digest_data.data()),
+            int refill_rc = ::recover_key( &capi_digest,
                                            sig_data.data(), sig_data.size(),
                                            reinterpret_cast<char*>(pubkey_data), pubkey_size );
             // The first call already succeeded, so the refill must report the
@@ -167,7 +176,14 @@ namespace sysio {
       auto sig_data = sysio::pack(sig);
       auto pubkey_data = sysio::pack(pubkey);
 
-      ::assert_recover_key( reinterpret_cast<const capi_checksum256*>(digest_data.data()),
+      // capi_checksum256 is alignas(16); digest_data is byte-array storage
+      // (alignment 1). Copy into a properly aligned local rather than
+      // reinterpret_cast'ing through a misaligned pointer (UB; can trap on
+      // strict / native targets).
+      capi_checksum256 capi_digest{};
+      std::memcpy( capi_digest.hash, digest_data.data(), sizeof(capi_digest.hash) );
+
+      ::assert_recover_key( &capi_digest,
                             sig_data.data(), sig_data.size(),
                             pubkey_data.data(), pubkey_data.size() );
    }
