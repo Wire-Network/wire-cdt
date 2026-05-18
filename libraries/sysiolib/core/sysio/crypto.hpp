@@ -9,6 +9,7 @@
 #include "serialize.hpp"
 
 #include <array>
+#include <optional>
 
 namespace sysio {
 
@@ -446,12 +447,42 @@ namespace sysio {
    /**
     *  Calculates the public key used for a given signature on a given digest.
     *
+    *  Aborts the transaction if the signature is malformed or cannot be
+    *  recovered. Use @ref try_recover_key instead when the signature bytes
+    *  are untrusted and the caller must not abort on bad input.
+    *
     *  @ingroup crypto
     *  @param digest - Digest of the message that was signed
     *  @param sig - Signature
     *  @return sysio::public_key - Recovered public key
     */
    sysio::public_key recover_key( const sysio::checksum256& digest, const sysio::signature& sig );
+
+   /**
+    *  Recovers the public key for a signature over a digest without aborting
+    *  the transaction on a malformed or unrecoverable signature.
+    *
+    *  Wraps the same host `recover_key` intrinsic as @ref recover_key, but
+    *  treats the host's contract-observable failure code (bad / empty /
+    *  truncated signature, unactivated or unknown signature variant, or
+    *  recovery-math failure) as a recoverable result. Intended for callers
+    *  that accept untrusted, user-submitted signatures and must not halt the
+    *  transaction on bad input (for example consensus inline-action
+    *  handlers).
+    *
+    *  @ingroup crypto
+    *  @param digest - Digest of the message that was signed
+    *  @param sig - Signature
+    *  @return the recovered public key, or `std::nullopt` if the signature
+    *          could not be recovered
+    *
+    *  @note The non-throwing guarantee requires a host whose `recover_key`
+    *        intrinsic returns a negative code on failure rather than
+    *        aborting. The host's subjective WebAuthn variable-size guard is
+    *        deliberately not maskable: it rejects the transaction before the
+    *        contract observes anything.
+    */
+   std::optional<sysio::public_key> try_recover_key( const sysio::checksum256& digest, const sysio::signature& sig );
 
    /**
     *  Tests a given public key with the recovered public key from digest and signature.
