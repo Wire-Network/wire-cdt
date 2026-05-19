@@ -94,6 +94,52 @@ From the repository root:
 ./vcpkg/bootstrap-vcpkg.sh
 ```
 
+## Recommended: Build with the GitHub Packages vcpkg Cache
+
+The simplest way to build with the same vcpkg NuGet binary cache used by CI is
+to run:
+
+```bash
+scripts/build-with-github-vcpkg-cache.sh
+```
+
+The script checks that the local environment matches the CI cache inputs before
+configuring CMake. If something does not match, it prints an explicit error and
+a correction command. It verifies:
+
+- the workflow platform file and Dockerfile selected by
+  `.github/workflows/build.yaml`
+- x86_64 host architecture
+- `cmake`, `ninja`, `mono`, `gh`, and vcpkg availability
+- GitHub CLI authentication with `read:packages`
+- `x64-linux-release` target and host triplets
+- `.github/vcpkg-triplets` as the vcpkg overlay triplet path
+- GitHub Packages NuGet source configuration
+
+When `ccache` is installed, the script enables it as the CMake compiler launcher
+and uses `.ccache` in the repository root by default. Set `CCACHE_DISABLE=1` to
+turn it off.
+
+Useful options:
+
+```bash
+scripts/build-with-github-vcpkg-cache.sh --build-dir build/release
+scripts/build-with-github-vcpkg-cache.sh --jobs 8
+scripts/build-with-github-vcpkg-cache.sh --skip-tests
+```
+
+The script has three build modes:
+
+- `developer`: local developer builds; reads packages from the GitHub Packages
+  NuGet cache and never publishes packages
+- `trusted-ci`: trusted GitHub Actions runs; reads and writes the GitHub
+  Packages NuGet cache
+- `forked-pr-ci`: fork pull-request runs; uses vcpkg's default local cache so
+  the workflow does not need package credentials
+
+The default mode is `developer`. The GitHub Actions workflow uses the same
+script with either `--mode trusted-ci` or `--mode forked-pr-ci`.
+
 ## Optional: Use the GitHub Packages vcpkg Binary Cache
 
 The project can restore vcpkg-built dependencies, including LLVM, from the same NuGet-backed binary cache used by CI. This is optional, but it avoids rebuilding large vcpkg dependencies locally.
