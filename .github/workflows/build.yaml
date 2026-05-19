@@ -44,13 +44,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Login to Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{github.repository_owner}}
           password: ${{github.token}}
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v7
         with:
           push: true
           tags: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
@@ -59,6 +59,8 @@ jobs:
     name: Build & Test
     needs: [discover, build-platforms]
     if: always() && needs.discover.result == 'success' && (needs.build-platforms.result == 'success' || needs.build-platforms.result == 'skipped')
+    env:
+      VCPKG_NUGET_FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
     strategy:
       fail-fast: false
       matrix:
@@ -76,53 +78,34 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-ccache-
-        - name: Cache vcpkg downloads
+        - name: Cache vcpkg downloads and tool archives
           uses: actions/cache@v5
           with:
             path: |
               vcpkg/downloads
               ~/.cache/vcpkg/archives
-            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
             restore-keys: |
-              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-
-        - name: Build & Test
+              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-
+        - name: Build and test
+          env:
+            GITHUB_TOKEN: ${{ github.token }}
+            GITHUB_USER: ${{ github.repository_owner }}
           run: |
-            echo $PWD
-            ls -la
+            if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+              echo "Using local-only vcpkg binary cache for fork pull request."
+              BUILD_MODE=forked-pr-ci
+            else
+              echo "Using GitHub Packages vcpkg binary cache in readwrite mode."
+              BUILD_MODE=trusted-ci
+            fi
 
-            export CC=/usr/bin/clang-18
-            export CXX=/usr/bin/clang++-18
-            export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
-            export VCPKG_TARGET_TRIPLET=x64-linux-release
-            export VCPKG_HOST_TRIPLET=x64-linux-release
-            export VCPKG_OVERLAY_TRIPLETS=$PWD/.github/vcpkg-triplets
-            export CCACHE_DIR=$PWD/.ccache
-            export CCACHE_MAXSIZE=5G
-            cmake --version 
-            ccache --version
-            ./vcpkg/bootstrap-vcpkg.sh
-            
-            chown -R $(id -u):$(id -g) $PWD
-            
-            env CC=/usr/bin/clang-18 CXX=/usr/bin/clang++-18 \
-            cmake -B build -S . -G Ninja \
-              -DCMAKE_C_COMPILER=$CC \
-              -DCMAKE_CXX_COMPILER=$CXX \
-              -DCMAKE_MAKE_PROGRAM=$CMAKE_MAKE_PROGRAM \
-              -DCMAKE_TOOLCHAIN_FILE=$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET \
-              -DVCPKG_HOST_TRIPLET=$VCPKG_HOST_TRIPLET \
-              -DVCPKG_OVERLAY_TRIPLETS=$VCPKG_OVERLAY_TRIPLETS
-            
-            cmake --build build -- -j $(nproc)
-
-            cd build/tests 
-
-            ctest -j $(nproc) --output-on-failure
+            scripts/build-with-github-vcpkg-cache.sh \
+              --mode "$BUILD_MODE" \
+              --build-dir build
   notification:
     name: Send Notification
-    needs: [discover, build]
+    needs: [discover, build-platforms, build]
     if: always()
     runs-on: ubuntu-latest
     steps:
