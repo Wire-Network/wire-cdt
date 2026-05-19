@@ -50,6 +50,15 @@ namespace {
    inline uint64_t hi (s128 v) { return static_cast<uint64_t>(static_cast<u128>(v) >> 64); }
    inline uint64_t ulo(u128 v) { return static_cast<uint64_t>(v); }
    inline uint64_t uhi(u128 v) { return static_cast<uint64_t>(v >> 64); }
+
+   // Build a u128 from (lo, hi) using only a constant-distance shift and OR --
+   // no u128 `/ % *`, so this does not lower to a __udivti3/__multi3 call that
+   // would collide with libnative_rt's custom signatures (see note above
+   // udivti3_basic). Expected values for the div/mod tests are precomputed
+   // literals fed through this.
+   inline u128 mk(uint64_t lo_, uint64_t hi_) {
+      return (static_cast<u128>(hi_) << 64) | static_cast<u128>(lo_);
+   }
 }
 
 // =====================================================================
@@ -182,6 +191,50 @@ SYSIO_TEST_BEGIN(umodti3_basic)
    // 0 % x = 0
    __umodti3(r, 0, 0, 100, 0);
    CHECK_EQUAL(r, static_cast<u128>(0))
+SYSIO_TEST_END
+
+// =====================================================================
+// udivmod128 small-divisor fast path: 128-bit dividend / (<= 32-bit
+// divisor). Exercises the four-32-bit-digit long division, its
+// 0xFFFFFFFF upper boundary, and the just-over-boundary divisor
+// (v == 2^32) that must fall through to the 128-iteration slow loop.
+// Vectors precomputed in Python; full-128 dividends so the 64/64 fast
+// path is skipped and the new path (or the slow loop) is taken.
+// =====================================================================
+SYSIO_TEST_BEGIN(udivti3_small_divisor_fastpath)
+   u128 r = 0;
+   // UINT128_MAX / 7 -- non-zero remainder carried across all four digits.
+   __udivti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 7, 0);
+   CHECK_EQUAL(r, mk(0x4924924924924924ULL, 0x2492492492492492ULL))
+   // UINT128_MAX / 0xFFFFFFFF -- largest divisor still on the fast path.
+   __udivti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL, 0);
+   CHECK_EQUAL(r, mk(0x0000000100000001ULL, 0x0000000100000001ULL))
+   // UINT128_MAX / 1 -- identity: q == u, r == 0 on the fast path.
+   __udivti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 1, 0);
+   CHECK_EQUAL(r, mk(0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL))
+   // Mixed dividend / 0xDEADBEEF (divisor just under 2^32).
+   __udivti3(r, 0xFEDCBA9876543210ULL, 0x0123456789ABCDEFULL, 0xDEADBEEFULL, 0);
+   CHECK_EQUAL(r, mk(0x717DCE0520562DA1ULL, 0x00000000014EDB42ULL))
+   // v == 2^32: one past the fast-path guard -> 128-iteration slow loop.
+   __udivti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0x100000000ULL, 0);
+   CHECK_EQUAL(r, mk(0xFFFFFFFFFFFFFFFFULL, 0x00000000FFFFFFFFULL))
+SYSIO_TEST_END
+
+SYSIO_TEST_BEGIN(umodti3_small_divisor_fastpath)
+   u128 r = 0;
+   // Remainders for the same vectors; result is always < v <= 2^32-1.
+   __umodti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 7, 0);
+   CHECK_EQUAL(r, static_cast<u128>(3))
+   __umodti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL, 0);
+   CHECK_EQUAL(r, static_cast<u128>(0))
+   __umodti3(r, 0xFEDCBA9876543210ULL, 0x0123456789ABCDEFULL, 0xDEADBEEFULL, 0);
+   CHECK_EQUAL(r, static_cast<u128>(0xDC351AC1ULL))
+   // 0xFFFF...FFFF_0000...0001 / 3 -> remainder 1 (carry chain ends nonzero).
+   __umodti3(r, 0x0000000000000001ULL, 0xFFFFFFFFFFFFFFFFULL, 3, 0);
+   CHECK_EQUAL(r, static_cast<u128>(1))
+   // v == 2^32: slow-loop remainder still exact.
+   __umodti3(r, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0x100000000ULL, 0);
+   CHECK_EQUAL(r, static_cast<u128>(0xFFFFFFFFULL))
 SYSIO_TEST_END
 
 // =====================================================================
@@ -352,6 +405,8 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(modti3_basic);
    SYSIO_TEST(modti3_int128_min_wrap);
    SYSIO_TEST(umodti3_basic);
+   SYSIO_TEST(udivti3_small_divisor_fastpath);
+   SYSIO_TEST(umodti3_small_divisor_fastpath);
    SYSIO_TEST(shift_left_basic);
    SYSIO_TEST(shift_left_oob_saturates_to_zero);
    SYSIO_TEST(lshrti3_basic);

@@ -64,6 +64,30 @@ namespace {
          *r_hi = 0;
          return;
       }
+      // Fast path: 128-bit / (<= 32-bit divisor). Schoolbook long division
+      // with the dividend split into four 32-bit digits, most significant
+      // first. The running remainder r satisfies r < v <= 2^32-1 after every
+      // `r %= v`, so the next dividend (r << 32) | digit < 2^64 -- it fits a
+      // native uint64 and the i64.div_u below is exact (no recursion back into
+      // __udivti3). The same bound gives (r << 32) | digit < v * 2^32, so each
+      // per-digit quotient is < 2^32 and the (hi << 32) | lo packing is exact.
+      // Since `digit < 2^32`, every `(r << 32) | digit` is a disjoint-bit add.
+      if (v_hi == 0 && v_lo <= 0xFFFFFFFFULL) {
+         const uint64_t v = v_lo;
+         uint64_t r = u_hi >> 32;                            // digit 3 (top)
+         const uint64_t q3 = r / v;   r %= v;
+         r = (r << 32) | (u_hi & 0xFFFFFFFFULL);             // digit 2
+         const uint64_t q2 = r / v;   r %= v;
+         r = (r << 32) | (u_lo >> 32);                       // digit 1
+         const uint64_t q1 = r / v;   r %= v;
+         r = (r << 32) | (u_lo & 0xFFFFFFFFULL);             // digit 0 (bottom)
+         const uint64_t q0 = r / v;   r %= v;
+         *q_hi = (q3 << 32) | q2;
+         *q_lo = (q1 << 32) | q0;
+         *r_lo = r;                                          // r < v <= 2^32-1
+         *r_hi = 0;
+         return;
+      }
       uint64_t ql = 0, qh = 0;
       uint64_t rl = 0, rh = 0;
       for (int i = 127; i >= 0; --i) {
