@@ -1,287 +1,298 @@
 # Build from Source Instructions
 
-> **Supported Platforms:** As of this release, Wire CDT can be built on **Ubuntu 24.04 LTS on x86_64. Earlier Ubuntu versions (20.04, 22.04) are no longer supported for building from source.
+> **Supported platform:** Ubuntu 24.04 LTS on x86_64.
 >
-## Get the source code
+> Earlier Ubuntu versions are not supported for building Wire CDT from source.
 
-Clone this repo as follows:
+## Get the Source Code
+
+Clone the repository with submodules:
 
 ```bash
-# Clone with HTTP
 git clone --recursive https://github.com/Wire-Network/wire-cdt.git
-
-# Clone with SSH (if you have SSH keys set up)
-# git clone --recursive git@github.com:Wire-Network/wire-cdt.git
-
-# Enter the repo directory
 cd wire-cdt
 ```
 
-## On Host Machine
-
-> **ONLY SUPPORTS:** Ubuntu 24.04 LTS.
->
-## Prerequisites
-
-You will need to build on a [supported operating system](README.md#supported-operating-systems) with the following tools and libraries available:
-
-- **Clang** – C/C++ compiler (system clang is sufficient for CDT)
-- **CMake 3.16+** – Build system generator
-- **libxml2** – XML parsing library
-- **Python 3** – Python is needed for some build steps and tools
-- **OCaml** – Required for certain CDT components
-- **git** – Version control, used for fetching submodules
-
-Other standard development tools and libraries (build essentials, etc.) are needed as well. These will be installed in the steps below.
-
-## Step 1 - Install Dependencies
-
-### 1a. Install System Packages (Ubuntu 24.04)
-
-On Ubuntu 24.04, install the following dependencies.
+If you already cloned without submodules, initialize them before configuring:
 
 ```bash
-# Update package lists
-sudo apt-get update
-
-# Install build tools and libraries
-sudo apt-get install -y \
-        build-essential \
-        clang \
-        clang-tidy \
-        cmake \
-        git \
-        libxml2-dev \
-        opam \
-        ocaml-interp \
-        python3 \
-        python3-pip \
-        time
+git submodule update --init --recursive
 ```
 
-### 1b. Install Python Dependencies
+## Install Dependencies
 
-Install required Python packages:
+Wire CDT builds with Clang 18, CMake, Ninja, and vcpkg. The CI builder uses the LLVM 18 packages from the Ubuntu 24.04 `apt.llvm.org` Noble repository; using the same toolchain locally keeps vcpkg binary-cache ABI keys aligned with CI.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  build-essential \
+  ccache \
+  cmake \
+  curl \
+  git \
+  gnupg \
+  jq \
+  libcurl4-openssl-dev \
+  libedit-dev \
+  libffi-dev \
+  libgmp-dev \
+  libncurses-dev \
+  libssl-dev \
+  libtinfo-dev \
+  libxml2-dev \
+  libzstd-dev \
+  ninja-build \
+  python3 \
+  python3-dev \
+  python3-numpy \
+  python3-pip \
+  software-properties-common \
+  unzip \
+  wget \
+  zip \
+  zlib1g-dev \
+  zstd
+```
+
+Add the LLVM 18 Noble package source and install Clang 18:
+
+```bash
+sudo wget -qO /etc/apt/trusted.gpg.d/apt.llvm.org.asc https://apt.llvm.org/llvm-snapshot.gpg.key
+echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main" | \
+  sudo tee /etc/apt/sources.list.d/llvm-toolchain-noble-18.list
+
+sudo apt-get update
+sudo apt-get install -y \
+  clang-18 \
+  clang-tools-18 \
+  lld-18 \
+  libclang-18-dev \
+  libclang-common-18-dev \
+  libclang-cpp18 \
+  libclang-rt-18-dev \
+  libclang1-18 \
+  libllvm18 \
+  llvm-18 \
+  llvm-18-dev \
+  llvm-18-linker-tools \
+  llvm-18-runtime \
+  llvm-18-tools
+```
+
+Optional Python helper:
 
 ```bash
 python3 -m pip install pygments
 ```
 
-### 1c. Install LLVM 11
+## Bootstrap vcpkg
 
-Wire CDT depends on **LLVM 11**. On modern systems (Ubuntu 24.04+), you will need to build LLVM 11 from source, since it's not available in the apt repositories.
-
-Use the helper script from Wire Sysio to build and install LLVM 11:
+From the repository root:
 
 ```bash
-# First, you'll need the Wire Sysio repository for the LLVM 11 build script
-# Clone it temporarily if you don't have it:
-git clone https://github.com/Wire-Network/wire-sysio.git /tmp/wire-sysio
-
-# Choose an installation base directory for LLVM 11
-export BASE_DIR=/opt/llvm    # (you can choose a different directory if desired)
-
-# Build and install LLVM 11 from source
-sudo mkdir -p "$BASE_DIR"; sudo chown "$USER":"$USER" "$BASE_DIR"
-/tmp/wire-sysio/scripts/llvm-11/llvm-11-ubuntu-build-source.sh
-
-# or:
-sudo --preserve-env=BASE_DIR /tmp/wire-sysio/scripts/llvm-11/llvm-11-ubuntu-build-source.sh
-```
-
-This will download the LLVM 11 source code, compile it, and install the libraries and tools to `$BASE_DIR/llvm-11`. (By default, the script places the final installation in `/opt/llvm/llvm-11` if `BASE_DIR=/opt/llvm`.)
-
-> **IMPORTANT:** Remember the installation path of LLVM 11 – you will need to supply it to CMake in the build step. For example, `-DCMAKE_PREFIX_PATH=/opt/llvm/llvm-11`.
->
-### 1d. Bootstrap vcpkg
-
-Wire CDT uses the **vcpkg** package manager for managing third-party dependencies. After installing the required system packages above, you must bootstrap vcpkg from the root of the cloned `wire-cdt` repository:
-
-```bash
-# From the wire-cdt repository root directory
 ./vcpkg/bootstrap-vcpkg.sh
 ```
 
-This will build the vcpkg executable and set up the local vcpkg infrastructure. (It may take a few minutes on first run.)
+## Optional: Use the GitHub Packages vcpkg Binary Cache
 
-You are now ready to build Wire CDT.
+The project can restore vcpkg-built dependencies, including LLVM, from the same NuGet-backed binary cache used by CI. This is optional, but it avoids rebuilding large vcpkg dependencies locally.
 
-### 1e. Optional - Enable Integration Tests
+To use the cache, you need:
 
-Integration tests require access to a build of [Wire Sysio](https://github.com/Wire-Network/wire-sysio).
+- a GitHub token that can read Wire-Network GitHub Packages
+- `read:packages` scope on that token
+- Mono, because vcpkg runs `nuget.exe` on Linux
 
-If you do not wish to build Wire Sysio, you can skip this section and continue to [Step 2](#step-2---build). Otherwise, follow the instructions below before running `cmake`.
+Install Mono:
 
-First, ensure that Wire Sysio has been built from source (see [BUILD.md](https://github.com/Wire-Network/wire-sysio/blob/master/BUILD.md) for details) and identify the build path, e.g. `/path/to/wire-sysio/build/`.
+```bash
+sudo apt-get install -y mono-complete
+```
 
-Then, execute the following command in the same terminal session that you will use to build CDT:
+If you use the GitHub CLI, refresh the local token with package-read scope:
+
+```bash
+gh auth refresh -h github.com -s read:packages
+gh auth status
+```
+
+`gh auth status` should list `read:packages` in the token scopes.
+
+Configure the NuGet source:
+
+```bash
+export GITHUB_TOKEN="$(gh auth token)"
+export GITHUB_USER="$(gh api user --jq .login)"
+export VCPKG_NUGET_FEED="https://nuget.pkg.github.com/Wire-Network/index.json"
+
+NUGET_EXE="$(./vcpkg/vcpkg fetch nuget | tail -n 1)"
+
+mono "$NUGET_EXE" sources remove -Name "github" >/dev/null 2>&1 || true
+mono "$NUGET_EXE" sources add \
+  -Name "github" \
+  -Source "$VCPKG_NUGET_FEED" \
+  -UserName "$GITHUB_USER" \
+  -Password "$GITHUB_TOKEN" \
+  -StorePasswordInClearText
+
+mono "$NUGET_EXE" setapikey "$GITHUB_TOKEN" -Source "$VCPKG_NUGET_FEED"
+```
+
+Enable read-only binary cache restores for the current shell:
+
+```bash
+export VCPKG_FEATURE_FLAGS="manifests,binarycaching"
+export VCPKG_BINARY_SOURCES="clear;nuget,$VCPKG_NUGET_FEED,read"
+```
+
+A successful restore looks like:
+
+```text
+Restored 9 package(s) from NuGet
+```
+
+If vcpkg prints `Restored 0 package(s) from NuGet`, check:
+
+- `gh auth status` includes `read:packages`
+- Clang 18 comes from `llvm-toolchain-noble-18`, not Ubuntu's default `18.1.3` package
+- `VCPKG_TARGET_TRIPLET` and `VCPKG_HOST_TRIPLET` are both `x64-linux-release`
+- `VCPKG_OVERLAY_TRIPLETS` points at `.github/vcpkg-triplets`
+
+## Configure
+
+From the repository root:
+
+```bash
+export CC=/usr/bin/clang-18
+export CXX=/usr/bin/clang++-18
+export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
+export VCPKG_TARGET_TRIPLET=x64-linux-release
+export VCPKG_HOST_TRIPLET=x64-linux-release
+export VCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
+
+cmake -B build -S . -G Ninja \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM" \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
+  -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
+  -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS"
+```
+
+## Build
+
+```bash
+cmake --build build -- -j "$(nproc)"
+```
+
+Wire CDT is a large build. If the machine runs out of memory, retry with fewer jobs:
+
+```bash
+cmake --build build -- -j 4
+```
+
+## Test
+
+```bash
+ctest --test-dir build/tests -j "$(nproc)" --output-on-failure
+```
+
+## Optional: Enable Integration Tests
+
+Integration tests require a build of [Wire Sysio](https://github.com/Wire-Network/wire-sysio).
+
+After building Wire Sysio, point CMake at its package config and enable integration tests:
 
 ```bash
 export sysio_DIR=/path/to/wire-sysio/build/lib/cmake/sysio
+
+cmake -B build -S . -G Ninja \
+  -DCMAKE_C_COMPILER=/usr/bin/clang-18 \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-18 \
+  -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DVCPKG_TARGET_TRIPLET=x64-linux-release \
+  -DVCPKG_HOST_TRIPLET=x64-linux-release \
+  -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
+  -Dsysio_DIR="$sysio_DIR" \
+  -DENABLE_INTEGRATION_TESTS=ON
 ```
 
-When you configure the build in Step 2, you will also need to add -DENABLE_INTEGRATION_TESTS=ON and -Dsysio_DIR to the cmake command. Here is a complete example:
+## Optional: Disable ccache
 
-```bash
-cmake -B . -S .. \
--DCMAKE_BUILD_TYPE=Release \
--DCMAKE_PREFIX_PATH="/path/to/wire-sysio/build;/opt/llvm/llvm-11" \
--DCMAKE_TOOLCHAIN_FILE="$PWD/../vcpkg/scripts/buildsystems/vcpkg.cmake" \
--Dsysio_DIR=/path/to/wire-sysio/build/lib/cmake/sysio \
--DENABLE_INTEGRATION_TESTS=ON
-```
-
-Now you can continue with the steps to build CDT as described. When you run `cmake` make sure that it does not report `sysio package not found`. If it does, this means CDT was not able to find a build of Wire Sysio at the specified path in `sysio_DIR` and will therefore continue without building the integration tests.
-
-### 1f. Optional - Disable ccache
-
-If issues persist with ccache when building CDT, you can disable ccache:
+If ccache causes local build issues:
 
 ```bash
 export CCACHE_DISABLE=1
 ```
 
-You are now ready to build Wire CDT.
+## Install
 
-## Step 2 - Build
+After building and testing, install using one of these methods.
 
-Make sure you are in the root of the `wire-cdt` repo, then perform the build with CMake.
-
-> ⚠️ **Memory/Parallelism Warning** ⚠️  
-> Building Wire CDT from source can be resource-intensive. Some compilation units (.cpp files) in CDT are extremely complex and can consume a large amount of memory to compile. If you use all CPU cores for parallel compilation (e.g. `make -j$(nproc)`), you may exhaust memory and encounter compiler crashes. Consider using a lower parallel job count (`-j`) if you run into memory issues or if you need to use your machine for other tasks during the build.
->
-### Build Instructions
-
-Create a build directory and configure with CMake:
-
-```bash
-mkdir -p build
-cd build
-
-cmake -B . -S .. \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_PREFIX_PATH="/opt/llvm/llvm-11" \
-  -DCMAKE_TOOLCHAIN_FILE="$PWD/../vcpkg/scripts/buildsystems/vcpkg.cmake"
-```
-
-In the above command:
-
-- `-B . -S ..` tells CMake to use the current directory for build files and parent directory for source.
-- `CMAKE_BUILD_TYPE=Release` produces an optimized build. (You can use `Debug` for development, etc.)
-- `CMAKE_PREFIX_PATH` is set to the location of LLVM 11 installation. Adjust the path if you installed to a different prefix (from Step 1c).
-- `CMAKE_TOOLCHAIN_FILE` points to the vcpkg toolchain file, so CMake will integrate `vcpkg` dependencies automatically.
-
-If you enabled integration tests in Step 1e, verify the configuration output shows that Wire Sysio was found.
-
-Now proceed to compile:
-
-```bash
-make -j$(nproc)
-```
-
-This will start the build process (using all available CPU cores by default). If you find your system running low on memory or becoming unresponsive, cancel the build (`Ctrl+C`) and re-run with a lower parallel job count, for example:
-
-```bash
-make -j4
-```
-
-(to limit to 4 threads).
-
-Once the build completes successfully, the Wire CDT binaries will be available in `build/bin/`.
-
-You can now proceed to [test](README.md#testing) your build (optional), or install CDT as described below.
-
-### Optional - Build in Debug Mode
-
-To build CDT with debug symbols for development, configure with debug flags:
-
-```bash
-cmake -DCMAKE_BUILD_TYPE="Debug" -DTOOLS_BUILD_TYPE="Debug" -DLIBS_BUILD_TYPE="Debug" ..
-make -j$(nproc)
-```
-
-## Step 3 - Install
-
-After you have [built](#step-2---build) Wire CDT (and optionally [tested](README.md#testing) it), you can install it on your system. There are three primary ways to install:
-
-**A. Install via Debian Package:**  
-We recommend installing using the Debian package that the build can produce, as it ensures all files go to appropriate system locations. To build the package, run:
+### Debian Package
 
 ```bash
 cd build/packages
 ./generate_package.sh deb ubuntu-24.04 amd64
-```
-
-This will create the Wire CDT `.deb` package. Then install it using `apt`:
-
-```bash
 sudo apt install ./cdt_*_amd64.deb
 ```
 
-*(Replace `cdt_*_amd64.deb` with the actual filename of the package. Using `apt install` on the local file will automatically handle any missing dependencies.)*
-
-**B. Install via CMake target:**  
-Alternatively, you can install the built files directly to your system using CMake. This is useful if you prefer not to create a package:
+### CMake Install
 
 ```bash
-cd build
-sudo cmake --install .
+sudo cmake --install build
 ```
 
-This will copy the Wire CDT binaries, libraries, and headers to the default installation prefixes (e.g., under `/usr/local/` by default, or whatever `CMAKE_INSTALL_PREFIX` was set to during configuration). You may omit `sudo` if installing to a location your user has write access to.
-
-**C. Use without installing:**  
-You can also use Wire CDT directly from the build directory without installing system-wide:
+### Use from the Build Directory
 
 ```bash
-# Add build/bin to your PATH
 export PATH=/path/to/wire-cdt/build/bin:$PATH
-
-# Or use the CMake toolchain file in your CMake projects
-# -DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/CDTWasmToolchain.cmake
 ```
 
-This allows you to compile contracts without installing CDT globally.
+For CMake projects, use the generated CDT Wasm toolchain file:
 
-Choose **either** method A, B, or C according to your preference. Method A (deb package) is cleaner for system installs, as it can be easily removed or upgraded using the system package manager.
+```bash
+-DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/CDTWasmToolchain.cmake
+```
 
-### Installed Tools
+## Installed Tools
 
-When installed globally (via method A or B), CDT provides the following command-line tools:
+Wire CDT installs tools including:
 
-- **cdt-abidiff** – ABI comparison tool
-- **cdt-ar** – Archive utility
-- **cdt-cc** – C compiler wrapper
-- **cdt-cpp** – C preprocessor
-- **cdt-init** – Project initialization tool
-- **cdt-ld** – Linker
-- **cdt-nm** – Symbol listing tool
-- **cdt-objcopy** – Object file utility
-- **cdt-objdump** – Object file disassembler
-- **cdt-ranlib** – Archive index generator
-- **cdt-readelf** – ELF file reader
-- **cdt-strip** – Symbol stripper
-- **sysio-pp** – Pre-processor
-- **sysio-wasm2wast** – WASM to WAST converter
-- **sysio-wast2wasm** – WAST to WASM converter
-
-It also installs CMake files for CDT accessible within a `cmake/cdt` directory located within your system's `lib` directory.
+- `cdt-abidiff`
+- `cdt-ar`
+- `cdt-cc`
+- `cdt-cpp`
+- `cdt-init`
+- `cdt-ld`
+- `cdt-nm`
+- `cdt-objcopy`
+- `cdt-objdump`
+- `cdt-ranlib`
+- `cdt-readelf`
+- `cdt-strip`
+- `sysio-pp`
+- `sysio-wasm2wast`
+- `sysio-wast2wasm`
 
 ## Uninstall
 
-### Uninstall CDT (if installed via package)
+If installed from a Debian package:
 
 ```bash
 sudo apt remove cdt
 ```
 
-### Uninstall CDT (if installed via CMake)
+If installed with CMake:
 
 ```bash
 sudo rm -fr /usr/local/cdt
 sudo rm -fr /usr/local/lib/cmake/cdt
-sudo rm /usr/local/bin/sysio-*
-sudo rm /usr/local/bin/cdt-*
+sudo rm -f /usr/local/bin/sysio-*
+sudo rm -f /usr/local/bin/cdt-*
 ```
-
----
