@@ -116,5 +116,5 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           notification-type: 1
           workflow-name: "CDT Build & Test"
-          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result }} build:${{ needs.build.result }}"
+          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }} build:${{ needs.build.result }}"
           github-context: ${{ toJSON(github) }}
