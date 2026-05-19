@@ -74,9 +74,12 @@ add_subdirectory(protoc-gen-zpp)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CMAKE_BINARY_DIR}/compiler_options.hpp)
 
-# Stage the LLVM host tools in the bin directory. These need to be real files so
-# the install tree does not contain symlinks back into the build directory.
+# Stage the LLVM host tools in the bin directory at configure time. Copying these
+# large binaries makes fresh CMake runs slower, but it keeps install() simple and
+# ensures the install tree contains real files instead of symlinks back into the
+# build directory.
 foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy llvm-objdump llvm-readobj llvm-readelf llvm-strip opt llc lld ld.lld)
+   unset(_tool_path CACHE)
    find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
    if(_tool_path)
       file(REMOVE ${CMAKE_BINARY_DIR}/bin/${target})
@@ -86,5 +89,4 @@ foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy ll
    else()
       message(WARNING "LLVM tool '${target}' not found in ${LLVM_TOOLS_BINARY_DIR}")
    endif()
-   unset(_tool_path CACHE)
 endforeach()
