@@ -262,23 +262,49 @@ For CMake projects, use the generated CDT Wasm toolchain file:
 
 ## Installed Tools
 
-Wire CDT installs tools including:
+Wire CDT installs its command-line tools under the CDT install prefix, normally
+`/usr/local/cdt/bin`.
+
+Primary CDT tools:
 
 - `cdt-abidiff`
-- `cdt-ar`
 - `cdt-cc`
+- `cdt-codegen`
 - `cdt-cpp`
 - `cdt-init`
 - `cdt-ld`
-- `cdt-nm`
-- `cdt-objcopy`
-- `cdt-objdump`
-- `cdt-ranlib`
-- `cdt-readelf`
-- `cdt-strip`
+- `cdt-protoc`
+- `cdt-protoc-gen-zpp`
 - `sysio-pp`
 - `sysio-wasm2wast`
 - `sysio-wast2wasm`
+
+The install also includes the host LLVM tools that the CDT drivers invoke at
+runtime:
+
+- `clang`
+- `clang++`
+- `ld.lld`
+- `llc`
+- `lld`
+- `llvm-ar`
+- `llvm-nm`
+- `llvm-objcopy`
+- `llvm-objdump`
+- `llvm-ranlib`
+- `llvm-readelf`
+- `llvm-readobj`
+- `llvm-strip`
+- `opt`
+- `wasm-ld`
+
+These LLVM tools are copied into the install tree as regular executables, not
+as symlinks to the build directory. Keeping them next to the CDT tools makes the
+installed CDT toolchain self-contained and prevents `cdt-cc`, `cdt-cpp`, and
+`cdt-ld` from accidentally using a different system LLVM version.
+
+The install also places the `sysio_attrs.so` and `sysio_codegen.so` plugins in
+the same `bin` directory.
 
 ## Uninstall
 
