@@ -82,7 +82,9 @@ foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy ll
    unset(_tool_path CACHE)
    find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
    if(_tool_path)
-      file(REMOVE ${CMAKE_BINARY_DIR}/bin/${target})
+      if(IS_SYMLINK ${CMAKE_BINARY_DIR}/bin/${target})
+         file(REMOVE ${CMAKE_BINARY_DIR}/bin/${target})
+      endif()
       file(COPY ${_tool_path}
          DESTINATION ${CMAKE_BINARY_DIR}/bin
          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)

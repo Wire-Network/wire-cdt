@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/build}"
 JOBS="${JOBS:-$(nproc)}"
 RUN_TESTS=1
-NEEDS_BOOTSTRAP_CHOWN=0
+NEEDS_CI_OWNERSHIP_FIX=0
 BUILD_MODE="${WIRE_CDT_BUILD_MODE:-developer}"
 VCPKG_BINARY_SOURCES=""
 VCPKG_NUGET_FEED="${VCPKG_NUGET_FEED:-https://nuget.pkg.github.com/Wire-Network/index.json}"
@@ -93,7 +93,7 @@ if [[ "$BUILD_MODE" != "developer" && "$BUILD_MODE" != "trusted-ci" && "$BUILD_M
 fi
 
 if [[ "$BUILD_MODE" == "trusted-ci" || "$BUILD_MODE" == "forked-pr-ci" ]]; then
-  NEEDS_BOOTSTRAP_CHOWN=1
+  NEEDS_CI_OWNERSHIP_FIX=1
 fi
 
 if [[ ! -f "$ROOT_DIR/CMakeLists.txt" || ! -d "$ROOT_DIR/vcpkg" ]]; then
@@ -194,12 +194,16 @@ if [[ "$BUILD_MODE" == "developer" ]]; then
   require_command gh gh
 fi
 
+# GitHub Actions checkout ownership can differ from the container user. Fix it
+# independently from vcpkg bootstrap so cached or prebuilt vcpkg binaries do not
+# accidentally skip the ownership repair.
+if [[ "$NEEDS_CI_OWNERSHIP_FIX" -eq 1 ]]; then
+  chown -R "$(id -u):$(id -g)" "$ROOT_DIR"
+fi
+
 if [[ ! -x "$ROOT_DIR/vcpkg/vcpkg" ]]; then
   info "Bootstrapping vcpkg"
   "$ROOT_DIR/vcpkg/bootstrap-vcpkg.sh"
-  if [[ "$NEEDS_BOOTSTRAP_CHOWN" -eq 1 ]]; then
-    chown -R "$(id -u):$(id -g)" "$ROOT_DIR"
-  fi
 fi
 
 CLANG_VERSION="$("$CLANG_BIN" --version | head -n 1)"
