@@ -1,0 +1,114 @@
+name: "Debug vcpkg bls12 NuGet cache"
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  bls12-nuget-cache:
+    name: Restore/publish bls12-381 cache package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete ninja-build cmake
+
+      - name: Bootstrap vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Configure NuGet credentials
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_USER: ${{ github.repository_owner }}
+          VCPKG_NUGET_FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        run: |
+          NUGET_EXE="$(./vcpkg/vcpkg fetch nuget | tail -n 1)"
+          mono "$NUGET_EXE" sources remove -Name github >/dev/null 2>&1 || true
+          mono "$NUGET_EXE" sources add \
+            -Name github \
+            -Source "$VCPKG_NUGET_FEED" \
+            -UserName "$GITHUB_USER" \
+            -Password "$GITHUB_TOKEN" \
+            -StorePasswordInClearText
+          mono "$NUGET_EXE" setapikey "$GITHUB_TOKEN" -Source "$VCPKG_NUGET_FEED"
+
+      - name: Probe bls12 package metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_USER: ${{ github.repository_owner }}
+        run: |
+          set +e
+          curl -sS \
+            -u "$GITHUB_USER:$GITHUB_TOKEN" \
+            -w '\nHTTP=%{http_code}\n' \
+            'https://nuget.pkg.github.com/Wire-Network/bls12-381_x64-linux-release/index.json' |
+            tee bls12-381-package-index-response.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          exit "$status"
+
+      - name: Install only bls12-381 with vcpkg NuGet cache
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_USER: ${{ github.repository_owner }}
+          VCPKG_BINARY_SOURCES: clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite
+          VCPKG_DISABLE_METRICS: "1"
+        run: |
+          mkdir -p build/bls12-manifest
+          cat > build/bls12-manifest/vcpkg.json <<'JSON'
+          {
+            "name": "wire-cdt-bls12-cache-diagnostic",
+            "version-string": "0",
+            "dependencies": [
+              "bls12-381"
+            ]
+          }
+          JSON
+          cat > build/bls12-manifest/vcpkg-configuration.json <<'JSON'
+          {
+            "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
+            "default-registry": {
+              "kind": "git",
+              "baseline": "74e6536215718009aae747d86d84b78376bf9e09",
+              "reference": "bc71aa640f89933294f16e004b212c7fd3183eed",
+              "repository": "https://github.com/Microsoft/vcpkg"
+            },
+            "registries": [
+              {
+                "kind": "git",
+                "repository": "https://github.com/wire-network/wire-vcpkg-registry",
+                "baseline": "23aa4018992d85602a4b5c30104a623e708b4b3e",
+                "reference": "23aa4018992d85602a4b5c30104a623e708b4b3e",
+                "packages": [
+                  "bls12-381"
+                ]
+              }
+            ]
+          }
+          JSON
+
+          (
+            cd build/bls12-manifest
+            ../../vcpkg/vcpkg install \
+              --debug \
+              --x-install-root="$PWD/../bls12-vcpkg-installed" \
+              --triplet x64-linux-release \
+              --host-triplet x64-linux-release \
+              --overlay-triplets="$GITHUB_WORKSPACE/.github/vcpkg-triplets"
+          )
