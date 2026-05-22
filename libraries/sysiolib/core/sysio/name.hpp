@@ -4,8 +4,7 @@
  */
 #pragma once
 
-#include "check.hpp"
-#include "serialize.hpp"
+#include "basic_name.hpp"
 #include "reflect.hpp"
 
 #include <string>
@@ -26,96 +25,52 @@ namespace sysio {
     * @brief SYSIO Name Type
     */
 
+   /// Alphabet + length traits for the SYSIO account-name encoding: up to 13
+   /// base-32 symbols over ".12345a-z". Drives sysio::basic_name.
+   struct sysio_name_traits {
+      static constexpr int              max_len  = 13;
+      static constexpr std::string_view alphabet = ".12345abcdefghijklmnopqrstuvwxyz";
+      static constexpr const char* bad_char_message =
+         "character is not in allowed character set for names";
+      static constexpr const char* too_long_message =
+         "string is too long to be a valid name";
+      static constexpr const char* bad_final_symbol_message =
+         "thirteenth character in name cannot be a letter that comes after j";
+   };
+
    /**
     * Wraps a %uint64_t to ensure it is only passed to methods that expect a %name.
-    * Ensures value is only passed to methods that expect a %name and that no mathematical
-    * operations occur.  Also enables specialization of print
+    *
+    * The packed encoding and value semantics (constructors, comparisons,
+    * to_string, serialization) live in sysio::basic_name; name adds the
+    * contract-side surface: raw, print, length, prefix()/suffix(),
+    * write_as_string.
     *
     * @ingroup name
     */
-   struct name {
-   public:
+   struct name : basic_name<sysio_name_traits> {
+      using base = basic_name<sysio_name_traits>;
+
+      /// Scoped enumerated alias of uint64_t, for the raw packed value.
       enum class raw : uint64_t {};
 
-      /**
-       * Construct a new name
-       *
-       * @brief Construct a new name object defaulting to a value of 0
-       *
-       */
-      constexpr name() : value(0) {}
-
-      /**
-       * Construct a new name given a unit64_t value
-       *
-       * @brief Construct a new name object initialising value with v
-       * @param v - The unit64_t value
-       *
-       */
-      constexpr explicit name( uint64_t v )
-      :value(v)
-      {}
+      using base::base;                  // name(uint64_t), name(std::string_view)
+      constexpr name() = default;
 
       /**
        * Construct a new name given a scoped enumerated type of raw (uint64_t).
-       *
-       * @brief Construct a new name object initialising value with r
-       * @param r - The raw value which is a scoped enumerated type of unit64_t
-       *
        */
-      constexpr explicit name( name::raw r )
-      :value(static_cast<uint64_t>(r))
-      {}
+      constexpr explicit name( name::raw r ) : base( static_cast<uint64_t>(r) ) {}
 
       /**
-       * Construct a new name given an string.
-       *
-       * @brief Construct a new name object initialising value with str
-       * @param str - The string value which validated then converted to unit64_t
-       *
-       */
-      constexpr explicit name( std::string_view str )
-      :value(0)
-      {
-         if( str.size() > 13 ) {
-            sysio::check( false, "string is too long to be a valid name" );
-         }
-         if( str.empty() ) {
-            return;
-         }
-
-         auto n = std::min( (uint32_t)str.size(), (uint32_t)12u );
-         for( decltype(n) i = 0; i < n; ++i ) {
-            value <<= 5;
-            value |= char_to_value( str[i] );
-         }
-         value <<= ( 4 + 5*(12 - n) );
-         if( str.size() == 13 ) {
-            uint64_t v = char_to_value( str[12] );
-            if( v > 0x0Full ) {
-               sysio::check(false, "thirteenth character in name cannot be a letter that comes after j");
-            }
-            value |= v;
-         }
-      }
-
-      /**
-       *  Converts a %name Base32 symbol into its corresponding value
+       *  Converts a %name Base32 symbol into its corresponding value.
+       *  Throws via sysio::check if the character is not in the allowed set.
        *
        *  @param c - Character to be converted
-       *  @return constexpr char - Converted value
+       *  @return constexpr uint8_t - Converted value
        */
       static constexpr uint8_t char_to_value( char c ) {
-         if( c == '.')
-            return 0;
-         else if( c >= '1' && c <= '5' )
-            return (c - '1') + 1;
-         else if( c >= 'a' && c <= 'z' )
-            return (c - 'a') + 6;
-         else
-            sysio::check( false, "character is not in allowed character set for names" );
-
-         return 0; // control flow will never reach here; just added to suppress warning
+         return static_cast<uint8_t>( base::symbol(c) );
       }
 
       /**
@@ -211,13 +166,6 @@ namespace sysio {
       constexpr operator raw()const { return raw(value); }
 
       /**
-       * Explicit cast to bool of the uint64_t value of the name
-       *
-       * @return Returns true if the name is set to the default value of 0 else true.
-       */
-      constexpr explicit operator bool()const { return value != 0; }
-
-      /**
        *  Writes the %name as a string to the provided char buffer
        *
        *  @pre The range [begin, end) must be a valid range of memory to write to.
@@ -249,17 +197,6 @@ namespace sysio {
       }
 
       /**
-       *  Returns the name as a string.
-       *
-       *  @brief Returns the name value as a string by calling write_as_string() and returning the buffer produced by write_as_string()
-       */
-      std::string to_string()const {
-         char buffer[13];
-         auto end = write_as_string( buffer, buffer + sizeof(buffer) );
-         return {buffer, end};
-      }
-
-      /**
        * Prints an names as base32 encoded string
        *
        * @param name to be printed
@@ -268,40 +205,11 @@ namespace sysio {
         internal_use_do_not_use::printn(value);
       }
 
-      /// @cond INTERNAL
-
-      /**
-       * Equivalency operator. Returns true if a == b (are the same)
-       *
-       * @return boolean - true if both provided %name values are the same
-       */
-      friend constexpr bool operator == ( const name& a, const name& b ) {
-         return a.value == b.value;
-      }
-
-      /**
-       * Inverted equivalency operator. Returns true if a != b (are different)
-       *
-       * @return boolean - true if both provided %name values are not the same
-       */
-      friend constexpr bool operator != ( const name& a, const name& b ) {
-         return a.value != b.value;
-      }
-
-      /**
-       * Less than operator. Returns true if a < b.
-       *
-       * @return boolean - true if %name `a` is less than `b`
-       */
-      friend constexpr bool operator < ( const name& a, const name& b ) {
-         return a.value < b.value;
-      }
-
-      /// @endcond
-
-      uint64_t value = 0;
-
       CDT_REFLECT(value);
+      // name's own serialization: an exact-match operator<<(ds, const name&)
+      // must exist, else the generic bluegrass::meta field-iterator is chosen
+      // and rejects name as a non-aggregate. (basic_name has its own, used by
+      // slug_name, which is the alias type itself rather than a derived type.)
       SYSLIB_SERIALIZE( name, (value) )
    };
 
