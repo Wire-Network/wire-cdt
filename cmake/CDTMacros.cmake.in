@@ -241,6 +241,12 @@ function(add_native_contract)
     "${CDT_ROOT}/include"
   )
 
+  # OPP-generated protobuf headers (types.pb.hpp) depend on magic_enum. The
+  # imported target name is identical in the CDT and consumer vcpkg trees, so
+  # linking it resolves the header for the host compiler.
+  find_cdt_magic_enum()
+  target_link_libraries(${ARG_TARGET} PRIVATE magic_enum::magic_enum)
+
   # Compile definitions for native mode
   target_compile_definitions(${ARG_TARGET} PRIVATE
     __sysio_cdt_native__
