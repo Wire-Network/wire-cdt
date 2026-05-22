@@ -30,6 +30,8 @@ namespace sysio {
    struct sysio_name_traits {
       static constexpr int              max_len  = 13;
       static constexpr std::string_view alphabet = ".12345abcdefghijklmnopqrstuvwxyz";
+      // Symbol 0 ('.') is an ordinary interior character, not a terminator.
+      static constexpr bool             zero_terminates = false;
       static constexpr const char* bad_char_message =
          "character is not in allowed character set for names";
       static constexpr const char* too_long_message =

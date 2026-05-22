@@ -9,14 +9,10 @@
  *  exceptions) in a constexpr constructor, so `_n` / `_s` literals are checked
  *  at compile time.
  *
- *  A Traits type must provide:
- *    static constexpr int              max_len;   // number of symbols
- *    static constexpr std::string_view alphabet;  // alphabet[s] is symbol s's
- *                                                 // character; alphabet[0] is
- *                                                 // the pad symbol
- *    static constexpr const char* bad_char_message;         // sysio::check msg
- *    static constexpr const char* too_long_message;         // sysio::check msg
- *    static constexpr const char* bad_final_symbol_message; // sysio::check msg
+ *  Traits is the policy that specialises the template; it must satisfy the
+ *  basic_name_traits concept (declared below). alphabet[0] is the pad symbol;
+ *  zero_terminates selects how to_string() treats a symbol-0 slot — a hard
+ *  terminator (slug-style) or an ordinary interior character (name's '.').
  *
  *  The symbol width is derived (the minimal bits to index the alphabet);
  *  symbols are packed most-significant-first, the final symbol narrowed if
@@ -29,6 +25,7 @@
 #include "serialize.hpp"
 
 #include <compare>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -36,7 +33,23 @@
 
 namespace sysio {
 
+/// Compile-time contract for a basic_name Traits policy: an alphabet and a
+/// length, a zero_terminates flag steering to_string(), and the three
+/// sysio::check messages. Enforced in place of a prose list of requirements.
 template <typename Traits>
+concept basic_name_traits =
+   requires {
+      { Traits::max_len }                  -> std::convertible_to<int>;
+      { Traits::alphabet }                 -> std::convertible_to<std::string_view>;
+      { Traits::zero_terminates }          -> std::convertible_to<bool>;
+      { Traits::bad_char_message }         -> std::convertible_to<const char*>;
+      { Traits::too_long_message }         -> std::convertible_to<const char*>;
+      { Traits::bad_final_symbol_message } -> std::convertible_to<const char*>;
+   }
+   && Traits::max_len > 0
+   && std::string_view{ Traits::alphabet }.size() > 0;
+
+template <basic_name_traits Traits>
 struct basic_name {
    uint64_t value = 0;
 
@@ -69,11 +82,19 @@ struct basic_name {
 
    std::string to_string() const {
       std::string s;
-      for ( int i = 0; i < Traits::max_len; ++i )
-         s.push_back( character( (value >> shift(i)) & width_mask(i) ) );
-      const char pad = character(0);
-      while ( !s.empty() && s.back() == pad )
-         s.pop_back();
+      for ( int i = 0; i < Traits::max_len; ++i ) {
+         const uint64_t sym = (value >> shift(i)) & width_mask(i);
+         // A zero-terminated alphabet (slug-style) ends at the first symbol-0
+         // slot; for name, symbol 0 ('.') is an ordinary interior character.
+         if ( Traits::zero_terminates && sym == 0 )
+            break;
+         s.push_back( character( sym ) );
+      }
+      if ( !Traits::zero_terminates ) {
+         const char pad = character(0);
+         while ( !s.empty() && s.back() == pad )
+            s.pop_back();
+      }
       return s;
    }
 
