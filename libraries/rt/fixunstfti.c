@@ -10,7 +10,7 @@
 
 #include "fp128.h"
 
-typedef float128_t fp_t;
+typedef softfloat128_t fp_t;
 typedef unsigned __int128 fixuint_t;
 typedef unsigned __int128 tu_int;
 typedef __int128 rep_t;

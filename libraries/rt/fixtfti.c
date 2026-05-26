@@ -10,7 +10,7 @@
 
 #include "fp128.h"
 
-__int128 ___fixtfti( float128_t a) {
+__int128 ___fixtfti( softfloat128_t a) {
     const __int128 fixint_max = (__int128)((~(unsigned __int128)0) / 2);
     const __int128 fixint_min = -fixint_max - 1;
     // Break a into sign, exponent, significand
