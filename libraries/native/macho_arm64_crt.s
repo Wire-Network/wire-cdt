@@ -34,6 +34,7 @@ __mmap:
    svc #0x80
    ret
 
+// AAPCS64 callee-saved state: x19-x30, SP, and low 64 bits of d8-d15.
 _setjmp:
    stp x19, x20, [x0, #0]
    stp x21, x22, [x0, #16]

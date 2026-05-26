@@ -303,12 +303,10 @@ if [[ "$BUILD_PLATFORM" == "linux" ]]; then
   export VCPKG_TARGET_TRIPLET=x64-linux-release
   export VCPKG_HOST_TRIPLET=x64-linux-release
   export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
-elif [[ "$BUILD_PLATFORM" == "macos-arm64" ]]; then
+else
   export VCPKG_TARGET_TRIPLET=arm64-osx-release
   export VCPKG_HOST_TRIPLET=arm64-osx-release
   export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
-else
-  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux' or '--platform macos-arm64'."
 fi
 export VCPKG_FEATURE_FLAGS=manifests,binarycaching
 export CCACHE_DIR="${CCACHE_DIR:-$ROOT_DIR/.ccache}"
