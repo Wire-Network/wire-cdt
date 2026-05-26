@@ -12,6 +12,7 @@ BUILD_MODE="${WIRE_CDT_BUILD_MODE:-developer}"
 BUILD_PLATFORM="${WIRE_CDT_BUILD_PLATFORM:-linux}"
 VCPKG_BINARY_SOURCES=""
 VCPKG_NUGET_FEED="${VCPKG_NUGET_FEED:-https://nuget.pkg.github.com/Wire-Network/index.json}"
+WIRE_CDT_NUGET_TOOL="${WIRE_CDT_NUGET_TOOL:-mono}"
 CI_WORKFLOW_FILE="${CI_WORKFLOW_FILE:-$ROOT_DIR/.github/workflows/build.yaml}"
 CI_PLATFORM="${CI_PLATFORM:-}"
 
@@ -32,6 +33,8 @@ Options:
 
 Environment:
   VCPKG_NUGET_FEED     NuGet feed URL. Default: $VCPKG_NUGET_FEED
+  WIRE_CDT_NUGET_TOOL  NuGet source configuration tool: mono or dotnet.
+                       Default: $WIRE_CDT_NUGET_TOOL
   CI_WORKFLOW_FILE     CI workflow to mirror. Default: $CI_WORKFLOW_FILE
   CI_PLATFORM          Platform key from the workflow matrix. Default: parsed from workflow.
   GITHUB_TOKEN         GitHub token. Required for trusted-ci mode.
@@ -147,8 +150,6 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
   brew install ninja"
   require_command git "$INSTALL_PREFIX
   brew install git"
-  require_command mono "$INSTALL_PREFIX
-  brew install mono"
 else
   INSTALL_PREFIX="Install it with apt:"
   require_command python3 "$INSTALL_PREFIX
@@ -159,8 +160,6 @@ else
   sudo apt-get install -y ninja-build"
   require_command git "$INSTALL_PREFIX
   sudo apt-get install -y git"
-  require_command mono "$INSTALL_PREFIX
-  sudo apt-get install -y mono-complete"
 fi
 
 if [[ "$BUILD_PLATFORM" == "linux" ]]; then
@@ -299,20 +298,47 @@ else
     fi
   fi
 
-  NUGET_EXE="$("$ROOT_DIR/vcpkg/vcpkg" fetch nuget | tail -n 1)"
-  if [[ ! -f "$NUGET_EXE" ]]; then
-    fail "vcpkg did not return a usable nuget.exe path." "Run '$ROOT_DIR/vcpkg/vcpkg fetch nuget' and fix any reported vcpkg download errors."
-  fi
-
   info "Configuring GitHub Packages NuGet source"
-  mono "$NUGET_EXE" sources remove -Name "github" >/dev/null 2>&1 || true
-  mono "$NUGET_EXE" sources add \
-    -Name "github" \
-    -Source "$VCPKG_NUGET_FEED" \
-    -UserName "$GITHUB_USER" \
-    -Password "$GITHUB_TOKEN" \
-    -StorePasswordInClearText >/dev/null
-  mono "$NUGET_EXE" setapikey "$GITHUB_TOKEN" -Source "$VCPKG_NUGET_FEED" >/dev/null
+  if [[ "$WIRE_CDT_NUGET_TOOL" == "dotnet" ]]; then
+    require_command dotnet "Install dotnet, or use the Mono-backed NuGet path:
+  brew install dotnet
+  WIRE_CDT_NUGET_TOOL=mono $0"
+    info "Using dotnet CLI to configure NuGet source"
+    dotnet nuget remove source github >/dev/null 2>&1 || true
+    dotnet nuget add source "$VCPKG_NUGET_FEED" \
+      --name github \
+      --username "$GITHUB_USER" \
+      --password "$GITHUB_TOKEN" \
+      --store-password-in-clear-text >/dev/null
+    dotnet nuget setapikey "$GITHUB_TOKEN" --source "$VCPKG_NUGET_FEED" >/dev/null
+  elif [[ "$WIRE_CDT_NUGET_TOOL" == "mono" ]]; then
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      require_command mono "Install dotnet or Mono with Homebrew:
+  brew install dotnet
+  brew install mono"
+    else
+      require_command mono "Install dotnet or Mono with apt:
+  sudo apt-get install -y dotnet-sdk-8.0
+  sudo apt-get install -y mono-complete"
+    fi
+
+    NUGET_EXE="$("$ROOT_DIR/vcpkg/vcpkg" fetch nuget | tail -n 1)"
+    if [[ ! -f "$NUGET_EXE" ]]; then
+      fail "vcpkg did not return a usable nuget.exe path." "Run '$ROOT_DIR/vcpkg/vcpkg fetch nuget' and fix any reported vcpkg download errors."
+    fi
+
+    info "Using nuget.exe through Mono to configure NuGet source"
+    mono "$NUGET_EXE" sources remove -Name "github" >/dev/null 2>&1 || true
+    mono "$NUGET_EXE" sources add \
+      -Name "github" \
+      -Source "$VCPKG_NUGET_FEED" \
+      -UserName "$GITHUB_USER" \
+      -Password "$GITHUB_TOKEN" \
+      -StorePasswordInClearText >/dev/null
+    mono "$NUGET_EXE" setapikey "$GITHUB_TOKEN" -Source "$VCPKG_NUGET_FEED" >/dev/null
+  else
+    fail "Unsupported NuGet tool '$WIRE_CDT_NUGET_TOOL'." "Use:\n  WIRE_CDT_NUGET_TOOL=mono $0\nor:\n  WIRE_CDT_NUGET_TOOL=dotnet $0"
+  fi
 
   if [[ "$BUILD_MODE" == "developer" ]]; then
     export VCPKG_BINARY_SOURCES="clear;nuget,$VCPKG_NUGET_FEED,read"
@@ -357,6 +383,9 @@ CMAKE_VCPKG_ARGS=(
 if [[ -n "${VCPKG_OVERLAY_TRIPLETS:-}" ]]; then
   CMAKE_VCPKG_ARGS+=(-DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS")
 fi
+if [[ "$BUILD_MODE" == "developer" ]]; then
+  CMAKE_VCPKG_ARGS+=(-DVCPKG_INSTALL_OPTIONS=--only-binarycaching)
+fi
 
 info "Build directory: $BUILD_DIR"
 info "NuGet feed: $VCPKG_NUGET_FEED"
@@ -382,6 +411,9 @@ configure_status=${PIPESTATUS[0]}
 set -e
 
 if [[ "$configure_status" -ne 0 ]]; then
+  if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then
+    fail "CMake configure failed because no matching vcpkg packages were restored from NuGet." "The GitHub NuGet cache is reachable, but this host's vcpkg ABI does not match the cached CI ABI. Check the compiler line above, then use the same Xcode/Command Line Tools version as CI, or let trusted CI create packages for this host ABI."
+  fi
   fail "CMake configure failed." "Review $CONFIGURE_LOG. Common fixes:\n  sudo apt-get install -y mono-complete ninja-build cmake\n  gh auth refresh -h github.com -s read:packages\n  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
 fi
 
