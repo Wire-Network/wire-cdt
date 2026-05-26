@@ -39,7 +39,7 @@ namespace sysio {
          : _size{n}
          , _capacity{_size*2}
       {
-         char* begin{new char[_capacity]};
+         char* begin{new char[_capacity+1]};
          memcpy(begin, str, _size);
          _begin = begin;
       }
@@ -48,7 +48,7 @@ namespace sysio {
          : _size{n}
          , _capacity{_size*2}
       {
-         char* begin{new char[_capacity]};
+         char* begin{new char[_capacity+1]};
          memset(begin, c, _size);
          _begin = begin;
       }
@@ -168,24 +168,11 @@ namespace sysio {
       }
 
       const char* c_str() const {
-         static size_t prev_size{0};
-         char* raw_ptr{nullptr};
-         
          if (is_literal())
             return std::get<const char*>(_begin);
-         
-         if (_size == prev_size)
-            return std::get<uptr>(_begin).get();
-         else if (_size < prev_size)
-            raw_ptr = std::get<uptr>(_begin).get();
-         else {
-            uptr tmp  = std::make_unique<char[]>(_size+1);
-            raw_ptr   = tmp.get();
-            prev_size = _size;
-            memcpy(raw_ptr, std::get<uptr>(_begin).get(), _size);
-         }
-         
-         raw_ptr[_size+1] = '\0';
+
+         char* raw_ptr = std::get<uptr>(_begin).get();
+         raw_ptr[_size] = '\0';
          return raw_ptr;
       }
 
@@ -306,7 +293,7 @@ namespace sysio {
             _size      += len;
             _capacity  = _size*2;
 
-            uptr begin{std::make_unique<char[]>(_capacity)};
+            uptr begin{std::make_unique<char[]>(_capacity+1)};
             const char* tmp{(is_literal()) ? std::get<const char*>(_begin) : std::get<uptr>(_begin).get()};
 
             memcpy(begin.get(), tmp, pos);
@@ -414,7 +401,7 @@ namespace sysio {
          _size     = size;
          _capacity = capacity;
 
-         uptr begin{std::make_unique<char[]>(capacity)};
+         uptr begin{std::make_unique<char[]>(capacity+1)};
          memcpy(begin.get(), str, size);
          _begin = std::move(begin);
       }

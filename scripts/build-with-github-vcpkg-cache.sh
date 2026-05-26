@@ -53,10 +53,10 @@ info() {
 
 require_command() {
   local command_name="$1"
-  local package_hint="$2"
+  local correction="$2"
 
   if ! command -v "$command_name" >/dev/null 2>&1; then
-    fail "'$command_name' is not installed." "Install it with:\n  sudo apt-get install -y $package_hint"
+    fail "'$command_name' is not installed." "$correction"
   fi
 }
 
@@ -137,12 +137,31 @@ if [[ -z "$CI_PLATFORM" ]]; then
   fail "Could not parse the build matrix platform from '$CI_WORKFLOW_FILE'." "Set CI_PLATFORM explicitly, for example:\n  CI_PLATFORM=ubuntu24 $0"
 fi
 
-require_command python3 python3
-
-require_command cmake cmake
-require_command ninja ninja-build
-require_command git git
-require_command mono mono-complete
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  INSTALL_PREFIX="Install it with Homebrew:"
+  require_command python3 "$INSTALL_PREFIX
+  brew install python"
+  require_command cmake "$INSTALL_PREFIX
+  brew install cmake"
+  require_command ninja "$INSTALL_PREFIX
+  brew install ninja"
+  require_command git "$INSTALL_PREFIX
+  brew install git"
+  require_command mono "$INSTALL_PREFIX
+  brew install mono"
+else
+  INSTALL_PREFIX="Install it with apt:"
+  require_command python3 "$INSTALL_PREFIX
+  sudo apt-get install -y python3"
+  require_command cmake "$INSTALL_PREFIX
+  sudo apt-get install -y cmake"
+  require_command ninja "$INSTALL_PREFIX
+  sudo apt-get install -y ninja-build"
+  require_command git "$INSTALL_PREFIX
+  sudo apt-get install -y git"
+  require_command mono "$INSTALL_PREFIX
+  sudo apt-get install -y mono-complete"
+fi
 
 if [[ "$BUILD_PLATFORM" == "linux" ]]; then
   CI_DOCKERFILE_REL="$(python3 - "$PLATFORM_FILE" "$CI_PLATFORM" <<'PY'
@@ -219,7 +238,13 @@ fi
 # In CI modes, GITHUB_TOKEN is injected directly; the GitHub CLI is only needed
 # for developer mode so the script can reuse the local authenticated token.
 if [[ "$BUILD_MODE" == "developer" ]]; then
-  require_command gh gh
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    require_command gh "Install it with Homebrew:
+  brew install gh"
+  else
+    require_command gh "Install it with apt:
+  sudo apt-get install -y gh"
+  fi
 fi
 
 # GitHub Actions checkout ownership can differ from the container user. Fix it
