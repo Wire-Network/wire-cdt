@@ -265,6 +265,13 @@ static cl::opt<bool> fmerge_all_constants_opt(
     "fmerge-all-constants",
     cl::desc("Allow merging of constants"),
     cl::cat(SysioCompilerToolCategory));
+static cl::list<std::string> fmacro_prefix_map_opt(
+    "fmacro-prefix-map",
+    cl::desc("Remap source paths expanded by macros such as __FILE__"),
+    cl::Hidden,
+    cl::Prefix,
+    cl::ZeroOrMore,
+    cl::cat(SysioCompilerToolCategory));
 static cl::opt<bool> fno_elide_constructors_opt(
     "fno-elide-constructors",
     cl::desc("Disable C++ copy constructor elision"),
@@ -734,6 +741,9 @@ static Options CreateOptions(bool add_defaults=true) {
    }
    if (fmerge_all_constants_opt) {
       copts.emplace_back("-fmerge-all-constants");
+   }
+   for (auto prefix_map : fmacro_prefix_map_opt) {
+      copts.emplace_back("-fmacro-prefix-map=" + prefix_map);
    }
    if (fstack_protector_all_opt) {
       copts.emplace_back("-fstack-protector-all");

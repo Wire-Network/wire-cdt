@@ -23,12 +23,18 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 message ( STATUS "Configuring SoftFloat" )
 set( C_DEFINES "-DSOFTFLOAT_FAST_INT64 -DSOFTFLOAT_ROUND_EVEN -DINLINE_LEVEL=5 -DSOFTFLOAT_FAST_DIV32TO16 -DSOFTFLOAT_FAST_DIV64TO32" )
 set( CMAKE_C_FLAGS " -Wall -Werror-implicit-function-declaration -Wno-conversion ${CMAKE_C_FLAGS} ${C_DEFINES}" )
+# The WASM runtime archive is part of contract output, so it must not vary with
+# the host building CDT. Keep libsf.a on the historical Linux/x86 specialization
+# to preserve checked-in WASM hashes across Linux and macOS.
+set(SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/8086-SSE")
+set(SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-x86_64-GCC")
+
 if (__APPLE)
-   set(SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/ARM-VFPv2")
-   set(SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-ARM-VFPv2-GCC")
+   set(NATIVE_SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/ARM-VFPv2")
+   set(NATIVE_SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-ARM-VFPv2-GCC")
 else()
-   set(SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/8086-SSE")
-   set(SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-x86_64-GCC")
+   set(NATIVE_SOFTFLOAT_SPECIALIZE_DIR "${SOFTFLOAT_SPECIALIZE_DIR}")
+   set(NATIVE_SOFTFLOAT_PLATFORM_DIR "${SOFTFLOAT_PLATFORM_DIR}")
 endif()
 set ( softfloat_sources
   softfloat/source/s_eq128.c
@@ -340,11 +346,23 @@ file ( GLOB softfloat_headers "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/incl
                               "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}/specialize.h" )
 list( APPEND softfloat_sources ${softfloat_headers} )
 
+set(native_softfloat_sources ${softfloat_sources})
+if (NOT NATIVE_SOFTFLOAT_SPECIALIZE_DIR STREQUAL SOFTFLOAT_SPECIALIZE_DIR)
+   list(TRANSFORM native_softfloat_sources REPLACE
+        "^${SOFTFLOAT_SPECIALIZE_DIR}/" "${NATIVE_SOFTFLOAT_SPECIALIZE_DIR}/")
+   list(TRANSFORM native_softfloat_sources REPLACE
+        "^${SOFTFLOAT_PLATFORM_DIR}/" "${NATIVE_SOFTFLOAT_PLATFORM_DIR}/")
+endif()
+file ( GLOB native_softfloat_headers "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include/*.h"
+                                     "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_PLATFORM_DIR}/platform.h"
+                                     "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_SPECIALIZE_DIR}/specialize.h" )
+list( APPEND native_softfloat_sources ${native_softfloat_headers} )
+
 add_library ( sf STATIC ${softfloat_sources} )
 target_include_directories( sf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR})
 
-add_native_library ( native STATIC ${softfloat_sources} intrinsics.cpp crt.cpp ${CRT_ASM} )
-target_include_directories( native PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/sysiolib/capi ${CMAKE_SOURCE_DIR}/sysiolib/contracts ${CMAKE_SOURCE_DIR}/sysiolib/core)
+add_native_library ( native STATIC ${native_softfloat_sources} intrinsics.cpp crt.cpp ${CRT_ASM} )
+target_include_directories( native PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/sysiolib/capi ${CMAKE_SOURCE_DIR}/sysiolib/contracts ${CMAKE_SOURCE_DIR}/sysiolib/core)
 
 add_dependencies(native native_sysio)
 

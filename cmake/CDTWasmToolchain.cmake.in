@@ -15,8 +15,9 @@ set(CMAKE_ASM_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cc")
 set(CMAKE_AR "@CDT_ROOT_DIR@/bin/cdt-ar")
 set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
-set(CMAKE_C_FLAGS "-Os")
-set(CMAKE_CXX_FLAGS "-Os")
+set(_CDT_SOURCE_PREFIX_MAP "-fmacro-prefix-map=${CMAKE_SOURCE_DIR}=.")
+set(CMAKE_C_FLAGS "-Os ${_CDT_SOURCE_PREFIX_MAP}")
+set(CMAKE_CXX_FLAGS "-Os ${_CDT_SOURCE_PREFIX_MAP}")
 set(CMAKE_ASM_FLAGS "-fnative -fasm")
 
 set(WASM_LINKER "@CDT_ROOT_DIR@/bin/cdt-ld")
