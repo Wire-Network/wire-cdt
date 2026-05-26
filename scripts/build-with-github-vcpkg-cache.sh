@@ -4,10 +4,12 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/build}"
-JOBS="${JOBS:-$(nproc)}"
+DEFAULT_JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+JOBS="${JOBS:-$DEFAULT_JOBS}"
 RUN_TESTS=1
 NEEDS_CI_OWNERSHIP_FIX=0
 BUILD_MODE="${WIRE_CDT_BUILD_MODE:-developer}"
+BUILD_PLATFORM="${WIRE_CDT_BUILD_PLATFORM:-linux}"
 VCPKG_BINARY_SOURCES=""
 VCPKG_NUGET_FEED="${VCPKG_NUGET_FEED:-https://nuget.pkg.github.com/Wire-Network/index.json}"
 CI_WORKFLOW_FILE="${CI_WORKFLOW_FILE:-$ROOT_DIR/.github/workflows/build.yaml}"
@@ -25,6 +27,7 @@ Options:
   --skip-tests         Configure and build only.
   --mode MODE          Build mode: developer, trusted-ci, or forked-pr-ci.
                        Default: $BUILD_MODE
+  --platform PLATFORM  Build platform: linux or macos-arm64. Default: $BUILD_PLATFORM
   -h, --help           Show this help.
 
 Environment:
@@ -78,6 +81,11 @@ while [[ $# -gt 0 ]]; do
       BUILD_MODE="$2"
       shift 2
       ;;
+    --platform)
+      [[ $# -ge 2 ]] || fail "--platform requires a value." "Use '--platform linux' or '--platform macos-arm64'."
+      BUILD_PLATFORM="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -90,6 +98,10 @@ done
 
 if [[ "$BUILD_MODE" != "developer" && "$BUILD_MODE" != "trusted-ci" && "$BUILD_MODE" != "forked-pr-ci" ]]; then
   fail "Unsupported build mode '$BUILD_MODE'." "Use '--mode developer' for local builds, '--mode trusted-ci' for trusted GitHub Actions runs, or '--mode forked-pr-ci' for fork pull requests."
+fi
+
+if [[ "$BUILD_PLATFORM" != "linux" && "$BUILD_PLATFORM" != "macos-arm64" ]]; then
+  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux' or '--platform macos-arm64'."
 fi
 
 if [[ "$BUILD_MODE" == "trusted-ci" || "$BUILD_MODE" == "forked-pr-ci" ]]; then
@@ -127,7 +139,13 @@ fi
 
 require_command python3 python3
 
-CI_DOCKERFILE_REL="$(python3 - "$PLATFORM_FILE" "$CI_PLATFORM" <<'PY'
+require_command cmake cmake
+require_command ninja ninja-build
+require_command git git
+require_command mono mono-complete
+
+if [[ "$BUILD_PLATFORM" == "linux" ]]; then
+  CI_DOCKERFILE_REL="$(python3 - "$PLATFORM_FILE" "$CI_PLATFORM" <<'PY'
 import json
 import sys
 
@@ -144,48 +162,58 @@ print(dockerfile)
 PY
 )" || fail "Could not resolve Dockerfile for platform '$CI_PLATFORM' from '$PLATFORM_FILE'." "Make sure the workflow matrix platform exists in the workflow platform file, or set CI_PLATFORM to a valid platform key."
 
-if [[ "$CI_DOCKERFILE_REL" == /* ]]; then
-  CI_DOCKERFILE="$CI_DOCKERFILE_REL"
+  if [[ "$CI_DOCKERFILE_REL" == /* ]]; then
+    CI_DOCKERFILE="$CI_DOCKERFILE_REL"
+  else
+    CI_DOCKERFILE="$ROOT_DIR/$CI_DOCKERFILE_REL"
+  fi
+
+  if [[ ! -f "$CI_DOCKERFILE" ]]; then
+    fail "The CI Dockerfile resolved from the workflow was not found at '$CI_DOCKERFILE'." "Check platform '$CI_PLATFORM' in $PLATFORM_FILE."
+  fi
+
+  EXPECTED_UBUNTU_CODENAME="$(sed -nE 's/^FROM[[:space:]]+ubuntu:([^[:space:]]+).*/\1/p' "$CI_DOCKERFILE" | head -n 1)"
+  EXPECTED_LLVM_APT_REPO="$(sed -nE 's/.*(deb[[:space:]]+http:\/\/apt\.llvm\.org\/[^"]+).*/\1/p' "$CI_DOCKERFILE" | head -n 1)"
+  LLVM_MAJOR="$(sed -nE 's/.*llvm-toolchain-[[:alnum:]_.-]+-([0-9]+).*/\1/p' "$CI_DOCKERFILE" | head -n 1)"
+
+  if [[ -z "$EXPECTED_UBUNTU_CODENAME" || -z "$EXPECTED_LLVM_APT_REPO" || -z "$LLVM_MAJOR" ]]; then
+    fail "Could not parse Ubuntu or LLVM settings from '$CI_DOCKERFILE'." "Make sure the Dockerfile contains a 'FROM ubuntu:<codename>' line and an apt.llvm.org 'llvm-toolchain-<codename>-<major>' repository line."
+  fi
+
+  CLANG_BIN="/usr/bin/clang-$LLVM_MAJOR"
+  CLANGXX_BIN="/usr/bin/clang++-$LLVM_MAJOR"
+
+  if [[ -f /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    source /etc/os-release
+  else
+    fail "/etc/os-release is missing." "Build on the Ubuntu '$EXPECTED_UBUNTU_CODENAME' environment defined by $CI_DOCKERFILE to match the CI vcpkg ABI."
+  fi
+
+  if [[ "${ID:-}" != "ubuntu" || "${VERSION_CODENAME:-}" != "$EXPECTED_UBUNTU_CODENAME" ]]; then
+    fail "This host is '${PRETTY_NAME:-unknown}', but the CI cache is built from 'ubuntu:$EXPECTED_UBUNTU_CODENAME'." "Use an Ubuntu '$EXPECTED_UBUNTU_CODENAME' host, or build inside the CI builder image defined by $CI_DOCKERFILE, before expecting GitHub NuGet cache hits."
+  fi
+
+  if [[ "$(uname -m)" != "x86_64" ]]; then
+    fail "This host architecture is '$(uname -m)', but the CI cache is x86_64." "Use an x86_64 Ubuntu '$EXPECTED_UBUNTU_CODENAME' host to reuse the current vcpkg binary cache."
+  fi
+
+  if [[ ! -x "$CLANG_BIN" || ! -x "$CLANGXX_BIN" ]]; then
+    fail "Clang $LLVM_MAJOR binaries are missing." "Install the compiler package used by CI:\n  sudo apt-get install -y clang-$LLVM_MAJOR"
+  fi
+elif [[ "$BUILD_PLATFORM" == "macos-arm64" ]]; then
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    fail "The macos-arm64 platform requires macOS." "Run this build on a GitHub-hosted macOS Arm64 runner or an Apple Silicon Mac."
+  fi
+
+  if [[ "$(uname -m)" != "arm64" ]]; then
+    fail "This host architecture is '$(uname -m)', but macos-arm64 requires Apple Silicon." "Use a macOS Arm64 runner or Apple Silicon Mac."
+  fi
+
+  CLANG_BIN="$(xcrun --find clang)"
+  CLANGXX_BIN="$(xcrun --find clang++)"
 else
-  CI_DOCKERFILE="$ROOT_DIR/$CI_DOCKERFILE_REL"
-fi
-
-if [[ ! -f "$CI_DOCKERFILE" ]]; then
-  fail "The CI Dockerfile resolved from the workflow was not found at '$CI_DOCKERFILE'." "Check platform '$CI_PLATFORM' in $PLATFORM_FILE."
-fi
-
-EXPECTED_UBUNTU_CODENAME="$(sed -nE 's/^FROM[[:space:]]+ubuntu:([^[:space:]]+).*/\1/p' "$CI_DOCKERFILE" | head -n 1)"
-EXPECTED_LLVM_APT_REPO="$(sed -nE 's/.*(deb[[:space:]]+http:\/\/apt\.llvm\.org\/[^"]+).*/\1/p' "$CI_DOCKERFILE" | head -n 1)"
-LLVM_MAJOR="$(sed -nE 's/.*llvm-toolchain-[[:alnum:]_.-]+-([0-9]+).*/\1/p' "$CI_DOCKERFILE" | head -n 1)"
-
-if [[ -z "$EXPECTED_UBUNTU_CODENAME" || -z "$EXPECTED_LLVM_APT_REPO" || -z "$LLVM_MAJOR" ]]; then
-  fail "Could not parse Ubuntu or LLVM settings from '$CI_DOCKERFILE'." "Make sure the Dockerfile contains a 'FROM ubuntu:<codename>' line and an apt.llvm.org 'llvm-toolchain-<codename>-<major>' repository line."
-fi
-
-CLANG_BIN="/usr/bin/clang-$LLVM_MAJOR"
-CLANGXX_BIN="/usr/bin/clang++-$LLVM_MAJOR"
-
-if [[ -f /etc/os-release ]]; then
-  # shellcheck disable=SC1091
-  source /etc/os-release
-else
-  fail "/etc/os-release is missing." "Build on the Ubuntu '$EXPECTED_UBUNTU_CODENAME' environment defined by $CI_DOCKERFILE to match the CI vcpkg ABI."
-fi
-
-if [[ "${ID:-}" != "ubuntu" || "${VERSION_CODENAME:-}" != "$EXPECTED_UBUNTU_CODENAME" ]]; then
-  fail "This host is '${PRETTY_NAME:-unknown}', but the CI cache is built from 'ubuntu:$EXPECTED_UBUNTU_CODENAME'." "Use an Ubuntu '$EXPECTED_UBUNTU_CODENAME' host, or build inside the CI builder image defined by $CI_DOCKERFILE, before expecting GitHub NuGet cache hits."
-fi
-
-if [[ "$(uname -m)" != "x86_64" ]]; then
-  fail "This host architecture is '$(uname -m)', but the CI cache is x86_64." "Use an x86_64 Ubuntu '$EXPECTED_UBUNTU_CODENAME' host to reuse the current vcpkg binary cache."
-fi
-
-require_command cmake cmake
-require_command ninja ninja-build
-require_command git git
-require_command mono mono-complete
-if [[ ! -x "$CLANG_BIN" || ! -x "$CLANGXX_BIN" ]]; then
-  fail "Clang $LLVM_MAJOR binaries are missing." "Install the compiler package used by CI:\n  sudo apt-get install -y clang-$LLVM_MAJOR"
+  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux' or '--platform macos-arm64'."
 fi
 
 # In CI modes, GITHUB_TOKEN is injected directly; the GitHub CLI is only needed
@@ -207,13 +235,15 @@ if [[ ! -x "$ROOT_DIR/vcpkg/vcpkg" ]]; then
 fi
 
 CLANG_VERSION="$("$CLANG_BIN" --version | head -n 1)"
-if [[ "$CLANG_VERSION" != *"$LLVM_MAJOR."* ]]; then
-  fail "$CLANG_BIN does not report LLVM major version $LLVM_MAJOR. Found: $CLANG_VERSION" "Install Clang $LLVM_MAJOR from the LLVM repository used by CI:\n  sudo wget -qO /etc/apt/trusted.gpg.d/apt.llvm.org.asc https://apt.llvm.org/llvm-snapshot.gpg.key\n  echo '$EXPECTED_LLVM_APT_REPO' | sudo tee /etc/apt/sources.list.d/llvm-toolchain-${EXPECTED_UBUNTU_CODENAME}-${LLVM_MAJOR}.list\n  sudo apt-get update\n  sudo apt-get install -y clang-$LLVM_MAJOR clang-tools-$LLVM_MAJOR lld-$LLVM_MAJOR llvm-$LLVM_MAJOR llvm-$LLVM_MAJOR-dev llvm-$LLVM_MAJOR-tools"
-fi
+if [[ "$BUILD_PLATFORM" == "linux" ]]; then
+  if [[ "$CLANG_VERSION" != *"$LLVM_MAJOR."* ]]; then
+    fail "$CLANG_BIN does not report LLVM major version $LLVM_MAJOR. Found: $CLANG_VERSION" "Install Clang $LLVM_MAJOR from the LLVM repository used by CI:\n  sudo wget -qO /etc/apt/trusted.gpg.d/apt.llvm.org.asc https://apt.llvm.org/llvm-snapshot.gpg.key\n  echo '$EXPECTED_LLVM_APT_REPO' | sudo tee /etc/apt/sources.list.d/llvm-toolchain-${EXPECTED_UBUNTU_CODENAME}-${LLVM_MAJOR}.list\n  sudo apt-get update\n  sudo apt-get install -y clang-$LLVM_MAJOR clang-tools-$LLVM_MAJOR lld-$LLVM_MAJOR llvm-$LLVM_MAJOR llvm-$LLVM_MAJOR-dev llvm-$LLVM_MAJOR-tools"
+  fi
 
-CLANG_PACKAGE_VERSION="$(dpkg-query -W -f='${Version}' "clang-$LLVM_MAJOR" 2>/dev/null || true)"
-if [[ -z "$CLANG_PACKAGE_VERSION" || "$CLANG_PACKAGE_VERSION" != *"~++"* ]]; then
-  fail "clang-$LLVM_MAJOR does not look like the apt.llvm.org package used by CI. Installed package version: ${CLANG_PACKAGE_VERSION:-unknown}" "Reinstall Clang $LLVM_MAJOR from the repository parsed from $CI_DOCKERFILE:\n  echo '$EXPECTED_LLVM_APT_REPO' | sudo tee /etc/apt/sources.list.d/llvm-toolchain-${EXPECTED_UBUNTU_CODENAME}-${LLVM_MAJOR}.list\n  sudo apt-get update\n  sudo apt-get install -y clang-$LLVM_MAJOR clang-tools-$LLVM_MAJOR lld-$LLVM_MAJOR llvm-$LLVM_MAJOR llvm-$LLVM_MAJOR-dev llvm-$LLVM_MAJOR-tools"
+  CLANG_PACKAGE_VERSION="$(dpkg-query -W -f='${Version}' "clang-$LLVM_MAJOR" 2>/dev/null || true)"
+  if [[ -z "$CLANG_PACKAGE_VERSION" || "$CLANG_PACKAGE_VERSION" != *"~++"* ]]; then
+    fail "clang-$LLVM_MAJOR does not look like the apt.llvm.org package used by CI. Installed package version: ${CLANG_PACKAGE_VERSION:-unknown}" "Reinstall Clang $LLVM_MAJOR from the repository parsed from $CI_DOCKERFILE:\n  echo '$EXPECTED_LLVM_APT_REPO' | sudo tee /etc/apt/sources.list.d/llvm-toolchain-${EXPECTED_UBUNTU_CODENAME}-${LLVM_MAJOR}.list\n  sudo apt-get update\n  sudo apt-get install -y clang-$LLVM_MAJOR clang-tools-$LLVM_MAJOR lld-$LLVM_MAJOR llvm-$LLVM_MAJOR llvm-$LLVM_MAJOR-dev llvm-$LLVM_MAJOR-tools"
+  fi
 fi
 
 if [[ "$BUILD_MODE" == "forked-pr-ci" ]]; then
@@ -268,10 +298,18 @@ fi
 
 export CC="$CLANG_BIN"
 export CXX="$CLANGXX_BIN"
-export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
-export VCPKG_TARGET_TRIPLET=x64-linux-release
-export VCPKG_HOST_TRIPLET=x64-linux-release
-export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
+export CMAKE_MAKE_PROGRAM="${CMAKE_MAKE_PROGRAM:-$(command -v ninja)}"
+if [[ "$BUILD_PLATFORM" == "linux" ]]; then
+  export VCPKG_TARGET_TRIPLET=x64-linux-release
+  export VCPKG_HOST_TRIPLET=x64-linux-release
+  export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
+elif [[ "$BUILD_PLATFORM" == "macos-arm64" ]]; then
+  export VCPKG_TARGET_TRIPLET=arm64-osx-release
+  export VCPKG_HOST_TRIPLET=arm64-osx-release
+  export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
+else
+  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux' or '--platform macos-arm64'."
+fi
 export VCPKG_FEATURE_FLAGS=manifests,binarycaching
 export CCACHE_DIR="${CCACHE_DIR:-$ROOT_DIR/.ccache}"
 export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-5G}"
@@ -289,9 +327,18 @@ else
   info "Compiler cache: unavailable"
 fi
 
+CMAKE_VCPKG_ARGS=(
+  -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET"
+  -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET"
+)
+if [[ -n "${VCPKG_OVERLAY_TRIPLETS:-}" ]]; then
+  CMAKE_VCPKG_ARGS+=(-DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS")
+fi
+
 info "Build directory: $BUILD_DIR"
 info "NuGet feed: $VCPKG_NUGET_FEED"
 info "Build mode: $BUILD_MODE"
+info "Build platform: $BUILD_PLATFORM"
 info "vcpkg binary sources: $VCPKG_BINARY_SOURCES"
 info "Compiler: $CLANG_VERSION"
 
@@ -306,9 +353,7 @@ cmake -B "$BUILD_DIR" -S "$ROOT_DIR" -G Ninja \
   -DCMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM" \
   -DCMAKE_TOOLCHAIN_FILE="$ROOT_DIR/vcpkg/scripts/buildsystems/vcpkg.cmake" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
-  -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
-  -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS" \
+  "${CMAKE_VCPKG_ARGS[@]}" \
   "${CMAKE_LAUNCHER_ARGS[@]}" 2>&1 | tee "$CONFIGURE_LOG"
 configure_status=${PIPESTATUS[0]}
 set -e
@@ -334,7 +379,7 @@ cmake --build "$BUILD_DIR" -- -j "$JOBS"
 
 if [[ "$RUN_TESTS" -eq 1 ]]; then
   info "Running tests"
-  ctest --test-dir "$BUILD_DIR/tests" -j "$JOBS" --output-on-failure
+  ctest --test-dir "$BUILD_DIR" -j "$JOBS" --output-on-failure
 fi
 
 info "Done"

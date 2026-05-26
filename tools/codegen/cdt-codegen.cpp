@@ -3,6 +3,7 @@
 #include <sysio/abimerge.hpp>
 #include <sysio/whereami/whereami.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <map>
 #include <set>
@@ -481,6 +482,9 @@ int main(int argc, const char** argv) {
             closedir(dir);
          }
       }
+
+      std::sort(desc_files.begin(), desc_files.end());
+      desc_files.erase(std::unique(desc_files.begin(), desc_files.end()), desc_files.end());
 
       ojson abi;
 

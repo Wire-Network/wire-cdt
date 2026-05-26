@@ -36,7 +36,7 @@ SYSIO_TEST_BEGIN(output_stream_push_overflow)
    std::string large_msg('x', initial_capacity + 1);
 
    _prints(large_msg.c_str(), sysio::cdt::output_stream_kind::std_err);
-   CHECK_EQUAL(std_err.to_string().capacity() > initial_capacity, true);
+   CHECK_EQUAL(std_err.to_string().capacity() >= large_msg.size(), true);
    CHECK_EQUAL(std_err.index(), large_msg.size());
 
    std_err.clear();

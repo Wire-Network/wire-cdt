@@ -27,9 +27,11 @@ include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-# Statically link C++ runtime for portable binaries
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+# Statically link C++ runtime for portable binaries where supported.
+if(NOT APPLE)
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+endif()
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(SYSIO_STACK_SIZE 8192)
@@ -82,12 +84,17 @@ foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy ll
    unset(_tool_path CACHE)
    find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
    if(_tool_path)
+      get_filename_component(_tool_real_path "${_tool_path}" REALPATH)
       if(IS_SYMLINK ${CMAKE_BINARY_DIR}/bin/${target})
          file(REMOVE ${CMAKE_BINARY_DIR}/bin/${target})
       endif()
-      file(COPY ${_tool_path}
+      file(COPY ${_tool_real_path}
          DESTINATION ${CMAKE_BINARY_DIR}/bin
          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+      get_filename_component(_tool_real_name "${_tool_real_path}" NAME)
+      if(NOT _tool_real_name STREQUAL target)
+         file(RENAME ${CMAKE_BINARY_DIR}/bin/${_tool_real_name} ${CMAKE_BINARY_DIR}/bin/${target})
+      endif()
    else()
       message(WARNING "LLVM tool '${target}' not found in ${LLVM_TOOLS_BINARY_DIR}")
    endif()

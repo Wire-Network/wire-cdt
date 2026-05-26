@@ -3,7 +3,10 @@ project(native LANGUAGES CXX ASM)
 if (NOT __APPLE)
    set(CRT_ASM elf_crt.s)
 else()
-   set(CRT_ASM macho_crt.s)
+   if (NOT CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+      message(FATAL_ERROR "Native macOS support requires Apple Silicon arm64")
+   endif()
+   set(CRT_ASM macho_arm64_crt.s)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-everything -allow-sse")
@@ -20,6 +23,13 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 message ( STATUS "Configuring SoftFloat" )
 set( C_DEFINES "-DSOFTFLOAT_FAST_INT64 -DSOFTFLOAT_ROUND_EVEN -DINLINE_LEVEL=5 -DSOFTFLOAT_FAST_DIV32TO16 -DSOFTFLOAT_FAST_DIV64TO32" )
 set( CMAKE_C_FLAGS " -Wall -Werror-implicit-function-declaration -Wno-conversion ${CMAKE_C_FLAGS} ${C_DEFINES}" )
+if (__APPLE)
+   set(SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/ARM-VFPv2")
+   set(SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-ARM-VFPv2-GCC")
+else()
+   set(SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/8086-SSE")
+   set(SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-x86_64-GCC")
+endif()
 set ( softfloat_sources
   softfloat/source/s_eq128.c
   softfloat/source/s_le128.c
@@ -52,24 +62,24 @@ set ( softfloat_sources
   softfloat/source/s_approxRecip32_1.c
   softfloat/source/s_approxRecipSqrt_1Ks.c
   softfloat/source/s_approxRecipSqrt32_1.c
-  softfloat/source/8086-SSE/softfloat_raiseFlags.c
-  softfloat/source/8086-SSE/s_f16UIToCommonNaN.c
-  softfloat/source/8086-SSE/s_commonNaNToF16UI.c
-  softfloat/source/8086-SSE/s_propagateNaNF16UI.c
-  softfloat/source/8086-SSE/s_f32UIToCommonNaN.c
-  softfloat/source/8086-SSE/s_commonNaNToF32UI.c
-  softfloat/source/8086-SSE/s_propagateNaNF32UI.c
-  softfloat/source/8086-SSE/s_f64UIToCommonNaN.c
-  softfloat/source/8086-SSE/s_commonNaNToF64UI.c
-  softfloat/source/8086-SSE/s_propagateNaNF64UI.c
-  softfloat/source/8086-SSE/extF80M_isSignalingNaN.c
-  softfloat/source/8086-SSE/s_extF80UIToCommonNaN.c
-  softfloat/source/8086-SSE/s_commonNaNToExtF80UI.c
-  softfloat/source/8086-SSE/s_propagateNaNExtF80UI.c
-  softfloat/source/8086-SSE/f128M_isSignalingNaN.c
-  softfloat/source/8086-SSE/s_f128UIToCommonNaN.c
-  softfloat/source/8086-SSE/s_commonNaNToF128UI.c
-  softfloat/source/8086-SSE/s_propagateNaNF128UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/softfloat_raiseFlags.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_f16UIToCommonNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_commonNaNToF16UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_propagateNaNF16UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_f32UIToCommonNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_commonNaNToF32UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_propagateNaNF32UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_f64UIToCommonNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_commonNaNToF64UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_propagateNaNF64UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/extF80M_isSignalingNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_extF80UIToCommonNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_commonNaNToExtF80UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_propagateNaNExtF80UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/f128M_isSignalingNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_f128UIToCommonNaN.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_commonNaNToF128UI.c
+  ${SOFTFLOAT_SPECIALIZE_DIR}/s_propagateNaNF128UI.c
   softfloat/source/s_roundToUI32.c
   softfloat/source/s_roundToUI64.c
   softfloat/source/s_roundToI32.c
@@ -326,15 +336,15 @@ set ( softfloat_sources
 )
 
 file ( GLOB softfloat_headers "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include/*.h"
-                              "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/build/Linux-x86_64-GCC/platform.h"
-                              "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/8086-SSE/specialize.h" )
+                              "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_PLATFORM_DIR}/platform.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}/specialize.h" )
 list( APPEND softfloat_sources ${softfloat_headers} )
 
 add_library ( sf STATIC ${softfloat_sources} )
-target_include_directories( sf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/8086-SSE" "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/build/Linux-x86_64-GCC" ${CMAKE_SOURCE_DIR})
+target_include_directories( sf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR})
 
 add_native_library ( native STATIC ${softfloat_sources} intrinsics.cpp crt.cpp ${CRT_ASM} )
-target_include_directories( native PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/8086-SSE" "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/build/Linux-x86_64-GCC" ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/sysiolib/capi ${CMAKE_SOURCE_DIR}/sysiolib/contracts ${CMAKE_SOURCE_DIR}/sysiolib/core)
+target_include_directories( native PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/sysiolib/capi ${CMAKE_SOURCE_DIR}/sysiolib/contracts ${CMAKE_SOURCE_DIR}/sysiolib/core)
 
 add_dependencies(native native_sysio)
 

@@ -12,6 +12,8 @@ set(WASMSDK_VERSION "@VERSION_FULL@")
 set(CMAKE_C_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cc")
 set(CMAKE_CXX_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cpp")
 set(CMAKE_ASM_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cc")
+set(CMAKE_AR "@CDT_ROOT_DIR@/bin/cdt-ar")
+set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
 set(CMAKE_C_FLAGS "-Os")
 set(CMAKE_CXX_FLAGS "-Os")
