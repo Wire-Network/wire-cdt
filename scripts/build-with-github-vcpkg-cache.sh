@@ -311,6 +311,7 @@ else
       --password "$GITHUB_TOKEN" \
       --store-password-in-clear-text \
       --valid-authentication-types basic
+    export NuGetPackageSourceCredentials_github="Username=$GITHUB_USER;Password=$GITHUB_TOKEN;ValidAuthenticationTypes=Basic"
   elif [[ "$WIRE_CDT_NUGET_TOOL" == "mono" ]]; then
     if [[ "$(uname -s)" == "Darwin" ]]; then
       require_command mono "Install dotnet or Mono with Homebrew:
