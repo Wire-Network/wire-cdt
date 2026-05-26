@@ -25,8 +25,7 @@ ____putc:
 
 __mmap:
    mov x0, #0
-   movz x1, #0
-   movk x1, #0x64, lsl #32
+   movz x1, #0x640, lsl #16
    mov x2, #3
    mov x3, #0x1002
    mov x4, #-1
