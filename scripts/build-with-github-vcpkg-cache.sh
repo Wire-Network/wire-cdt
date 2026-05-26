@@ -311,7 +311,6 @@ else
       --password "$GITHUB_TOKEN" \
       --store-password-in-clear-text \
       --valid-authentication-types basic
-    dotnet nuget setapikey "$GITHUB_TOKEN" --source "$VCPKG_NUGET_FEED"
   elif [[ "$WIRE_CDT_NUGET_TOOL" == "mono" ]]; then
     if [[ "$(uname -s)" == "Darwin" ]]; then
       require_command mono "Install dotnet or Mono with Homebrew:
