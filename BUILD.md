@@ -326,7 +326,7 @@ cmake -B build -S . -G Ninja \
 ## Build
 
 ```bash
-cmake --build build -- -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu)"
+cmake --build build
 ```
 
 Wire CDT is a large build. If the machine runs out of memory, retry with fewer jobs:
@@ -338,7 +338,8 @@ cmake --build build -- -j 4
 ## Test
 
 ```bash
-ctest --test-dir build -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu)" --output-on-failure
+JOBS="$(sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN)"
+ctest --test-dir build -j "$JOBS" --output-on-failure
 ```
 
 ## Optional: Enable Integration Tests
