@@ -303,15 +303,19 @@ else
     require_command dotnet "Install dotnet, or use the Mono-backed NuGet path:
   brew install dotnet
   WIRE_CDT_NUGET_TOOL=mono $0"
+    mkdir -p "$BUILD_DIR"
+    NUGET_CONFIG="$BUILD_DIR/NuGet.config"
     info "Using dotnet CLI to configure NuGet source"
-    dotnet nuget remove source github >/dev/null 2>&1 || true
+    dotnet nuget remove source github --configfile "$NUGET_CONFIG" >/dev/null 2>&1 || true
     dotnet nuget add source "$VCPKG_NUGET_FEED" \
+      --configfile "$NUGET_CONFIG" \
       --name github \
       --username "$GITHUB_USER" \
       --password "$GITHUB_TOKEN" \
       --store-password-in-clear-text \
       --valid-authentication-types basic
-    export NuGetPackageSourceCredentials_github="Username=$GITHUB_USER;Password=$GITHUB_TOKEN;ValidAuthenticationTypes=Basic"
+    VCPKG_NUGET_SOURCE_KIND="nugetconfig"
+    VCPKG_NUGET_SOURCE_VALUE="$NUGET_CONFIG"
   elif [[ "$WIRE_CDT_NUGET_TOOL" == "mono" ]]; then
     if [[ "$(uname -s)" == "Darwin" ]]; then
       require_command mono "Install dotnet or Mono with Homebrew:
@@ -337,14 +341,16 @@ else
       -Password "$GITHUB_TOKEN" \
       -StorePasswordInClearText >/dev/null
     mono "$NUGET_EXE" setapikey "$GITHUB_TOKEN" -Source "$VCPKG_NUGET_FEED" >/dev/null
+    VCPKG_NUGET_SOURCE_KIND="nuget"
+    VCPKG_NUGET_SOURCE_VALUE="$VCPKG_NUGET_FEED"
   else
     fail "Unsupported NuGet tool '$WIRE_CDT_NUGET_TOOL'." "Use:\n  WIRE_CDT_NUGET_TOOL=mono $0\nor:\n  WIRE_CDT_NUGET_TOOL=dotnet $0"
   fi
 
   if [[ "$BUILD_MODE" == "developer" ]]; then
-    export VCPKG_BINARY_SOURCES="clear;nuget,$VCPKG_NUGET_FEED,read"
+    export VCPKG_BINARY_SOURCES="clear;$VCPKG_NUGET_SOURCE_KIND,$VCPKG_NUGET_SOURCE_VALUE,read"
   else
-    export VCPKG_BINARY_SOURCES="clear;nuget,$VCPKG_NUGET_FEED,readwrite"
+    export VCPKG_BINARY_SOURCES="clear;$VCPKG_NUGET_SOURCE_KIND,$VCPKG_NUGET_SOURCE_VALUE,readwrite"
   fi
 fi
 
