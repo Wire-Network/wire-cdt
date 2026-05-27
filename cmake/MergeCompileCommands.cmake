@@ -1,8 +1,8 @@
 # MergeCompileCommands.cmake
 #
-# Creates a custom target that merges compile_commands.json files into a single
-# database at the root build directory so that IDEs (CLion, clangd) can navigate
-# all sources. Host tools are part of the parent build; wasm libraries and tests
+# Merges compile_commands.json files into the root build directory's standard
+# compile_commands.json so IDEs (CLion, clangd) can discover it automatically.
+# Host tools are part of the parent compile database; wasm libraries and tests
 # are still ExternalProject builds with their own compile databases.
 
 set(_merge_script "${CMAKE_SOURCE_DIR}/cmake/scripts/merge_compile_commands.py")

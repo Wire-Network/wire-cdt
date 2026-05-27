@@ -32,6 +32,7 @@ target_link_libraries(cdt-protoc-gen-zpp PRIVATE protobuf::libprotoc protobuf::l
 add_custom_command(TARGET cdt-protoc-gen-zpp POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cdt-protoc-gen-zpp> ${CDT_TOOLS_BIN_DIR}/
 )
+cdt_register_tool_target(cdt-protoc-gen-zpp)
 
 # Also install protoc from vcpkg into CDT bin/ as cdt-protoc
 add_custom_command(TARGET cdt-protoc-gen-zpp POST_BUILD
