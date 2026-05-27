@@ -304,7 +304,7 @@ else
   brew install dotnet
   WIRE_CDT_NUGET_TOOL=mono $0"
     mkdir -p "$BUILD_DIR"
-    NUGET_CONFIG="$BUILD_DIR/NuGet.config"
+    NUGET_CONFIG="$(cd "$BUILD_DIR" && pwd)/NuGet.config"
     printf '<configuration>\n  <packageSources />\n</configuration>\n' > "$NUGET_CONFIG"
     info "Using dotnet CLI to configure NuGet source"
     dotnet nuget remove source github --configfile "$NUGET_CONFIG" >/dev/null 2>&1 || true
