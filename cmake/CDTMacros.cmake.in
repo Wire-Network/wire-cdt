@@ -226,9 +226,8 @@ function(add_native_contract)
     PREFIX ""
     SUFFIX ".so"
     OUTPUT_NAME "${ARG_TARGET}"
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED YES
   )
+  target_compile_features(${ARG_TARGET} PRIVATE cxx_std_17)
 
   # CDT include paths — we intentionally exclude the native/ directory because
   # it contains CDT's own intrinsic dispatch headers (intrinsics.hpp, crt.hpp)
