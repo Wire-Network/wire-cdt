@@ -1,0 +1,72 @@
+name: "Build & Test macOS"
+
+on:
+  push:
+    branches:
+      - master
+      - "release/*"
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-macos:
+    name: Build & Test macOS Arm64
+    env:
+      VCPKG_NUGET_FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install ccache dotnet mono ninja
+      - name: Cache ccache
+        uses: actions/cache@v5
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-macos-arm64-ccache-
+      - name: Cache vcpkg downloads and tool archives
+        uses: actions/cache@v5
+        with:
+          path: |
+            vcpkg/downloads
+            ~/.cache/vcpkg/archives
+          key: ${{ runner.os }}-macos-arm64-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+          restore-keys: |
+            ${{ runner.os }}-macos-arm64-vcpkg-downloads-
+      - name: Build and test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_USER: ${{ github.repository_owner }}
+        run: |
+          if [[ "$(uname -m)" != "arm64" ]]; then
+            echo "macOS native support is Apple Silicon only; runner is $(uname -m)." >&2
+            exit 1
+          fi
+
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            echo "Using local-only vcpkg binary cache for fork pull request."
+            BUILD_MODE=forked-pr-ci
+          else
+            echo "Using GitHub Packages vcpkg binary cache in readwrite mode."
+            BUILD_MODE=trusted-ci
+          fi
+
+          scripts/build-with-github-vcpkg-cache.sh \
+            --mode "$BUILD_MODE" \
+            --platform macos-arm64 \
+            --build-dir build-macos-arm64
