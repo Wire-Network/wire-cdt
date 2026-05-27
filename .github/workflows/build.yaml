@@ -88,7 +88,7 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-
-        - name: Build and test
+        - name: Build
           env:
             GITHUB_TOKEN: ${{ github.token }}
             GITHUB_USER: ${{ github.repository_owner }}
@@ -104,6 +104,14 @@ jobs:
             scripts/build-with-github-vcpkg-cache.sh \
               --mode "$BUILD_MODE" \
               --build-dir build
+        - name: Test
+          run: |
+            TEST_COUNT="$(ctest --test-dir build -N | sed -nE 's/^Total Tests:[[:space:]]*([0-9]+).*/\1/p' | tail -n 1)"
+            if [[ -z "$TEST_COUNT" || "$TEST_COUNT" -eq 0 ]]; then
+              echo "CTest discovered no tests in build." >&2
+              exit 1
+            fi
+            ctest --test-dir build -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
   notification:
     name: Send Notification
     needs: [discover, build-platforms, build]

@@ -25,6 +25,7 @@ ____putc:
 
 __mmap:
    mov x0, #0
+   // 100 MiB initial WASM linear memory size.
    movz x1, #0x640, lsl #16
    mov x2, #3
    mov x3, #0x1002

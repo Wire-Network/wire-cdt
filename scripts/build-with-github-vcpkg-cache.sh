@@ -6,10 +6,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/build}"
 DEFAULT_JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
 JOBS="${JOBS:-$DEFAULT_JOBS}"
-RUN_TESTS=1
 NEEDS_CI_OWNERSHIP_FIX=0
 BUILD_MODE="${WIRE_CDT_BUILD_MODE:-developer}"
-BUILD_PLATFORM="${WIRE_CDT_BUILD_PLATFORM:-linux}"
+HOST_PLATFORM="$(uname -s):$(uname -m)"
+case "$HOST_PLATFORM" in
+  Linux:x86_64) DEFAULT_BUILD_PLATFORM="linux-x86-64" ;;
+  Darwin:arm64) DEFAULT_BUILD_PLATFORM="macos-arm64" ;;
+  *) DEFAULT_BUILD_PLATFORM="" ;;
+esac
+BUILD_PLATFORM="${WIRE_CDT_BUILD_PLATFORM:-$DEFAULT_BUILD_PLATFORM}"
 VCPKG_BINARY_SOURCES=""
 VCPKG_NUGET_FEED="${VCPKG_NUGET_FEED:-https://nuget.pkg.github.com/Wire-Network/index.json}"
 WIRE_CDT_NUGET_TOOL="${WIRE_CDT_NUGET_TOOL:-dotnet}"
@@ -24,11 +29,10 @@ Build Wire CDT with the GitHub Packages vcpkg NuGet binary cache.
 
 Options:
   --build-dir DIR       CMake build directory. Default: $BUILD_DIR
-  --jobs N             Parallel build/test jobs. Default: $JOBS
-  --skip-tests         Configure and build only.
+  --jobs N             Parallel build jobs. Default: $JOBS
   --mode MODE          Build mode: developer, trusted-ci, or forked-pr-ci.
                        Default: $BUILD_MODE
-  --platform PLATFORM  Build platform: linux or macos-arm64. Default: $BUILD_PLATFORM
+  --platform PLATFORM  Build platform: linux-x86-64 or macos-arm64. Default: $BUILD_PLATFORM
   -h, --help           Show this help.
 
 Environment:
@@ -75,17 +79,13 @@ while [[ $# -gt 0 ]]; do
       JOBS="$2"
       shift 2
       ;;
-    --skip-tests)
-      RUN_TESTS=0
-      shift
-      ;;
     --mode)
       [[ $# -ge 2 ]] || fail "--mode requires a value." "Use '--mode developer', '--mode trusted-ci', or '--mode forked-pr-ci'."
       BUILD_MODE="$2"
       shift 2
       ;;
     --platform)
-      [[ $# -ge 2 ]] || fail "--platform requires a value." "Use '--platform linux' or '--platform macos-arm64'."
+      [[ $# -ge 2 ]] || fail "--platform requires a value." "Use '--platform linux-x86-64' or '--platform macos-arm64'."
       BUILD_PLATFORM="$2"
       shift 2
       ;;
@@ -103,8 +103,12 @@ if [[ "$BUILD_MODE" != "developer" && "$BUILD_MODE" != "trusted-ci" && "$BUILD_M
   fail "Unsupported build mode '$BUILD_MODE'." "Use '--mode developer' for local builds, '--mode trusted-ci' for trusted GitHub Actions runs, or '--mode forked-pr-ci' for fork pull requests."
 fi
 
-if [[ "$BUILD_PLATFORM" != "linux" && "$BUILD_PLATFORM" != "macos-arm64" ]]; then
-  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux' or '--platform macos-arm64'."
+if [[ -z "$BUILD_PLATFORM" ]]; then
+  fail "Unsupported host platform '$HOST_PLATFORM'." "Use an x86_64 Linux host or Apple Silicon Mac, or pass '--platform linux-x86-64' or '--platform macos-arm64' from a matching environment."
+fi
+
+if [[ "$BUILD_PLATFORM" != "linux-x86-64" && "$BUILD_PLATFORM" != "macos-arm64" ]]; then
+  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux-x86-64' or '--platform macos-arm64'."
 fi
 
 if [[ "$BUILD_MODE" == "trusted-ci" || "$BUILD_MODE" == "forked-pr-ci" ]]; then
@@ -162,7 +166,7 @@ else
   sudo apt-get install -y git"
 fi
 
-if [[ "$BUILD_PLATFORM" == "linux" ]]; then
+if [[ "$BUILD_PLATFORM" == "linux-x86-64" ]]; then
   CI_DOCKERFILE_REL="$(python3 - "$PLATFORM_FILE" "$CI_PLATFORM" <<'PY'
 import json
 import sys
@@ -231,7 +235,7 @@ elif [[ "$BUILD_PLATFORM" == "macos-arm64" ]]; then
   CLANG_BIN="$(xcrun --find clang)"
   CLANGXX_BIN="$(xcrun --find clang++)"
 else
-  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux' or '--platform macos-arm64'."
+  fail "Unsupported build platform '$BUILD_PLATFORM'." "Use '--platform linux-x86-64' or '--platform macos-arm64'."
 fi
 
 # In CI modes, GITHUB_TOKEN is injected directly; the GitHub CLI is only needed
@@ -259,7 +263,7 @@ if [[ ! -x "$ROOT_DIR/vcpkg/vcpkg" ]]; then
 fi
 
 CLANG_VERSION="$("$CLANG_BIN" --version | head -n 1)"
-if [[ "$BUILD_PLATFORM" == "linux" ]]; then
+if [[ "$BUILD_PLATFORM" == "linux-x86-64" ]]; then
   if [[ "$CLANG_VERSION" != *"$LLVM_MAJOR."* ]]; then
     fail "$CLANG_BIN does not report LLVM major version $LLVM_MAJOR. Found: $CLANG_VERSION" "Install Clang $LLVM_MAJOR from the LLVM repository used by CI:\n  sudo wget -qO /etc/apt/trusted.gpg.d/apt.llvm.org.asc https://apt.llvm.org/llvm-snapshot.gpg.key\n  echo '$EXPECTED_LLVM_APT_REPO' | sudo tee /etc/apt/sources.list.d/llvm-toolchain-${EXPECTED_UBUNTU_CODENAME}-${LLVM_MAJOR}.list\n  sudo apt-get update\n  sudo apt-get install -y clang-$LLVM_MAJOR clang-tools-$LLVM_MAJOR lld-$LLVM_MAJOR llvm-$LLVM_MAJOR llvm-$LLVM_MAJOR-dev llvm-$LLVM_MAJOR-tools"
   fi
@@ -358,7 +362,7 @@ fi
 export CC="$CLANG_BIN"
 export CXX="$CLANGXX_BIN"
 export CMAKE_MAKE_PROGRAM="${CMAKE_MAKE_PROGRAM:-$(command -v ninja)}"
-if [[ "$BUILD_PLATFORM" == "linux" ]]; then
+if [[ "$BUILD_PLATFORM" == "linux-x86-64" ]]; then
   export VCPKG_TARGET_TRIPLET=x64-linux-release
   export VCPKG_HOST_TRIPLET=x64-linux-release
   export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
@@ -422,7 +426,7 @@ if [[ "$configure_status" -ne 0 ]]; then
   if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then
     fail "CMake configure failed because no matching vcpkg packages were restored from NuGet." "The GitHub NuGet cache is reachable, but this host's vcpkg ABI does not match the cached CI ABI. Check the compiler line above, then use the same Xcode/Command Line Tools version as CI, or let trusted CI create packages for this host ABI."
   fi
-  fail "CMake configure failed." "Review $CONFIGURE_LOG. Common fixes:\n  sudo apt-get install -y dotnet-sdk-8.0 ninja-build cmake\n  gh auth refresh -h github.com -s read:packages\n  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
+  fail "CMake configure failed." "Review $CONFIGURE_LOG. Common fixes:\n  sudo apt-get install -y dotnet-sdk-8.0 mono-complete ninja-build cmake\n  gh auth refresh -h github.com -s read:packages\n  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
 fi
 
 if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then
@@ -439,10 +443,5 @@ fi
 
 info "Building"
 cmake --build "$BUILD_DIR" -- -j "$JOBS"
-
-if [[ "$RUN_TESTS" -eq 1 ]]; then
-  info "Running tests"
-  ctest --test-dir "$BUILD_DIR" -j "$JOBS" --output-on-failure
-fi
 
 info "Done"
