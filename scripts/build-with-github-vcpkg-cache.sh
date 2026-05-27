@@ -422,7 +422,7 @@ if [[ "$configure_status" -ne 0 ]]; then
   if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then
     fail "CMake configure failed because no matching vcpkg packages were restored from NuGet." "The GitHub NuGet cache is reachable, but this host's vcpkg ABI does not match the cached CI ABI. Check the compiler line above, then use the same Xcode/Command Line Tools version as CI, or let trusted CI create packages for this host ABI."
   fi
-  fail "CMake configure failed." "Review $CONFIGURE_LOG. Common fixes:\n  sudo apt-get install -y mono-complete ninja-build cmake\n  gh auth refresh -h github.com -s read:packages\n  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
+  fail "CMake configure failed." "Review $CONFIGURE_LOG. Common fixes:\n  sudo apt-get install -y dotnet-sdk-8.0 ninja-build cmake\n  gh auth refresh -h github.com -s read:packages\n  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
 fi
 
 if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then
