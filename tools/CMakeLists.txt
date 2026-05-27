@@ -82,12 +82,17 @@ foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy ll
    unset(_tool_path CACHE)
    find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
    if(_tool_path)
-      if(IS_SYMLINK ${CMAKE_BINARY_DIR}/bin/${target})
-         file(REMOVE ${CMAKE_BINARY_DIR}/bin/${target})
+      get_filename_component(_real_tool_path "${_tool_path}" REALPATH)
+      set(_staged_tool_path "${CMAKE_BINARY_DIR}/bin/${target}")
+      if(EXISTS "${_staged_tool_path}" OR IS_SYMLINK "${_staged_tool_path}")
+         file(REMOVE "${_staged_tool_path}")
       endif()
-      file(COPY ${_tool_path}
-         DESTINATION ${CMAKE_BINARY_DIR}/bin
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+      execute_process(
+         COMMAND ${CMAKE_COMMAND} -E copy "${_real_tool_path}" "${_staged_tool_path}"
+         RESULT_VARIABLE _copy_result)
+      if(NOT _copy_result EQUAL 0)
+         message(FATAL_ERROR "Failed to stage LLVM tool '${target}' from '${_real_tool_path}' to '${_staged_tool_path}'")
+      endif()
    else()
       message(WARNING "LLVM tool '${target}' not found in ${LLVM_TOOLS_BINARY_DIR}")
    endif()
