@@ -9,9 +9,16 @@ endmacro( cdt_tool_install )
 macro( cdt_tool_install_and_symlink file symlink )
    set(BINARY_DIR ${CMAKE_BINARY_DIR}/tools/bin)
    add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/${file} ${CMAKE_BINARY_DIR}/bin/ )
+   if(NOT "${file}" STREQUAL "${symlink}")
+      add_custom_command( TARGET CDTTools POST_BUILD
+         COMMAND ${CMAKE_COMMAND} -E create_symlink ${file} ${CMAKE_BINARY_DIR}/bin/${symlink} )
+   endif()
    install(FILES ${BINARY_DIR}/${file}
       DESTINATION ${CDT_INSTALL_PREFIX}/bin
       PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+   if(NOT "${file}" STREQUAL "${symlink}")
+      install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink \"${file}\" \"\$ENV{DESTDIR}${CDT_INSTALL_PREFIX}/bin/${symlink}\")")
+   endif()
 endmacro( cdt_tool_install_and_symlink )
 
 macro( cdt_cmake_install_and_symlink file symlink )

@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 3.15)
 project(cdt_tools)
+
+set(CDT_TOOLS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(CDT_TOOLS_BIN_DIR "${CDT_TOOLS_BINARY_DIR}/bin")
+set_property(GLOBAL PROPERTY CDT_TOOLS_TARGETS "")
 
 find_package(LLVM 18.1 CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -30,20 +33,27 @@ add_definitions(${LLVM_DEFINITIONS})
 # Statically link C++ runtime for portable binaries
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+file(MAKE_DIRECTORY ${CDT_TOOLS_BIN_DIR})
 
 set(SYSIO_STACK_SIZE 8192)
+function(cdt_register_tool_target name)
+   if(TARGET ${name})
+      set_property(GLOBAL APPEND PROPERTY CDT_TOOLS_TARGETS ${name})
+   else()
+      message(WARNING "Cannot register missing CDT tool target '${name}'")
+   endif()
+endfunction()
 
 macro (add_tool name)
    set(LLVM_LINK_COMPONENTS support)
 
    include_directories(include)
 
-   add_executable(${name} ${CMAKE_BINARY_DIR}/${name}.cpp)
+   add_executable(${name} ${CDT_TOOLS_BINARY_DIR}/${name}.cpp)
    set_property(TARGET ${name} PROPERTY CXX_STANDARD 23)
    target_compile_options(${name} PRIVATE -fexceptions -fno-rtti)
    target_include_directories(${name} PUBLIC
-      ${CMAKE_BINARY_DIR}
+      ${CDT_TOOLS_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/../include
       ${LLVM_INCLUDE_DIRS}
@@ -56,7 +66,8 @@ macro (add_tool name)
      LLVMSupport
    )
 
-   add_custom_command( TARGET ${name} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${name}> ${CMAKE_BINARY_DIR}/bin/ )
+   add_custom_command( TARGET ${name} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${name}> ${CDT_TOOLS_BIN_DIR}/ )
+   cdt_register_tool_target(${name})
 endmacro()
 
 # Build plugins (sysio_attrs and sysio_codegen)
@@ -72,28 +83,35 @@ add_subdirectory(init)
 add_subdirectory(external)
 add_subdirectory(protoc-gen-zpp)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CMAKE_BINARY_DIR}/compiler_options.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CDT_TOOLS_BINARY_DIR}/compiler_options.hpp)
 
-# Stage the LLVM host tools in the bin directory at configure time. Copying these
-# large binaries makes fresh CMake runs slower, but it keeps install() simple and
-# ensures the install tree contains real files instead of symlinks back into the
-# build directory.
+# Stage the LLVM host tools in the bin directory as build outputs. `ninja clean`
+# removes tools/bin, so Ninja must own these copies instead of relying on a
+# configure-time side effect.
+set(_cdt_llvm_tool_outputs "")
 foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy llvm-objdump llvm-readobj llvm-readelf llvm-strip opt llc lld ld.lld)
    unset(_tool_path CACHE)
    find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
    if(_tool_path)
       get_filename_component(_real_tool_path "${_tool_path}" REALPATH)
-      set(_staged_tool_path "${CMAKE_BINARY_DIR}/bin/${target}")
-      if(EXISTS "${_staged_tool_path}" OR IS_SYMLINK "${_staged_tool_path}")
-         file(REMOVE "${_staged_tool_path}")
-      endif()
-      execute_process(
+      set(_staged_tool_path "${CDT_TOOLS_BIN_DIR}/${target}")
+      add_custom_command(
+         OUTPUT "${_staged_tool_path}"
+         COMMAND ${CMAKE_COMMAND} -E make_directory "${CDT_TOOLS_BIN_DIR}"
          COMMAND ${CMAKE_COMMAND} -E copy "${_real_tool_path}" "${_staged_tool_path}"
-         RESULT_VARIABLE _copy_result)
-      if(NOT _copy_result EQUAL 0)
-         message(FATAL_ERROR "Failed to stage LLVM tool '${target}' from '${_real_tool_path}' to '${_staged_tool_path}'")
-      endif()
+         DEPENDS "${_real_tool_path}"
+         COMMENT "Staging LLVM tool ${target}"
+         VERBATIM)
+      list(APPEND _cdt_llvm_tool_outputs "${_staged_tool_path}")
    else()
       message(WARNING "LLVM tool '${target}' not found in ${LLVM_TOOLS_BINARY_DIR}")
    endif()
 endforeach()
+
+if(_cdt_llvm_tool_outputs)
+   add_custom_target(cdt_llvm_tools DEPENDS ${_cdt_llvm_tool_outputs})
+   cdt_register_tool_target(cdt_llvm_tools)
+endif()
+
+get_property(CDT_TOOLS_TARGETS GLOBAL PROPERTY CDT_TOOLS_TARGETS)
+set(CDT_TOOLS_TARGETS ${CDT_TOOLS_TARGETS} PARENT_SCOPE)
