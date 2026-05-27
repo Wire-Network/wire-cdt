@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(cdt_tools)
 
+set(CDT_TOOLS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(CDT_TOOLS_BIN_DIR "${CDT_TOOLS_BINARY_DIR}/bin")
+
 find_package(LLVM 18.1 CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -30,7 +33,7 @@ add_definitions(${LLVM_DEFINITIONS})
 # Statically link C++ runtime for portable binaries
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+file(MAKE_DIRECTORY ${CDT_TOOLS_BIN_DIR})
 
 set(SYSIO_STACK_SIZE 8192)
 
@@ -39,11 +42,11 @@ macro (add_tool name)
 
    include_directories(include)
 
-   add_executable(${name} ${CMAKE_BINARY_DIR}/${name}.cpp)
+   add_executable(${name} ${CDT_TOOLS_BINARY_DIR}/${name}.cpp)
    set_property(TARGET ${name} PROPERTY CXX_STANDARD 23)
    target_compile_options(${name} PRIVATE -fexceptions -fno-rtti)
    target_include_directories(${name} PUBLIC
-      ${CMAKE_BINARY_DIR}
+      ${CDT_TOOLS_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/../include
       ${LLVM_INCLUDE_DIRS}
@@ -56,7 +59,7 @@ macro (add_tool name)
      LLVMSupport
    )
 
-   add_custom_command( TARGET ${name} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${name}> ${CMAKE_BINARY_DIR}/bin/ )
+   add_custom_command( TARGET ${name} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${name}> ${CDT_TOOLS_BIN_DIR}/ )
 endmacro()
 
 # Build plugins (sysio_attrs and sysio_codegen)
@@ -72,7 +75,7 @@ add_subdirectory(init)
 add_subdirectory(external)
 add_subdirectory(protoc-gen-zpp)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CMAKE_BINARY_DIR}/compiler_options.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CDT_TOOLS_BINARY_DIR}/compiler_options.hpp)
 
 # Stage the LLVM host tools in the bin directory at configure time. Copying these
 # large binaries makes fresh CMake runs slower, but it keeps install() simple and
@@ -82,13 +85,39 @@ foreach(target clang clang++ wasm-ld llvm-ar llvm-ranlib llvm-nm llvm-objcopy ll
    unset(_tool_path CACHE)
    find_program(_tool_path ${target} HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
    if(_tool_path)
-      if(IS_SYMLINK ${CMAKE_BINARY_DIR}/bin/${target})
-         file(REMOVE ${CMAKE_BINARY_DIR}/bin/${target})
+      get_filename_component(_real_tool_path "${_tool_path}" REALPATH)
+      set(_staged_tool_path "${CDT_TOOLS_BIN_DIR}/${target}")
+      if(EXISTS "${_staged_tool_path}" OR IS_SYMLINK "${_staged_tool_path}")
+         file(REMOVE "${_staged_tool_path}")
       endif()
-      file(COPY ${_tool_path}
-         DESTINATION ${CMAKE_BINARY_DIR}/bin
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+      execute_process(
+         COMMAND ${CMAKE_COMMAND} -E copy "${_real_tool_path}" "${_staged_tool_path}"
+         RESULT_VARIABLE _copy_result)
+      if(NOT _copy_result EQUAL 0)
+         message(FATAL_ERROR "Failed to stage LLVM tool '${target}' from '${_real_tool_path}' to '${_staged_tool_path}'")
+      endif()
    else()
       message(WARNING "LLVM tool '${target}' not found in ${LLVM_TOOLS_BINARY_DIR}")
    endif()
 endforeach()
+
+set(_cdt_tools_targets
+   cdt-abidiff
+   cdt-cc
+   cdt-codegen
+   cdt-cpp
+   cdt-init
+   cdt-ld
+   cdt-protoc-gen-zpp
+   sysio-pp
+   sysio-wasm2wast
+   sysio-wast2wasm
+   sysio_attrs
+   sysio_codegen
+)
+foreach(_target IN LISTS _cdt_tools_targets)
+   if(NOT TARGET ${_target})
+      list(REMOVE_ITEM _cdt_tools_targets ${_target})
+   endif()
+endforeach()
+set(CDT_TOOLS_TARGETS ${_cdt_tools_targets} PARENT_SCOPE)

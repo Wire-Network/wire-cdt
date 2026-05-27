@@ -299,21 +299,21 @@ if (NOT EMSCRIPTEN)
     )
   endfunction()
   wabt_executable(sysio-pp src/tools/postpass.cc)
-  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-pp> ${CMAKE_BINARY_DIR}/bin/ )
+  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND mkdir -p ${CDT_TOOLS_BIN_DIR} )
+  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-pp> ${CDT_TOOLS_BIN_DIR}/ )
 
   # wat2wasm
   wabt_executable(sysio-wast2wasm src/tools/wat2wasm.cc)
-  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wast2wasm> ${CMAKE_BINARY_DIR}/bin/ )
+  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND mkdir -p ${CDT_TOOLS_BIN_DIR} )
+  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wast2wasm> ${CDT_TOOLS_BIN_DIR}/ )
 
   # wast2json
   wabt_executable(wast2json src/tools/wast2json.cc)
 
   # wasm2wat
   wabt_executable(sysio-wasm2wast src/tools/wasm2wat.cc)
-  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wasm2wast> ${CMAKE_BINARY_DIR}/bin/ )
+  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND mkdir -p ${CDT_TOOLS_BIN_DIR} )
+  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wasm2wast> ${CDT_TOOLS_BIN_DIR}/ )
 
   # wasm2c
   wabt_executable(wasm2c

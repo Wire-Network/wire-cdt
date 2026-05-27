@@ -19,5 +19,5 @@ target_include_directories(cdt-codegen SYSTEM PRIVATE
 target_link_libraries(cdt-codegen PRIVATE LLVMSupport protobuf::libprotobuf)
 
 add_custom_command(TARGET cdt-codegen POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cdt-codegen> ${CMAKE_BINARY_DIR}/bin/
+   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cdt-codegen> ${CDT_TOOLS_BIN_DIR}/
 )

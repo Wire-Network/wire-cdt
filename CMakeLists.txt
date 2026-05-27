@@ -46,7 +46,7 @@ if(NOT LIBS_BUILD_TYPE)
    set(LIBS_BUILD_TYPE "Release")
 endif()
 
-include(cmake/ToolsExternalProject.cmake)
+include(cmake/Tools.cmake)
 
 set(WASM_SDK_BUILD true)
 

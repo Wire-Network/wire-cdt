@@ -9,7 +9,7 @@ function(add_clang_plugin name src)
   endif()
 
   set_target_properties(${name} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    LIBRARY_OUTPUT_DIRECTORY ${CDT_TOOLS_BIN_DIR})
 
   if(APPLE)
     target_link_libraries(${name} PUBLIC clang-cpp)
