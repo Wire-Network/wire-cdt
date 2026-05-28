@@ -187,7 +187,7 @@ struct zpp_generator {
 
    void generate_enum(const gpb::EnumDescriptor* descriptor, std::stringstream& strm, std::string indent = "") {
       auto name = reserve_keyword(sv2s(descriptor->name()));
-      strm << indent << "enum " << name << " : int {\n";
+      strm << indent << "enum " << name << " : int64_t {\n";
       int min_value = descriptor->value(0)->number();
       int max_value = descriptor->value(0)->number();
 
@@ -223,7 +223,7 @@ struct zpp_generator {
       bool can_be_optional = true;
 
       switch (descriptor->type()) {
-      case gpb::FieldDescriptor::TYPE_INT32: result = "zpp::bits::vint32_t"; break;
+      case gpb::FieldDescriptor::TYPE_INT32: result = "zpp::bits::vint64_t"; break;
       case gpb::FieldDescriptor::TYPE_INT64: result = "zpp::bits::vint64_t"; break;
       case gpb::FieldDescriptor::TYPE_UINT32: result = "zpp::bits::vuint32_t"; break;
       case gpb::FieldDescriptor::TYPE_UINT64: result = "zpp::bits::vuint64_t"; break;
