@@ -371,6 +371,7 @@ else
   export VCPKG_HOST_TRIPLET=arm64-osx-release
   export VCPKG_OVERLAY_TRIPLETS="$ROOT_DIR/.github/vcpkg-triplets"
 fi
+
 export VCPKG_FEATURE_FLAGS=manifests,binarycaching
 export CCACHE_DIR="${CCACHE_DIR:-$ROOT_DIR/.ccache}"
 export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-5G}"
@@ -407,6 +408,17 @@ info "vcpkg binary sources: $VCPKG_BINARY_SOURCES"
 info "Compiler: $CLANG_VERSION"
 
 CONFIGURE_LOG="$BUILD_DIR/vcpkg-nuget-configure.log"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  CONFIGURE_FAILURE_HINT="Review $CONFIGURE_LOG. Common fixes:
+  brew install dotnet mono ninja cmake
+  gh auth refresh -h github.com -s read:packages
+  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
+else
+  CONFIGURE_FAILURE_HINT="Review $CONFIGURE_LOG. Common fixes:
+  sudo apt-get install -y dotnet-sdk-8.0 mono-complete ninja-build cmake
+  gh auth refresh -h github.com -s read:packages
+  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
+fi
 mkdir -p "$BUILD_DIR"
 
 info "Configuring CMake"
@@ -426,7 +438,7 @@ if [[ "$configure_status" -ne 0 ]]; then
   if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then
     fail "CMake configure failed because no matching vcpkg packages were restored from NuGet." "The GitHub NuGet cache is reachable, but this host's vcpkg ABI does not match the cached CI ABI. Check the compiler line above, then use the same Xcode/Command Line Tools version as CI, or let trusted CI create packages for this host ABI."
   fi
-  fail "CMake configure failed." "Review $CONFIGURE_LOG. Common fixes:\n  sudo apt-get install -y dotnet-sdk-8.0 mono-complete ninja-build cmake\n  gh auth refresh -h github.com -s read:packages\n  rm -rf '$BUILD_DIR' and rerun this script after changing compilers or triplets."
+  fail "CMake configure failed." "$CONFIGURE_FAILURE_HINT"
 fi
 
 if grep -q "Restored 0 package(s) from NuGet" "$CONFIGURE_LOG"; then

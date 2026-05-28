@@ -23,19 +23,13 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 message ( STATUS "Configuring SoftFloat" )
 set( C_DEFINES "-DSOFTFLOAT_FAST_INT64 -DSOFTFLOAT_ROUND_EVEN -DINLINE_LEVEL=5 -DSOFTFLOAT_FAST_DIV32TO16 -DSOFTFLOAT_FAST_DIV64TO32" )
 set( CMAKE_C_FLAGS " -Wall -Werror-implicit-function-declaration -Wno-conversion ${CMAKE_C_FLAGS} ${C_DEFINES}" )
-# The WASM runtime archive is part of contract output, so it must not vary with
-# the host building CDT. Keep libsf.a on the historical Linux/x86 specialization
-# to preserve checked-in WASM hashes across Linux and macOS.
+# The WASM runtime archive and native test runtime must not vary with the host
+# building CDT. Keep both on the historical Linux/x86 specialization to preserve
+# checked-in WASM hashes and native-vs-WASM softfloat behavior across hosts.
 set(SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/8086-SSE")
 set(SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-x86_64-GCC")
-
-if (__APPLE)
-   set(NATIVE_SOFTFLOAT_SPECIALIZE_DIR "softfloat/source/ARM-VFPv2")
-   set(NATIVE_SOFTFLOAT_PLATFORM_DIR "softfloat/build/Linux-ARM-VFPv2-GCC")
-else()
-   set(NATIVE_SOFTFLOAT_SPECIALIZE_DIR "${SOFTFLOAT_SPECIALIZE_DIR}")
-   set(NATIVE_SOFTFLOAT_PLATFORM_DIR "${SOFTFLOAT_PLATFORM_DIR}")
-endif()
+set(NATIVE_SOFTFLOAT_SPECIALIZE_DIR "${SOFTFLOAT_SPECIALIZE_DIR}")
+set(NATIVE_SOFTFLOAT_PLATFORM_DIR "${SOFTFLOAT_PLATFORM_DIR}")
 set ( softfloat_sources
   softfloat/source/s_eq128.c
   softfloat/source/s_le128.c

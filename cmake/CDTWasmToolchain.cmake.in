@@ -17,7 +17,7 @@ set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
 # Toolchain files are evaluated before project(), but CMAKE_SOURCE_DIR is
 # already set from the consumer's -S source directory before the toolchain loads.
-set(_CDT_SOURCE_PREFIX_MAP "-fmacro-prefix-map=${CMAKE_SOURCE_DIR}=.")
+set(_CDT_SOURCE_PREFIX_MAP "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
 set(CMAKE_C_FLAGS "-Os ${_CDT_SOURCE_PREFIX_MAP}")
 set(CMAKE_CXX_FLAGS "-Os ${_CDT_SOURCE_PREFIX_MAP}")
 set(CMAKE_ASM_FLAGS "-fnative -fasm")

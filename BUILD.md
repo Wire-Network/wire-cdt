@@ -112,6 +112,11 @@ brew install \
 
 `dotnet` is used by the recommended build script to create the NuGet source config. `mono` is still required by vcpkg's NuGet binary-cache provider.
 
+Wire CDT macOS host binaries are built for Apple Silicon and dynamically link
+against the system libc++ provided by the installed Xcode Command Line Tools.
+Use macOS 11.0 or newer with current Command Line Tools when building or running
+the macOS CDT tools.
+
 ## Bootstrap vcpkg
 
 From the repository root:
