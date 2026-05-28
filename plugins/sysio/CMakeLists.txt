@@ -9,6 +9,8 @@ function(add_clang_plugin name src)
   endif()
 
   set_target_properties(${name} PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
     LIBRARY_OUTPUT_DIRECTORY ${CDT_TOOLS_BIN_DIR})
 
   if(APPLE)

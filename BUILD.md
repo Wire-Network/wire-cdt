@@ -1,8 +1,12 @@
 # Build from Source Instructions
 
-> **Supported platform:** Ubuntu 24.04 LTS on x86_64.
+> **Supported platforms:**
+>
+> - Ubuntu 24.04 LTS on x86_64
+> - macOS on Apple Silicon
 >
 > Earlier Ubuntu versions are not supported for building Wire CDT from source.
+> Intel macOS is not supported.
 
 ## Get the Source Code
 
@@ -21,7 +25,9 @@ git submodule update --init --recursive
 
 ## Install Dependencies
 
-Wire CDT builds with Clang 18, CMake, Ninja, and vcpkg. The CI builder uses the LLVM 18 packages from the Ubuntu 24.04 `apt.llvm.org` Noble repository; using the same toolchain locally keeps vcpkg binary-cache ABI keys aligned with CI.
+Wire CDT builds with Clang, CMake, Ninja, and vcpkg. The Linux CI builder uses the LLVM 18 packages from the Ubuntu 24.04 `apt.llvm.org` Noble repository; using the same Linux toolchain locally keeps vcpkg binary-cache ABI keys aligned with CI. The macOS CI builder uses the Xcode Command Line Tools on Apple Silicon.
+
+### Ubuntu 24.04 x86_64
 
 ```bash
 sudo apt-get update
@@ -86,6 +92,31 @@ Optional Python helper:
 python3 -m pip install pygments
 ```
 
+### macOS Apple Silicon
+
+Install Xcode Command Line Tools and Homebrew dependencies:
+
+```bash
+xcode-select --install
+
+brew install \
+  ccache \
+  cmake \
+  dotnet \
+  gh \
+  git \
+  mono \
+  ninja \
+  python
+```
+
+`dotnet` is used by the recommended build script to create the NuGet source config. `mono` is still required by vcpkg's NuGet binary-cache provider.
+
+Wire CDT macOS host binaries are built for Apple Silicon and dynamically link
+against the system libc++ provided by the installed Xcode Command Line Tools.
+Use macOS 11.0 or newer with current Command Line Tools when building or running
+the macOS CDT tools.
+
 ## Bootstrap vcpkg
 
 From the repository root:
@@ -108,13 +139,26 @@ configuring CMake. If something does not match, it prints an explicit error and
 a correction command. It verifies:
 
 - the workflow platform file and Dockerfile selected by
-  `.github/workflows/build.yaml`
-- x86_64 host architecture
-- `cmake`, `ninja`, `mono`, `gh`, and vcpkg availability
+  `.github/workflows/build.yaml` for Linux builds
+- x86_64 host architecture for `linux-x86-64`, or Apple Silicon host
+  architecture for `macos-arm64`
+- `cmake`, `ninja`, `dotnet` or Mono, `gh`, and vcpkg availability
 - GitHub CLI authentication with `read:packages`
-- `x64-linux-release` target and host triplets
+- `x64-linux-release` or `arm64-osx-release` target and host triplets
 - `.github/vcpkg-triplets` as the vcpkg overlay triplet path
 - GitHub Packages NuGet source configuration
+
+By default, the script detects the executing host platform:
+
+- Linux x86_64 uses `linux-x86-64`
+- Apple Silicon macOS uses `macos-arm64`
+
+You can also pass the platform explicitly:
+
+```bash
+scripts/build-with-github-vcpkg-cache.sh --platform linux-x86-64
+scripts/build-with-github-vcpkg-cache.sh --platform macos-arm64
+```
 
 When `ccache` is installed, the script enables it as the CMake compiler launcher
 and uses `.ccache` in the repository root by default. Set `CCACHE_DISABLE=1` to
@@ -125,7 +169,6 @@ Useful options:
 ```bash
 scripts/build-with-github-vcpkg-cache.sh --build-dir build/release
 scripts/build-with-github-vcpkg-cache.sh --jobs 8
-scripts/build-with-github-vcpkg-cache.sh --skip-tests
 ```
 
 The script has three build modes:
@@ -148,12 +191,17 @@ To use the cache, you need:
 
 - a GitHub token that can read Wire-Network GitHub Packages
 - `read:packages` scope on that token
-- Mono, because vcpkg runs `nuget.exe` on Linux
+- `dotnet`, used to create a build-local NuGet config
+- Mono, because vcpkg's NuGet binary-cache provider may run `nuget.exe`
 
-Install Mono:
+Install the NuGet prerequisites:
 
 ```bash
-sudo apt-get install -y mono-complete
+# Ubuntu
+sudo apt-get install -y dotnet-sdk-8.0 mono-complete
+
+# macOS
+brew install dotnet mono
 ```
 
 If you use the GitHub CLI, refresh the local token with package-read scope:
@@ -165,7 +213,28 @@ gh auth status
 
 `gh auth status` should list `read:packages` in the token scopes.
 
-Configure the NuGet source:
+Configure the NuGet source with `dotnet`:
+
+```bash
+export GITHUB_TOKEN="$(gh auth token)"
+export GITHUB_USER="$(gh api user --jq .login)"
+export VCPKG_NUGET_FEED="https://nuget.pkg.github.com/Wire-Network/index.json"
+export NUGET_CONFIG="$PWD/build/NuGet.config"
+
+mkdir -p "$(dirname "$NUGET_CONFIG")"
+printf '<configuration>\n  <packageSources />\n</configuration>\n' > "$NUGET_CONFIG"
+
+dotnet nuget remove source github --configfile "$NUGET_CONFIG" >/dev/null 2>&1 || true
+dotnet nuget add source "$VCPKG_NUGET_FEED" \
+  --configfile "$NUGET_CONFIG" \
+  --name github \
+  --username "$GITHUB_USER" \
+  --password "$GITHUB_TOKEN" \
+  --store-password-in-clear-text \
+  --valid-authentication-types basic
+```
+
+Alternatively, configure the NuGet source with `nuget.exe` through Mono:
 
 ```bash
 export GITHUB_TOKEN="$(gh auth token)"
@@ -189,6 +258,13 @@ Enable read-only binary cache restores for the current shell:
 
 ```bash
 export VCPKG_FEATURE_FLAGS="manifests,binarycaching"
+export VCPKG_BINARY_SOURCES="clear;nugetconfig,$NUGET_CONFIG,read"
+```
+
+If you used the Mono-backed `nuget.exe` setup instead, use the feed URL directly:
+
+```bash
+export VCPKG_FEATURE_FLAGS="manifests,binarycaching"
 export VCPKG_BINARY_SOURCES="clear;nuget,$VCPKG_NUGET_FEED,read"
 ```
 
@@ -203,11 +279,14 @@ If vcpkg prints `Restored 0 package(s) from NuGet`, check:
 - `gh auth status` includes `read:packages`
 - Clang 18 comes from `llvm-toolchain-noble-18`, not Ubuntu's default `18.1.3` package
 - `VCPKG_TARGET_TRIPLET` and `VCPKG_HOST_TRIPLET` are both `x64-linux-release`
+  on Linux, or both `arm64-osx-release` on macOS
 - `VCPKG_OVERLAY_TRIPLETS` points at `.github/vcpkg-triplets`
 
 ## Configure
 
 From the repository root:
+
+### Ubuntu 24.04 x86_64
 
 ```bash
 export CC=/usr/bin/clang-18
@@ -228,10 +307,31 @@ cmake -B build -S . -G Ninja \
   -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS"
 ```
 
+### macOS Apple Silicon
+
+```bash
+export CC="$(xcrun --find clang)"
+export CXX="$(xcrun --find clang++)"
+export CMAKE_MAKE_PROGRAM="$(command -v ninja)"
+export VCPKG_TARGET_TRIPLET=arm64-osx-release
+export VCPKG_HOST_TRIPLET=arm64-osx-release
+export VCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
+
+cmake -B build -S . -G Ninja \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM" \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
+  -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
+  -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS"
+```
+
 ## Build
 
 ```bash
-cmake --build build -- -j "$(nproc)"
+cmake --build build
 ```
 
 Wire CDT is a large build. If the machine runs out of memory, retry with fewer jobs:
@@ -243,7 +343,8 @@ cmake --build build -- -j 4
 ## Test
 
 ```bash
-ctest --test-dir build/tests -j "$(nproc)" --output-on-failure
+JOBS="$(sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN)"
+ctest --test-dir build -j "$JOBS" --output-on-failure
 ```
 
 ## Optional: Enable Integration Tests
@@ -254,19 +355,28 @@ After building Wire Sysio, point CMake at its package config and enable integrat
 
 ```bash
 export sysio_DIR=/path/to/wire-sysio/build/lib/cmake/sysio
+export CC=/usr/bin/clang-18
+export CXX=/usr/bin/clang++-18
+export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
+export VCPKG_TARGET_TRIPLET=x64-linux-release
+export VCPKG_HOST_TRIPLET=x64-linux-release
 
 cmake -B build -S . -G Ninja \
-  -DCMAKE_C_COMPILER=/usr/bin/clang-18 \
-  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-18 \
-  -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM" \
   -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DVCPKG_TARGET_TRIPLET=x64-linux-release \
-  -DVCPKG_HOST_TRIPLET=x64-linux-release \
+  -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
+  -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
   -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
   -Dsysio_DIR="$sysio_DIR" \
   -DENABLE_INTEGRATION_TESTS=ON
 ```
+
+On macOS, use the macOS compiler and `arm64-osx-release` triplets from the
+manual macOS configure example above. Integration tests also require a matching
+Wire Sysio build.
 
 ## Optional: Disable ccache
 
@@ -281,6 +391,8 @@ export CCACHE_DISABLE=1
 After building and testing, install using one of these methods.
 
 ### Debian Package
+
+Debian packages are only produced for Linux builds:
 
 ```bash
 cd build/packages

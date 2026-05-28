@@ -31,6 +31,7 @@ RUN apt-get update && apt-get upgrade -y && \
     unzip                \
     tar                  \
     sudo                 \
+    dotnet-sdk-8.0      \
     mono-complete        \
     golang               \
     python3-dev          \
