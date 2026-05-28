@@ -1,10 +1,3 @@
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <dlfcn.h>
-
 template <uint8_t OS>
 int _getExecutablePath(char* out, int capacity, int* dirname_length, typename std::enable_if<OS == sys::_bsd, int>::type = 0) {
   char buffer1[PATH_MAX];
@@ -96,4 +89,3 @@ int _getModulePath(char* out, int capacity, int* dirname_length, typename std::e
 
   return length;
 }
-

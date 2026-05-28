@@ -30,7 +30,7 @@ ____putc:
 __mmap:
    mov $0x20000C5, %eax # mmap syscall 0xC5 or 197
    mov $0, %rdi          # don't map
-   mov $0x640000000, %rsi  # size 100Mb 
+   mov $0x6400000, %rsi    # size 100Mb
    mov $3, %rdx         
    mov $0x1002, %r10
    mov $-1, %r8

@@ -8,6 +8,16 @@
 #include "serialize.hpp"
 
 namespace sysio {
+  namespace detail {
+     inline std::time_t timegm(std::tm* tm) {
+  #ifdef _WIN32
+        return ::_mkgmtime(tm);
+  #else
+        return ::timegm(tm);
+  #endif
+     }
+  }
+
   /**
    *  @defgroup time
    *  @ingroup core
@@ -62,10 +72,10 @@ namespace sysio {
         uint32_t            sec_since_epoch()const  { return uint32_t(elapsed.count() / 1000000); }
 
         static time_point from_iso_string(const std::string& date_str) {
-           std::tm tm{};
+           std::tm tm = {};
            check(strptime(date_str.c_str(), "%Y-%m-%dT%H:%M:%S", &tm), "date parsing failed");
 
-           auto tp = std::chrono::system_clock::from_time_t( ::timegm( &tm ) );
+           auto tp = std::chrono::system_clock::from_time_t( detail::timegm( &tm ) );
            auto duration = std::chrono::duration_cast<std::chrono::microseconds>( tp.time_since_epoch() );
            return time_point{ microseconds{ static_cast<int64_t>(duration.count()) } };
         }

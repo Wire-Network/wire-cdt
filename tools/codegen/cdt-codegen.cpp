@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <algorithm>
 #include <map>
 #include <set>
 #include <sstream>
@@ -483,6 +484,8 @@ int main(int argc, const char** argv) {
          }
       }
 
+      // Directory iteration order is filesystem-dependent. Keep .desc merge
+      // order stable so ABI output is reproducible across platforms.
       std::sort(desc_files.begin(), desc_files.end());
       desc_files.erase(std::unique(desc_files.begin(), desc_files.end()), desc_files.end());
 
