@@ -167,19 +167,19 @@ extern "C" {
 
    float _sysio_f32_add( float a, float b ) {
       float32_t ret = f32_add( to_softfloat32(a), to_softfloat32(b) );
-      return *reinterpret_cast<float*>(&ret);
+      return from_softfloat32(ret);
    }
    float _sysio_f32_sub( float a, float b ) {
       float32_t ret = f32_sub( to_softfloat32(a), to_softfloat32(b) );
-      return *reinterpret_cast<float*>(&ret);
+      return from_softfloat32(ret);
    }
    float _sysio_f32_div( float a, float b ) {
       float32_t ret = f32_div( to_softfloat32(a), to_softfloat32(b) );
-      return *reinterpret_cast<float*>(&ret);
+      return from_softfloat32(ret);
    }
    float _sysio_f32_mul( float a, float b ) {
       float32_t ret = f32_mul( to_softfloat32(a), to_softfloat32(b) );
-      return *reinterpret_cast<float*>(&ret);
+      return from_softfloat32(ret);
    }
    float _sysio_f32_min( float af, float bf ) {
       float32_t a = to_softfloat32(af);
