@@ -32,6 +32,9 @@ namespace sysio {
       static constexpr std::string_view alphabet = ".12345abcdefghijklmnopqrstuvwxyz";
       // Symbol 0 ('.') is an ordinary interior character, not a terminator.
       static constexpr bool             zero_terminates = false;
+      // MSB-first packing: the first symbol of "sysio" occupies bits [59..63].
+      // Byte-identical with the host-side fc::name encoding.
+      static constexpr basic_name_endianness packing = basic_name_endianness::MSB;
       static constexpr const char* bad_char_message =
          "character is not in allowed character set for names";
       static constexpr const char* too_long_message =

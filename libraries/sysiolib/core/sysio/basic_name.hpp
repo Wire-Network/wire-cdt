@@ -1,7 +1,7 @@
 #pragma once
 /**
  *  @file sysio/basic_name.hpp
- *  @brief Generic MSB-first packed 64-bit identifier (contract side).
+ *  @brief Generic packed 64-bit identifier, MSB- or LSB-first per traits.
  *
  *  basic_name<Traits> is the shared core behind sysio::name and
  *  sysio::slug_name. It mirrors the host-side fc::basic_name, but with CDT
@@ -11,12 +11,22 @@
  *
  *  Traits is the policy that specialises the template; it must satisfy the
  *  basic_name_traits concept (declared below). alphabet[0] is the pad symbol;
- *  zero_terminates selects how to_string() treats a symbol-0 slot — a hard
+ *  zero_terminates selects how to_string() treats a symbol-0 slot - a hard
  *  terminator (slug-style) or an ordinary interior character (name's '.').
+ *  packing selects MSB- or LSB-first layout; MSB-first makes integer ordering
+ *  match string ordering, LSB-first places the first symbol in the low bits
+ *  (legacy wire formats, locality of least-significant prefix).
  *
- *  The symbol width is derived (the minimal bits to index the alphabet);
- *  symbols are packed most-significant-first, the final symbol narrowed if
- *  max_len * width would exceed 64.
+ *  The symbol width is derived (the minimal bits to index the alphabet).
+ *  When max_len * width exceeds 64 the final symbol is narrowed to whatever
+ *  fits. In MSB layout the narrow symbol sits in the low bits; in LSB layout
+ *  it sits in the high bits. In both cases at the "far end" of the packed
+ *  value relative to the first symbol.
+ *
+ *  For zero_terminates traits, the validating constructor sysio::check-throws
+ *  on an embedded pad-symbol slot: a literal like `"A\0B"_s` would otherwise
+ *  decode to just `"A"` (zero-terminated to_string stops at the gap), so the
+ *  literal and the canonical decoding would disagree.
  *
  *  @see fc::basic_name (host-side mirror)
  */
@@ -33,15 +43,23 @@
 
 namespace sysio {
 
+/// Packing direction for basic_name. MSB places the first symbol in the
+/// highest-order bits so integer order matches string lex order; LSB places
+/// the first symbol in the lowest-order bits and is used by formats that
+/// predate the MSB convention.
+enum class basic_name_endianness { MSB, LSB };
+
 /// Compile-time contract for a basic_name Traits policy: an alphabet and a
-/// length, a zero_terminates flag steering to_string(), and the three
-/// sysio::check messages. Enforced in place of a prose list of requirements.
+/// length, a zero_terminates flag steering to_string(), a packing direction,
+/// and the three sysio::check messages. Enforced in place of a prose list of
+/// requirements.
 template <typename Traits>
 concept basic_name_traits =
    requires {
       { Traits::max_len }                  -> std::convertible_to<int>;
       { Traits::alphabet }                 -> std::convertible_to<std::string_view>;
       { Traits::zero_terminates }          -> std::convertible_to<bool>;
+      { Traits::packing }                  -> std::convertible_to<basic_name_endianness>;
       { Traits::bad_char_message }         -> std::convertible_to<const char*>;
       { Traits::too_long_message }         -> std::convertible_to<const char*>;
       { Traits::bad_final_symbol_message } -> std::convertible_to<const char*>;
@@ -57,18 +75,28 @@ struct basic_name {
    constexpr explicit basic_name( uint64_t v ) : value(v) {}
 
    /// Per-character validated string constructor. sysio::check-throws on an
-   /// over-long string, an out-of-alphabet character, or a final symbol too
-   /// wide for its (possibly narrowed) slot. constexpr — so an invalid
-   /// `_n` / `_s` literal is a compile error.
+   /// over-long string, an out-of-alphabet character, a final symbol too
+   /// wide for its (possibly narrowed) slot, or - for zero_terminates traits
+   /// only - the pad symbol embedded anywhere in the string (such a literal
+   /// would silently decode to just its prefix; rejecting it keeps the
+   /// literal and the canonical decoding in agreement). constexpr - so an
+   /// invalid `_n` / `_s` literal is a compile error.
    constexpr explicit basic_name( std::string_view str ) : value(0) {
-      // sysio::check is not constexpr — invoke it only on the failure path so a
-      // valid `_n` / `_s` literal still constant-evaluates (a bad one reaches
-      // check and is therefore a compile error).
+      // sysio::check is not constexpr - invoke it only on the failure path so
+      // a valid `_n` / `_s` literal still constant-evaluates (a bad one
+      // reaches check and is therefore a compile error).
       if ( str.size() > static_cast<std::size_t>(Traits::max_len) )
          sysio::check( false, Traits::too_long_message );
       const int n = static_cast<int>(str.size());
       for ( int i = 0; i < Traits::max_len && i < n; ++i ) {
          const uint64_t sym = symbol( str[i] );
+         if constexpr ( Traits::zero_terminates ) {
+            // sym == 0 is the pad/terminator slot. For zero_terminates traits,
+            // an interior pad would make to_string() truncate (e.g. "A\0B"
+            // decodes to "A"), so the input would not round-trip. Reject.
+            if ( sym == 0 )
+               sysio::check( false, Traits::bad_char_message );
+         }
          if ( sym > width_mask(i) )
             sysio::check( false, Traits::bad_final_symbol_message );
          value |= sym << shift(i);
@@ -113,9 +141,11 @@ struct basic_name {
       return s < a.size() ? a[s] : a[0];
    }
 
-   // Total order on the packed value; MSB-first packing makes it match the
-   // decoded string's lexicographic order. Defaulted <=> / == synthesize the
-   // four relational operators and !=.
+   // Total order on the packed value. With MSB packing this matches the
+   // decoded string's lexicographic order; with LSB packing it does not (the
+   // first symbol sits in the low bits, so high-order symbols dominate the
+   // integer comparison). Defaulted <=> / == synthesize the four relational
+   // operators and !=.
    friend constexpr std::strong_ordering operator<=>( basic_name a, basic_name b ) = default;
    friend constexpr bool                 operator==( basic_name a, basic_name b ) = default;
 
@@ -134,11 +164,21 @@ private:
    static_assert( (Traits::max_len - 1) * bits < 64,
                   "basic_name: symbol layout does not fit in 64 bits" );
 
-   // --- MSB-first bit layout; the final symbol absorbs any shortfall ---
+   // --- Bit layout. Direction is set by Traits::packing. The final symbol
+   //     absorbs any shortfall when max_len * bits > 64. ---
+   /// Bit offset of symbol i. MSB: symbol 0 occupies the highest bits and the
+   /// final (possibly narrow) symbol sits at offset 0. LSB: symbol 0 occupies
+   /// the lowest bits and the final symbol sits at the high end.
    static constexpr uint32_t shift( int i ) {
-      const int s = total_bits - bits * (i + 1);
-      return s > 0 ? static_cast<uint32_t>(s) : 0u;
+      if constexpr ( Traits::packing == basic_name_endianness::MSB ) {
+         const int s = total_bits - bits * (i + 1);
+         return s > 0 ? static_cast<uint32_t>(s) : 0u;
+      } else {
+         return static_cast<uint32_t>(bits * i);
+      }
    }
+   /// Value mask of symbol i (the final symbol may be narrower than `bits`).
+   /// Position depends on packing direction, but width depends only on i.
    static constexpr uint64_t width_mask( int i ) {
       const int w = (i == Traits::max_len - 1) ? total_bits - bits * i : bits;
       return (static_cast<uint64_t>(1) << w) - 1;
