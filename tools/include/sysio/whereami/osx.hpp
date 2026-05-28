@@ -1,10 +1,3 @@
-#define _DARWIN_BETTER_REALPATH
-#include <mach-o/dyld.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dlfcn.h>
-
 template <uint8_t OS>
 int _getExecutablePath(char* out, int capacity, int* dirname_length, typename std::enable_if<OS == sys::_osx, int>::type = 0) {
      char buffer1[PATH_MAX];

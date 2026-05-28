@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#ifndef __STDC_FORMAT_MACROS
-# define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
-   
 template <uint8_t OS>
 int _getExecutablePath(char* out, int capacity, int* dirname_length, typename std::enable_if<OS == sys::_linux, int>::type = 0) {
   char buffer[PATH_MAX];
