@@ -25,7 +25,7 @@ ____putc:
 
 __mmap:
    mov x0, #0
-   // 100 MiB initial WASM linear memory size.
+   /* 100 MiB initial WASM linear memory size. */
    movz x1, #0x640, lsl #16
    mov x2, #3
    mov x3, #0x1002
@@ -35,7 +35,7 @@ __mmap:
    svc #0x80
    ret
 
-// AAPCS64 callee-saved state: x19-x30, SP, and low 64 bits of d8-d15.
+/* AAPCS64 callee-saved state: x19-x30, SP, and low 64 bits of d8-d15. */
 _setjmp:
    stp x19, x20, [x0, #0]
    stp x21, x22, [x0, #16]
