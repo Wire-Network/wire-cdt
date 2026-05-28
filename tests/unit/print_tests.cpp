@@ -18,7 +18,7 @@ SYSIO_TEST_BEGIN(print_test)
    CHECK_PRINT("-404", [](){ sysio::print((int32_t)-404); });
    CHECK_PRINT("404000000", [](){ sysio::print((uint64_t)404000000); });
    CHECK_PRINT("-404000000", [](){ sysio::print((int64_t)-404000000); });
-   CHECK_PRINT("0x0066000000000000", [](){ sysio::print((uint128_t)102); });
+   CHECK_PRINT("0x00000066000000000000000000000000", [](){ sysio::print((uint128_t)102); });
    CHECK_PRINT("0xffffff9affffffffffffffffffffffff", [](){ sysio::print((int128_t)-102); });
 SYSIO_TEST_END
 
