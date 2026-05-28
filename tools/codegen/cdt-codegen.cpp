@@ -4,6 +4,7 @@
 #include <sysio/whereami/whereami.hpp>
 
 #include <fstream>
+#include <algorithm>
 #include <map>
 #include <set>
 #include <sstream>
@@ -481,6 +482,10 @@ int main(int argc, const char** argv) {
             closedir(dir);
          }
       }
+
+      // Directory iteration order is filesystem-dependent. Keep .desc merge
+      // order stable so ABI output is reproducible across platforms.
+      std::sort(desc_files.begin(), desc_files.end());
 
       ojson abi;
 
