@@ -1,3 +1,9 @@
+/*
+ * Minimal Mach-O arm64 CRT for CDT native contract tests.
+ * Provides the process entry point and libc shims that the native runtime
+ * expects before transferring control to _wrap_main in crt.cpp.
+ */
+
 .global start
 .global ____putc
 .global __mmap
