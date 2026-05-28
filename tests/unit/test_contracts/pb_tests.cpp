@@ -15,7 +15,7 @@ public:
       sysio::check(msg.note == "hello", "validate msg.note");
 
       ActResult result;
-      result.value = zpp::bits::vint32_t(42);
+      result.value = zpp::bits::vint64_t(42);
       result.str_value = "result_string";
       return result;
    }

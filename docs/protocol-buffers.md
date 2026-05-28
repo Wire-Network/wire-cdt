@@ -136,7 +136,7 @@ clio push action mycontract settle \
 - The ABI generator detects `sysio::pb<T>` and encodes the type as `protobuf::mypackage.TransferData`
 - **Single `pb<T>` parameter**: action type points directly at the protobuf type (flat JSON)
 - **Multiple parameters**: a wrapper struct is generated (nested JSON)
-- Protobuf integer types use `zpp::bits` varint wrappers (`vint32_t`, `vuint64_t`, etc.)
+- Protobuf integer types use `zpp::bits` varint wrappers (`vint64_t`, `vuint64_t`, etc.)
 - Varint types don't implicitly convert — use `static_cast<int32_t>(field)` to access the underlying value
 
 ## Generated ABI
@@ -224,7 +224,7 @@ The `pb_members<N>` declaration (where N is the number of fields) enables protob
 
 | Proto3 Type | C++ Type |
 |------------|----------|
-| `int32` | `zpp::bits::vint32_t` |
+| `int32` | `zpp::bits::vint64_t` |
 | `int64` | `zpp::bits::vint64_t` |
 | `uint32` | `zpp::bits::vuint32_t` |
 | `uint64` | `zpp::bits::vuint64_t` |
@@ -239,7 +239,7 @@ The `pb_members<N>` declaration (where N is the number of fields) enables protob
 | `bool` | `bool` |
 | `string` | `std::string` |
 | `bytes` | `std::vector<char>` |
-| `enum` | C++ `enum : int` |
+| `enum` | C++ `enum : int64_t` |
 | `message` | C++ `struct` |
 | `repeated T` | `std::vector<T>` |
 | `map<K,V>` | `std::map<K,V>` |
