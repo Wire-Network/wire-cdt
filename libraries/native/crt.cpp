@@ -2,13 +2,23 @@
 #include <sysio/action.hpp>
 #include "native/sysio/intrinsics.hpp"
 #include "native/sysio/crt.hpp"
+#include <array>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <stdio.h>
 #include <setjmp.h>
 
 sysio::cdt::output_stream std_out;
 sysio::cdt::output_stream std_err;
+
+namespace {
+   void print_hex_128(const void* value) {
+      std::array<uint32_t, 4> words{};
+      std::memcpy(words.data(), value, sizeof(words));
+      printf("0x%08x%08x%08x%08x", words[0], words[1], words[2], words[3]);
+   }
+}
 
 extern "C" {
    int main(int, char**);
@@ -96,12 +106,10 @@ extern "C" {
             printf("%llu", v);
          });
       intrinsics::set_intrinsic<intrinsics::printi128>([](const int128_t* v) {
-            int* tmp = (int*)v;
-            printf("0x%04x%04x%04x%04x", tmp[0], tmp[1], tmp[2], tmp[3]);
+            print_hex_128(v);
          });
       intrinsics::set_intrinsic<intrinsics::printui128>([](const uint128_t* v) {
-            int* tmp = (int*)v;
-            printf("0x%04x%04x%04x%04x", tmp[0], tmp[1], tmp[2], tmp[3]);
+            print_hex_128(v);
          });
       intrinsics::set_intrinsic<intrinsics::printsf>([](float v) {
             char buff[512] = {0};
@@ -132,8 +140,7 @@ extern "C" {
             prints(buff);
          });
       intrinsics::set_intrinsic<intrinsics::printqf>([](const long double* v) {
-            int* tmp = (int*)v;
-            printf("0x%04x%04x%04x%04x", tmp[0], tmp[1], tmp[2], tmp[3]);
+            print_hex_128(v);
          });
       intrinsics::set_intrinsic<intrinsics::printn>([](uint64_t nm) {
             std::string s = sysio::name(nm).to_string();
