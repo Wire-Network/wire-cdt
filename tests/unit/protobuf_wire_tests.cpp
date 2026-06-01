@@ -47,6 +47,20 @@ struct protobuf_repeated_int32_values {
    serialize use();
 };
 
+struct protobuf_nested_int32_value {
+   sysio::pb_int32 value = {};
+
+   using serialize = sysio::pb_members<1>;
+   serialize use();
+};
+
+struct protobuf_repeated_nested_values {
+   std::vector<protobuf_nested_int32_value> values = {};
+
+   using serialize = sysio::pb_members<1>;
+   serialize use();
+};
+
 static std::vector<char> encode(const auto& value) {
    std::vector<char> actual;
    zpp::bits::out out(actual, zpp::bits::size_varint{});
@@ -144,6 +158,29 @@ SYSIO_TEST_BEGIN(protobuf_repeated_int32_wire_test)
    }
 SYSIO_TEST_END
 
+SYSIO_TEST_BEGIN(protobuf_repeated_nested_message_wire_test)
+   protobuf_repeated_nested_values value;
+   value.values = {{7}, {-1}};
+
+   const auto actual = encode(value);
+
+   const std::array<unsigned char, 18> expected = {
+      0x11,
+      0x0a, 0x02, 0x08, 0x07,
+      0x0a, 0x0b, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
+   };
+
+   check_bytes(actual, expected);
+
+   protobuf_repeated_nested_values decoded;
+   CHECK_EQUAL(decode(actual, decoded), std::errc{})
+   CHECK_EQUAL(decoded.values.size(), static_cast<std::size_t>(2))
+   if (decoded.values.size() == 2) {
+      CHECK_EQUAL(static_cast<int32_t>(decoded.values[0].value), 7)
+      CHECK_EQUAL(static_cast<int32_t>(decoded.values[1].value), -1)
+   }
+SYSIO_TEST_END
+
 SYSIO_TEST_BEGIN(protobuf_int64_negative_wire_test)
    check_int64_value(
       -2,
@@ -181,6 +218,7 @@ int main(int argc, char** argv) {
 
    SYSIO_TEST(protobuf_int32_boundary_wire_test);
    SYSIO_TEST(protobuf_repeated_int32_wire_test);
+   SYSIO_TEST(protobuf_repeated_nested_message_wire_test);
    SYSIO_TEST(protobuf_int64_negative_wire_test);
    SYSIO_TEST(protobuf_int32_and_enum_wire_test);
    return has_failed();

@@ -54,6 +54,15 @@ namespace sysio {
    template <typename T>
    inline constexpr bool is_pb_int32_v = std::same_as<std::remove_cvref_t<T>, pb_int32>;
 
+   /// True when a protobuf field is a repeated nested message that must be
+   /// serialized through this protocol rather than the upstream zpp_bits one.
+   template <typename T>
+   inline constexpr bool is_repeated_pb_message_v =
+      zpp::bits::concepts::container<std::remove_cvref_t<T>> &&
+      !zpp::bits::concepts::associative_container<std::remove_cvref_t<T>> &&
+      requires { typename std::remove_cvref_t<T>::value_type; } &&
+      zpp::bits::concepts::by_protocol<typename std::remove_cvref_t<T>::value_type>;
+
    template <typename>
    inline constexpr bool dependent_false_v = false;
 
@@ -202,6 +211,14 @@ namespace sysio {
             // packed length is precomputed from the same vint64_t bytes that
             // unsized(item) writes for each pb_int32 element.
             return archive(tag, zpp::bits::varint{size}, zpp::bits::unsized(item));
+         } else if constexpr (is_repeated_pb_message_v<type>) {
+            constexpr auto tag = base::template make_tag<tag_type, Index>();
+            for (auto& element : item) {
+               if (auto result = archive(tag, element); zpp::bits::failure(result)) {
+                  return result;
+               }
+            }
+            return {};
          } else {
             return base::template serialize_one<Index, TagType>(archive, item);
          }
@@ -349,6 +366,22 @@ namespace sysio {
                if (auto result = fetch(); zpp::bits::failure(result)) {
                   return result;
                }
+            }
+            return zpp::bits::errc{};
+         } else if constexpr (is_repeated_pb_message_v<type>) {
+            if (field_type != base::wire_type::length_delimited) {
+               return zpp::bits::errc{std::errc::protocol_error};
+            }
+
+            typename type::value_type value;
+            if (auto result = archive(value); zpp::bits::failure(result)) {
+               return result;
+            }
+
+            if constexpr (requires { item.push_back(std::move(value)); }) {
+               item.push_back(std::move(value));
+            } else {
+               item.insert(std::move(value));
             }
             return zpp::bits::errc{};
          } else {
