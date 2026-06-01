@@ -10,33 +10,40 @@
 #include <span>
 #include <vector>
 
+#include <sysio/pb.hpp>
 #include <sysio/tester.hpp>
-#include <zpp_bits.h>
 
-enum negative_enum : int64_t {
+enum positive_enum : int32_t {
    zero = 0,
-   negative = -1,
+   positive = 42,
 };
 
 struct protobuf_int32_value {
-   zpp::bits::vint64_t value = {};
+   sysio::pb_int32 value = {};
 
-   using serialize = zpp::bits::pb_members<1>;
+   using serialize = sysio::pb_members<1>;
    serialize use();
 };
 
 struct protobuf_int64_value {
    zpp::bits::vint64_t value = {};
 
-   using serialize = zpp::bits::pb_members<1>;
+   using serialize = sysio::pb_members<1>;
    serialize use();
 };
 
 struct protobuf_negative_values {
-   zpp::bits::vint64_t int32_value = {};
-   negative_enum enum_value = zero;
+   sysio::pb_int32 int32_value = {};
+   positive_enum enum_value = zero;
 
-   using serialize = zpp::bits::pb_members<2>;
+   using serialize = sysio::pb_members<2>;
+   serialize use();
+};
+
+struct protobuf_repeated_int32_values {
+   std::vector<sysio::pb_int32> values = {};
+
+   using serialize = sysio::pb_members<1>;
    serialize use();
 };
 
@@ -70,54 +77,91 @@ static void check_bytes(const std::vector<char>& actual, const std::array<unsign
    }
 }
 
-template <typename Message, std::size_t Size>
-static void check_int_value(int64_t value, const std::array<unsigned char, Size>& expected) {
-   Message original;
+template <std::size_t Size>
+static void check_int32_value(int32_t value, const std::array<unsigned char, Size>& expected) {
+   protobuf_int32_value original;
    original.value = value;
 
    const auto actual = encode(original);
    check_bytes(actual, expected);
 
-   Message decoded;
+   protobuf_int32_value decoded;
+   CHECK_EQUAL(decode(actual, decoded), std::errc{})
+   CHECK_EQUAL(static_cast<int32_t>(decoded.value), value)
+}
+
+template <std::size_t Size>
+static void check_int64_value(int64_t value, const std::array<unsigned char, Size>& expected) {
+   protobuf_int64_value original;
+   original.value = value;
+
+   const auto actual = encode(original);
+   check_bytes(actual, expected);
+
+   protobuf_int64_value decoded;
    CHECK_EQUAL(decode(actual, decoded), std::errc{})
    CHECK_EQUAL(static_cast<int64_t>(decoded.value), value)
 }
 
 SYSIO_TEST_BEGIN(protobuf_int32_boundary_wire_test)
-   check_int_value<protobuf_int32_value>(0, std::array<unsigned char, 3>{0x02, 0x08, 0x00});
-   check_int_value<protobuf_int32_value>(1, std::array<unsigned char, 3>{0x02, 0x08, 0x01});
-   check_int_value<protobuf_int32_value>(42, std::array<unsigned char, 3>{0x02, 0x08, 0x2a});
-   check_int_value<protobuf_int32_value>(
+   CHECK_EQUAL(sizeof(sysio::pb_int32), sizeof(int32_t))
+
+   check_int32_value(0, std::array<unsigned char, 3>{0x02, 0x08, 0x00});
+   check_int32_value(1, std::array<unsigned char, 3>{0x02, 0x08, 0x01});
+   check_int32_value(42, std::array<unsigned char, 3>{0x02, 0x08, 0x2a});
+   check_int32_value(
       std::numeric_limits<int32_t>::max(),
       std::array<unsigned char, 7>{0x06, 0x08, 0xff, 0xff, 0xff, 0xff, 0x07});
-   check_int_value<protobuf_int32_value>(
+   check_int32_value(
       -1,
       std::array<unsigned char, 12>{0x0b, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
                                     0xff, 0xff, 0xff, 0x01});
-   check_int_value<protobuf_int32_value>(
+   check_int32_value(
       std::numeric_limits<int32_t>::min(),
       std::array<unsigned char, 12>{0x0b, 0x08, 0x80, 0x80, 0x80, 0x80, 0xf8, 0xff,
                                     0xff, 0xff, 0xff, 0x01});
 SYSIO_TEST_END
 
+SYSIO_TEST_BEGIN(protobuf_repeated_int32_wire_test)
+   protobuf_repeated_int32_values value;
+   value.values = {1, -1};
+
+   const auto actual = encode(value);
+
+   const std::array<unsigned char, 14> expected = {
+      0x0d,
+      0x0a, 0x0b, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
+   };
+
+   check_bytes(actual, expected);
+
+   protobuf_repeated_int32_values decoded;
+   CHECK_EQUAL(decode(actual, decoded), std::errc{})
+   CHECK_EQUAL(decoded.values.size(), static_cast<std::size_t>(2))
+   if (decoded.values.size() == 2) {
+      CHECK_EQUAL(static_cast<int32_t>(decoded.values[0]), 1)
+      CHECK_EQUAL(static_cast<int32_t>(decoded.values[1]), -1)
+   }
+SYSIO_TEST_END
+
 SYSIO_TEST_BEGIN(protobuf_int64_negative_wire_test)
-   check_int_value<protobuf_int64_value>(
+   check_int64_value(
       -2,
       std::array<unsigned char, 12>{0x0b, 0x08, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff,
                                     0xff, 0xff, 0xff, 0x01});
 SYSIO_TEST_END
 
-SYSIO_TEST_BEGIN(protobuf_negative_enum_wire_test)
+SYSIO_TEST_BEGIN(protobuf_int32_and_enum_wire_test)
    protobuf_negative_values value;
    value.int32_value = -1;
-   value.enum_value = negative;
+   value.enum_value = positive;
 
    const auto actual = encode(value);
 
-   const std::array<unsigned char, 23> expected = {
-      0x16,
+   const std::array<unsigned char, 14> expected = {
+      0x0d,
       0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
-      0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
+      0x10, 0x2a,
    };
 
    check_bytes(actual, expected);
@@ -125,7 +169,7 @@ SYSIO_TEST_BEGIN(protobuf_negative_enum_wire_test)
    protobuf_negative_values decoded;
    CHECK_EQUAL(decode(actual, decoded), std::errc{})
    CHECK_EQUAL(static_cast<int64_t>(decoded.int32_value), -1)
-   CHECK_EQUAL(decoded.enum_value, negative)
+   CHECK_EQUAL(decoded.enum_value, positive)
 SYSIO_TEST_END
 
 int main(int argc, char** argv) {
@@ -136,7 +180,8 @@ int main(int argc, char** argv) {
    silence_output(!verbose);
 
    SYSIO_TEST(protobuf_int32_boundary_wire_test);
+   SYSIO_TEST(protobuf_repeated_int32_wire_test);
    SYSIO_TEST(protobuf_int64_negative_wire_test);
-   SYSIO_TEST(protobuf_negative_enum_wire_test);
+   SYSIO_TEST(protobuf_int32_and_enum_wire_test);
    return has_failed();
 }
