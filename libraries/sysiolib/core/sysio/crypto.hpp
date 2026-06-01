@@ -23,11 +23,23 @@ namespace sysio {
    /**
     *  SYSIO ECC public key data
     *
-    *  Fixed size representation of either a K1 or R1 compressed public key
-
+    *  Fixed size representation of a K1, R1, or EM (Ethereum secp256k1)
+    *  compressed public key.
+    *
+    *  The element type is unsigned (`uint8_t`) on purpose: the chain orders
+    *  authority keys with an unsigned byte comparison (`fc::crypto`'s
+    *  `less_comparator` uses `std::memcmp`). `std::array`'s `operator<` is a
+    *  lexicographical compare over its element type, so a signed `char` element
+    *  would order any key byte >= 0x80 as negative and disagree with the chain
+    *  for ~25% of key pairs -- a contract that sorts such keys into an authority
+    *  would then have `updateauth` reject it as unsorted. `uint8_t` keeps the
+    *  contract-side ordering identical to the chain's (and consistent with
+    *  `ed_public_key`/`bls_public_key`, which already use unsigned bytes).
+    *  The on-wire serialization is unchanged -- 33 raw bytes either way.
+    *
     *  @ingroup public_key
     */
-   using ecc_public_key = std::array<char, 33>;
+   using ecc_public_key = std::array<uint8_t, 33>;
 
    /**
     *  SYSIO WebAuthN public key

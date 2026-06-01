@@ -2,10 +2,7 @@
   "name": "wire-cdt",
   "version": "5.2.0-rc1",
   "dependencies": [
-    {
-      "name": "protobuf",
-      "host": true
-    },
+    "protobuf",
     "zpp-bits",
     "magic-enum",
     {
