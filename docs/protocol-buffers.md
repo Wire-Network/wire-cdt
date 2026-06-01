@@ -239,7 +239,7 @@ The `pb_members<N>` declaration (where N is the number of fields) enables protob
 | `bool` | `bool` |
 | `string` | `std::string` |
 | `bytes` | `std::vector<char>` |
-| `enum` | C++ `enum : int64_t` |
+| `enum` | C++ `enum : int32_t` |
 | `message` | C++ `struct` |
 | `repeated T` | `std::vector<T>` |
 | `map<K,V>` | `std::map<K,V>` |
@@ -249,5 +249,6 @@ The `pb_members<N>` declaration (where N is the number of fields) enables protob
 - Only proto3 syntax is supported
 - `oneof` fields are not supported
 - `std::optional` fields (`[(zpp.zpp_optional) = true]`) are not supported — stock `zpp_bits` does not support optional fields in protobuf serialization mode
+- Negative enum values are not supported
 - Unpacked repeated fields are not supported
 - WASM contracts have no exception support; serialization errors abort via `sysio::check()`
