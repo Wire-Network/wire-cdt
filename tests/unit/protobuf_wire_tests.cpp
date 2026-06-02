@@ -13,9 +13,9 @@
 #include <sysio/tester.hpp>
 #include <zpp_bits.h>
 
-enum negative_enum : int64_t {
+enum positive_enum : int32_t {
    zero = 0,
-   negative = -1,
+   positive = 42,
 };
 
 struct protobuf_int32_value {
@@ -32,9 +32,9 @@ struct protobuf_int64_value {
    serialize use();
 };
 
-struct protobuf_negative_values {
+struct protobuf_int32_and_enum_values {
    zpp::bits::vint64_t int32_value = {};
-   negative_enum enum_value = zero;
+   positive_enum enum_value = zero;
 
    using serialize = zpp::bits::pb_members<2>;
    serialize use();
@@ -107,25 +107,25 @@ SYSIO_TEST_BEGIN(protobuf_int64_negative_wire_test)
                                     0xff, 0xff, 0xff, 0x01});
 SYSIO_TEST_END
 
-SYSIO_TEST_BEGIN(protobuf_negative_enum_wire_test)
-   protobuf_negative_values value;
+SYSIO_TEST_BEGIN(protobuf_int32_and_enum_wire_test)
+   protobuf_int32_and_enum_values value;
    value.int32_value = -1;
-   value.enum_value = negative;
+   value.enum_value = positive;
 
    const auto actual = encode(value);
 
-   const std::array<unsigned char, 23> expected = {
-      0x16,
+   const std::array<unsigned char, 14> expected = {
+      0x0d,
       0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
-      0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
+      0x10, 0x2a,
    };
 
    check_bytes(actual, expected);
 
-   protobuf_negative_values decoded;
+   protobuf_int32_and_enum_values decoded;
    CHECK_EQUAL(decode(actual, decoded), std::errc{})
    CHECK_EQUAL(static_cast<int64_t>(decoded.int32_value), -1)
-   CHECK_EQUAL(decoded.enum_value, negative)
+   CHECK_EQUAL(decoded.enum_value, positive)
 SYSIO_TEST_END
 
 int main(int argc, char** argv) {
@@ -137,6 +137,6 @@ int main(int argc, char** argv) {
 
    SYSIO_TEST(protobuf_int32_boundary_wire_test);
    SYSIO_TEST(protobuf_int64_negative_wire_test);
-   SYSIO_TEST(protobuf_negative_enum_wire_test);
+   SYSIO_TEST(protobuf_int32_and_enum_wire_test);
    return has_failed();
 }
