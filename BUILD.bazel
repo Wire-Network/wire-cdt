@@ -55,14 +55,15 @@ cmake_workspace_build(
             "wire-sysio/build/$$BUILD_TYPE_LC/compile_commands.json",
         ],
     },
+    # clang-18 is pinned centrally by cmake_workspace_build (both the
+    # CC/CXX env and the -DCMAKE_C[XX]_COMPILER cache entries — vcpkg needs both).
     cache_entries = {
         "ENABLE_CCACHE": "ON",
         "ENABLE_DISTCC": "OFF",
         "ENABLE_TESTS": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_C_COMPILER": "/usr/bin/clang-18",
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
-        "CMAKE_PARALLEL_LEVEL": "$$(nproc)",
+        "CMAKE_BUILD_PARALLEL_LEVEL": "$$(nproc)",
+        "VCPKG_BUILD_TYPE": "Release",
     },
     generator = "Ninja",
     # Root of the chain — nothing builds before cdt.
