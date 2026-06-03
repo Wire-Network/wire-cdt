@@ -33,8 +33,8 @@ CONTRACT table_id_collision : public contract {
 
       ACTION store(uint64_t id) {
          ah_table tbl1;
-         tbl1.set({id}, {id});
+         tbl1.set(get_self(), {id}, {id});
          aa1_table tbl2;
-         tbl2.set({id}, {id});
+         tbl2.set(get_self(), {id}, {id});
       }
 };

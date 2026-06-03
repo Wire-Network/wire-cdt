@@ -15,7 +15,7 @@ int64_t kv_set(uint32_t table_id, uint64_t payer,
 Store a key-value pair. Returns RAM byte delta.
 
 - **table_id** — table namespace identifier (lower 16 bits of the DJB2 hash of table name)
-- **payer** — account to bill for RAM (0 = receiver)
+- **payer** — account to bill for RAM. `0` (`same_payer`) is valid only on update (existing key), where it keeps the row's existing payer; on insert (new key) there is no existing payer to keep, so the host rejects `0` with `invalid_table_payer` and the caller must name a paying account.
 
 ### kv\_get
 
@@ -77,6 +77,8 @@ void kv_idx_store(uint64_t payer, uint32_t table_id,
 
 Insert secondary index entry. `table_id` identifies the secondary index namespace.
 
+- **payer** — account to bill for RAM. `kv_idx_store` always inserts, so a paying account must be named; `0` (`same_payer`) is rejected with `invalid_table_payer`.
+
 ### kv\_idx\_remove
 
 ```c
@@ -93,6 +95,10 @@ void kv_idx_update(uint64_t payer, uint32_t table_id,
                    const void* old_sec_key, uint32_t old_sec_key_size,
                    const void* new_sec_key, uint32_t new_sec_key_size);
 ```
+
+Update a secondary index entry's key (operates on an existing entry).
+
+- **payer** — account to bill for RAM. `0` (`same_payer`) keeps the entry's existing payer; pass a non-zero payer to bill that account explicitly.
 
 ### kv\_idx\_find\_secondary
 
