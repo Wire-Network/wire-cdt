@@ -24,7 +24,7 @@
  *   >;
  *
  *   my_table tbl;
- *   tbl.emplace({1}, {1000, "alice"_n});
+ *   tbl.emplace(get_self(), {1}, {1000, "alice"_n});
  *   auto idx = tbl.get_index<"byowner"_n>();
  *   auto it  = idx.find("alice"_n);
  */
@@ -689,6 +689,9 @@ public:
    }
 
    // --- Mutation ---
+   // Every row-creating operation (emplace/set/upsert) requires an explicit payer: the host rejects
+   // payer 0 (same_payer) on insert, since a new row has no existing payer to keep. same_payer stays
+   // valid for modify (update), where it keeps the row's current payer.
 
    /// Insert a new row. Asserts if the key already exists. Use upsert()/set()
    /// for insert-or-update semantics.
@@ -696,10 +699,6 @@ public:
       auto k = make_key(key);
       sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()), exists_msg);
       do_insert(payer.value, k, key, value);
-   }
-
-   void emplace(const K& key, const V& value) {
-      emplace(name{}, key, value);
    }
 
    /// Lambda emplace: construct the value in-place.
@@ -710,14 +709,8 @@ public:
       emplace(payer, key, value, exists_msg);
    }
 
-   template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
-   void emplace(const K& key, Lambda&& constructor) {
-      emplace(name{}, key, std::forward<Lambda>(constructor));
-   }
-
    /// Upsert convenience alias.
    void set(name payer, const K& key, const V& value) { upsert(payer, key, value); }
-   void set(const K& key, const V& value) { upsert(name{}, key, value); }
 
    /// Insert or update a row. If the key already exists, the old value is read
    /// and secondary indexes are updated correctly (like modify). If the key is
@@ -757,10 +750,6 @@ public:
          auto v = serialize_value(value);
          ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
       }
-   }
-
-   void upsert(const K& key, const V& value) {
-      upsert(name{}, key, value);
    }
 
    /// Insert with a default value, or update with a lambda.
@@ -816,11 +805,6 @@ public:
          auto v = serialize_value(new_value);
          ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
       }
-   }
-
-   template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
-   void upsert(const K& key, const V& default_value, Lambda&& updater) {
-      upsert(name{}, key, default_value, std::forward<Lambda>(updater));
    }
 
    void modify(name payer, const const_iterator& it, const V& new_value) {
