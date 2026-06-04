@@ -24,7 +24,7 @@
  *   >;
  *
  *   my_table tbl;
- *   tbl.emplace({1}, {1000, "alice"_n});
+ *   tbl.emplace(get_self(), {1}, {1000, "alice"_n});
  *   auto idx = tbl.get_index<"byowner"_n>();
  *   auto it  = idx.find("alice"_n);
  */
