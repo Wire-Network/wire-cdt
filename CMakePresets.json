@@ -10,7 +10,6 @@
       "name": "base-cdt",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "environment": {
         "CC": "/usr/bin/clang-18",
@@ -19,8 +18,6 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "/usr/bin/clang-18",
         "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
-        "ENABLE_CCACHE": "ON",
-        "ENABLE_DISTCC": "OFF",
         "ENABLE_TESTS": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "VCPKG_BUILD_TYPE": "Release"
@@ -31,6 +28,7 @@
       "displayName": "Debug CDT (clang-18, Ninja, vcpkg)",
       "description": "Debug CDT build matching //wire-cdt:build with WIRE_BUILD_TYPE=Debug (the Bazel default). vcpkg ports always build Release.",
       "inherits": "base-cdt",
+      "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -40,6 +38,7 @@
       "displayName": "Release CDT (clang-18, Ninja, vcpkg)",
       "description": "Release CDT build matching //wire-cdt:build with WIRE_BUILD_TYPE=Release. vcpkg ports always build Release.",
       "inherits": "base-cdt",
+      "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
