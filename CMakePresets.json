@@ -1,0 +1,76 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base-cdt",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "environment": {
+        "CC": "/usr/bin/clang-18",
+        "CXX": "/usr/bin/clang++-18"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/clang-18",
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
+        "ENABLE_CCACHE": "ON",
+        "ENABLE_DISTCC": "OFF",
+        "ENABLE_TESTS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "VCPKG_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "debug-cdt",
+      "displayName": "Debug CDT (clang-18, Ninja, vcpkg)",
+      "description": "Debug CDT build matching //wire-cdt:build with WIRE_BUILD_TYPE=Debug (the Bazel default). vcpkg ports always build Release.",
+      "inherits": "base-cdt",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-cdt",
+      "displayName": "Release CDT (clang-18, Ninja, vcpkg)",
+      "description": "Release CDT build matching //wire-cdt:build with WIRE_BUILD_TYPE=Release. vcpkg ports always build Release.",
+      "inherits": "base-cdt",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug-cdt",
+      "configurePreset": "debug-cdt",
+      "targets": ["all"]
+    },
+    {
+      "name": "release-cdt",
+      "configurePreset": "release-cdt",
+      "targets": ["all"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug-cdt",
+      "configurePreset": "debug-cdt",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-cdt",
+      "configurePreset": "release-cdt",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
