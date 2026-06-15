@@ -2,10 +2,10 @@
 #include <sysio/action.hpp>
 #include "native/sysio/intrinsics.hpp"
 #include "native/sysio/crt.hpp"
-#include <array>
 #include <cstdint>
 #include <cstring>
 #include <functional>
+#include <string>
 #include <stdio.h>
 #include <setjmp.h>
 
@@ -13,29 +13,19 @@ sysio::cdt::output_stream std_out;
 sysio::cdt::output_stream std_err;
 
 namespace {
-   constexpr size_t hex_128_chars = 2 + 4 * 8 + 1;
-
-   void print_hex_128(const void* value) {
-      std::array<uint32_t, 4> words{};
-      std::memcpy(words.data(), value, sizeof(words));
-      char buff[hex_128_chars] = {};
-      snprintf(buff, sizeof(buff), "0x%08x%08x%08x%08x", words[0], words[1], words[2], words[3]);
-      prints(buff);
-   }
-
    void print_hex_bytes(const void* data, size_t len) {
       constexpr char hex_characters[] = "0123456789abcdef";
-      constexpr size_t max_long_double_hex_chars = 2 + sizeof(long double) * 2 + 1;
-      char buff[max_long_double_hex_chars] = {};
-      const auto* bytes = reinterpret_cast<const uint8_t*>(data);
+      const auto* bytes = static_cast<const uint8_t*>(data);
+      std::string output;
+      output.reserve(2 + len * 2);
+      output += "0x";
 
-      buff[0] = '0';
-      buff[1] = 'x';
       for (size_t i = 0; i < len; ++i) {
-         buff[2 + i * 2] = hex_characters[bytes[i] >> 4];
-         buff[3 + i * 2] = hex_characters[bytes[i] & 0x0f];
+         output += hex_characters[bytes[i] >> 4];
+         output += hex_characters[bytes[i] & 0x0f];
       }
-      prints(buff);
+
+      prints(output.c_str());
    }
 }
 
@@ -129,10 +119,10 @@ extern "C" {
             prints(buff);
          });
       intrinsics::set_intrinsic<intrinsics::printi128>([](const int128_t* v) {
-            print_hex_128(v);
+            print_hex_bytes(v, sizeof(*v));
          });
       intrinsics::set_intrinsic<intrinsics::printui128>([](const uint128_t* v) {
-            print_hex_128(v);
+            print_hex_bytes(v, sizeof(*v));
          });
       intrinsics::set_intrinsic<intrinsics::printsf>([](float v) {
             char buff[512] = {0};
