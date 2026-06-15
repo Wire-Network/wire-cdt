@@ -16,7 +16,9 @@ namespace {
    void print_hex_128(const void* value) {
       std::array<uint32_t, 4> words{};
       std::memcpy(words.data(), value, sizeof(words));
-      printf("0x%08x%08x%08x%08x", words[0], words[1], words[2], words[3]);
+      char buff[35] = {};
+      snprintf(buff, sizeof(buff), "0x%08x%08x%08x%08x", words[0], words[1], words[2], words[3]);
+      _prints(buff, sysio::cdt::output_stream_kind::std_out);
    }
 }
 
@@ -100,10 +102,14 @@ extern "C" {
             _prints(cs, sysio::cdt::output_stream_kind::std_out);
          });
       intrinsics::set_intrinsic<intrinsics::printi>([](int64_t v) {
-            printf("%lli", v);
+            char buff[32] = {};
+            snprintf(buff, sizeof(buff), "%lli", v);
+            _prints(buff, sysio::cdt::output_stream_kind::std_out);
          });
       intrinsics::set_intrinsic<intrinsics::printui>([](uint64_t v) {
-            printf("%llu", v);
+            char buff[32] = {};
+            snprintf(buff, sizeof(buff), "%llu", v);
+            _prints(buff, sysio::cdt::output_stream_kind::std_out);
          });
       intrinsics::set_intrinsic<intrinsics::printi128>([](const int128_t* v) {
             print_hex_128(v);
