@@ -37,15 +37,20 @@ jobs:
           key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-macos-arm64-ccache-
-      - name: Cache vcpkg downloads and tool archives
+      - name: Cache vcpkg downloads
         uses: actions/cache@v5
         with:
-          path: |
-            vcpkg/downloads
-            ~/.cache/vcpkg/archives
+          path: vcpkg/downloads
           key: ${{ runner.os }}-macos-arm64-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
           restore-keys: |
             ${{ runner.os }}-macos-arm64-vcpkg-downloads-
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v5
+        with:
+          path: .vcpkg-binary-cache
+          key: ${{ runner.os }}-macos-arm64-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+          restore-keys: |
+            ${{ runner.os }}-macos-arm64-vcpkg-binary-
       - name: Build
         run: |
           if [[ "$(uname -m)" != "arm64" ]]; then
@@ -53,15 +58,6 @@ jobs:
             exit 1
           fi
 
-          echo "$PWD"
-          ls -la
-
-          export CC="$(xcrun --find clang)"
-          export CXX="$(xcrun --find clang++)"
-          export CMAKE_MAKE_PROGRAM="$(command -v ninja)"
-          export VCPKG_TARGET_TRIPLET=arm64-osx-release
-          export VCPKG_HOST_TRIPLET=arm64-osx-release
-          export VCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
           export CCACHE_DIR="$PWD/.ccache"
           export CCACHE_MAXSIZE=5G
           cmake --version
@@ -69,14 +65,14 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.sh
 
           cmake -B build-macos-arm64 -S . -G Ninja \
-            -DCMAKE_C_COMPILER="$CC" \
-            -DCMAKE_CXX_COMPILER="$CXX" \
-            -DCMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -DCMAKE_BUILD_TYPE=Release \
-            -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
-            -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
-            -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS"
+            -DVCPKG_TARGET_TRIPLET=arm64-osx-release \
+            -DVCPKG_HOST_TRIPLET=arm64-osx-release \
+            -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
+            "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
 
           cmake --build build-macos-arm64 -- -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
       - name: Test

@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  # build-platforms publishes the container image to GHCR.
   packages: write
   contents: read
 
@@ -77,46 +78,46 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-ccache-
-        - name: Cache vcpkg downloads and tool archives
+        - name: Cache vcpkg downloads
           uses: actions/cache@v5
           with:
-            path: |
-              vcpkg/downloads
-              ~/.cache/vcpkg/archives
+            path: vcpkg/downloads
             key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-
+        - name: Cache vcpkg binary archives
+          uses: actions/cache@v5
+          with:
+            path: .vcpkg-binary-cache
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+            restore-keys: |
+              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-
         - name: Build
           run: |
-            echo $PWD
-            ls -la
-
             export CC=/usr/bin/clang-18
             export CXX=/usr/bin/clang++-18
-            export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
-            export VCPKG_TARGET_TRIPLET=x64-linux-release
-            export VCPKG_HOST_TRIPLET=x64-linux-release
-            export VCPKG_OVERLAY_TRIPLETS=$PWD/.github/vcpkg-triplets
-            export CCACHE_DIR=$PWD/.ccache
+            export CCACHE_DIR="$PWD/.ccache"
             export CCACHE_MAXSIZE=5G
             cmake --version
             ccache --version
+
+            chown -R "$(id -u):$(id -g)" "$PWD"
             ./vcpkg/bootstrap-vcpkg.sh
 
-            chown -R $(id -u):$(id -g) $PWD
-
-            env CC=/usr/bin/clang-18 CXX=/usr/bin/clang++-18 \
             cmake -B build -S . -G Ninja \
-              -DCMAKE_C_COMPILER=$CC \
-              -DCMAKE_CXX_COMPILER=$CXX \
-              -DCMAKE_MAKE_PROGRAM=$CMAKE_MAKE_PROGRAM \
-              -DCMAKE_TOOLCHAIN_FILE=$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake \
+              -DCMAKE_C_COMPILER="$CC" \
+              -DCMAKE_CXX_COMPILER="$CXX" \
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
+              -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
               -DCMAKE_BUILD_TYPE=Release \
-              -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET \
-              -DVCPKG_HOST_TRIPLET=$VCPKG_HOST_TRIPLET \
-              -DVCPKG_OVERLAY_TRIPLETS=$VCPKG_OVERLAY_TRIPLETS
+              -DVCPKG_TARGET_TRIPLET=x64-linux-release \
+              -DVCPKG_HOST_TRIPLET=x64-linux-release \
+              -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
+              "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
 
-            cmake --build build -- -j $(nproc)
+            cmake --build build -- -j "$(nproc)"
         - name: Test
           run: |
             TEST_COUNT="$(ctest --test-dir build -N | sed -nE 's/^Total Tests:[[:space:]]*([0-9]+).*/\1/p' | tail -n 1)"

@@ -13,12 +13,29 @@ sysio::cdt::output_stream std_out;
 sysio::cdt::output_stream std_err;
 
 namespace {
+   constexpr size_t hex_128_chars = 2 + 4 * 8 + 1;
+
    void print_hex_128(const void* value) {
       std::array<uint32_t, 4> words{};
       std::memcpy(words.data(), value, sizeof(words));
-      char buff[35] = {};
+      char buff[hex_128_chars] = {};
       snprintf(buff, sizeof(buff), "0x%08x%08x%08x%08x", words[0], words[1], words[2], words[3]);
-      _prints(buff, sysio::cdt::output_stream_kind::std_out);
+      prints(buff);
+   }
+
+   void print_hex_bytes(const void* data, size_t len) {
+      constexpr char hex_characters[] = "0123456789abcdef";
+      constexpr size_t max_long_double_hex_chars = 2 + sizeof(long double) * 2 + 1;
+      char buff[max_long_double_hex_chars] = {};
+      const auto* bytes = reinterpret_cast<const uint8_t*>(data);
+
+      buff[0] = '0';
+      buff[1] = 'x';
+      for (size_t i = 0; i < len; ++i) {
+         buff[2 + i * 2] = hex_characters[bytes[i] >> 4];
+         buff[3 + i * 2] = hex_characters[bytes[i] & 0x0f];
+      }
+      prints(buff);
    }
 }
 
@@ -104,12 +121,12 @@ extern "C" {
       intrinsics::set_intrinsic<intrinsics::printi>([](int64_t v) {
             char buff[32] = {};
             snprintf(buff, sizeof(buff), "%lli", v);
-            _prints(buff, sysio::cdt::output_stream_kind::std_out);
+            prints(buff);
          });
       intrinsics::set_intrinsic<intrinsics::printui>([](uint64_t v) {
             char buff[32] = {};
             snprintf(buff, sizeof(buff), "%llu", v);
-            _prints(buff, sysio::cdt::output_stream_kind::std_out);
+            prints(buff);
          });
       intrinsics::set_intrinsic<intrinsics::printi128>([](const int128_t* v) {
             print_hex_128(v);
@@ -146,7 +163,7 @@ extern "C" {
             prints(buff);
          });
       intrinsics::set_intrinsic<intrinsics::printqf>([](const long double* v) {
-            print_hex_128(v);
+            print_hex_bytes(v, sizeof(*v));
          });
       intrinsics::set_intrinsic<intrinsics::printn>([](uint64_t nm) {
             std::string s = sysio::name(nm).to_string();

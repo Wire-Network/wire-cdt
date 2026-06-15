@@ -39,6 +39,8 @@ compile_commands.json
 
 # Build
 [Bb]uild*/
+.ccache/
+.vcpkg-binary-cache/
 cmake-build-debug/
 examples/multi_index_example/build
 examples/hello/build
