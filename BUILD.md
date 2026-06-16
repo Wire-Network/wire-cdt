@@ -102,15 +102,10 @@ xcode-select --install
 brew install \
   ccache \
   cmake \
-  dotnet \
-  gh \
   git \
-  mono \
   ninja \
   python
 ```
-
-`dotnet` is used by the recommended build script to create the NuGet source config. `mono` is still required by vcpkg's NuGet binary-cache provider.
 
 Wire CDT macOS host binaries are built for Apple Silicon and dynamically link
 against the system libc++ provided by the installed Xcode Command Line Tools.
@@ -124,163 +119,6 @@ From the repository root:
 ```bash
 ./vcpkg/bootstrap-vcpkg.sh
 ```
-
-## Recommended: Build with the GitHub Packages vcpkg Cache
-
-The simplest way to build with the same vcpkg NuGet binary cache used by CI is
-to run:
-
-```bash
-scripts/build-with-github-vcpkg-cache.sh
-```
-
-The script checks that the local environment matches the CI cache inputs before
-configuring CMake. If something does not match, it prints an explicit error and
-a correction command. It verifies:
-
-- the workflow platform file and Dockerfile selected by
-  `.github/workflows/build.yaml` for Linux builds
-- x86_64 host architecture for `linux-x86-64`, or Apple Silicon host
-  architecture for `macos-arm64`
-- `cmake`, `ninja`, `dotnet` or Mono, `gh`, and vcpkg availability
-- GitHub CLI authentication with `read:packages`
-- `x64-linux-release` or `arm64-osx-release` target and host triplets
-- `.github/vcpkg-triplets` as the vcpkg overlay triplet path
-- GitHub Packages NuGet source configuration
-
-By default, the script detects the executing host platform:
-
-- Linux x86_64 uses `linux-x86-64`
-- Apple Silicon macOS uses `macos-arm64`
-
-You can also pass the platform explicitly:
-
-```bash
-scripts/build-with-github-vcpkg-cache.sh --platform linux-x86-64
-scripts/build-with-github-vcpkg-cache.sh --platform macos-arm64
-```
-
-When `ccache` is installed, the script enables it as the CMake compiler launcher
-and uses `.ccache` in the repository root by default. Set `CCACHE_DISABLE=1` to
-turn it off.
-
-Useful options:
-
-```bash
-scripts/build-with-github-vcpkg-cache.sh --build-dir build/release
-scripts/build-with-github-vcpkg-cache.sh --jobs 8
-```
-
-The script has three build modes:
-
-- `developer`: local developer builds; reads packages from the GitHub Packages
-  NuGet cache and never publishes packages
-- `trusted-ci`: trusted GitHub Actions runs; reads and writes the GitHub
-  Packages NuGet cache
-- `forked-pr-ci`: fork pull-request runs; uses vcpkg's default local cache so
-  the workflow does not need package credentials
-
-The default mode is `developer`. The GitHub Actions workflow uses the same
-script with either `--mode trusted-ci` or `--mode forked-pr-ci`.
-
-## Optional: Use the GitHub Packages vcpkg Binary Cache
-
-The project can restore vcpkg-built dependencies, including LLVM, from the same NuGet-backed binary cache used by CI. This is optional, but it avoids rebuilding large vcpkg dependencies locally.
-
-To use the cache, you need:
-
-- a GitHub token that can read Wire-Network GitHub Packages
-- `read:packages` scope on that token
-- `dotnet`, used to create a build-local NuGet config
-- Mono, because vcpkg's NuGet binary-cache provider may run `nuget.exe`
-
-Install the NuGet prerequisites:
-
-```bash
-# Ubuntu
-sudo apt-get install -y dotnet-sdk-8.0 mono-complete
-
-# macOS
-brew install dotnet mono
-```
-
-If you use the GitHub CLI, refresh the local token with package-read scope:
-
-```bash
-gh auth refresh -h github.com -s read:packages
-gh auth status
-```
-
-`gh auth status` should list `read:packages` in the token scopes.
-
-Configure the NuGet source with `dotnet`:
-
-```bash
-export GITHUB_TOKEN="$(gh auth token)"
-export GITHUB_USER="$(gh api user --jq .login)"
-export VCPKG_NUGET_FEED="https://nuget.pkg.github.com/Wire-Network/index.json"
-export NUGET_CONFIG="$PWD/build/NuGet.config"
-
-mkdir -p "$(dirname "$NUGET_CONFIG")"
-printf '<configuration>\n  <packageSources />\n</configuration>\n' > "$NUGET_CONFIG"
-
-dotnet nuget remove source github --configfile "$NUGET_CONFIG" >/dev/null 2>&1 || true
-dotnet nuget add source "$VCPKG_NUGET_FEED" \
-  --configfile "$NUGET_CONFIG" \
-  --name github \
-  --username "$GITHUB_USER" \
-  --password "$GITHUB_TOKEN" \
-  --store-password-in-clear-text \
-  --valid-authentication-types basic
-```
-
-Alternatively, configure the NuGet source with `nuget.exe` through Mono:
-
-```bash
-export GITHUB_TOKEN="$(gh auth token)"
-export GITHUB_USER="$(gh api user --jq .login)"
-export VCPKG_NUGET_FEED="https://nuget.pkg.github.com/Wire-Network/index.json"
-
-NUGET_EXE="$(./vcpkg/vcpkg fetch nuget | tail -n 1)"
-
-mono "$NUGET_EXE" sources remove -Name "github" >/dev/null 2>&1 || true
-mono "$NUGET_EXE" sources add \
-  -Name "github" \
-  -Source "$VCPKG_NUGET_FEED" \
-  -UserName "$GITHUB_USER" \
-  -Password "$GITHUB_TOKEN" \
-  -StorePasswordInClearText
-
-mono "$NUGET_EXE" setapikey "$GITHUB_TOKEN" -Source "$VCPKG_NUGET_FEED"
-```
-
-Enable read-only binary cache restores for the current shell:
-
-```bash
-export VCPKG_FEATURE_FLAGS="manifests,binarycaching"
-export VCPKG_BINARY_SOURCES="clear;nugetconfig,$NUGET_CONFIG,read"
-```
-
-If you used the Mono-backed `nuget.exe` setup instead, use the feed URL directly:
-
-```bash
-export VCPKG_FEATURE_FLAGS="manifests,binarycaching"
-export VCPKG_BINARY_SOURCES="clear;nuget,$VCPKG_NUGET_FEED,read"
-```
-
-A successful restore looks like:
-
-```text
-Restored 9 package(s) from NuGet
-```
-
-If vcpkg prints `Restored 0 package(s) from NuGet`, check:
-
-- `gh auth status` includes `read:packages`
-- Clang 18 comes from `llvm-toolchain-noble-18`, not Ubuntu's default `18.1.3` package
-- `VCPKG_TARGET_TRIPLET` and `VCPKG_HOST_TRIPLET` are both `x64-linux-release`
-  on Linux, or both `arm64-osx-release` on macOS
-- `VCPKG_OVERLAY_TRIPLETS` points at `.github/vcpkg-triplets`
 
 ## Configure
 

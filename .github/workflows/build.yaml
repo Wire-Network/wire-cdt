@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  # build-platforms publishes the container image to GHCR.
   packages: write
   contents: read
 
@@ -60,8 +61,6 @@ jobs:
     name: Build & Test
     needs: [discover, build-platforms]
     if: always() && needs.discover.result == 'success' && (needs.build-platforms.result == 'success' || needs.build-platforms.result == 'skipped')
-    env:
-      VCPKG_NUGET_FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
     strategy:
       fail-fast: false
       matrix:
@@ -79,31 +78,46 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-ccache-
-        - name: Cache vcpkg downloads and tool archives
+        - name: Cache vcpkg downloads
           uses: actions/cache@v5
           with:
-            path: |
-              vcpkg/downloads
-              ~/.cache/vcpkg/archives
+            path: vcpkg/downloads
             key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-
+        - name: Cache vcpkg binary archives
+          uses: actions/cache@v5
+          with:
+            path: .vcpkg-binary-cache
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+            restore-keys: |
+              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-
         - name: Build
-          env:
-            GITHUB_TOKEN: ${{ github.token }}
-            GITHUB_USER: ${{ github.repository_owner }}
           run: |
-            if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
-              echo "Using local-only vcpkg binary cache for fork pull request."
-              BUILD_MODE=forked-pr-ci
-            else
-              echo "Using GitHub Packages vcpkg binary cache in readwrite mode."
-              BUILD_MODE=trusted-ci
-            fi
+            export CC=/usr/bin/clang-18
+            export CXX=/usr/bin/clang++-18
+            export CCACHE_DIR="$PWD/.ccache"
+            export CCACHE_MAXSIZE=5G
+            cmake --version
+            ccache --version
 
-            scripts/build-with-github-vcpkg-cache.sh \
-              --mode "$BUILD_MODE" \
-              --build-dir build
+            chown -R "$(id -u):$(id -g)" "$PWD"
+            ./vcpkg/bootstrap-vcpkg.sh
+
+            cmake -B build -S . -G Ninja \
+              -DCMAKE_C_COMPILER="$CC" \
+              -DCMAKE_CXX_COMPILER="$CXX" \
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
+              -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DVCPKG_TARGET_TRIPLET=x64-linux-release \
+              -DVCPKG_HOST_TRIPLET=x64-linux-release \
+              -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
+              "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
+
+            cmake --build build -- -j "$(nproc)"
         - name: Test
           run: |
             TEST_COUNT="$(ctest --test-dir build -N | sed -nE 's/^Total Tests:[[:space:]]*([0-9]+).*/\1/p' | tail -n 1)"
