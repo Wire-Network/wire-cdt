@@ -64,7 +64,6 @@ kv::table<"mytbl"_n, K, V> tbl("other"_n);    // reads another contract's data
 |--------|-------------|
 | `emplace(payer, key, value)` | Insert new row. **Asserts if key exists.** |
 | `emplace(payer, key, lambda)` | Lambda emplace: `[](V& v){ v.x = 1; }` |
-| `emplace(key, value)` | Self-payer variant |
 | `upsert(payer, key, value)` | Insert or update (handles secondary index cleanup) |
 | `upsert(payer, key, default, lambda)` | Insert default or apply lambda to existing. **2 intrinsic calls — optimal for insert-or-modify patterns.** |
 | `set(payer, key, value)` | Alias for `upsert` |

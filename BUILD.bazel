@@ -1,0 +1,76 @@
+# =============================================================================
+# wire-cdt — Contract Development Toolkit (Wire's AntelopeIO CDT fork)
+# =============================================================================
+# C++ / CMake, vcpkg-backed. Provides the contract compiler + protoc-gen-zpp
+# that wire-sysio uses to build its system contracts — so it is the ROOT of the
+# platform build chain (no deps). Built natively in-tree via cmake_workspace_build
+# (see build_defs.bzl for why native, not rules_foreign_cc). `manual` because
+# vcpkg fetches from the network and the build is large.
+#
+# Native equivalent:
+#   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)"
+# =============================================================================
+
+load("//:build_defs.bzl", "cmake_workspace_build")
+
+package(default_visibility = ["//visibility:public"])
+
+# Change-tracking inputs. vcpkg/ is .bazelignore'd (the native build reads it
+# from the real tree); build/ is the output dir.
+filegroup(
+    name = "srcs",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "build/**",
+            "vcpkg/**",
+            ".git/**",
+            "node_modules/**",
+            "BUILD.bazel",
+        ],
+    ),
+)
+
+# Reproduces the known-good local recipe (NOT the x64-linux-release vcpkg
+# triplet from BUILD.md — that overlay produced an unstable cdt-cc that crashed
+# compiling the wasm libc; the default triplet + Debug works). vcpkg pulls
+# llvm/protobuf/zpp-bits/magic-enum, so this needs the network.
+#   cmake -G Ninja -DENABLE_CCACHE=ON -DENABLE_DISTCC=OFF -DENABLE_TESTS=ON \
+#     -DCMAKE_TOOLCHAIN_FILE=$PWD/vcpkg/.../vcpkg.cmake \
+#     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug \
+#     -DCMAKE_C_COMPILER=/usr/bin/clang-18 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-18 \
+#     -DCMAKE_PARALLEL_LEVEL=$(nproc) -S . -B build/debug
+#   cmake --build build/debug --target all
+cmake_workspace_build(
+    name = "build",
+    # CMAKE_BUILD_TYPE is injected from $WIRE_BUILD_TYPE (default Debug).
+    build_target = "all",
+    # Verify the build with ctest (the correct check — not raw cdt-cc runs).
+    ctest = True,
+    compile_commands_merge = {
+        "script": "wire-sysio/cmake/scripts/merge_compile_commands.py",
+        "output": "compile_commands.json",
+        "inputs": [
+            "wire-cdt/build/$$BUILD_TYPE_LC/compile_commands.json",
+            "wire-sysio/build/$$BUILD_TYPE_LC/compile_commands.json",
+        ],
+    },
+    # clang-18 is pinned centrally by cmake_workspace_build (both the
+    # CC/CXX env and the -DCMAKE_C[XX]_COMPILER cache entries — vcpkg needs both).
+    cache_entries = {
+        "ENABLE_CCACHE": "ON",
+        "ENABLE_DISTCC": "OFF",
+        "ENABLE_TESTS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_BUILD_PARALLEL_LEVEL": "$$(nproc)",
+        "VCPKG_BUILD_TYPE": "Release",
+    },
+    generator = "Ninja",
+    # Root of the chain — nothing builds before cdt.
+    tags = [
+        "cpp",
+        "requires-network",
+    ],
+    vcpkg_toolchain = True,
+    working_dir = "wire-cdt",
+)

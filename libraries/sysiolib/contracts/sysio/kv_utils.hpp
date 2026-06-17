@@ -151,8 +151,10 @@ struct is_fixed_serializable<T, std::enable_if_t<
 template<typename T>
 inline constexpr bool is_fixed_serializable_v = is_fixed_serializable<T>::value;
 
-/// Payer constant: pass as payer to keep existing payer unchanged.
-/// Works with kv::table, kv::scoped_table, kv::global, and kv_multi_index.
+/// Payer constant (name{}): on an update, keeps the row's existing payer unchanged. Valid only on
+/// update -- a new row has no existing payer to keep, so the host rejects same_payer on insert
+/// (name an explicit paying account instead). Works with kv::table, kv::scoped_table, kv::global,
+/// and kv_multi_index.
 inline constexpr name same_payer{};
 
 /// Encode a uint64_t to 8 bytes big-endian.

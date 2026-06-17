@@ -80,9 +80,9 @@ public:
 
    [[sysio::action]]
    void emplace() {
-      tbl.emplace({1}, {1000, "alice"_n});
-      tbl.emplace({2}, {2000, "bob"_n});
-      tbl.emplace({3}, {500,  "carol"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {2}, {2000, "bob"_n});
+      tbl.emplace(get_self(), {3}, {500,  "carol"_n});
 
       auto it = tbl.find({2});
       check(it != tbl.end(), "find(2) should succeed");
@@ -111,8 +111,8 @@ public:
 
    [[sysio::action]]
    void modify() {
-      tbl.emplace({1}, {1000, "alice"_n});
-      tbl.emplace({2}, {2000, "bob"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {2}, {2000, "bob"_n});
 
       auto it = tbl.require_find({1});
       tbl.modify(it, {1500, "alice"_n});
@@ -132,7 +132,7 @@ public:
 
    [[sysio::action]]
    void modpayer() {
-      tbl.emplace({1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
 
       auto it = tbl.require_find({1});
       // Verify payer overload compiles and works (uses self as payer here;
@@ -147,9 +147,9 @@ public:
 
    [[sysio::action]]
    void erasetest() {
-      tbl.emplace({1}, {1000, "alice"_n});
-      tbl.emplace({2}, {2000, "bob"_n});
-      tbl.emplace({3}, {3000, "carol"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {2}, {2000, "bob"_n});
+      tbl.emplace(get_self(), {3}, {3000, "carol"_n});
 
       // Erase key 2
       auto it = tbl.require_find({2});
@@ -172,9 +172,9 @@ public:
 
    [[sysio::action]]
    void secfind() {
-      tbl.emplace({1}, {1000, "alice"_n});
-      tbl.emplace({2}, {2000, "bob"_n});
-      tbl.emplace({3}, {500,  "carol"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {2}, {2000, "bob"_n});
+      tbl.emplace(get_self(), {3}, {500,  "carol"_n});
 
       auto idx = tbl.get_index<"byowner"_n>();
 
@@ -190,9 +190,9 @@ public:
 
    [[sysio::action]]
    void seclbound() {
-      tbl.emplace({1}, {100,  "alice"_n});
-      tbl.emplace({2}, {500,  "bob"_n});
-      tbl.emplace({3}, {1000, "carol"_n});
+      tbl.emplace(get_self(), {1}, {100,  "alice"_n});
+      tbl.emplace(get_self(), {2}, {500,  "bob"_n});
+      tbl.emplace(get_self(), {3}, {1000, "carol"_n});
 
       auto idx = tbl.get_index<"bybal"_n>();
 
@@ -211,9 +211,9 @@ public:
 
    [[sysio::action]]
    void seciter() {
-      tbl.emplace({1}, {300, "charlie"_n});
-      tbl.emplace({2}, {100, "alice"_n});
-      tbl.emplace({3}, {200, "bob"_n});
+      tbl.emplace(get_self(), {1}, {300, "charlie"_n});
+      tbl.emplace(get_self(), {2}, {100, "alice"_n});
+      tbl.emplace(get_self(), {3}, {200, "bob"_n});
 
       auto idx = tbl.get_index<"bybal"_n>();
 
@@ -232,8 +232,8 @@ public:
 
    [[sysio::action]]
    void secmodify() {
-      tbl.emplace({1}, {1000, "alice"_n});
-      tbl.emplace({2}, {2000, "bob"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {2}, {2000, "bob"_n});
 
       auto idx = tbl.get_index<"byowner"_n>();
       auto it = idx.find("alice"_n);
@@ -255,9 +255,9 @@ public:
 
    [[sysio::action]]
    void secerase() {
-      tbl.emplace({1}, {1000, "alice"_n});
-      tbl.emplace({2}, {2000, "bob"_n});
-      tbl.emplace({3}, {3000, "carol"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {2}, {2000, "bob"_n});
+      tbl.emplace(get_self(), {3}, {3000, "carol"_n});
 
       auto idx = tbl.get_index<"byowner"_n>();
       auto it = idx.find("bob"_n);
@@ -277,9 +277,9 @@ public:
 
    [[sysio::action]]
    void keyiter() {
-      tbl.emplace({1}, {300, "charlie"_n});
-      tbl.emplace({2}, {100, "alice"_n});
-      tbl.emplace({3}, {200, "bob"_n});
+      tbl.emplace(get_self(), {1}, {300, "charlie"_n});
+      tbl.emplace(get_self(), {2}, {100, "alice"_n});
+      tbl.emplace(get_self(), {3}, {200, "bob"_n});
 
       auto idx = tbl.get_index<"bybal"_n>();
 
@@ -300,7 +300,7 @@ public:
 
    [[sysio::action]]
    void reqfind() {
-      tbl.emplace({1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
 
       // Primary require_find
       auto it = tbl.require_find({1}, "pk not found");
@@ -316,9 +316,9 @@ public:
 
    [[sysio::action]]
    void dupkeys() {
-      tbl.emplace({1}, {100, "alice"_n});
-      tbl.emplace({2}, {100, "bob"_n});
-      tbl.emplace({3}, {200, "carol"_n});
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {2}, {100, "bob"_n});
+      tbl.emplace(get_self(), {3}, {200, "carol"_n});
 
       auto idx = tbl.get_index<"bybal"_n>();
 
@@ -342,9 +342,9 @@ public:
 
    [[sysio::action]]
    void priiter() {
-      tbl.emplace({30}, {3, "c"_n});
-      tbl.emplace({10}, {1, "a"_n});
-      tbl.emplace({20}, {2, "b"_n});
+      tbl.emplace(get_self(), {30}, {3, "c"_n});
+      tbl.emplace(get_self(), {10}, {1, "a"_n});
+      tbl.emplace(get_self(), {20}, {2, "b"_n});
 
       uint64_t expected[] = {10, 20, 30};
       int i = 0;
@@ -360,7 +360,7 @@ public:
 
    [[sysio::action]]
    void gettest() {
-      tbl.emplace({1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
 
       check(tbl.contains({1}), "should contain key 1");
       check(!tbl.contains({2}), "should not contain key 2");
@@ -384,7 +384,7 @@ public:
 
    [[sysio::action]]
    void overwrite() {
-      tbl.emplace({1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
 
       // Overwrite via modify
       auto it = tbl.require_find({1});
@@ -404,12 +404,12 @@ public:
    [[sysio::action]]
    void upsert() {
       // Insert via upsert (key does not exist)
-      tbl.upsert({1}, {100, "alice"_n});
+      tbl.upsert(get_self(), {1}, {100, "alice"_n});
       auto val = tbl.get({1});
       check(val.balance == 100, "upsert insert: balance should be 100");
 
       // Update via upsert (key exists)
-      tbl.upsert({1}, {200, "bob"_n});
+      tbl.upsert(get_self(), {1}, {200, "bob"_n});
       val = tbl.get({1});
       check(val.balance == 200, "upsert update: balance should be 200");
       check(val.owner == "bob"_n, "upsert update: owner should be bob");
@@ -429,11 +429,11 @@ public:
    [[sysio::action]]
    void signedkey() {
       i64_table t;
-      t.emplace({-100}, {1});
-      t.emplace({50},   {2});
-      t.emplace({-1},   {3});
-      t.emplace({0},    {4});
-      t.emplace({200},  {5});
+      t.emplace(get_self(), {-100}, {1});
+      t.emplace(get_self(), {50},   {2});
+      t.emplace(get_self(), {-1},   {3});
+      t.emplace(get_self(), {0},    {4});
+      t.emplace(get_self(), {200},  {5});
 
       // Iteration should be in signed order: -100, -1, 0, 50, 200
       int64_t expected[] = {-100, -1, 0, 50, 200};
@@ -457,10 +457,10 @@ public:
    [[sysio::action]]
    void strkey() {
       str_table t;
-      t.emplace({"us-east", 1}, {10});
-      t.emplace({"eu-west", 2}, {20});
-      t.emplace({"us-east", 3}, {30});
-      t.emplace({"ap-south", 4}, {40});
+      t.emplace(get_self(), {"us-east", 1}, {10});
+      t.emplace(get_self(), {"eu-west", 2}, {20});
+      t.emplace(get_self(), {"us-east", 3}, {30});
+      t.emplace(get_self(), {"ap-south", 4}, {40});
 
       // Lexicographic order: ap-south, eu-west, us-east/1, us-east/3
       auto it = t.begin();
@@ -486,10 +486,10 @@ public:
    [[sysio::action]]
    void dblkey() {
       dbl_table t;
-      t.emplace({1}, {-2.5, 1});
-      t.emplace({2}, {0.0,  2});
-      t.emplace({3}, {1.5,  3});
-      t.emplace({4}, {-0.1, 4});
+      t.emplace(get_self(), {1}, {-2.5, 1});
+      t.emplace(get_self(), {2}, {0.0,  2});
+      t.emplace(get_self(), {3}, {1.5,  3});
+      t.emplace(get_self(), {4}, {-0.1, 4});
 
       auto idx = t.get_index<"byscore"_n>();
 
@@ -514,10 +514,10 @@ public:
    [[sysio::action]]
    void multikey() {
       multi_table t;
-      t.emplace({1, 100}, {10});
-      t.emplace({1, 200}, {20});
-      t.emplace({2, 50},  {30});
-      t.emplace({1, 50},  {40});
+      t.emplace(get_self(), {1, 100}, {10});
+      t.emplace(get_self(), {1, 200}, {20});
+      t.emplace(get_self(), {2, 50},  {30});
+      t.emplace(get_self(), {1, 50},  {40});
 
       // Order: (1,50), (1,100), (1,200), (2,50)
       auto it = t.begin();
@@ -548,9 +548,9 @@ public:
 
    [[sysio::action]]
    void reviter() {
-      tbl.emplace({10}, {1, "a"_n});
-      tbl.emplace({20}, {2, "b"_n});
-      tbl.emplace({30}, {3, "c"_n});
+      tbl.emplace(get_self(), {10}, {1, "a"_n});
+      tbl.emplace(get_self(), {20}, {2, "b"_n});
+      tbl.emplace(get_self(), {30}, {3, "c"_n});
 
       // Decrement from end should give last element
       auto it = tbl.end();
@@ -578,9 +578,9 @@ public:
 
    [[sysio::action]]
    void secrev() {
-      tbl.emplace({1}, {300, "c"_n});
-      tbl.emplace({2}, {100, "a"_n});
-      tbl.emplace({3}, {200, "b"_n});
+      tbl.emplace(get_self(), {1}, {300, "c"_n});
+      tbl.emplace(get_self(), {2}, {100, "a"_n});
+      tbl.emplace(get_self(), {3}, {200, "b"_n});
 
       auto idx = tbl.get_index<"bybal"_n>();
 
@@ -601,11 +601,11 @@ public:
 
    [[sysio::action]]
    void secubound() {
-      tbl.emplace({1}, {100, "alice"_n});
-      tbl.emplace({2}, {100, "bob"_n});
-      tbl.emplace({3}, {100, "carol"_n});
-      tbl.emplace({4}, {200, "dave"_n});
-      tbl.emplace({5}, {300, "eve"_n});
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {2}, {100, "bob"_n});
+      tbl.emplace(get_self(), {3}, {100, "carol"_n});
+      tbl.emplace(get_self(), {4}, {200, "dave"_n});
+      tbl.emplace(get_self(), {5}, {300, "eve"_n});
 
       auto idx = tbl.get_index<"bybal"_n>();
 
@@ -642,7 +642,7 @@ public:
       // emplace returns an iterator, not a delta — but the underlying kv_set
       // does return a delta. We verify indirectly via erase: if emplace consumed
       // RAM, erasing should free it.
-      t.emplace({1}, {100});
+      t.emplace(get_self(), {1}, {100});
       check(t.contains({1}), "should exist after emplace");
 
       auto it = t.find({1});
@@ -680,7 +680,7 @@ public:
    void zerocopy() {
       // POD path: trivially_copyable, sizeof == pack_size → memcpy
       pod_table pt;
-      pt.emplace({1}, {1000, 2000});
+      pt.emplace(get_self(), {1}, {1000, 2000});
       auto pval = pt.get({1});
       check(pval.x == 1000, "pod: x should be 1000");
       check(pval.y == 2000, "pod: y should be 2000");
@@ -692,7 +692,7 @@ public:
 
       // Complex path: has std::string → datastream serialization
       complex_table ct;
-      ct.emplace({1}, {"hello", 42});
+      ct.emplace(get_self(), {1}, {"hello", 42});
       auto cval = ct.get({1});
       check(cval.label == "hello", "complex: label should be hello");
       check(cval.amount == 42, "complex: amount should be 42");
@@ -715,8 +715,8 @@ public:
       time_point t1(microseconds(1000000));
       time_point t2(microseconds(2000000));
 
-      t.emplace({1}, {t1, 10});
-      t.emplace({2}, {t2, 20});
+      t.emplace(get_self(), {1}, {t1, 10});
+      t.emplace(get_self(), {2}, {t2, 20});
 
       // find → deserialize_value
       auto it = t.find({1});
@@ -766,7 +766,7 @@ public:
    void newapi() {
       // --- set() as upsert alias ---
       // Insert via set (key does not exist)
-      tbl.set({1}, {100, "alice"_n});
+      tbl.set(get_self(), {1}, {100, "alice"_n});
       {
          auto v = tbl.get({1});
          check(v.balance == 100, "set insert: balance should be 100");
@@ -774,7 +774,7 @@ public:
       }
 
       // Update via set (key already exists)
-      tbl.set({1}, {200, "bob"_n});
+      tbl.set(get_self(), {1}, {200, "bob"_n});
       {
          auto v = tbl.get({1});
          check(v.balance == 200, "set update: balance should be 200");
@@ -821,7 +821,7 @@ public:
       tbl.erase({1});
 
       // --- Modify by key + lambda ---
-      tbl.emplace({1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
 
       // Modify by key (self-payer)
       tbl.modify({1}, [](my_val& v) {
@@ -855,8 +855,8 @@ public:
       tbl.erase({1});
 
       // --- Erase by key ---
-      tbl.emplace({1}, {100, "alice"_n});
-      tbl.emplace({2}, {200, "bob"_n});
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {2}, {200, "bob"_n});
 
       tbl.erase({1});
 
@@ -880,7 +880,7 @@ public:
          check(!none.has_value(), "try_get(99) should be empty");
       }
 
-      tbl.emplace({1}, {1000, "alice"_n});
+      tbl.emplace(get_self(), {1}, {1000, "alice"_n});
 
       // try_get on existing key returns value
       {
@@ -894,9 +894,9 @@ public:
       tbl.erase({1});
 
       // --- cbegin / cend const iterator aliases ---
-      tbl.emplace({10}, {1, "a"_n});
-      tbl.emplace({20}, {2, "b"_n});
-      tbl.emplace({30}, {3, "c"_n});
+      tbl.emplace(get_self(), {10}, {1, "a"_n});
+      tbl.emplace(get_self(), {20}, {2, "b"_n});
+      tbl.emplace(get_self(), {30}, {3, "c"_n});
 
       // cbegin/cend should work identically to begin/end
       {
@@ -935,8 +935,8 @@ public:
 
    [[sysio::action]]
    void dupempl() {
-      tbl.emplace({1}, {100, "alice"_n});
-      tbl.emplace({1}, {200, "bob"_n});  // should assert — key already exists
+      tbl.emplace(get_self(), {1}, {100, "alice"_n});
+      tbl.emplace(get_self(), {1}, {200, "bob"_n});  // should assert — key already exists
    }
 };
 
