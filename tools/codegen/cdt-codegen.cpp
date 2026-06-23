@@ -56,6 +56,41 @@ static bool exists(const char* filename) {
    return stat(filename, &st) == 0;
 }
 
+// Atomically replace `filename` with `content`: write to a unique per-process
+// temp file in the same directory, then rename(2) over the target. Under a
+// parallel build, many cdt-codegen processes (one per translation unit) write
+// the same shared per-contract outputs -- <contract>.abi and, in link mode,
+// <contract>.dispatch.cpp. A plain truncate+write lets those concurrent writes
+// interleave and leave a corrupt file for whoever consumes it, and the in-place
+// truncate also momentarily exposes an empty/partial file to a concurrent
+// reader. rename(2) is atomic within a directory, so each publish is
+// all-or-nothing: a concurrent reader always sees one complete version, and the
+// last writer wins cleanly instead of corrupting the file. Returns false (and
+// removes the temp) on any I/O error.
+static bool write_file_atomic(const std::string& filename, const std::string& content) {
+   const std::string tmp = filename + ".tmp." + std::to_string((long)getpid());
+   {
+      std::ofstream ofs(tmp);
+      if (!ofs) {
+         std::cerr << "cannot open " + tmp + "\n";
+         return false;
+      }
+      ofs << content;
+      ofs.close();
+      if (!ofs) { // a flush/close error must not publish a truncated file
+         std::cerr << "failed writing " + tmp + "\n";
+         unlink(tmp.c_str());
+         return false;
+      }
+   }
+   if (rename(tmp.c_str(), filename.c_str()) != 0) {
+      std::cerr << "cannot publish " + filename + "\n";
+      unlink(tmp.c_str());
+      return false;
+   }
+   return true;
+}
+
 // Write dispatch code (apply entry point) to an output stream.
 // When weak=true, apply() gets __attribute__((weak)) so a user-defined apply()
 // (e.g. from SYSIO_DISPATCH) takes priority at link time.
@@ -141,17 +176,14 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
 static void generate_sysio_dispatch(const std::string& output, const std::set<wasm_action>& wasm_actions,
                                     const std::set<wasm_notify>& wasm_notifies,
                                     bool has_pre_dispatch, bool has_post_dispatch) {
-   try {
-      std::ofstream ofs(output);
-      if (!ofs)
-         throw std::runtime_error("cannot open " + output);
-      ofs << "#include <cstdint>\n"
-          << "#include <sysio/name.hpp>\n";
-      write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, false, has_pre_dispatch, has_post_dispatch);
-      ofs.close();
-   } catch (...) {
+   std::stringstream ss;
+   ss << "#include <cstdint>\n"
+      << "#include <sysio/name.hpp>\n";
+   write_sysio_dispatch(ss, wasm_actions, wasm_notifies, false, has_pre_dispatch, has_post_dispatch);
+   // Atomic publish: in link mode every parallel TU writes this same
+   // <contract>.dispatch.cpp; a plain truncate+write would let them corrupt it.
+   if (!write_file_atomic(output, ss.str()))
       std::cerr << "Failed to generate sysio dispatcher\n";
-   }
 }
 
 static std::vector<std::string> split_then_prepend(const std::string& s, char delim, std::string prefix) {
@@ -666,18 +698,16 @@ int main(int argc, const char** argv) {
                return -1;
             }
 
-            std::string   filename = abi_output_path.empty()
-                                   ? output_dir + "/" + contract_name + ".abi"
-                                   : abi_output_path;
-            std::ofstream ofs(filename);
-            if (!ofs) {
-               std::cerr << "cannot open " + filename + "\n";
-               return -1;
-            }
+            std::string filename = abi_output_path.empty()
+                                 ? output_dir + "/" + contract_name + ".abi"
+                                 : abi_output_path;
             std::stringstream abi_json;
             abi_json << pretty_print(abi);
-            ofs << abi_json.str();
-            ofs.close();
+            // Atomic publish: many parallel TUs write this same <contract>.abi;
+            // a plain truncate+write would let them interleave into a corrupt file.
+            if (!write_file_atomic(filename, abi_json.str())) {
+               return -1;
+            }
          }
       }
 
