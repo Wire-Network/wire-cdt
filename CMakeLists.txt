@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.19)
 
 # Sanity check our source directory to make sure that we are not trying to
 # generate an in-source build, and to make
@@ -46,7 +46,11 @@ if(NOT LIBS_BUILD_TYPE)
    set(LIBS_BUILD_TYPE "Release")
 endif()
 
-include(cmake/ToolsExternalProject.cmake)
+if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
+   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
+
+include(cmake/Tools.cmake)
 
 set(WASM_SDK_BUILD true)
 

@@ -187,9 +187,19 @@ struct zpp_generator {
 
    void generate_enum(const gpb::EnumDescriptor* descriptor, std::stringstream& strm, std::string indent = "") {
       auto name = reserve_keyword(sv2s(descriptor->name()));
-      strm << indent << "enum " << name << " : int {\n";
-      int min_value = descriptor->value(0)->number();
-      int max_value = descriptor->value(0)->number();
+      int max_value = 0;
+
+      for (int i = 0; i < descriptor->value_count(); ++i) {
+         auto value = descriptor->value(i);
+         if (value->number() < 0) {
+            response.set_error("negative protobuf enum values are not supported: " +
+                               sv2s(descriptor->full_name()) + "." + sv2s(value->name()));
+            return;
+         }
+         max_value = std::max(max_value, value->number());
+      }
+
+      strm << indent << "enum " << name << " : int32_t {\n";
 
       if (descriptor->value_count()) {
          for (int i = 0; i < descriptor->value_count(); ++i) {
@@ -200,18 +210,18 @@ struct zpp_generator {
             if (descriptor->options().deprecated())
                strm << " [[deprecated]]";
             strm << " = " << value->number();
-            min_value = std::min(min_value, value->number());
-            max_value = std::max(max_value, value->number());
          }
       }
       strm << "\n" << indent << "};\n\n";
 
-      if (min_value < -128 || max_value > 128 || (max_value - min_value) > UINT16_MAX) {
+      /// Extend magic_enum's default range when non-negative protobuf enum
+      /// values exceed its built-in scan limit.
+      if (max_value > 128) {
          epilogue_strm << "\n"
                        << "template <>\n"
                        << "struct magic_enum::customize::enum_range<" << full_name_to_cpp_name(descriptor->full_name())
                        << "> {\n"
-                       << "   static constexpr int min = " << min_value << ";\n"
+                       << "   static constexpr int min = 0;\n"
                        << "   static constexpr int max = " << max_value << ";\n"
                        << "};\n";
       }
@@ -223,7 +233,7 @@ struct zpp_generator {
       bool can_be_optional = true;
 
       switch (descriptor->type()) {
-      case gpb::FieldDescriptor::TYPE_INT32: result = "zpp::bits::vint32_t"; break;
+      case gpb::FieldDescriptor::TYPE_INT32: result = "zpp::bits::vint64_t"; break;
       case gpb::FieldDescriptor::TYPE_INT64: result = "zpp::bits::vint64_t"; break;
       case gpb::FieldDescriptor::TYPE_UINT32: result = "zpp::bits::vuint32_t"; break;
       case gpb::FieldDescriptor::TYPE_UINT64: result = "zpp::bits::vuint64_t"; break;
@@ -315,7 +325,7 @@ struct zpp_generator {
 
       strm << indent << "struct " << message_name << " {\n";
 
-      for (size_t i = 0; i < descriptor->enum_type_count(); ++i)
+      for (size_t i = 0; i < descriptor->enum_type_count() && !response.has_error(); ++i)
          generate_enum(descriptor->enum_type(i), strm, indent + "   ");
 
       for (size_t i = 0; i < descriptor->nested_type_count(); ++i) {

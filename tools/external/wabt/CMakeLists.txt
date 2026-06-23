@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 if (POLICY CMP0048)
    cmake_policy(SET CMP0048 NEW)
 endif()
@@ -33,7 +33,7 @@ option(USE_UBSAN "Use undefined behavior sanitizer" OFF)
 option(CODE_COVERAGE "Build with code coverage enabled" OFF)
 option(WITH_EXCEPTIONS "Build with exceptions enabled" OFF)
 
-if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+if (${CMAKE_C_COMPILER_ID} MATCHES "^(AppleClang|Clang)$")
   set(COMPILER_IS_CLANG 1)
   set(COMPILER_IS_GNU 0)
   set(COMPILER_IS_MSVC 0)
@@ -55,8 +55,10 @@ else ()
   set(COMPILER_IS_MSVC 0)
 endif ()
 
-# Statically link C++ runtime for portable binaries
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+# Statically link C++ runtime for portable binaries where supported.
+if(NOT APPLE)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+endif()
 
 include(CheckIncludeFile)
 include(CheckSymbolExists)
@@ -299,21 +301,24 @@ if (NOT EMSCRIPTEN)
     )
   endfunction()
   wabt_executable(sysio-pp src/tools/postpass.cc)
-  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-pp> ${CMAKE_BINARY_DIR}/bin/ )
+  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${CDT_TOOLS_BIN_DIR} )
+  add_custom_command( TARGET sysio-pp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-pp> ${CDT_TOOLS_BIN_DIR}/ )
+  cdt_register_tool_target(sysio-pp)
 
   # wat2wasm
   wabt_executable(sysio-wast2wasm src/tools/wat2wasm.cc)
-  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wast2wasm> ${CMAKE_BINARY_DIR}/bin/ )
+  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${CDT_TOOLS_BIN_DIR} )
+  add_custom_command( TARGET sysio-wast2wasm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wast2wasm> ${CDT_TOOLS_BIN_DIR}/ )
+  cdt_register_tool_target(sysio-wast2wasm)
 
   # wast2json
   wabt_executable(wast2json src/tools/wast2json.cc)
 
   # wasm2wat
   wabt_executable(sysio-wasm2wast src/tools/wasm2wat.cc)
-  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND mkdir -p ${CMAKE_BINARY_DIR}/bin )
-  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wasm2wast> ${CMAKE_BINARY_DIR}/bin/ )
+  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${CDT_TOOLS_BIN_DIR} )
+  add_custom_command( TARGET sysio-wasm2wast POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sysio-wasm2wast> ${CDT_TOOLS_BIN_DIR}/ )
+  cdt_register_tool_target(sysio-wasm2wast)
 
   # wasm2c
   wabt_executable(wasm2c

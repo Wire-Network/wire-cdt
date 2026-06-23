@@ -1,14 +1,3 @@
-#define WIN32_LEAN_AND_MEAN
-#if defined(_MSC_VER)
-#pragma warning(push, 3)
-#endif
-#include <windows.h>
-#include <intrin.h>
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-#endif
-
 template <uint8_t OS>
 int _getModulePath(HMODULE module, char* out, int capacity, int* dirname_length, typename std::enable_if<OS == sys::_win, int>::type = 0) {
    wchar_t buffer1[MAX_PATH];

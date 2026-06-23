@@ -22,8 +22,8 @@
 #define quietBit        (implicitBit >> 1)
 #define qnanRep         (exponentMask | quietBit)
 
-static __inline __int128 toRep(float128_t x) {
-    const union { float128_t f; __int128 i; } rep = {.f = x};
+static __inline __int128 toRep(softfloat128_t x) {
+    const union { softfloat128_t f; __int128 i; } rep = {.f = x};
     return rep.i;
 }
 

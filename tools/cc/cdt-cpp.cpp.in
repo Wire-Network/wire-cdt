@@ -78,8 +78,7 @@ int main(int argc, const char **argv) {
    // fix to show version info without having to have any other arguments
    for (int i=0; i < argc; i++) {
      if (argv[i] == std::string("-v")) {
-       sysio::cdt::environment::exec_subprogram("clang++", {"-v"});
-       return 0;
+       return sysio::cdt::environment::exec_subprogram("clang++", {"-v"}) ? 0 : -1;
      }
    }
 

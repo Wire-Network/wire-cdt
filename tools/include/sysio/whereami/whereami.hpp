@@ -1,5 +1,54 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <stdlib.h>
+#include <type_traits>
+#include <vector>
+
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#if defined(_MSC_VER)
+#pragma warning(push, 3)
+#endif
+#include <windows.h>
+#include <intrin.h>
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+#define __SYSIO_OS__ sys::_win
+
+#elif defined(__linux__) || defined(__CYGWIN__)
+#ifndef __STDC_FORMAT_MACROS
+# define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+#define __SYSIO_OS__ sys::_linux
+
+#elif defined(__APPLE__)
+#define _DARWIN_BETTER_REALPATH
+#include <dlfcn.h>
+#include <limits.h>
+#include <mach-o/dyld.h>
+#include <string.h>
+#define __SYSIO_OS__ sys::_osx
+
+#elif defined(__DragonFly__) || defined(__FreeBSD__) || \
+      defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+#include <dlfcn.h>
+#include <limits.h>
+#include <string.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#define __SYSIO_OS__ sys::_bsd
+
+#else
+#error unsupported platform
+#endif
+
 namespace sysio { namespace cdt {
 enum sys {
    _win,
@@ -8,26 +57,15 @@ enum sys {
    _bsd
 };
 
-#include <stdlib.h>
 #if defined(_WIN32)
 #include "win.hpp"
-#define __SYSIO_OS__ sys::_win
-
 #elif defined(__linux__) || defined(__CYGWIN__)
 #include "linux.hpp"
-#define __SYSIO_OS__ sys::_linux
-
 #elif defined(__APPLE__)
 #include "osx.hpp"
-#define __SYSIO_OS__ sys::_osx
-
 #elif defined(__DragonFly__) || defined(__FreeBSD__) || \
       defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 #include "bsd.hpp"
-#define __SYSIO_OS__ sys::_bsd
-
-#else
-#error unsupported platform
 #endif
 
 struct whereami {

@@ -1,0 +1,100 @@
+name: "Build & Test macOS"
+
+on:
+  push:
+    branches:
+      - master
+      - "release/*"
+  pull_request:
+    branches:
+      - master
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-macos:
+    name: Build & Test macOS Arm64
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install ccache ninja
+      - name: Cache ccache
+        uses: actions/cache@v5
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-macos-arm64-ccache-
+      - name: Cache vcpkg downloads
+        uses: actions/cache@v5
+        with:
+          path: vcpkg/downloads
+          key: ${{ runner.os }}-macos-arm64-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+          restore-keys: |
+            ${{ runner.os }}-macos-arm64-vcpkg-downloads-
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v5
+        with:
+          path: .vcpkg-binary-cache
+          key: ${{ runner.os }}-macos-arm64-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+          restore-keys: |
+            ${{ runner.os }}-macos-arm64-vcpkg-binary-
+      - name: Build
+        run: |
+          if [[ "$(uname -m)" != "arm64" ]]; then
+            echo "macOS native support is Apple Silicon only; runner is $(uname -m)." >&2
+            exit 1
+          fi
+
+          export CCACHE_DIR="$PWD/.ccache"
+          export CCACHE_MAXSIZE=5G
+          cmake --version
+          ccache --version
+          ./vcpkg/bootstrap-vcpkg.sh
+
+          cmake -B build-macos-arm64 -S . -G Ninja \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVCPKG_TARGET_TRIPLET=arm64-osx-release \
+            -DVCPKG_HOST_TRIPLET=arm64-osx-release \
+            -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
+            "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
+
+          cmake --build build-macos-arm64 -- -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+      - name: Test
+        run: |
+          TEST_COUNT="$(ctest --test-dir build-macos-arm64 -N | sed -nE 's/^Total Tests:[[:space:]]*([0-9]+).*/\1/p' | tail -n 1)"
+          if [[ -z "$TEST_COUNT" || "$TEST_COUNT" -eq 0 ]]; then
+            echo "CTest discovered no tests in build-macos-arm64." >&2
+            exit 1
+          fi
+          ctest --test-dir build-macos-arm64 -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
+  notification:
+    name: Send Notification
+    needs: [build-macos]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Notification
+        if: always()
+        uses: Wire-Network/notification-action@v1
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          notification-type: 1
+          workflow-name: "CDT macOS Build & Test"
+          job-results: "build-macos:${{ needs.build-macos.result }}"
+          github-context: ${{ toJSON(github) }}
