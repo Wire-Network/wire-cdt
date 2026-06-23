@@ -3,6 +3,7 @@
 #include <sysio/abimerge.hpp>
 #include <sysio/whereami/whereami.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <map>
 #include <set>
@@ -481,6 +482,16 @@ int main(int argc, const char** argv) {
             closedir(dir);
          }
       }
+
+      // Merge the .desc files in a stable, path-sorted order. readdir(3) returns
+      // directory entries in an arbitrary, filesystem-dependent order, and each
+      // parallel cdt-codegen process seeds desc_files with its OWN translation
+      // unit first, so without this sort the merged ABI's struct/action/table
+      // order varies between rebuilds and between the per-TU processes that all
+      // write the shared <contract>.abi. Sorting by path makes every process
+      // produce a byte-identical ABI -- reproducible output regardless of
+      // readdir order or which TU wins the (now atomic) .abi write.
+      std::sort(desc_files.begin(), desc_files.end());
 
       ojson abi;
 
