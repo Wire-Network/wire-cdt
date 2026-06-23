@@ -1,12 +1,14 @@
 # Native Tester and Compilation
 
-Wire CDT supports compiling smart contracts to native x86-64 code instead of WebAssembly. This enables:
+Wire CDT supports compiling smart contracts to native host code instead of WebAssembly. This enables:
 
 - **Fast unit testing** without deploying to a blockchain
 - **Debugging with standard tools** like `gdb` or `lldb` — set breakpoints, inspect variables, and step through contract code
 - **Quick iteration** during development
 
 Native compilation produces an ordinary executable that can be run directly on your machine. Blockchain intrinsics (`require_auth`, `prints`, `db_*`, etc.) are replaced with mockable stubs that you configure per-test.
+
+On macOS, native compilation targets Apple Silicon arm64 only. Intel macOS/x86_64 native compilation is unsupported.
 
 ## Getting Started
 
@@ -117,7 +119,7 @@ int main(int argc, char** argv) {
 
 ### Command Line
 
-Use `cdt-cpp` with the `-fnative` flag to compile to native x86-64 instead of WebAssembly:
+Use `cdt-cpp` with the `-fnative` flag to compile to native host code instead of WebAssembly:
 
 ```bash
 cdt-cpp -fnative -o hello_test hello_test.cpp hello.cpp -I./include

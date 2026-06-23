@@ -145,8 +145,9 @@ endmacro()
 # ── Native contract compilation (for native-module runtime) ───────────────
 #
 # Compiles contract sources with the HOST compiler (not CDT's WASM toolchain)
-# to produce a shared library (.so) that can be dlopen'd by the native_module
-# runtime for debugging with GDB/LLDB/IDE debuggers.
+# to produce a dlopen-able native module named *_native.so for the
+# native_module runtime. On macOS this is a Mach-O bundle that intentionally
+# keeps the .so suffix so discovery logic can stay platform-neutral.
 #
 # Usage:
 #   add_native_contract(
@@ -169,9 +170,9 @@ endmacro()
 #                    "sysiosystem::trx_priority:addtrxp,deltrxp"
 #   )
 #
-# The resulting .so exports an `apply(uint64_t, uint64_t, uint64_t)` function.
-# Intrinsic symbols (db_store_i64, etc.) are left undefined and resolved at
-# dlopen time against the test executable's --dynamic-list exports.
+# The resulting module exports an `apply(uint64_t, uint64_t, uint64_t)`
+# function. Intrinsic symbols (db_store_i64, etc.) are left undefined and
+# resolved at dlopen time against symbols exported by the host executable.
 function(add_native_contract)
   cmake_parse_arguments(ARG "" "TARGET;CONTRACT_CLASS;ABI_FILE"
     "SOURCES;INCLUDE_DIRS;HEADERS;EXTRA_DISPATCH" ${ARGN})
@@ -223,8 +224,10 @@ function(add_native_contract)
   add_library(${ARG_TARGET} MODULE ${ARG_SOURCES} ${_cdt_sources})
   set_target_properties(${ARG_TARGET} PROPERTIES
     PREFIX ""
+    SUFFIX ".so"
     OUTPUT_NAME "${ARG_TARGET}"
   )
+  target_compile_features(${ARG_TARGET} PRIVATE cxx_std_17)
 
   # CDT include paths — we intentionally exclude the native/ directory because
   # it contains CDT's own intrinsic dispatch headers (intrinsics.hpp, crt.hpp)
@@ -266,12 +269,12 @@ function(add_native_contract)
     "SHELL:-include memory"
   )
 
-  # Allow undefined symbols — intrinsics are resolved at dlopen time.
-  # Link against shared libgcc_s and libstdc++ to ensure C++ exceptions can
-  # propagate across the .so boundary.
+  # Allow undefined symbols; blockchain intrinsics are resolved at dlopen time.
   if(APPLE)
     target_link_options(${ARG_TARGET} PRIVATE -undefined dynamic_lookup)
   else()
+    # Link against shared libgcc_s and libstdc++ to ensure C++ exceptions can
+    # propagate across the .so boundary on Linux.
     target_link_options(${ARG_TARGET} PRIVATE -Wl,--allow-shlib-undefined)
     target_link_libraries(${ARG_TARGET} PRIVATE gcc_s stdc++)
   endif()

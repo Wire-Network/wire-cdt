@@ -14,6 +14,7 @@ extern char **environ;
 #endif
 
 #include "whereami/whereami.hpp"
+#include <iostream>
 #include <vector>
 #include <sstream>
 
@@ -153,10 +154,26 @@ struct environment {
             redirects[1] = llvm::StringRef{*stdout_file};
          if(stderr_file)
             redirects[2] = llvm::StringRef{*stderr_file};
-         return llvm::sys::ExecuteAndWait(*path, args, std::nullopt, redirects, 0, 0, nullptr, nullptr) == 0;
+         std::string err_msg;
+         bool execution_failed = false;
+         int result = llvm::sys::ExecuteAndWait(*path, args, std::nullopt, redirects, 0, 0, &err_msg, &execution_failed);
+         if (execution_failed || result < 0) {
+            std::cerr << "cdt: failed to execute subprogram '" << prog << "' at '" << *path << "'";
+            if (!err_msg.empty()) {
+               std::cerr << ": " << err_msg;
+            } else if (result == -1) {
+               std::cerr << ": unable to execute";
+            } else if (result == -2) {
+               std::cerr << ": process crashed or timed out";
+            }
+            std::cerr << std::endl;
+         }
+         return result == 0;
       }
-      else
+      else {
+         std::cerr << "cdt: failed to find subprogram '" << prog << "' in '" << find_path << "'" << std::endl;
          return false;
+      }
       return true;
    }
 

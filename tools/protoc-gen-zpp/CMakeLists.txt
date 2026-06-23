@@ -30,16 +30,17 @@ target_include_directories(cdt-protoc-gen-zpp PRIVATE ${CMAKE_CURRENT_BINARY_DIR
 target_link_libraries(cdt-protoc-gen-zpp PRIVATE protobuf::libprotoc protobuf::libprotobuf)
 
 add_custom_command(TARGET cdt-protoc-gen-zpp POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cdt-protoc-gen-zpp> ${CMAKE_BINARY_DIR}/bin/
+   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cdt-protoc-gen-zpp> ${CDT_TOOLS_BIN_DIR}/
 )
+cdt_register_tool_target(cdt-protoc-gen-zpp)
 
 # Also install protoc from vcpkg into CDT bin/ as cdt-protoc
 add_custom_command(TARGET cdt-protoc-gen-zpp POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy ${PROTOC_PROGRAM} ${CMAKE_BINARY_DIR}/bin/cdt-protoc
+   COMMAND ${CMAKE_COMMAND} -E copy ${PROTOC_PROGRAM} ${CDT_TOOLS_BIN_DIR}/cdt-protoc
 )
 
 # Copy zpp_options.proto to include dir so contracts can import it
 add_custom_command(TARGET cdt-protoc-gen-zpp POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/zpp
-   COMMAND ${CMAKE_COMMAND} -E copy ${ZPP_OPTIONS_PROTO} ${CMAKE_BINARY_DIR}/include/zpp/
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${CDT_TOOLS_BINARY_DIR}/include/zpp
+   COMMAND ${CMAKE_COMMAND} -E copy ${ZPP_OPTIONS_PROTO} ${CDT_TOOLS_BINARY_DIR}/include/zpp/
 )
