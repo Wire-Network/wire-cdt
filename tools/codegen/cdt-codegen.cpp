@@ -423,21 +423,32 @@ static void gen_actions(const std::string& input) {
    auto basename = input.substr(input.rfind('/') + 1);
    auto desc_file = output_dir + "/" + contract_name + "." + basename + ".desc";
    if (exists(raw_desc.c_str())) {
-      rename(raw_desc.c_str(), desc_file.c_str());
       // Stamp the originating source path into the .desc so a later build can
       // detect it is stale when the source .cpp has been removed or moved.
       // Without this marker, a stale .desc gets merged into the contract ABI
       // and produces "ABI structs malformed : <name> already defined" errors.
       // Only attempt the JSON round-trip when abigen actually produced content;
       // a failed abigen run leaves an empty .desc that ojson::parse would reject.
-      if (file_size(desc_file.c_str()) > 0) {
-         std::ifstream ifs(desc_file);
+      //
+      // Crucially, stamp raw_desc -- the abigen plugin's private, un-prefixed
+      // output -- and ONLY THEN atomically rename it to the contract-prefixed
+      // desc_file that sibling TUs discover via the output-dir scan below.
+      // rename(2) is atomic within a directory, so a concurrent parallel
+      // cdt-codegen process always observes either the old or the new complete
+      // file, never a half-written one. (Previously the rename happened first and
+      // the stamp truncated and rewrote the already-published desc_file in place;
+      // a concurrent merge scan reading it mid-rewrite saw partial JSON and
+      // aborted the whole build with an uncaught jsoncons::parse_error.)
+      if (file_size(raw_desc.c_str()) > 0) {
+         std::ifstream ifs(raw_desc);
          auto desc = ojson::parse(ifs);
          ifs.close();
          desc["____source_file"] = input;
-         std::ofstream ofs(desc_file);
+         std::ofstream ofs(raw_desc);
          ofs << desc.to_string();
+         ofs.close();
       }
+      rename(raw_desc.c_str(), desc_file.c_str());
       desc_files.push_back(desc_file);
    }
 }
@@ -696,7 +707,12 @@ int main(int argc, const char** argv) {
          }
       }
       return 0;
-   } catch (std::runtime_error& err) {
+   } catch (const std::exception& err) {
+      // Catch std::exception, not just std::runtime_error: jsoncons::parse_error
+      // derives from std::exception but NOT from std::runtime_error, so a parse
+      // failure that reaches here (e.g. a malformed/empty .desc) must still surface
+      // as a clean diagnostic and a non-zero exit rather than an uncaught exception
+      // that calls std::terminate ("terminate called after throwing ...").
       std::cerr << err.what() << '\n';
       return -1;
    }
