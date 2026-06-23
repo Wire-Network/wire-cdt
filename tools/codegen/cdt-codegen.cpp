@@ -8,7 +8,9 @@
 #include <set>
 #include <sstream>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <dirent.h>
 #include <llvm/Support/Program.h>
 
@@ -493,6 +495,27 @@ int main(int argc, const char** argv) {
    bool                  has_post_dispatch    = false;
 
    parse_args(argc, argv);
+
+   // Serialize cdt-codegen across the parallel translation units of one contract.
+   // The build runs one process per TU concurrently in a shared output_dir, and
+   // every process re-scans that dir and republishes the shared <contract>.abi /
+   // dispatch from whatever .desc files it happened to see at scan time. Holding a
+   // per-contract advisory lock for the whole run makes those processes run one at
+   // a time, so the LAST one observes every sibling's .desc and publishes a
+   // COMPLETE ABI/dispatch. This closes the stale-snapshot completeness race -- a
+   // late process atomically replacing a complete ABI with a partial one -- that an
+   // atomic write alone cannot. The lock is advisory (flock); the kernel drops it
+   // when this process exits, including on crash. Best-effort: if the lock file
+   // cannot be created (e.g. a read-only output_dir) we proceed unlocked rather
+   // than fail the build -- the atomic writes still prevent torn output, we only
+   // lose the completeness guarantee in that unusual case.
+   int codegen_lock_fd = -1;
+   if (!contract_name.empty()) {
+      const std::string lock_path = output_dir + "/." + contract_name + ".codegen.lock";
+      codegen_lock_fd = open(lock_path.c_str(), O_CREAT | O_RDWR, 0644);
+      if (codegen_lock_fd >= 0)
+         flock(codegen_lock_fd, LOCK_EX); // held for the whole run; released on exit
+   }
 
    try {
       for (auto& input : input_files) {
