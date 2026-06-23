@@ -69,9 +69,14 @@ bool replay_stderr_and_check_softfloat(const std::string& stderr_path) {
 // object (hence every .desc) exists, the complete descriptor set is available. Running the
 // finalize once eliminates the parallel-build races entirely: no per-TU shared writes, no
 // sibling-.desc reads during compilation, and the dispatcher is always complete (a single
-// strong apply() that overrides any per-TU stub). Best-effort: if no manifest is found this
-// is not a contract link, and we leave the link unchanged.
-void run_link_time_finalize(Options& opts) {
+// strong apply() that overrides any per-TU stub).
+//
+// Returns true to proceed with the link: either no manifest was found (not a contract link,
+// leave it unchanged) or the finalize succeeded. Returns false on a hard failure once a
+// contract manifest HAS been identified -- finalize is now solely responsible for the ABI
+// and dispatcher, so a failure here must abort cdt-ld rather than let wasm-ld link stale or
+// missing generated artifacts.
+bool run_link_time_finalize(Options& opts) {
    namespace fs = llvm::sys::fs;
 
    // 1. Find the object directory(ies) and the finalize manifest.
@@ -90,23 +95,35 @@ void run_link_time_finalize(Options& opts) {
       if (!manifest_path.empty()) break;
    }
    if (manifest_path.empty())
-      return; // not a contract link
+      return true; // not a contract link -- leave the link unchanged
 
-   // 2. Read the manifest (key=value lines).
+   // 2. Read the manifest. Single-value keys go in the map; the compile flags arrive as
+   //    repeated "cxxarg=" lines (one flag per line) so argument boundaries -- e.g. a path
+   //    containing a space -- are preserved rather than lost to a join + whitespace re-split.
    std::map<std::string, std::string> m;
+   std::vector<std::string> cxx_args;
    {
       std::ifstream in(manifest_path);
       std::string line;
       while (std::getline(in, line)) {
          auto eq = line.find('=');
-         if (eq != std::string::npos)
-            m[line.substr(0, eq)] = line.substr(eq + 1);
+         if (eq == std::string::npos)
+            continue;
+         std::string key = line.substr(0, eq);
+         std::string val = line.substr(eq + 1);
+         if (key == "cxxarg")
+            cxx_args.push_back(std::move(val));
+         else
+            m[key] = std::move(val);
       }
    }
    const std::string contract   = m["contract"];
    const std::string output_dir = m["output_dir"];
-   if (contract.empty() || output_dir.empty())
-      return;
+   if (contract.empty() || output_dir.empty()) {
+      std::cerr << "cdt-ld: finalize manifest " << manifest_path
+                << " is missing contract/output_dir" << std::endl;
+      return false;
+   }
 
    // 3. Publish the complete ABI + a strong standalone dispatch.cpp from every .desc.
    std::vector<std::string> cg = {"--finalize", "--contract", contract, "--output-dir", output_dir};
@@ -117,33 +134,36 @@ void run_link_time_finalize(Options& opts) {
    if (!m["protobuf_files"].empty()) { cg.push_back("--protobuf-files"); cg.push_back(m["protobuf_files"]); }
    if (!sysio::cdt::environment::exec_subprogram("cdt-codegen", cg)) {
       std::cerr << "cdt-ld: link-time ABI/dispatch finalize failed" << std::endl;
-      return;
+      return false;
    }
 
-   // 4. If a dispatcher was generated (contract did not define its own apply()), compile it
-   //    with the same flags the TUs used and add it to the link.
+   // 4. If a dispatcher was generated, compile it with the same flags the TUs used and add it
+   //    to the link. finalize deletes any stale dispatcher and only writes one when the
+   //    contract has actions/notifies and no user-defined apply(), so the file's presence is a
+   //    reliable signal that a dispatcher was generated this run -- its absence is success
+   //    (the contract defines its own apply()), not an error.
    const std::string dispatch_cpp = output_dir + "/" + contract + ".dispatch.cpp";
    if (!fs::exists(dispatch_cpp))
-      return;
+      return true;
    const std::string dispatch_obj = output_dir + "/" + contract + ".dispatch.cpp.o";
    // Compile the generated dispatcher with the contract's own clang flags (recorded in the
    // manifest), minus the abigen plugins and dependency-file flags that apply only to the
    // per-TU sources. Invoke clang++ directly -- cdt-cpp has its own option parser and rejects
    // raw clang flags such as -ferror-limit.
    std::vector<std::string> cc;
-   {
-      std::vector<std::string> toks;
-      { std::stringstream ss(m["cxx"]); std::string t; while (ss >> t) toks.push_back(t); }
-      for (size_t i = 0; i < toks.size(); ++i) {
-         const std::string& t = toks[i];
-         if (t.rfind("-fplugin=", 0) == 0) continue;                   // abigen/attribute plugins
-         if (t == "-Xclang") { ++i; continue; }                        // drops the -add-plugin wiring
-         if (t == "-MF" || t == "-MT" || t == "-MQ") { ++i; continue; } // per-TU dependency file
-         if (t == "-MD" || t == "-MMD" || t == "-MP" || t == "-M" || t == "-MM") continue;
-         if (t == "-c") continue;                                      // re-added below
-         if (t == "-o") { ++i; continue; }                             // re-added below
-         cc.push_back(t);
-      }
+   for (size_t i = 0; i < cxx_args.size(); ++i) {
+      const std::string& t = cxx_args[i];
+      if (t.rfind("-fplugin=", 0) == 0) continue;                      // abigen/attribute plugins
+      // Clang plugin activation is the 4-token group "-Xclang -add-plugin -Xclang <name>"
+      // (likewise "-Xclang -load -Xclang <path>"). Drop exactly those groups; any other
+      // -Xclang option the contract passes is kept and forwarded to the dispatcher compile.
+      if (t == "-Xclang" && i + 1 < cxx_args.size() &&
+          (cxx_args[i + 1] == "-add-plugin" || cxx_args[i + 1] == "-load")) { i += 3; continue; }
+      if (t == "-MF" || t == "-MT" || t == "-MQ" || t == "-MJ") { ++i; continue; } // dep-file (takes arg)
+      if (t == "-MD" || t == "-MMD" || t == "-MP" || t == "-M" || t == "-MM" || t == "-MG") continue;
+      if (t == "-c") continue;                                         // re-added below
+      if (t == "-o") { ++i; continue; }                                // re-added below
+      cc.push_back(t);
    }
    cc.push_back("-c");
    cc.push_back(dispatch_cpp);
@@ -151,10 +171,11 @@ void run_link_time_finalize(Options& opts) {
    cc.push_back(dispatch_obj);
    if (!sysio::cdt::environment::exec_subprogram("clang++", cc)) {
       std::cerr << "cdt-ld: failed to compile the generated dispatcher" << std::endl;
-      return;
+      return false;
    }
-   // 5. Add the dispatcher object so wasm-ld's strong apply() overrides any per-TU stub.
+   // 5. Add the dispatcher object so wasm-ld picks up the single strong apply().
    opts.ld_options.push_back(dispatch_obj);
+   return true;
 }
 } // namespace
 
@@ -176,8 +197,12 @@ int main(int argc, const char **argv) {
          return -1;
   } else {
       // Publish the complete contract ABI + a single strong dispatcher from every .desc
-      // before linking (see run_link_time_finalize). No-op for non-contract links.
-      run_link_time_finalize(opts);
+      // before linking (see run_link_time_finalize). No-op for non-contract links; aborts the
+      // link if finalize fails for an identified contract.
+      if (!run_link_time_finalize(opts)) {
+         std::cerr << "Exit due to link-time ABI/dispatch finalize failure" << std::endl;
+         return -1;
+      }
 
       // Capture wasm-ld stderr so we can detect specific unresolved-symbol patterns
       // (softfloat builtins -> hint to pass --use-rt) and still echo the original

@@ -3,8 +3,11 @@
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 
+#include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
 
 // Declares llvm::cl::extrahelp.
 #include <llvm/Support/CommandLine.h>
@@ -22,6 +25,53 @@ using namespace llvm;
 #include <sstream>
 
 using namespace llvm;
+
+// Records the arguments cdt-ld's link-time finalize pass needs -- it cannot recover the
+// contract name, abi version, protobuf args, output paths, or compile flags at link time.
+// Written per-TU in compile-only contract builds; temp+rename keeps it atomic under the
+// parallel build. The compile flags are written one per line (cxxarg=) so argument
+// boundaries (e.g. a path containing a space) survive the round-trip to the dispatcher
+// compile, rather than being lost to a join + re-split.
+// Returns false on any write/rename failure: the manifest is required for correctness, and a
+// missing or stale one makes cdt-ld treat the link as a non-contract link and silently skip
+// ABI/dispatch generation. The caller must fail the compile.
+static bool write_finalize_manifest(const Options& opts, const std::string& output_dir) {
+   std::stringstream ss;
+   ss << "contract="      << opts.abigen_contract << "\n"
+      << "output_dir="    << output_dir << "\n"
+      << "no_abigen="     << ((!opts.abigen && !opts.link) ? "1" : "0") << "\n"
+      << "protobuf_dir="  << opts.protobuf_dir << "\n"
+      << "protobuf_files=" << opts.protobuf_files << "\n";
+   if (!opts.abigen_output.empty() && opts.abigen_output != "''")
+      ss << "abi_output=" << opts.abigen_output << "\n";
+   if (opts.abi_version.first > 0)
+      ss << "abi_version=" << opts.abi_version.first << "." << opts.abi_version.second << "\n";
+   for (const auto& a : opts.comp_options)
+      ss << "cxxarg=" << a << "\n";
+
+   const std::string path = output_dir + "/" + opts.abigen_contract + ".finalize";
+   const std::string tmp  = path + ".tmp." + std::to_string(static_cast<long>(getpid()));
+   {
+      std::ofstream ofs(tmp);
+      if (!ofs) {
+         std::cerr << "cdt-cpp: cannot open finalize manifest " << tmp << "\n";
+         return false;
+      }
+      ofs << ss.str();
+      ofs.close();
+      if (!ofs) { // write/flush/close error -- do not publish a truncated manifest
+         std::cerr << "cdt-cpp: failed writing finalize manifest " << tmp << "\n";
+         unlink(tmp.c_str());
+         return false;
+      }
+   }
+   if (rename(tmp.c_str(), path.c_str()) != 0) {
+      std::cerr << "cdt-cpp: cannot publish finalize manifest " << path << "\n";
+      unlink(tmp.c_str());
+      return false;
+   }
+   return true;
+}
 
 int main(int argc, const char **argv) {
 
@@ -129,6 +179,12 @@ int main(int argc, const char **argv) {
       llvm::sys::path::remove_filename(out_dir_buf);
       std::string codegen_output_dir = out_dir_buf.str().empty() ? "." : std::string(out_dir_buf.str());
       bool is_contract_build = should_run_codegen;
+
+      // Compile-only contract builds defer the shared ABI + dispatcher to a single
+      // link-time finalize pass (cdt-ld); record the args that pass needs. The manifest is
+      // required for correctness, so a write failure fails the compile.
+      if (is_contract_build && !opts.link && !write_finalize_manifest(opts, codegen_output_dir))
+         return -1;
 
       // Compile each input file. For contract builds, if a .actions.cpp was generated,
       // compile it instead (it #includes the original source and adds action wrappers).
