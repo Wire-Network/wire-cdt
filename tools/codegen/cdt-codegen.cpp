@@ -181,12 +181,24 @@ static int         abi_version_minor           = 3;
 static bool        no_abigen                   = false;
 static std::string abi_output_path;
 static bool        embed_dispatch              = false;
+// Link-time finalize split (see main()):
+//   emit_desc_only -- per-TU compile pass: emit this TU's .desc/.actions.cpp and a
+//                     small finalize manifest, then stop. No shared .abi/dispatch,
+//                     no sibling-.desc scan (so no parallel-build races).
+//   finalize_mode  -- the single link-time pass (run by cdt-ld): skip compilation,
+//                     scan every .desc, and publish the complete .abi + a strong
+//                     standalone dispatch exactly once.
+static bool        emit_desc_only              = false;
+static bool        finalize_mode               = false;
 static bool        verbose                     = false;
 static bool        suppress_ricardian_warnings = true;
 static bool        is_wasm                     = false;
 static std::string smart_contract_trace_level;
 static std::string              protobuf_dir;
 static std::vector<std::string> protobuf_files;
+// Raw --cxx options string, recorded in the finalize manifest so cdt-ld can compile the
+// link-time-generated dispatch.cpp with the same flags the contract's TUs were built with.
+static std::string              cxx_options_raw;
 
 static int exec_subprogram(std::string prog, const std::vector<std::string>& options, bool show_commands) {
    if (prog.size() && prog[0] != '/') {
@@ -285,6 +297,10 @@ static void parse_args(int argc, const char** argv) {
             if (!item.empty())
                protobuf_files.push_back(item);
          }
+      } else if (arg == "--emit-desc-only") {
+         emit_desc_only = true;
+      } else if (arg == "--finalize") {
+         finalize_mode = true;
       } else if (arg[0] == '-') {
          std::cerr << "Unknown option: " << arg << "\n";
          print_usage(argv[0]);
@@ -294,7 +310,9 @@ static void parse_args(int argc, const char** argv) {
       }
    }
 
-   if (cxx_arg.empty()) {
+   // The finalize pass does not compile anything (it only merges existing .desc files),
+   // so it needs no --cxx options.
+   if (!finalize_mode && cxx_arg.empty()) {
       const char* env = getenv("SYSIO_CXX_OPTIONS");
       if (env)
          cxx_arg = env;
@@ -303,6 +321,7 @@ static void parse_args(int argc, const char** argv) {
          exit(1);
       }
    }
+   cxx_options_raw = cxx_arg;
    auto args = split_then_prepend(cxx_arg, ' ', "");
    compiler_options.insert(compiler_options.end(), args.begin(), args.end());
    is_wasm = cxx_arg.find("--target=wasm") != std::string::npos;
@@ -442,6 +461,29 @@ static void gen_actions(const std::string& input) {
    }
 }
 
+// Per-TU emit-desc-only writes the arguments the link-time --finalize pass needs --
+// it cannot otherwise recover the protobuf args, abi version, or output paths at link.
+// cdt-ld reads this manifest and forwards them to `cdt-codegen --finalize`. Every TU of
+// a contract writes identical content; temp+rename keeps it atomic under the parallel build.
+static void write_finalize_manifest() {
+   std::stringstream ss;
+   ss << "contract="       << contract_name << "\n"
+      << "output_dir="     << output_dir << "\n"
+      << "abi_output="     << abi_output_path << "\n"
+      << "abi_version="    << abi_version_major << "." << abi_version_minor << "\n"
+      << "no_abigen="      << (no_abigen ? "1" : "0") << "\n"
+      << "protobuf_dir="   << protobuf_dir << "\n"
+      << "cxx="            << cxx_options_raw << "\n";
+   std::string pf;
+   for (const auto& f : protobuf_files) { if (!pf.empty()) pf += ";"; pf += f; }
+   ss << "protobuf_files=" << pf << "\n";
+
+   const std::string path = output_dir + "/" + contract_name + ".finalize";
+   const std::string tmp  = path + ".tmp." + std::to_string((long)getpid());
+   { std::ofstream ofs(tmp); if (!ofs) return; ofs << ss.str(); }
+   rename(tmp.c_str(), path.c_str());
+}
+
 int main(int argc, const char** argv) {
    std::set<wasm_action> wasm_actions;
    std::set<wasm_notify> wasm_notifies;
@@ -452,8 +494,23 @@ int main(int argc, const char** argv) {
    parse_args(argc, argv);
 
    try {
-      for (auto& input : input_files) {
-         gen_actions(input);
+      // The per-TU compile pass emits this TU's descriptor; the link-time finalize pass
+      // (run by cdt-ld) skips compilation and only publishes the merged outputs.
+      if (!finalize_mode) {
+         for (auto& input : input_files) {
+            gen_actions(input);
+         }
+      }
+
+      // Compile-only contract members stop here: the abigen plugin has written this TU's
+      // .desc and .actions.cpp. The shared <contract>.abi and dispatch are NOT produced
+      // per-TU -- cdt-ld finalizes them once, after every .desc exists, by invoking
+      // `cdt-codegen --finalize`. This eliminates the parallel-build races: no process
+      // reads a sibling's .desc during compilation, and the shared outputs are written
+      // exactly once. The manifest hands the finalize pass its arguments.
+      if (emit_desc_only) {
+         write_finalize_manifest();
+         return 0;
       }
 
       // In compile-only mode (single file per invocation), scan the output

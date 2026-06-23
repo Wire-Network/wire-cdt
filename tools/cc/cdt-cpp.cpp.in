@@ -82,11 +82,14 @@ int main(int argc, const char **argv) {
             codegen_args.push_back("--no-abigen");
          }
 
-         // In compile-only mode, embed weak dispatch code directly into .actions.cpp
-         // instead of generating a separate dispatch.cpp. This avoids needing
-         // wasm-ld --relocatable to merge .o files (which can't handle weak symbols).
+         // Compile-only (per-TU, CMake) builds defer the shared <contract>.abi and the
+         // contract dispatcher to a single link-time finalize pass (run by cdt-ld), which
+         // sees every TU's .desc and so always produces a complete, race-free result. Each
+         // TU here only emits its own .desc/.actions.cpp plus a finalize manifest.
+         // (Link-mode builds, where cdt-cpp drives compile+link itself and already sees all
+         // sources, keep generating the standalone dispatch directly -- no --emit-desc-only.)
          if (!opts.link) {
-            codegen_args.push_back("--embed-dispatch");
+            codegen_args.push_back("--emit-desc-only");
          }
 
          // Build --cxx options string from compiler options
