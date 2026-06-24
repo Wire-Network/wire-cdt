@@ -8,6 +8,26 @@
 #include "llvm/Support/Path.h"
 #include "llvm/ADT/ScopeExit.h"
 
+// Keys for the per-object finalize manifest ("<object>.finalize"): cdt-cpp (the writer) records
+// these next to every compiled contract object, and cdt-ld (the reader) parses them at link time to
+// drive the single ABI/dispatch finalize pass. Defined here, in the header both tools already
+// include, so a rename cannot silently desync the writer and reader (a mismatched key would
+// otherwise be read as absent and the contract mis-finalized). Values must be newline-free (the
+// manifest is line-oriented, parsed by splitting each line on the first '='); paths and compiler
+// flags satisfy this. The compile flags are written one per line under k_cxxarg so that argument
+// boundaries -- e.g. a path containing a space -- survive the round-trip to the dispatcher compile.
+namespace sysio { namespace cdt { namespace finalize_manifest {
+   inline constexpr const char* k_contract        = "contract";
+   inline constexpr const char* k_dispatch_output = "dispatch_output";
+   inline constexpr const char* k_no_abigen       = "no_abigen";
+   inline constexpr const char* k_protobuf_dir    = "protobuf_dir";
+   inline constexpr const char* k_protobuf_files  = "protobuf_files";
+   inline constexpr const char* k_abi_output      = "abi_output";
+   inline constexpr const char* k_abi_version     = "abi_version";
+   inline constexpr const char* k_desc_file       = "desc_file";
+   inline constexpr const char* k_cxxarg          = "cxxarg";
+} } } // namespace sysio::cdt::finalize_manifest
+
 #ifdef ONLY_LD
 #define LD_CAT SysioLdToolCategory
 #else

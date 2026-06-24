@@ -78,16 +78,23 @@ bool replay_stderr_and_check_softfloat(const std::string& stderr_path) {
 // must abort cdt-ld rather than let wasm-ld link stale or missing generated artifacts.
 bool run_link_time_finalize(Options& opts) {
    namespace fs = llvm::sys::fs;
+   namespace fm = sysio::cdt::finalize_manifest;
 
-   // Shared finalize parameters, accumulated from the sidecars (all linked objects of one
-   // contract must agree on them); cxx_args are the dispatcher compile flags (taken from the
-   // first sidecar -- they agree modulo per-object dep-file/-o flags, which are filtered below).
+   // Shared finalize parameters, accumulated from the sidecars (all linked objects of one contract
+   // must agree on them; dispatch_output is target-level for exactly this reason -- see cdt-cpp's
+   // write_finalize_manifest). cxx_args are the dispatcher compile flags, taken from the first
+   // sidecar: every TU of a CMake target gets the same target_compile_options, so they agree modulo
+   // the per-object dep-file/-o flags (filtered out below). Per-source compile options, were a
+   // contract to set any, would not be honored for the generated dispatcher.
    std::string contract, abi_output, dispatch_output, abi_version, no_abigen,
                protobuf_dir, protobuf_files;
    std::vector<std::string> desc_files; // one (or more) per linked object
    std::vector<std::string> cxx_args;
    bool found = false;
 
+   // Require every sidecar that records a shared field to agree on its value. An empty incoming
+   // value never conflicts (that TU simply did not record the field); the truly required fields
+   // (contract / dispatch_output) plus a non-empty desc list are enforced separately after the walk.
    auto agree = [](std::string& field, const std::string& val, const char* name,
                    const std::string& where) -> bool {
       if (val.empty()) return true;
@@ -113,16 +120,16 @@ bool run_link_time_finalize(Options& opts) {
          auto eq = line.find('=');
          if (eq == std::string::npos) continue;
          std::string key = line.substr(0, eq);
-         std::string val = line.substr(eq + 1);
-         if (key == "desc_file")            desc_files.push_back(std::move(val));
-         else if (key == "cxxarg")          this_cxx.push_back(std::move(val));
-         else if (key == "contract")        { if (!agree(contract, val, "contract", sidecar)) return false; }
-         else if (key == "abi_output")      { if (!agree(abi_output, val, "abi_output", sidecar)) return false; }
-         else if (key == "dispatch_output") { if (!agree(dispatch_output, val, "dispatch_output", sidecar)) return false; }
-         else if (key == "abi_version")     { if (!agree(abi_version, val, "abi_version", sidecar)) return false; }
-         else if (key == "no_abigen")       { if (!agree(no_abigen, val, "no_abigen", sidecar)) return false; }
-         else if (key == "protobuf_dir")    { if (!agree(protobuf_dir, val, "protobuf_dir", sidecar)) return false; }
-         else if (key == "protobuf_files")  { if (!agree(protobuf_files, val, "protobuf_files", sidecar)) return false; }
+         std::string val = line.substr(eq + 1); // everything after the FIRST '=' (values may contain '=')
+         if (key == fm::k_desc_file)            desc_files.push_back(std::move(val));
+         else if (key == fm::k_cxxarg)          this_cxx.push_back(std::move(val));
+         else if (key == fm::k_contract)        { if (!agree(contract, val, fm::k_contract, sidecar)) return false; }
+         else if (key == fm::k_abi_output)      { if (!agree(abi_output, val, fm::k_abi_output, sidecar)) return false; }
+         else if (key == fm::k_dispatch_output) { if (!agree(dispatch_output, val, fm::k_dispatch_output, sidecar)) return false; }
+         else if (key == fm::k_abi_version)     { if (!agree(abi_version, val, fm::k_abi_version, sidecar)) return false; }
+         else if (key == fm::k_no_abigen)       { if (!agree(no_abigen, val, fm::k_no_abigen, sidecar)) return false; }
+         else if (key == fm::k_protobuf_dir)    { if (!agree(protobuf_dir, val, fm::k_protobuf_dir, sidecar)) return false; }
+         else if (key == fm::k_protobuf_files)  { if (!agree(protobuf_files, val, fm::k_protobuf_files, sidecar)) return false; }
       }
       if (cxx_args.empty()) cxx_args = std::move(this_cxx);
    }
@@ -135,6 +142,10 @@ bool run_link_time_finalize(Options& opts) {
    }
 
    // 2. Publish the complete ABI + a strong dispatcher from exactly the linked objects' descriptors.
+   //    --abi-output and --dispatch-output come from the target-level -abigen_output and so are
+   //    absolute; the --desc-file paths are as recorded by each compile (relative to the build dir).
+   //    cdt-codegen runs in this same working directory, so the relative descriptor paths resolve --
+   //    the standard ninja/make invariant that the compiles, this finalize, and wasm-ld all share a CWD.
    std::vector<std::string> cg = {"--finalize", "--contract", contract,
                                   "--dispatch-output", dispatch_output};
    if (!abi_output.empty())     { cg.push_back("--abi-output");     cg.push_back(abi_output); }
@@ -155,9 +166,11 @@ bool run_link_time_finalize(Options& opts) {
    if (!fs::exists(dispatch_output))
       return true;
    const std::string dispatch_obj = dispatch_output + ".o";
-   // Compile the generated dispatcher with the contract's own clang flags (from the sidecar),
-   // minus the abigen plugins and per-object dependency-file/output flags. Invoke clang++
-   // directly -- cdt-cpp has its own option parser and rejects raw clang flags like -ferror-limit.
+   // Compile the generated dispatcher with the contract's own clang flags (from the sidecar), minus
+   // the abigen plugins and per-object dependency-file/output flags. Invoke clang++ directly --
+   // cdt-cpp has its own option parser and rejects raw clang flags like -ferror-limit. The filter
+   // below is a best-effort denylist of "things that must not be on a plain dispatcher compile";
+   // extend it here if a contract starts passing a new plugin-wiring or dependency-output flag.
    std::vector<std::string> cc;
    for (size_t i = 0; i < cxx_args.size(); ++i) {
       const std::string& t = cxx_args[i];

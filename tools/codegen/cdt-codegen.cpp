@@ -471,6 +471,16 @@ int main(int argc, const char** argv) {
 
    parse_args(argc, argv);
 
+   // The link-time finalize pass must be told where the ABI goes via --abi-output (cdt-ld derives
+   // it from the per-target -abigen_output). Without it the ABI would fall back to output_dir,
+   // which in finalize mode keeps its default "." -- the linker's working directory -- a
+   // wrong-location write that silently looks like success. Refuse rather than mislead. (Normal
+   // per-TU compiles are not affected: they always carry an explicit output dir.)
+   if (finalize_mode && !no_abigen && abi_output_path.empty()) {
+      std::cerr << "cdt-codegen --finalize requires --abi-output when generating an ABI\n";
+      return -1;
+   }
+
    try {
       // The per-TU compile pass emits this TU's descriptor; the link-time finalize pass
       // (run by cdt-ld) skips compilation and only publishes the merged outputs.

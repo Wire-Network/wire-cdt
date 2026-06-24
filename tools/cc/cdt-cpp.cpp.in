@@ -38,24 +38,41 @@ using namespace llvm;
 // generation, so the caller must fail the compile.
 static bool write_finalize_manifest(const Options& opts, const std::string& output_dir,
                                     const std::string& object) {
+   namespace fm = sysio::cdt::finalize_manifest;
+
+   // Co-locate the generated dispatcher with the contract's .abi: -abigen_output is a TARGET-level
+   // path (identical for every TU of the contract), whereas this object's output_dir is per-source.
+   // Deriving dispatch_output from output_dir would make two TUs compiled from different source
+   // SUBDIRECTORIES record different dispatch_output values; cdt-ld treats that disagreement across
+   // sidecars as an error and aborts the link. Fall back to output_dir only when no -abigen_output
+   // was supplied (non-abigen builds, which never reach the link-time dispatcher compile anyway).
+   std::string dispatch_dir = output_dir;
+   if (!opts.abigen_output.empty() && opts.abigen_output != "''") {
+      const llvm::StringRef abi_dir = llvm::sys::path::parent_path(opts.abigen_output);
+      if (!abi_dir.empty())
+         dispatch_dir = std::string(abi_dir);
+   }
+
    std::stringstream ss;
-   ss << "contract="        << opts.abigen_contract << "\n"
-      << "dispatch_output=" << output_dir + "/" + opts.abigen_contract + ".dispatch.cpp" << "\n"
-      << "no_abigen="       << ((!opts.abigen && !opts.link) ? "1" : "0") << "\n"
-      << "protobuf_dir="    << opts.protobuf_dir << "\n"
-      << "protobuf_files="  << opts.protobuf_files << "\n";
+   ss << fm::k_contract        << "=" << opts.abigen_contract << "\n"
+      << fm::k_dispatch_output << "=" << dispatch_dir + "/" + opts.abigen_contract + ".dispatch.cpp" << "\n"
+      << fm::k_no_abigen       << "=" << ((!opts.abigen && !opts.link) ? "1" : "0") << "\n"
+      << fm::k_protobuf_dir    << "=" << opts.protobuf_dir << "\n"
+      << fm::k_protobuf_files  << "=" << opts.protobuf_files << "\n";
    if (!opts.abigen_output.empty() && opts.abigen_output != "''")
-      ss << "abi_output=" << opts.abigen_output << "\n";
+      ss << fm::k_abi_output << "=" << opts.abigen_output << "\n";
    if (opts.abi_version.first > 0)
-      ss << "abi_version=" << opts.abi_version.first << "." << opts.abi_version.second << "\n";
-   // The descriptor(s) this object produced -- cdt-codegen names each <contract>.<src>.desc in
-   // the output dir. One line per source (normally a single source per compile).
+      ss << fm::k_abi_version << "=" << opts.abi_version.first << "." << opts.abi_version.second << "\n";
+   // The descriptor(s) this object produced -- cdt-codegen names each <contract>.<src>.desc in the
+   // output dir. One line per source (normally a single source per compile). These ARE per-TU:
+   // cdt-ld accumulates every object's desc_file (sources in different subdirectories are all
+   // collected), so -- unlike dispatch_output above -- they are not required to agree across sidecars.
    for (const auto& src : opts.inputs) {
       const std::string basename = src.substr(src.rfind('/') + 1);
-      ss << "desc_file=" << output_dir + "/" + opts.abigen_contract + "." + basename + ".desc" << "\n";
+      ss << fm::k_desc_file << "=" << output_dir + "/" + opts.abigen_contract + "." + basename + ".desc" << "\n";
    }
    for (const auto& a : opts.comp_options)
-      ss << "cxxarg=" << a << "\n";
+      ss << fm::k_cxxarg << "=" << a << "\n";
 
    const std::string path = object + ".finalize";
    const std::string tmp  = path + ".tmp." + std::to_string(static_cast<long>(getpid()));
@@ -234,9 +251,10 @@ int main(int argc, const char **argv) {
          }
       }
 
-      // Compile the generated dispatch file (contains apply() entry point).
-      // Only needed in link mode — in compile-only mode, dispatch is embedded
-      // directly in .actions.cpp via --embed-dispatch (weak symbol).
+      // Compile the generated dispatch file (contains the apply() entry point). Only needed in
+      // link mode, where cdt-cpp drives the whole compile+link itself and already sees every source.
+      // In compile-only mode the dispatcher is deferred to the single link-time finalize pass (run
+      // by cdt-ld), which sees every TU's .desc and compiles the one complete strong apply() there.
       if (is_contract_build && opts.link) {
          std::string dispatch_file = codegen_output_dir + "/" + opts.abigen_contract + ".dispatch.cpp";
          if (llvm::sys::fs::exists(dispatch_file)) {
