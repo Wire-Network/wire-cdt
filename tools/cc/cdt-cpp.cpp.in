@@ -26,30 +26,38 @@ using namespace llvm;
 
 using namespace llvm;
 
-// Records the arguments cdt-ld's link-time finalize pass needs -- it cannot recover the
-// contract name, abi version, protobuf args, output paths, or compile flags at link time.
-// Written per-TU in compile-only contract builds; temp+rename keeps it atomic under the
-// parallel build. The compile flags are written one per line (cxxarg=) so argument
-// boundaries (e.g. a path containing a space) survive the round-trip to the dispatcher
-// compile, rather than being lost to a join + re-split.
-// Returns false on any write/rename failure: the manifest is required for correctness, and a
-// missing or stale one makes cdt-ld treat the link as a non-contract link and silently skip
-// ABI/dispatch generation. The caller must fail the compile.
-static bool write_finalize_manifest(const Options& opts, const std::string& output_dir) {
+// Writes a per-object sidecar ("<object>.finalize") recording everything cdt-ld's link-time
+// finalize pass needs for this translation unit -- it cannot recover the contract name, abi
+// version, protobuf args, output paths, the descriptor this object produced, or the compile
+// flags at link time. The sidecar is keyed on the object path, so cdt-ld can find it directly
+// from each linked object (no directory scanning, and sources in multiple subdirectories are
+// all accounted for). The compile flags are written one per line (cxxarg=) so argument
+// boundaries (e.g. a path containing a space) survive the round-trip to the dispatcher compile.
+// Returns false on any write/rename failure: the sidecar is required for correctness -- a
+// missing one makes cdt-ld treat the link as a non-contract link and silently skip ABI/dispatch
+// generation, so the caller must fail the compile.
+static bool write_finalize_manifest(const Options& opts, const std::string& output_dir,
+                                    const std::string& object) {
    std::stringstream ss;
-   ss << "contract="      << opts.abigen_contract << "\n"
-      << "output_dir="    << output_dir << "\n"
-      << "no_abigen="     << ((!opts.abigen && !opts.link) ? "1" : "0") << "\n"
-      << "protobuf_dir="  << opts.protobuf_dir << "\n"
-      << "protobuf_files=" << opts.protobuf_files << "\n";
+   ss << "contract="        << opts.abigen_contract << "\n"
+      << "dispatch_output=" << output_dir + "/" + opts.abigen_contract + ".dispatch.cpp" << "\n"
+      << "no_abigen="       << ((!opts.abigen && !opts.link) ? "1" : "0") << "\n"
+      << "protobuf_dir="    << opts.protobuf_dir << "\n"
+      << "protobuf_files="  << opts.protobuf_files << "\n";
    if (!opts.abigen_output.empty() && opts.abigen_output != "''")
       ss << "abi_output=" << opts.abigen_output << "\n";
    if (opts.abi_version.first > 0)
       ss << "abi_version=" << opts.abi_version.first << "." << opts.abi_version.second << "\n";
+   // The descriptor(s) this object produced -- cdt-codegen names each <contract>.<src>.desc in
+   // the output dir. One line per source (normally a single source per compile).
+   for (const auto& src : opts.inputs) {
+      const std::string basename = src.substr(src.rfind('/') + 1);
+      ss << "desc_file=" << output_dir + "/" + opts.abigen_contract + "." + basename + ".desc" << "\n";
+   }
    for (const auto& a : opts.comp_options)
       ss << "cxxarg=" << a << "\n";
 
-   const std::string path = output_dir + "/" + opts.abigen_contract + ".finalize";
+   const std::string path = object + ".finalize";
    const std::string tmp  = path + ".tmp." + std::to_string(static_cast<long>(getpid()));
    {
       std::ofstream ofs(tmp);
@@ -179,10 +187,11 @@ int main(int argc, const char **argv) {
       std::string codegen_output_dir = out_dir_buf.str().empty() ? "." : std::string(out_dir_buf.str());
       bool is_contract_build = should_run_codegen;
 
-      // Compile-only contract builds defer the shared ABI + dispatcher to a single
-      // link-time finalize pass (cdt-ld); record the args that pass needs. The manifest is
-      // required for correctness, so a write failure fails the compile.
-      if (is_contract_build && !opts.link && !write_finalize_manifest(opts, codegen_output_dir))
+      // Compile-only contract builds defer the shared ABI + dispatcher to a single link-time
+      // finalize pass (cdt-ld); write a sidecar next to this object recording what that pass
+      // needs. Required for correctness, so a write failure fails the compile.
+      if (is_contract_build && !opts.link &&
+          !write_finalize_manifest(opts, codegen_output_dir, opts.output_fn))
          return -1;
 
       // Compile each input file. For contract builds, if a .actions.cpp was generated,

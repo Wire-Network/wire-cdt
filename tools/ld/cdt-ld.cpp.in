@@ -63,93 +63,101 @@ bool replay_stderr_and_check_softfloat(const std::string& stderr_path) {
 
 // Link-time finalize: publish the complete contract ABI + a single strong dispatcher.
 //
-// The per-TU compiles (cdt-cpp --emit-desc-only -> cdt-codegen) wrote each TU's .desc and
-// a "<contract>.finalize" manifest into the object directory, but deferred the shared
-// <contract>.abi and the contract apply() dispatcher to here -- where, now that every
-// object (hence every .desc) exists, the complete descriptor set is available. Running the
-// finalize once eliminates the parallel-build races entirely: no per-TU shared writes, no
-// sibling-.desc reads during compilation, and the dispatcher is always complete (a single
-// strong apply() that overrides any per-TU stub).
+// Object-driven: cdt-cpp wrote a per-object sidecar ("<object>.finalize") next to each compiled
+// object, recording that object's descriptor and the shared finalize parameters. Here we walk
+// the objects actually being linked, read their sidecars, and hand cdt-codegen the exact set of
+// descriptors via repeated --desc-file options. This is robust where a directory scan is not:
+// it only finalizes descriptors for linked objects, finds descriptors regardless of which source
+// subdirectory they live in, and ignores stale files from removed sources. Running the finalize
+// once also eliminates the parallel-build races -- no per-TU shared writes, no sibling-.desc
+// reads during compilation, and the dispatcher is always a single complete strong apply().
 //
-// Returns true to proceed with the link: either no manifest was found (not a contract link,
-// leave it unchanged) or the finalize succeeded. Returns false on a hard failure once a
-// contract manifest HAS been identified -- finalize is now solely responsible for the ABI
-// and dispatcher, so a failure here must abort cdt-ld rather than let wasm-ld link stale or
-// missing generated artifacts.
+// Returns true to proceed with the link: either no sidecar was found (not a contract link, leave
+// it unchanged) or the finalize succeeded. Returns false on a hard failure once a contract has
+// been identified -- finalize is solely responsible for the ABI and dispatcher, so a failure here
+// must abort cdt-ld rather than let wasm-ld link stale or missing generated artifacts.
 bool run_link_time_finalize(Options& opts) {
    namespace fs = llvm::sys::fs;
 
-   // 1. Find the object directory(ies) and the finalize manifest.
-   std::set<std::string> obj_dirs;
+   // Shared finalize parameters, accumulated from the sidecars (all linked objects of one
+   // contract must agree on them); cxx_args are the dispatcher compile flags (taken from the
+   // first sidecar -- they agree modulo per-object dep-file/-o flags, which are filtered below).
+   std::string contract, abi_output, dispatch_output, abi_version, no_abigen,
+               protobuf_dir, protobuf_files;
+   std::vector<std::string> desc_files; // one (or more) per linked object
+   std::vector<std::string> cxx_args;
+   bool found = false;
+
+   auto agree = [](std::string& field, const std::string& val, const char* name,
+                   const std::string& where) -> bool {
+      if (val.empty()) return true;
+      if (field.empty()) { field = val; return true; }
+      if (field == val) return true;
+      std::cerr << "cdt-ld: conflicting '" << name << "' across finalize sidecars in " << where
+                << " ('" << field << "' vs '" << val << "')" << std::endl;
+      return false;
+   };
+
+   // 1. Walk the linked objects; read the sidecar sitting next to each.
    for (const auto& a : opts.ld_options) {
       llvm::StringRef ar(a);
-      if (ar.ends_with(".o") || ar.ends_with(".obj")) // CMake uses .o or .obj
-         obj_dirs.insert(std::string(llvm::sys::path::parent_path(ar)));
-   }
-   std::string manifest_path;
-   for (const auto& dir : obj_dirs) {
-      std::error_code ec;
-      for (fs::directory_iterator it(dir, ec), end; it != end && !ec; it.increment(ec)) {
-         if (llvm::StringRef(it->path()).ends_with(".finalize")) { manifest_path = it->path(); break; }
-      }
-      if (!manifest_path.empty()) break;
-   }
-   if (manifest_path.empty())
-      return true; // not a contract link -- leave the link unchanged
+      if (!ar.ends_with(".o") && !ar.ends_with(".obj")) continue; // CMake uses .o or .obj
+      const std::string sidecar = a + ".finalize";
+      if (!fs::exists(sidecar)) continue;
+      found = true;
 
-   // 2. Read the manifest. Single-value keys go in the map; the compile flags arrive as
-   //    repeated "cxxarg=" lines (one flag per line) so argument boundaries -- e.g. a path
-   //    containing a space -- are preserved rather than lost to a join + whitespace re-split.
-   std::map<std::string, std::string> m;
-   std::vector<std::string> cxx_args;
-   {
-      std::ifstream in(manifest_path);
+      std::vector<std::string> this_cxx;
+      std::ifstream in(sidecar);
       std::string line;
       while (std::getline(in, line)) {
          auto eq = line.find('=');
-         if (eq == std::string::npos)
-            continue;
+         if (eq == std::string::npos) continue;
          std::string key = line.substr(0, eq);
          std::string val = line.substr(eq + 1);
-         if (key == "cxxarg")
-            cxx_args.push_back(std::move(val));
-         else
-            m[key] = std::move(val);
+         if (key == "desc_file")            desc_files.push_back(std::move(val));
+         else if (key == "cxxarg")          this_cxx.push_back(std::move(val));
+         else if (key == "contract")        { if (!agree(contract, val, "contract", sidecar)) return false; }
+         else if (key == "abi_output")      { if (!agree(abi_output, val, "abi_output", sidecar)) return false; }
+         else if (key == "dispatch_output") { if (!agree(dispatch_output, val, "dispatch_output", sidecar)) return false; }
+         else if (key == "abi_version")     { if (!agree(abi_version, val, "abi_version", sidecar)) return false; }
+         else if (key == "no_abigen")       { if (!agree(no_abigen, val, "no_abigen", sidecar)) return false; }
+         else if (key == "protobuf_dir")    { if (!agree(protobuf_dir, val, "protobuf_dir", sidecar)) return false; }
+         else if (key == "protobuf_files")  { if (!agree(protobuf_files, val, "protobuf_files", sidecar)) return false; }
       }
+      if (cxx_args.empty()) cxx_args = std::move(this_cxx);
    }
-   const std::string contract   = m["contract"];
-   const std::string output_dir = m["output_dir"];
-   if (contract.empty() || output_dir.empty()) {
-      std::cerr << "cdt-ld: finalize manifest " << manifest_path
-                << " is missing contract/output_dir" << std::endl;
+
+   if (!found)
+      return true; // not a contract link -- leave the link unchanged
+   if (contract.empty() || dispatch_output.empty() || desc_files.empty()) {
+      std::cerr << "cdt-ld: finalize sidecar(s) missing contract/dispatch_output/desc_file" << std::endl;
       return false;
    }
 
-   // 3. Publish the complete ABI + a strong standalone dispatch.cpp from every .desc.
-   std::vector<std::string> cg = {"--finalize", "--contract", contract, "--output-dir", output_dir};
-   if (!m["abi_output"].empty())     { cg.push_back("--abi-output");     cg.push_back(m["abi_output"]); }
-   if (!m["abi_version"].empty())    { cg.push_back("--abi-version");    cg.push_back(m["abi_version"]); }
-   if (m["no_abigen"] == "1")        { cg.push_back("--no-abigen"); }
-   if (!m["protobuf_dir"].empty())   { cg.push_back("--protobuf-dir");   cg.push_back(m["protobuf_dir"]); }
-   if (!m["protobuf_files"].empty()) { cg.push_back("--protobuf-files"); cg.push_back(m["protobuf_files"]); }
+   // 2. Publish the complete ABI + a strong dispatcher from exactly the linked objects' descriptors.
+   std::vector<std::string> cg = {"--finalize", "--contract", contract,
+                                  "--dispatch-output", dispatch_output};
+   if (!abi_output.empty())     { cg.push_back("--abi-output");     cg.push_back(abi_output); }
+   if (!abi_version.empty())    { cg.push_back("--abi-version");    cg.push_back(abi_version); }
+   if (no_abigen == "1")        { cg.push_back("--no-abigen"); }
+   if (!protobuf_dir.empty())   { cg.push_back("--protobuf-dir");   cg.push_back(protobuf_dir); }
+   if (!protobuf_files.empty()) { cg.push_back("--protobuf-files"); cg.push_back(protobuf_files); }
+   for (const auto& d : desc_files) { cg.push_back("--desc-file"); cg.push_back(d); }
    if (!sysio::cdt::environment::exec_subprogram("cdt-codegen", cg)) {
       std::cerr << "cdt-ld: link-time ABI/dispatch finalize failed" << std::endl;
       return false;
    }
 
-   // 4. If a dispatcher was generated, compile it with the same flags the TUs used and add it
-   //    to the link. finalize deletes any stale dispatcher and only writes one when the
-   //    contract has actions/notifies and no user-defined apply(), so the file's presence is a
-   //    reliable signal that a dispatcher was generated this run -- its absence is success
-   //    (the contract defines its own apply()), not an error.
-   const std::string dispatch_cpp = output_dir + "/" + contract + ".dispatch.cpp";
-   if (!fs::exists(dispatch_cpp))
+   // 3. If a dispatcher was generated, compile it with the same flags the TUs used and add it to
+   //    the link. finalize deletes any stale dispatcher and only writes one when the contract has
+   //    actions/notifies and no user-defined apply(), so the file's presence reliably means it was
+   //    generated this run -- its absence is success (the contract defines its own apply()).
+   if (!fs::exists(dispatch_output))
       return true;
-   const std::string dispatch_obj = output_dir + "/" + contract + ".dispatch.cpp.o";
-   // Compile the generated dispatcher with the contract's own clang flags (recorded in the
-   // manifest), minus the abigen plugins and dependency-file flags that apply only to the
-   // per-TU sources. Invoke clang++ directly -- cdt-cpp has its own option parser and rejects
-   // raw clang flags such as -ferror-limit.
+   const std::string dispatch_obj = dispatch_output + ".o";
+   // Compile the generated dispatcher with the contract's own clang flags (from the sidecar),
+   // minus the abigen plugins and per-object dependency-file/output flags. Invoke clang++
+   // directly -- cdt-cpp has its own option parser and rejects raw clang flags like -ferror-limit.
    std::vector<std::string> cc;
    for (size_t i = 0; i < cxx_args.size(); ++i) {
       const std::string& t = cxx_args[i];
@@ -166,14 +174,14 @@ bool run_link_time_finalize(Options& opts) {
       cc.push_back(t);
    }
    cc.push_back("-c");
-   cc.push_back(dispatch_cpp);
+   cc.push_back(dispatch_output);
    cc.push_back("-o");
    cc.push_back(dispatch_obj);
    if (!sysio::cdt::environment::exec_subprogram("clang++", cc)) {
       std::cerr << "cdt-ld: failed to compile the generated dispatcher" << std::endl;
       return false;
    }
-   // 5. Add the dispatcher object so wasm-ld picks up the single strong apply().
+   // 4. Add the dispatcher object so wasm-ld picks up the single strong apply().
    opts.ld_options.push_back(dispatch_obj);
    return true;
 }

@@ -186,6 +186,13 @@ static std::string abi_output_path;
 //                     standalone dispatch exactly once.
 static bool        emit_desc_only              = false;
 static bool        finalize_mode               = false;
+// In --finalize mode, cdt-ld passes the exact descriptor list (one --desc-file per linked
+// object) and the output path for the generated dispatcher. When desc files are given
+// explicitly we use them verbatim and skip the output-directory scan -- so only descriptors
+// for objects actually linked are merged (no stale/sibling .desc, and sources spread across
+// subdirectories are handled).
+static std::vector<std::string> explicit_desc_files;
+static std::string              dispatch_output_path;
 static bool        verbose                     = false;
 static bool        suppress_ricardian_warnings = true;
 static bool        is_wasm                     = false;
@@ -254,6 +261,10 @@ static void parse_args(int argc, const char** argv) {
          no_abigen = true;
       } else if (arg == "--abi-output" && i + 1 < argc) {
          abi_output_path = argv[++i];
+      } else if (arg == "--desc-file" && i + 1 < argc) {
+         explicit_desc_files.push_back(argv[++i]);
+      } else if (arg == "--dispatch-output" && i + 1 < argc) {
+         dispatch_output_path = argv[++i];
       } else if (arg == "-v" || arg == "--verbose") {
          verbose = true;
       } else if (arg == "--contract" && i + 1 < argc) {
@@ -478,12 +489,17 @@ int main(int argc, const char** argv) {
       if (emit_desc_only)
          return 0;
 
-      // In compile-only mode (single file per invocation), scan the output
-      // directory for .desc files from previous compilations of other TUs
-      // in the same contract.  Desc files are prefixed with the contract name
-      // (e.g., "sysio.system.peer_keys.cpp.desc") to avoid merging unrelated
-      // contracts that might share the same output directory.
-      {
+      // The link-time finalize pass (cdt-ld) supplies the exact descriptor set via repeated
+      // --desc-file options -- one per object actually linked -- so use that list verbatim. It
+      // is authoritative: it excludes descriptors from removed sources and includes those in
+      // any source subdirectory, neither of which a single-directory scan handles correctly.
+      if (!explicit_desc_files.empty()) {
+         desc_files = explicit_desc_files;
+      } else {
+         // Fallback (e.g. cdt-cpp link-mode): scan the output directory for .desc files from
+         // previous compilations of other TUs in the same contract. Desc files are prefixed
+         // with the contract name (e.g. "sysio.system.peer_keys.cpp.desc") to avoid merging
+         // unrelated contracts that might share the same output directory.
          std::string prefix = contract_name + ".";
          std::string suffix = ".desc";
          std::set<std::string> known(desc_files.begin(), desc_files.end());
@@ -702,7 +718,9 @@ int main(int argc, const char** argv) {
       // in which the contract gained its own apply() (or lost all its actions) would leave a
       // stale <contract>.dispatch.cpp on disk that cdt-ld would then compile and link -- a
       // duplicate or stale strong apply().
-      const std::string dispatch_file = output_dir + "/" + contract_name + ".dispatch.cpp";
+      const std::string dispatch_file = !dispatch_output_path.empty()
+                                      ? dispatch_output_path
+                                      : output_dir + "/" + contract_name + ".dispatch.cpp";
       unlink(dispatch_file.c_str());
 
       // Only generate dispatch if there are actions/notifies to dispatch
