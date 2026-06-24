@@ -40,22 +40,27 @@ static bool write_finalize_manifest(const Options& opts, const std::string& outp
                                     const std::string& object) {
    namespace fm = sysio::cdt::finalize_manifest;
 
-   // Co-locate the generated dispatcher with the contract's .abi: -abigen_output is a TARGET-level
-   // path (identical for every TU of the contract), whereas this object's output_dir is per-source.
-   // Deriving dispatch_output from output_dir would make two TUs compiled from different source
-   // SUBDIRECTORIES record different dispatch_output values; cdt-ld treats that disagreement across
-   // sidecars as an error and aborts the link. Fall back to output_dir only when no -abigen_output
-   // was supplied (non-abigen builds, which never reach the link-time dispatcher compile anyway).
-   std::string dispatch_dir = output_dir;
+   // Derive the dispatcher path from -abigen_output, which is the TARGET-level <target>.abi: swap
+   // its extension for .dispatch.cpp. This gives a path that is (a) identical for every TU of a
+   // target -- TUs compiled from different source SUBDIRECTORIES would otherwise record different
+   // dispatch_output values, and cdt-ld treats that disagreement as an error and aborts the link;
+   // and (b) unique per TARGET -- two targets can intentionally share a contract name (e.g.
+   // malloc_tests / old_malloc_tests, get_code_hash_write / get_code_hash_read), and a
+   // <contract>.dispatch.cpp keyed on the contract name would collide on one file in the shared
+   // output dir. Fall back to the per-object dir + contract name only when no -abigen_output was
+   // supplied (non-abigen builds, which never reach the link-time dispatcher compile anyway).
+   std::string dispatch_output;
    if (!opts.abigen_output.empty() && opts.abigen_output != "''") {
-      const llvm::StringRef abi_dir = llvm::sys::path::parent_path(opts.abigen_output);
-      if (!abi_dir.empty())
-         dispatch_dir = std::string(abi_dir);
+      llvm::SmallString<256> p(opts.abigen_output);
+      llvm::sys::path::replace_extension(p, ".dispatch.cpp"); // <target>.abi -> <target>.dispatch.cpp
+      dispatch_output = std::string(p.str());
+   } else {
+      dispatch_output = output_dir + "/" + opts.abigen_contract + ".dispatch.cpp";
    }
 
    std::stringstream ss;
    ss << fm::k_contract        << "=" << opts.abigen_contract << "\n"
-      << fm::k_dispatch_output << "=" << dispatch_dir + "/" + opts.abigen_contract + ".dispatch.cpp" << "\n"
+      << fm::k_dispatch_output << "=" << dispatch_output << "\n"
       << fm::k_no_abigen       << "=" << ((!opts.abigen && !opts.link) ? "1" : "0") << "\n"
       << fm::k_protobuf_dir    << "=" << opts.protobuf_dir << "\n"
       << fm::k_protobuf_files  << "=" << opts.protobuf_files << "\n";
