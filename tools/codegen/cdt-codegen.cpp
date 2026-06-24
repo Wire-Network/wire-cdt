@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <algorithm>
 #include <map>
 #include <set>
 #include <sstream>
@@ -58,12 +57,11 @@ static bool exists(const char* filename) {
    return stat(filename, &st) == 0;
 }
 
-// Write dispatch code (apply entry point) to an output stream.
-// When weak=true, apply() gets __attribute__((weak)) so a user-defined apply()
-// (e.g. from SYSIO_DISPATCH) takes priority at link time.
-// When weak=false (standalone dispatch.cpp for link-mode builds), no weak attr.
+// Write dispatch code (apply entry point) to an output stream. apply() is a single
+// strong export; the generated dispatcher is the only one in the link (a contract that
+// defines its own apply() suppresses generation upstream via dispatcher_was_found).
 static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>& wasm_actions,
-                                 const std::set<wasm_notify>& wasm_notifies, bool weak,
+                                 const std::set<wasm_notify>& wasm_notifies,
                                  bool has_pre_dispatch, bool has_post_dispatch) {
    ofs << "extern \"C\" {\n";
    ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(uint32_t, uint64_t);";
@@ -80,10 +78,7 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
    for (auto& wn : wasm_notifies) {
       ofs << "  void " << wn.handler << "(uint64_t r, uint64_t c);\n";
    }
-   if (weak)
-      ofs << "  __attribute__((weak, export_name(\"apply\"), visibility(\"default\")))\n";
-   else
-      ofs << "  __attribute__((export_name(\"apply\"), visibility(\"default\")))\n";
+   ofs << "  __attribute__((export_name(\"apply\"), visibility(\"default\")))\n";
    ofs << "  void apply(uint64_t r, uint64_t c, uint64_t a) {\n";
    ofs << "    sysio_set_contract_name(r);\n";
    if (has_pre_dispatch)
@@ -149,7 +144,7 @@ static void generate_sysio_dispatch(const std::string& output, const std::set<wa
          throw std::runtime_error("cannot open " + output);
       ofs << "#include <cstdint>\n"
           << "#include <sysio/name.hpp>\n";
-      write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, false, has_pre_dispatch, has_post_dispatch);
+      write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, has_pre_dispatch, has_post_dispatch);
       ofs.close();
    } catch (...) {
       std::cerr << "Failed to generate sysio dispatcher\n";
@@ -182,7 +177,22 @@ static int         abi_version_major           = 1;
 static int         abi_version_minor           = 3;
 static bool        no_abigen                   = false;
 static std::string abi_output_path;
-static bool        embed_dispatch              = false;
+// Link-time finalize split (see main()):
+//   emit_desc_only -- per-TU compile pass: emit this TU's .desc/.actions.cpp and a
+//                     small finalize manifest, then stop. No shared .abi/dispatch,
+//                     no sibling-.desc scan (so no parallel-build races).
+//   finalize_mode  -- the single link-time pass (run by cdt-ld): skip compilation,
+//                     scan every .desc, and publish the complete .abi + a strong
+//                     standalone dispatch exactly once.
+static bool        emit_desc_only              = false;
+static bool        finalize_mode               = false;
+// In --finalize mode, cdt-ld passes the exact descriptor list (one --desc-file per linked
+// object) and the output path for the generated dispatcher. When desc files are given
+// explicitly we use them verbatim and skip the output-directory scan -- so only descriptors
+// for objects actually linked are merged (no stale/sibling .desc, and sources spread across
+// subdirectories are handled).
+static std::vector<std::string> explicit_desc_files;
+static std::string              dispatch_output_path;
 static bool        verbose                     = false;
 static bool        suppress_ricardian_warnings = true;
 static bool        is_wasm                     = false;
@@ -251,8 +261,10 @@ static void parse_args(int argc, const char** argv) {
          no_abigen = true;
       } else if (arg == "--abi-output" && i + 1 < argc) {
          abi_output_path = argv[++i];
-      } else if (arg == "--embed-dispatch") {
-         embed_dispatch = true;
+      } else if (arg == "--desc-file" && i + 1 < argc) {
+         explicit_desc_files.push_back(argv[++i]);
+      } else if (arg == "--dispatch-output" && i + 1 < argc) {
+         dispatch_output_path = argv[++i];
       } else if (arg == "-v" || arg == "--verbose") {
          verbose = true;
       } else if (arg == "--contract" && i + 1 < argc) {
@@ -287,6 +299,10 @@ static void parse_args(int argc, const char** argv) {
             if (!item.empty())
                protobuf_files.push_back(item);
          }
+      } else if (arg == "--emit-desc-only") {
+         emit_desc_only = true;
+      } else if (arg == "--finalize") {
+         finalize_mode = true;
       } else if (arg[0] == '-') {
          std::cerr << "Unknown option: " << arg << "\n";
          print_usage(argv[0]);
@@ -296,7 +312,9 @@ static void parse_args(int argc, const char** argv) {
       }
    }
 
-   if (cxx_arg.empty()) {
+   // The finalize pass does not compile anything (it only merges existing .desc files),
+   // so it needs no --cxx options.
+   if (!finalize_mode && cxx_arg.empty()) {
       const char* env = getenv("SYSIO_CXX_OPTIONS");
       if (env)
          cxx_arg = env;
@@ -453,17 +471,45 @@ int main(int argc, const char** argv) {
 
    parse_args(argc, argv);
 
+   // The link-time finalize pass must be told where the ABI goes via --abi-output (cdt-ld derives
+   // it from the per-target -abigen_output). Without it the ABI would fall back to output_dir,
+   // which in finalize mode keeps its default "." -- the linker's working directory -- a
+   // wrong-location write that silently looks like success. Refuse rather than mislead. (Normal
+   // per-TU compiles are not affected: they always carry an explicit output dir.)
+   if (finalize_mode && !no_abigen && abi_output_path.empty()) {
+      std::cerr << "cdt-codegen --finalize requires --abi-output when generating an ABI\n";
+      return -1;
+   }
+
    try {
-      for (auto& input : input_files) {
-         gen_actions(input);
+      // The per-TU compile pass emits this TU's descriptor; the link-time finalize pass
+      // (run by cdt-ld) skips compilation and only publishes the merged outputs.
+      if (!finalize_mode) {
+         for (auto& input : input_files) {
+            gen_actions(input);
+         }
       }
 
-      // In compile-only mode (single file per invocation), scan the output
-      // directory for .desc files from previous compilations of other TUs
-      // in the same contract.  Desc files are prefixed with the contract name
-      // (e.g., "sysio.system.peer_keys.cpp.desc") to avoid merging unrelated
-      // contracts that might share the same output directory.
-      {
+      // Compile-only contract members stop here: the abigen plugin has written this TU's
+      // .desc and .actions.cpp. The shared <contract>.abi and dispatch are NOT produced
+      // per-TU -- cdt-ld finalizes them once, after every .desc exists, by invoking
+      // `cdt-codegen --finalize`. This eliminates the parallel-build races: no process
+      // reads a sibling's .desc during compilation, and the shared outputs are written
+      // exactly once. (cdt-cpp writes the finalize manifest that hands cdt-ld the args.)
+      if (emit_desc_only)
+         return 0;
+
+      // The link-time finalize pass (cdt-ld) supplies the exact descriptor set via repeated
+      // --desc-file options -- one per object actually linked -- so use that list verbatim. It
+      // is authoritative: it excludes descriptors from removed sources and includes those in
+      // any source subdirectory, neither of which a single-directory scan handles correctly.
+      if (!explicit_desc_files.empty()) {
+         desc_files = explicit_desc_files;
+      } else {
+         // Fallback (e.g. cdt-cpp link-mode): scan the output directory for .desc files from
+         // previous compilations of other TUs in the same contract. Desc files are prefixed
+         // with the contract name (e.g. "sysio.system.peer_keys.cpp.desc") to avoid merging
+         // unrelated contracts that might share the same output directory.
          std::string prefix = contract_name + ".";
          std::string suffix = ".desc";
          std::set<std::string> known(desc_files.begin(), desc_files.end());
@@ -677,30 +723,24 @@ int main(int argc, const char** argv) {
          }
       }
 
+      // Delete any dispatcher from a previous run BEFORE deciding whether to regenerate, so the
+      // file's presence reliably means "generated this run". Without this, an incremental build
+      // in which the contract gained its own apply() (or lost all its actions) would leave a
+      // stale <contract>.dispatch.cpp on disk that cdt-ld would then compile and link -- a
+      // duplicate or stale strong apply().
+      const std::string dispatch_file = !dispatch_output_path.empty()
+                                      ? dispatch_output_path
+                                      : output_dir + "/" + contract_name + ".dispatch.cpp";
+      unlink(dispatch_file.c_str());
+
       // Only generate dispatch if there are actions/notifies to dispatch
       // AND the source doesn't already define its own apply() (e.g. via SYSIO_DISPATCH macro).
       if ((!wasm_actions.empty() || !wasm_notifies.empty()) && !dispatcher_was_found) {
-         if (embed_dispatch) {
-            // Embed weak dispatch code into each .actions.cpp file.
-            // This avoids a separate dispatch.o and the wasm-ld --relocatable merge,
-            // which can't handle weak/strong symbol resolution.
-            // At final link time, wasm-ld properly resolves weak vs strong apply().
-            for (auto& input : input_files) {
-               std::string actions_file = output_dir + "/" + input.substr(input.rfind('/') + 1) + ".actions.cpp";
-               if (exists(actions_file.c_str())) {
-                  std::ofstream ofs(actions_file, std::ios::app);
-                  if (ofs) {
-                     ofs << "\n// --- Auto-generated weak dispatch ---\n";
-                     write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, true, has_pre_dispatch, has_post_dispatch);
-                     ofs.close();
-                  }
-               }
-            }
-         } else {
-            // Standalone dispatch.cpp for link-mode builds (cdt-cpp handles compilation).
-            auto main_file = output_dir + "/" + contract_name + ".dispatch.cpp";
-            generate_sysio_dispatch(main_file, wasm_actions, wasm_notifies, has_pre_dispatch, has_post_dispatch);
-         }
+         // Generate a standalone dispatcher with a single strong apply(). For compile-only
+         // contract builds this runs in the link-time finalize pass and cdt-ld compiles and
+         // links the result; link-mode builds (cdt-cpp drives compile+link) emit it here and
+         // compile it themselves.
+         generate_sysio_dispatch(dispatch_file, wasm_actions, wasm_notifies, has_pre_dispatch, has_post_dispatch);
       }
       return 0;
    } catch (std::runtime_error& err) {

@@ -23,6 +23,13 @@ add_contract(hash_id_tests hash_id_tests hash_id_tests.cpp)
 add_contract(capi_tests capi_tests capi/capi.c capi/action.c capi/chain.c capi/crypto.c capi/db.c capi/permission.c
                                    capi/print.c capi/privileged.c capi/system.c capi/transaction.c)
 
+# Regression contract for cdt-ld's link-time finalize across multiple source SUBDIRECTORIES:
+# the two action handlers live in multidir/part_a/ and multidir/part_b/, so their objects (and the
+# per-object finalize sidecars) land in different directories. The dispatcher path the sidecars
+# record must be target-level, or cdt-ld rejects the disagreement and the link below fails outright.
+# multidir_contract_tests.sh additionally checks both actions made it into the merged ABI.
+add_contract(multidir_contract multidir_contract multidir/part_a/multidir_a.cpp multidir/part_b/multidir_b.cpp)
+
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/simple_wrong.abi ${CMAKE_CURRENT_BINARY_DIR}/simple_wrong.abi COPYONLY )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/capi/capi_tests.abi ${CMAKE_CURRENT_BINARY_DIR}/capi_tests.abi COPYONLY )
 
