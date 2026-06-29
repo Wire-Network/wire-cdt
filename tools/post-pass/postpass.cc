@@ -38,6 +38,7 @@
 #include "wabt/binary-writer.h"
 #include "wabt/common.h"
 #include "wabt/error.h"
+#include "wabt/error-formatter.h"
 #include "wabt/feature.h"
 #include "wabt/ir.h"
 #include "wabt/leb128.h"
@@ -53,8 +54,15 @@ static Features s_features;
 static WriteBinaryOptions s_write_binary_options;
 
 static void InitFeatures() {
+   // Match the feature set the previous vendored (2018-era) WABT used:
+   // sign-extension and mutable-globals only. WABT 1.0.41 enables bulk-memory by
+   // default, which makes passive data segments (no offset expression) valid
+   // input; FillFromSegments() reads each segment's offset, so a passive segment
+   // would crash sysio-pp. The contract toolchain never emits these (the old
+   // tool rejected them too), so disable bulk-memory to reject them at parse.
    s_features.enable_sign_extension();
    s_features.enable_mutable_globals();
+   s_features.disable_bulk_memory();
 }
 
 static std::unique_ptr<FileStream> s_log_stream;
@@ -244,6 +252,12 @@ int ProgramMain(int argc, char** argv) {
                               /*fail_on_custom_section_error=*/false);
     result = ReadBinaryIr(s_infile.c_str(), file_data.data(),
                           file_data.size(), options, &errors, &module);
+
+    // Emit parse diagnostics, like the old ErrorHandlerFile path did, so a
+    // malformed input fails with an explanation rather than a bare exit code.
+    if (Failed(result)) {
+      FormatErrorsToFile(errors, Location::Type::Binary);
+    }
 
     if (Succeeded(result)) {
       // Drop custom sections. The previous vendored (2018-era) WABT writer did
