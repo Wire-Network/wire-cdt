@@ -82,7 +82,10 @@ add_subdirectory(abidiff)
 add_subdirectory(cc)
 add_subdirectory(ld)
 add_subdirectory(init)
-add_subdirectory(external)
+# WABT-derived sysio-pp + converters. De-vendored onto the vcpkg `wabt` port
+# (SEC-10 / WSA-020); replaces the old add_subdirectory(external) which built a
+# 2018-era vendored WABT source copy.
+add_subdirectory(post-pass)
 add_subdirectory(protoc-gen-zpp)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/compiler_options.hpp.in ${CDT_TOOLS_BINARY_DIR}/compiler_options.hpp)

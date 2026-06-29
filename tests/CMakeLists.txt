@@ -38,6 +38,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/multidir_contract_tests.sh ${CMA
 add_test(NAME multidir_contract_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh "${CMAKE_BINARY_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST multidir_contract_tests PROPERTY LABELS unit_tests)
 
+# sysio-pp (WABT post-pass) regression — guards the WSA-020 / SEC-10
+# FillFromSegments out-of-bounds write and basic post-pass correctness.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/postpass_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/postpass_tests.sh COPYONLY)
+add_test(NAME postpass_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/postpass_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TEST postpass_tests PROPERTY LABELS unit_tests)
+
 if (sysio_FOUND)
    add_test(integration_tests ${CMAKE_BINARY_DIR}/tests/integration/integration_tests)
    set_property(TEST integration_tests PROPERTY LABELS integration_tests)
