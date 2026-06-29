@@ -60,7 +60,11 @@ jobs:
   build:
     name: Build & Test
     needs: [discover, build-platforms]
-    if: always() && needs.discover.result == 'success' && (needs.build-platforms.result == 'success' || needs.build-platforms.result == 'skipped')
+    # !cancelled() (not always()) so this job still runs when build-platforms is
+    # skipped, but a cancelled run actually stops it. always() makes the job run
+    # even when the workflow is cancelled, which is why cancelling left the build
+    # running to completion.
+    if: ${{ !cancelled() && needs.discover.result == 'success' && (needs.build-platforms.result == 'success' || needs.build-platforms.result == 'skipped') }}
     strategy:
       fail-fast: false
       matrix:
