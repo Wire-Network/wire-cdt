@@ -11,6 +11,14 @@ on:
       - develop
   workflow_dispatch:
 
+# A newer run for the same branch/PR cancels the in-progress one instead of
+# leaving multiple builds racing to completion. github.head_ref is the source
+# branch on pull_request events; it falls back to github.ref for push events so
+# each branch (or PR) collapses to a single live run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   # build-platforms publishes the container image to GHCR.
   packages: write
