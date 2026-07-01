@@ -377,13 +377,25 @@ function(target_add_protobuf TARGET)
     file(MAKE_DIRECTORY ${OUTPUT_DIR})
   endif()
 
+  set(_cdt_protobuf_include_dir)
+  foreach(_cdt_protobuf_root IN LISTS CDT_ROOT CMAKE_FIND_ROOT_PATH)
+    if(IS_DIRECTORY "${_cdt_protobuf_root}/include" AND EXISTS "${_cdt_protobuf_root}/include/zpp/zpp_options.proto")
+      set(_cdt_protobuf_include_dir "${_cdt_protobuf_root}/include")
+      break()
+    endif()
+  endforeach()
+
+  if(NOT _cdt_protobuf_include_dir)
+    message(FATAL_ERROR "Unable to find CDT protobuf include directory containing zpp/zpp_options.proto")
+  endif()
+
   # GENERATE PROTOBUF HEADERS WITH CUSTOM COMMAND
   add_custom_command(
     COMMENT "Generating ${OUTPUT_HDRS} from ${INPUT_FILES}"
     OUTPUT ${OUTPUT_HDRS}
     COMMAND cdt::protoc
     -I ${ADD_PROTOBUF_INPUT_DIRECTORY}
-    -I ${CDT_ROOT}/include
+    -I ${_cdt_protobuf_include_dir}
     --plugin=protoc-gen-zpp=$<TARGET_FILE:cdt::protoc-gen-zpp>
     --zpp_out
     ${OUTPUT_DIR}
