@@ -1,0 +1,179 @@
+name: Validate CDT Debian Package Against Sysio
+
+on:
+  push:
+    branches:
+      - chore/test-cdt-deb-package
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  validate:
+    name: Build CDT .deb, install it, compile sysio
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout wire-cdt
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            autoconf-archive \
+            automake \
+            build-essential \
+            ccache \
+            cmake \
+            curl \
+            doxygen \
+            git \
+            gnupg \
+            jq \
+            libbz2-dev \
+            libcurl4-openssl-dev \
+            libedit-dev \
+            libffi-dev \
+            libgmp-dev \
+            liblzma-dev \
+            libncurses-dev \
+            libncurses5-dev \
+            libssl-dev \
+            libstdc++-14-dev \
+            libtinfo-dev \
+            libtool \
+            libusb-1.0-0-dev \
+            libxml2-dev \
+            libzstd-dev \
+            ninja-build \
+            pkg-config \
+            python3 \
+            python3-dev \
+            python3-numpy \
+            python3-pip \
+            python3-venv \
+            software-properties-common \
+            tar \
+            unzip \
+            wget \
+            zip \
+            zlib1g-dev \
+            zstd
+
+          sudo wget -qO /etc/apt/trusted.gpg.d/apt.llvm.org.asc https://apt.llvm.org/llvm-snapshot.gpg.key
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main" | \
+            sudo tee /etc/apt/sources.list.d/llvm-toolchain-noble-18.list
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang-18 \
+            clang-tools-18 \
+            lld-18 \
+            libclang-18-dev \
+            libclang-common-18-dev \
+            libclang-cpp18 \
+            libclang-rt-18-dev \
+            libclang1-18 \
+            libllvm18 \
+            llvm-18 \
+            llvm-18-dev \
+            llvm-18-linker-tools \
+            llvm-18-runtime \
+            llvm-18-tools
+
+      - name: Build CDT and generate Debian package
+        env:
+          CC: /usr/bin/clang-18
+          CXX: /usr/bin/clang++-18
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          VCPKG_TARGET_TRIPLET: x64-linux-release
+          VCPKG_HOST_TRIPLET: x64-linux-release
+          VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}/.github/vcpkg-triplets
+          VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-binary-cache,readwrite
+        run: |
+          set -euxo pipefail
+          ./vcpkg/bootstrap-vcpkg.sh
+          cmake -B build/release -S . -G Ninja \
+            -DCMAKE_C_COMPILER="$CC" \
+            -DCMAKE_CXX_COMPILER="$CXX" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_TESTS=OFF \
+            -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
+            -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
+            -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS" \
+            "-DVCPKG_BINARY_SOURCES=$VCPKG_BINARY_SOURCES"
+          cmake --build build/release -- -j "$(nproc)"
+          cd build/release/packages
+          ./generate_package.sh deb ubuntu amd64
+          ls -lh cdt_*.deb
+
+      - name: Install CDT package
+        id: cdt
+        run: |
+          set -euxo pipefail
+          sudo apt-get install -y ./build/release/packages/cdt_*.deb
+          cdt-cpp --version
+          cdt_prefix="$(dpkg -L cdt | awk '/\/lib\/cmake\/cdt\/cdt-config.cmake$/ && $0 !~ /^\/usr\/lib\// { sub(/\/lib\/cmake\/cdt\/cdt-config.cmake$/, ""); print; exit }')"
+          if [[ -z "$cdt_prefix" ]]; then
+            cdt_prefix="$(dpkg -L cdt | awk '/\/opt\/cdt\/.*\/lib\/cmake\/cdt\/cdt-config.cmake$/ { sub(/\/lib\/cmake\/cdt\/cdt-config.cmake$/, ""); print; exit }')"
+          fi
+          test -n "$cdt_prefix"
+          test -x "$cdt_prefix/bin/cdt-cpp"
+          echo "prefix=$cdt_prefix" >> "$GITHUB_OUTPUT"
+          echo "CDT_PREFIX=$cdt_prefix" >> "$GITHUB_ENV"
+
+      - name: Checkout wire-sysio master
+        uses: actions/checkout@v5
+        with:
+          repository: Wire-Network/wire-sysio
+          ref: master
+          submodules: recursive
+          path: wire-sysio
+
+      - name: Build wire-sysio with installed CDT package
+        working-directory: wire-sysio
+        env:
+          CC: /usr/bin/clang-18
+          CXX: /usr/bin/clang++-18
+          CCACHE_DIR: ${{ github.workspace }}/wire-sysio/.ccache
+          CMAKE_BUILD_TYPE: Release
+          VCPKG_TARGET_TRIPLET: x64-linux-release
+          VCPKG_HOST_TRIPLET: x64-linux-release
+          VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}/wire-sysio/.github/vcpkg-triplets
+          VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/wire-sysio/vcpkg-binary-cache,readwrite
+        run: |
+          set -euxo pipefail
+          ./vcpkg/bootstrap-vcpkg.sh
+          cmake -B build/release -S . -G Ninja \
+            -DCMAKE_C_COMPILER="$CC" \
+            -DCMAKE_CXX_COMPILER="$CXX" \
+            -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+            -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
+            -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
+            -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS" \
+            -DENABLE_CCACHE=ON \
+            -DENABLE_TESTS=ON \
+            -DBUILD_SYSTEM_CONTRACTS=ON \
+            -DBUILD_TEST_CONTRACTS=ON \
+            -DCDT_ROOT="$CDT_PREFIX" \
+            -Dcdt_DIR="$CDT_PREFIX/lib/cmake/cdt" \
+            -DCMAKE_PREFIX_PATH="$CDT_PREFIX" \
+            "-DVCPKG_BINARY_SOURCES=$VCPKG_BINARY_SOURCES"
+          cmake --build build/release -- -j "$(nproc)"
