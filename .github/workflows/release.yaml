@@ -1,33 +1,98 @@
-name: Upload Release .deb
+name: Publish Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  eb:
-    name: Upload Release .deb
+  validate-tag:
+    name: Validate Release Tag
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      version: ${{ steps.validate.outputs.version }}
+      target_sha: ${{ steps.validate.outputs.target_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Validate tag
+        id: validate
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$tag' must match vX.X.X."
+            exit 1
+          fi
+
+          target_sha="$(git rev-parse HEAD^{commit})"
+          git fetch --force origin master:refs/remotes/origin/master
+          if ! git merge-base --is-ancestor "$target_sha" origin/master; then
+            echo "::error::Tag '$tag' points to $target_sha, which is not on origin/master."
+            exit 1
+          fi
+
+          major="$(sed -nE 's/^set\(VERSION_MAJOR ([0-9]+)\).*/\1/p' CMakeLists.txt)"
+          minor="$(sed -nE 's/^set\(VERSION_MINOR ([0-9]+)\).*/\1/p' CMakeLists.txt)"
+          patch="$(sed -nE 's/^set\(VERSION_PATCH ([0-9]+)\).*/\1/p' CMakeLists.txt)"
+          if [[ -z "$major" || -z "$minor" || -z "$patch" ]]; then
+            echo "::error::Unable to read CDT version from CMakeLists.txt."
+            exit 1
+          fi
+
+          version="${major}.${minor}.${patch}"
+          if [[ "${tag#v}" != "$version" ]]; then
+            echo "::error::Tag '$tag' does not match CMake version '$version'."
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: validate-tag
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      packages: write
       actions: read
+      contents: write
     steps:
-      - name: Get cdt.deb
-        id: getter
+      - name: Download Debian package artifact
+        id: deb
         uses: AntelopeIO/asset-artifact-download-action@v3
         with:
           owner: ${{github.repository_owner}}
           repo: ${{github.event.repository.name}}
-          file: cdt_.*_amd64.deb 
-          target: ${{github.sha}}
+          file: cdt_.*_amd64.deb
+          target: ${{ needs.validate-tag.outputs.target_sha }}
           artifact-name: cdt_ubuntu_package_amd64
           wait-for-exact-target: true
-      - run: |
-          curl -LsSf \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${{github.token}}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          -H "Content-Type: application/octet-stream" \
-          --data-binary "@${{steps.getter.outputs.downloaded-file}}" \
-          "https://uploads.github.com/repos/${{github.repository}}/releases/${{github.event.release.id}}/assets?name=${{steps.getter.outputs.downloaded-file}}"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+          DEB_FILE: ${{ steps.deb.outputs.downloaded-file }}
+        run: |
+          if [[ -z "$DEB_FILE" || ! -f "$DEB_FILE" ]]; then
+            echo "::error::No Debian package artifact was downloaded."
+            exit 1
+          fi
+
+          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" "$DEB_FILE" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            # GitHub adds source zip and tar.gz archives automatically for tag releases.
+            gh release create "$TAG_NAME" "$DEB_FILE" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG_NAME" \
+              --generate-notes \
+              --verify-tag
+          fi

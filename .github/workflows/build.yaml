@@ -130,6 +130,21 @@ jobs:
               exit 1
             fi
             ctest --test-dir build -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
+        - name: Build Debian package
+          if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
+          working-directory: build/packages
+          run: |
+            bash ./generate_package.sh deb ubuntu-24.04 amd64
+            ls -lh ./*.deb
+        - name: Upload Debian package artifact
+          if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
+          uses: actions/upload-artifact@v7
+          with:
+            name: cdt_ubuntu_package_amd64
+            path: build/packages/*.deb
+            if-no-files-found: error
+            retention-days: 30
+            compression-level: 0
   notification:
     name: Send Notification
     needs: [discover, build-platforms, build]

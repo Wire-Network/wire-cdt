@@ -68,12 +68,18 @@ create_symlink sysio-wasm2wast cdt-wasm2wast
 create_symlink sysio-wast2wasm cdt-wast2wasm
 create_symlink cdt-ar cdt-ar
 create_symlink cdt-abidiff cdt-abidiff
+create_symlink cdt-protoc cdt-protoc
+create_symlink cdt-protoc-gen-zpp cdt-protoc-gen-zpp
 create_symlink cdt-nm cdt-nm
 create_symlink cdt-objcopy cdt-objcopy
 create_symlink cdt-objdump cdt-objdump
 create_symlink cdt-ranlib cdt-ranlib
 create_symlink cdt-readelf cdt-readelf
 create_symlink cdt-strip cdt-strip
+
+find ${PREFIX} -type d -exec chmod 755 {} +
+find ${PREFIX} -type f -exec chmod a+r {} +
+find ${PREFIX}/bin ${CDT_PREFIX}/bin -type f -perm -u=x -exec chmod a+rx {} +
 
 echo "Generating Tarball $NAME.tar.gz..."
 tar -cvzf $NAME.tar.gz ./${PREFIX}/* || exit 1

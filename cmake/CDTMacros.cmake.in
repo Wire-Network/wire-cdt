@@ -383,7 +383,7 @@ function(target_add_protobuf TARGET)
     OUTPUT ${OUTPUT_HDRS}
     COMMAND cdt::protoc
     -I ${ADD_PROTOBUF_INPUT_DIRECTORY}
-    -I ${CMAKE_FIND_ROOT_PATH}/include
+    -I ${CDT_ROOT}/include
     --plugin=protoc-gen-zpp=$<TARGET_FILE:cdt::protoc-gen-zpp>
     --zpp_out
     ${OUTPUT_DIR}
