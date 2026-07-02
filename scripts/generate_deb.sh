@@ -26,6 +26,8 @@ Architecture: ${ARCH}
 Homepage: ${URL} 
 Maintainer: ${EMAIL} 
 Description: ${DESC}" &> ${PROJECT}/DEBIAN/control
+chmod 755 ${PROJECT}/DEBIAN
+chmod 644 ${PROJECT}/DEBIAN/control
 cat ${PROJECT}/DEBIAN/control
 
 export PREFIX
