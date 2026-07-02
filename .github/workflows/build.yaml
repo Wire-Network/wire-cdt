@@ -71,6 +71,8 @@ jobs:
         platform: [ubuntu24]
     runs-on: ubuntu-24.04
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
+    env:
+      SHOULD_PACKAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
     steps:
         - uses: actions/checkout@v5
           with:
@@ -131,13 +133,13 @@ jobs:
             fi
             ctest --test-dir build -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
         - name: Build Debian package
-          if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
+          if: env.SHOULD_PACKAGE == 'true'
           working-directory: build/packages
           run: |
             bash ./generate_package.sh deb ubuntu-24.04 amd64
             ls -lh ./*.deb
         - name: Upload Debian package artifact
-          if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
+          if: env.SHOULD_PACKAGE == 'true'
           uses: actions/upload-artifact@v7
           with:
             name: cdt_ubuntu_package_amd64
