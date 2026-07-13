@@ -16,6 +16,10 @@ permissions:
   packages: write
   contents: read
 
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     shell: bash
@@ -73,12 +77,16 @@ jobs:
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
     env:
       SHOULD_PACKAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
+      CCACHE_MAXSIZE: "10G"
+      CCACHE_COMPRESS: "true"
+      CCACHE_COMPRESSLEVEL: "6"''')
     steps:
         - uses: actions/checkout@v5
           with:
             submodules: recursive
-        - name: Cache ccache
-          uses: actions/cache@v5
+        - name: Restore ccache
+          id: restore-ccache
+          uses: actions/cache/restore@v5
           with:
             path: .ccache
             key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
@@ -103,7 +111,6 @@ jobs:
             export CC=/usr/bin/clang-18
             export CXX=/usr/bin/clang++-18
             export CCACHE_DIR="$PWD/.ccache"
-            export CCACHE_MAXSIZE=5G
             cmake --version
             ccache --version
 
@@ -124,6 +131,14 @@ jobs:
               "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
 
             cmake --build build -- -j "$(nproc)"
+        - name: Restore CTest cost data
+          uses: actions/cache/restore@v5
+          with:
+            # CTest schedules higher-cost tests first when running with -j.
+            path: build/Testing/Temporary/CTestCostData.txt
+            key: ctest-cost-${{ matrix.platform }}-${{ github.sha }}
+            restore-keys: |
+              ctest-cost-${{ matrix.platform }}-
         - name: Test
           run: |
             TEST_COUNT="$(ctest --test-dir build -N | sed -nE 's/^Total Tests:[[:space:]]*([0-9]+).*/\1/p' | tail -n 1)"
@@ -132,6 +147,19 @@ jobs:
               exit 1
             fi
             ctest --test-dir build -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
+        - name: Save CTest cost data
+          if: ${{ always() && hashFiles('build/Testing/Temporary/CTestCostData.txt') != '' }}
+          uses: actions/cache/save@v5
+          with:
+            # Caches are immutable; save under a unique key, restore by prefix.
+            path: build/Testing/Temporary/CTestCostData.txt
+            key: ctest-cost-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+        - name: Save ccache
+          if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
+          uses: actions/cache/save@v5
+          with:
+            path: .ccache
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
         - name: Build packages (tgz + deb + rpm, base + dev)
           if: env.SHOULD_PACKAGE == 'true'
           working-directory: build
