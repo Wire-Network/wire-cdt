@@ -61,7 +61,7 @@ jobs:
             exit 1
           fi
 
-          target_sha="$(git rev-parse HEAD^{commit})"
+          target_sha="$(git rev-parse "HEAD^{commit}")"
           git fetch --force origin master:refs/remotes/origin/master
           if ! git merge-base --is-ancestor "$target_sha" origin/master; then
             if [[ "$SKIP_MASTER_CHECK" == "true" ]]; then
@@ -87,10 +87,12 @@ jobs:
             exit 1
           fi
 
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
-          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          {
+            echo "tag=$tag"
+            echo "version=$version"
+            echo "target_sha=$target_sha"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
 
   publish-release:
     name: Publish GitHub Release
