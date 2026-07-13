@@ -95,19 +95,27 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
             restore-keys: |
               ${{ runner.os }}-${{ matrix.platform }}-ccache-
-        - name: Cache vcpkg downloads
-          uses: actions/cache@v5
+        - name: Restore vcpkg downloads
+          id: restore-vcpkg-downloads
+          uses: actions/cache/restore@v5
           with:
             path: vcpkg/downloads
-            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+            # Caches are immutable: save (below, on always()) uses this unique
+            # per-run key so failed/cancelled builds still bank their vcpkg work;
+            # restore takes the newest cache by prefix, preferring one built from
+            # the same manifests.
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
             restore-keys: |
+              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-downloads-
-        - name: Cache vcpkg binary archives
-          uses: actions/cache@v5
+        - name: Restore vcpkg binary archives
+          id: restore-vcpkg-binary
+          uses: actions/cache/restore@v5
           with:
             path: .vcpkg-binary-cache
-            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
             restore-keys: |
+              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-
         - name: Build
           run: |
@@ -163,6 +171,21 @@ jobs:
           with:
             path: .ccache
             key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+        - name: Save vcpkg downloads
+          # always(): bank vcpkg work even when the build fails or is cancelled —
+          # cancel-in-progress iteration otherwise discards it on every push. The
+          # guard only skips the save when the restore step never ran at all.
+          if: ${{ always() && steps.restore-vcpkg-downloads.outputs.cache-primary-key != '' }}
+          uses: actions/cache/save@v5
+          with:
+            path: vcpkg/downloads
+            key: ${{ steps.restore-vcpkg-downloads.outputs.cache-primary-key }}
+        - name: Save vcpkg binary archives
+          if: ${{ always() && steps.restore-vcpkg-binary.outputs.cache-primary-key != '' }}
+          uses: actions/cache/save@v5
+          with:
+            path: .vcpkg-binary-cache
+            key: ${{ steps.restore-vcpkg-binary.outputs.cache-primary-key }}
         - name: Build packages (tgz + deb + rpm, base + dev)
           if: env.SHOULD_PACKAGE == 'true'
           working-directory: build
