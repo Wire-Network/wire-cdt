@@ -73,6 +73,18 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchainPackage.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake.package @ONLY)
 
+# Package variants of the cmake config/toolchain files, configured for the
+# packaged root (/usr/cdt -- the deb/rpm packaging prefix; the portable
+# tarball documents extraction at / for toolchain-file workflows, matching
+# the legacy tarball's baked root). Templates are untouched; this is purely
+# installation configuration, same mechanism as the build-tree variants above.
+set(CDT_ROOT_DIR "/usr/cdt")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/cdt-config.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTMacros.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTInternalMacros.cmake ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTInternalMacros.cmake COPYONLY)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/ DESTINATION lib/cmake/cdt COMPONENT base)
+
 # Find zpp_bits header (from vcpkg) for contract compilation
 find_path(ZPP_BITS_INCLUDE_DIR zpp_bits.h
    HINTS ${CMAKE_PREFIX_PATH}/include ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
@@ -96,13 +108,13 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 )
 
 configure_file(${CMAKE_SOURCE_DIR}/imports/cdt.imports.in ${CMAKE_BINARY_DIR}/cdt.imports COPYONLY)
-install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION ${CDT_INSTALL_PREFIX})
+install(FILES ${CMAKE_BINARY_DIR}/cdt.imports DESTINATION . COMPONENT base)
 
 configure_file(${CMAKE_SOURCE_DIR}/scripts/ricardeos/ricardeos.py ${CMAKE_BINARY_DIR}/scripts/ricardeos.py COPYONLY)
-install(FILES ${CMAKE_BINARY_DIR}/scripts/ricardeos.py DESTINATION ${CDT_INSTALL_PREFIX}/scripts)
+install(FILES ${CMAKE_BINARY_DIR}/scripts/ricardeos.py DESTINATION scripts COMPONENT base)
 
 configure_file(${CMAKE_SOURCE_DIR}/scripts/gen_native_dispatch.py ${CMAKE_BINARY_DIR}/scripts/gen_native_dispatch.py COPYONLY)
-install(FILES ${CMAKE_BINARY_DIR}/scripts/gen_native_dispatch.py DESTINATION ${CDT_INSTALL_PREFIX}/scripts)
+install(FILES ${CMAKE_BINARY_DIR}/scripts/gen_native_dispatch.py DESTINATION scripts COMPONENT dev)
 
 # Copy sysiolib source files needed for native contract compilation (host compiler)
 foreach(_src crypto.cpp sysiolib.cpp base64.cpp)
@@ -110,7 +122,10 @@ foreach(_src crypto.cpp sysiolib.cpp base64.cpp)
                  ${CMAKE_BINARY_DIR}/share/cdt/native-contract-src/${_src} COPYONLY)
 endforeach()
 install(DIRECTORY ${CMAKE_BINARY_DIR}/share/cdt/native-contract-src/
-        DESTINATION ${CDT_INSTALL_PREFIX}/share/cdt/native-contract-src)
+        DESTINATION share/cdt/native-contract-src COMPONENT dev)
+# Third-party + CDT license texts ship in the base package (the legacy script
+# pipeline copied these manually; the cmake install rules previously did not).
+install(DIRECTORY ${CMAKE_BINARY_DIR}/licenses/ DESTINATION licenses COMPONENT base)
 
 set(VENDOR "WireNetwork")
 set(PROJECT_NAME "cdt")
@@ -143,20 +158,5 @@ endif()
 include(cmake/MergeCompileCommands.cmake)
 
 if(ENABLE_PACKAGE)
-   # section for package construction
-   set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-   set(CPACK_PACKAGE_VENDOR "${VENDOR}")
-   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${DESC}")
-   set(CPACK_PACKAGE_VERSION "${VERSION_FULL}")
-   set(CPACK_PACKAGE_CONTACT "${EMAIL}")
-
-   # Optionally specify license file, URL, etc.
-   # set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-   # set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md")
-   # set(CPACK_PACKAGE_INSTALL_DIRECTORY "CDT-${VERSION_FULL}")
-
-   # Define the package generators, for example, TGZ, DEB, and RPM:
-   set(CPACK_GENERATOR "DEB")
-
-   include(CPack)
+   include(cmake/package.cmake)
 endif()
