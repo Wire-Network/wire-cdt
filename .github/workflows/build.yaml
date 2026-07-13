@@ -189,6 +189,10 @@ jobs:
   verify-packages:
     name: Verify packages
     needs: [build]
+    # Same guard pattern as `build`: build-platforms is usually skipped (image
+    # already published), and a skipped ancestor propagates through the default
+    # success() check, silently skipping this job.
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
