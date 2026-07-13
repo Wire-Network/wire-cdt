@@ -5,10 +5,26 @@ on:
     tags:
       - "v[0-9]*.[0-9]*.[0-9]*"
       - "!v*-*"
+  # Debug/validation path: run the same verify-and-publish flow against an
+  # existing tag (pre-release tags allowed) without waiting for a tag push.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to verify and publish (e.g. v4.2.0 or v4.2.0-rc1)"
+        type: string
+        required: true
+      skip-master-check:
+        description: "DEBUG ONLY: allow a tag whose commit is not on master"
+        type: boolean
+        default: false
 
 defaults:
   run:
     shell: bash
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   validate-tag:
@@ -20,24 +36,40 @@ jobs:
       tag: ${{ steps.validate.outputs.tag }}
       version: ${{ steps.validate.outputs.version }}
       target_sha: ${{ steps.validate.outputs.target_sha }}
+      prerelease: ${{ steps.validate.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
       - name: Validate tag
         id: validate
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          SKIP_MASTER_CHECK: ${{ inputs.skip-master-check }}
         run: |
-          tag="${GITHUB_REF_NAME}"
-          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Tag '$tag' must match vX.X.X."
+          tag="${INPUT_TAG:-$GITHUB_REF_NAME}"
+          prerelease="false"
+          if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            :
+          elif [[ -n "$INPUT_TAG" && "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[0-9A-Za-z.-]+$ ]]; then
+            # Suffixed tags are only reachable via the dispatch path and are
+            # published as pre-releases.
+            prerelease="true"
+          else
+            echo "::error::Tag '$tag' must match vX.X.X (or vX.X.X-suffix via dispatch)."
             exit 1
           fi
 
           target_sha="$(git rev-parse HEAD^{commit})"
           git fetch --force origin master:refs/remotes/origin/master
           if ! git merge-base --is-ancestor "$target_sha" origin/master; then
-            echo "::error::Tag '$tag' points to $target_sha, which is not on origin/master."
-            exit 1
+            if [[ "$SKIP_MASTER_CHECK" == "true" ]]; then
+              echo "::warning::Tag '$tag' ($target_sha) is not on master; continuing (skip-master-check)."
+            else
+              echo "::error::Tag '$tag' points to $target_sha, which is not on origin/master."
+              exit 1
+            fi
           fi
 
           major="$(sed -nE 's/^set\(VERSION_MAJOR ([0-9]+)\).*/\1/p' CMakeLists.txt)"
@@ -49,7 +81,8 @@ jobs:
           fi
 
           version="${major}.${minor}.${patch}"
-          if [[ "${tag#v}" != "$version" ]]; then
+          core="${tag#v}"; core="${core%%-*}"
+          if [[ "$core" != "$version" ]]; then
             echo "::error::Tag '$tag' does not match CMake version '$version'."
             exit 1
           fi
@@ -57,6 +90,7 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
   publish-release:
     name: Publish GitHub Release
@@ -65,35 +99,64 @@ jobs:
     permissions:
       actions: read
       contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+      TARGET_SHA: ${{ needs.validate-tag.outputs.target_sha }}
+      VERSION: ${{ needs.validate-tag.outputs.version }}
+      PRERELEASE: ${{ needs.validate-tag.outputs.prerelease }}
     steps:
-      - name: Download Debian package artifact
-        id: deb
-        uses: AntelopeIO/asset-artifact-download-action@v3
+      - uses: actions/checkout@v5
         with:
-          owner: ${{github.repository_owner}}
-          repo: ${{github.event.repository.name}}
-          file: cdt_.*_amd64.deb
-          target: ${{ needs.validate-tag.outputs.target_sha }}
-          artifact-name: cdt_ubuntu_package_amd64
-          wait-for-exact-target: true
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
-          DEB_FILE: ${{ steps.deb.outputs.downloaded-file }}
-        run: |
-          if [[ -z "$DEB_FILE" || ! -f "$DEB_FILE" ]]; then
-            echo "::error::No Debian package artifact was downloaded."
-            exit 1
-          fi
+          ref: ${{ needs.validate-tag.outputs.target_sha }}
 
+      - name: Resolve build run for the released commit
+        id: run
+        run: |
+          # Any successful build of exactly this commit provides the package
+          # artifact (branch-push builds cover dispatch-path pre-release tags).
+          run_id=""
+          for attempt in {1..30}; do
+            run_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build.yaml/runs?head_sha=${TARGET_SHA}&per_page=20" \
+              --jq '[.workflow_runs[] | select(.status=="completed" and .conclusion=="success")][0].id // empty')
+            [[ -n "$run_id" ]] && break
+            echo "Waiting for a successful build of ${TARGET_SHA} (attempt ${attempt}/30)"
+            sleep 60
+          done
+          [[ -n "$run_id" ]] || { echo "::error::No successful build run found for ${TARGET_SHA}"; exit 1; }
+          echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: cdt_ubuntu_package_amd64
+          path: dist
+          run-id: ${{ steps.run.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Guard release tag matches artifact version
+        run: |
+          ls -la dist/
+          [[ -f "dist/cdt_${VERSION}-1_amd64.deb" ]] \
+            || { echo "::error::Tag $TAG_NAME does not match the artifact version (bump VERSION_* in CMakeLists.txt before tagging)."; exit 1; }
+
+      - name: Verify packages
+        run: |
+          tools/packaging/tests/verify-tgz.sh dist/cdt-*.tar.gz
+          tools/packaging/tests/verify-deb.sh dist/cdt_*_amd64.deb dist/cdt-dev_*_amd64.deb
+          tools/packaging/tests/verify-rpm.sh dist/cdt-[0-9]*.rpm dist/cdt-dev-*.rpm
+
+      - name: Publish release
+        run: |
+          sha256sum dist/* > "dist/cdt-${TAG_NAME#v}-checksums.txt"
+          prerelease_flag=""
+          [[ "$PRERELEASE" == "true" ]] && prerelease_flag="--prerelease"
           if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG_NAME" "$DEB_FILE" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release upload "$TAG_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
           else
             # GitHub adds source zip and tar.gz archives automatically for tag releases.
-            gh release create "$TAG_NAME" "$DEB_FILE" \
+            gh release create "$TAG_NAME" dist/* \
               --repo "$GITHUB_REPOSITORY" \
               --title "$TAG_NAME" \
               --generate-notes \
-              --verify-tag
+              --verify-tag $prerelease_flag
           fi

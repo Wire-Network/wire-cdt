@@ -132,21 +132,48 @@ jobs:
               exit 1
             fi
             ctest --test-dir build -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
-        - name: Build Debian package
+        - name: Build packages (tgz + deb + rpm, base + dev)
           if: env.SHOULD_PACKAGE == 'true'
-          working-directory: build/packages
+          working-directory: build
           run: |
-            bash ./generate_package.sh deb ubuntu-24.04 amd64
-            ls -lh ./*.deb
-        - name: Upload Debian package artifact
+            # The RPM generator needs rpmbuild; the builder image is Debian-based.
+            command -v rpmbuild >/dev/null || { apt-get update && apt-get install -y rpm; }
+            cpack -G DEB
+            cpack -G RPM
+            cmake --build . --target package-tgz
+            ls -lh cdt*.deb cdt*.rpm cdt*.tar.gz
+        - name: Upload package artifacts
           if: env.SHOULD_PACKAGE == 'true'
           uses: actions/upload-artifact@v7
           with:
             name: cdt_ubuntu_package_amd64
-            path: build/packages/*.deb
+            path: |
+              build/cdt_*.deb
+              build/cdt-dev_*.deb
+              build/cdt-*.rpm
+              build/cdt-*.tar.gz
             if-no-files-found: error
             retention-days: 30
             compression-level: 0
+  verify-packages:
+    name: Verify packages
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with:
+          name: cdt_ubuntu_package_amd64
+          path: artifacts
+      - name: Run packaging verification suite
+        run: |
+          ls -la artifacts/
+          tools/packaging/tests/verify-scripts.sh
+          tools/packaging/tests/verify-tgz.sh artifacts/cdt-*.tar.gz
+          tools/packaging/tests/verify-deb.sh artifacts/cdt_*_amd64.deb artifacts/cdt-dev_*_amd64.deb
+          # cdt-[0-9]* matches the base rpm only (the dev rpm is cdt-dev-*).
+          tools/packaging/tests/verify-rpm.sh artifacts/cdt-[0-9]*.rpm artifacts/cdt-dev-*.rpm
+
   notification:
     name: Send Notification
     needs: [discover, build-platforms, build]

@@ -2,7 +2,7 @@ macro( cdt_tool_install file )
    set(BINARY_DIR ${CMAKE_BINARY_DIR}/tools/bin)
    add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/${file} ${CMAKE_BINARY_DIR}/bin/ )
    install(FILES ${BINARY_DIR}/${file}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+      DESTINATION bin COMPONENT base
       PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endmacro( cdt_tool_install )
 
@@ -14,10 +14,10 @@ macro( cdt_tool_install_and_symlink file symlink )
          COMMAND ${CMAKE_COMMAND} -E create_symlink ${file} ${CMAKE_BINARY_DIR}/bin/${symlink} )
    endif()
    install(FILES ${BINARY_DIR}/${file}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+      DESTINATION bin COMPONENT base
       PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
    if(NOT "${file}" STREQUAL "${symlink}")
-      install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink \"${file}\" \"\$ENV{DESTDIR}${CDT_INSTALL_PREFIX}/bin/${symlink}\")")
+      install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink \"${file}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/${symlink}\")" COMPONENT base)
    endif()
 endmacro( cdt_tool_install_and_symlink )
 
@@ -28,8 +28,16 @@ endmacro( cdt_cmake_install_and_symlink )
 macro( cdt_libraries_install)
    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/lib)
    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include)
-   install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION ${CDT_INSTALL_PREFIX}/lib)
-   install(DIRECTORY ${CMAKE_BINARY_DIR}/include/ DESTINATION ${CDT_INSTALL_PREFIX}/include)
+   # Wasm sysroot archives -> base; native (host) testing archives -> dev.
+   # lib/cmake is excluded: the packages ship the dedicated package-configured
+   # variants installed from ${CMAKE_BINARY_DIR}/packaging (see CMakeLists.txt).
+   install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib COMPONENT base
+      PATTERN "libnative*" EXCLUDE
+      PATTERN "cmake" EXCLUDE)
+   install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib COMPONENT dev
+      FILES_MATCHING PATTERN "libnative*"
+      PATTERN "cmake" EXCLUDE)
+   install(DIRECTORY ${CMAKE_BINARY_DIR}/include/ DESTINATION include COMPONENT base)
 endmacro( cdt_libraries_install )
 
 # Ensure bin/ exists before copying anything into it
@@ -39,8 +47,12 @@ add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_
 foreach(tool llvm-ranlib llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-readobj llvm-readelf llvm-strip opt llc lld ld.lld clang clang++ wasm-ld)
    add_custom_command( TARGET CDTTools POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/tools/bin/${tool} ${CMAKE_BINARY_DIR}/bin/ 2>/dev/null || true )
-   install(PROGRAMS ${CMAKE_BINARY_DIR}/tools/bin/${tool}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+   # Install from bin/ (the POST_BUILD `cmake -E copy` output), NOT tools/bin:
+   # the tools tree exposes several llvm binaries as symlinks into the vcpkg
+   # tool directory, and installing those embeds dead absolute links in the
+   # packages; the bin/ copies are dereferenced real files.
+   install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/${tool}
+      DESTINATION bin COMPONENT base
       OPTIONAL)
 endforeach()
 
@@ -61,14 +73,14 @@ endforeach()
 # Install cdt-protoc (protoc from vcpkg, copied during tools build)
 add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/tools/bin/cdt-protoc ${CMAKE_BINARY_DIR}/bin/ )
 install(PROGRAMS ${CMAKE_BINARY_DIR}/tools/bin/cdt-protoc
-   DESTINATION ${CDT_INSTALL_PREFIX}/bin)
+   DESTINATION bin COMPONENT base)
 
 # Sysio plugins (built by tools project)
 foreach(plugin sysio_attrs sysio_codegen)
    set(PLUGIN_FILE ${CMAKE_BINARY_DIR}/tools/bin/${plugin}${CMAKE_SHARED_LIBRARY_SUFFIX})
    add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PLUGIN_FILE} ${CMAKE_BINARY_DIR}/bin/ )
    install(FILES ${PLUGIN_FILE}
-      DESTINATION ${CDT_INSTALL_PREFIX}/bin
+      DESTINATION bin COMPONENT base
       PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endforeach()
 
@@ -85,12 +97,12 @@ add_custom_command( TARGET CDTTools POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/google/protobuf
    COMMAND ${CMAKE_COMMAND} -E copy ${ZPP_BITS_INCLUDE_DIR}/google/protobuf/descriptor.proto ${CMAKE_BINARY_DIR}/include/google/protobuf/ )
 install(FILES ${CMAKE_BINARY_DIR}/tools/include/zpp/zpp_options.proto
-   DESTINATION ${CDT_INSTALL_PREFIX}/include/zpp)
+   DESTINATION include/zpp COMPONENT base)
 install(DIRECTORY ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/google/protobuf
-   DESTINATION ${CDT_INSTALL_PREFIX}/include/google)
+   DESTINATION include/google COMPONENT base)
 
 # Install magic_enum headers
 install(DIRECTORY ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/magic_enum
-   DESTINATION ${CDT_INSTALL_PREFIX}/include)
+   DESTINATION include COMPONENT base)
 
 cdt_libraries_install()
