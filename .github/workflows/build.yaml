@@ -79,7 +79,7 @@ jobs:
       SHOULD_PACKAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
       CCACHE_MAXSIZE: "10G"
       CCACHE_COMPRESS: "true"
-      CCACHE_COMPRESSLEVEL: "6"''')
+      CCACHE_COMPRESSLEVEL: "6"
     steps:
         - uses: actions/checkout@v5
           with:
