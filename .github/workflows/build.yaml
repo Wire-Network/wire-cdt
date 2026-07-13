@@ -76,7 +76,10 @@ jobs:
     runs-on: ubuntu-24.04
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
     env:
-      SHOULD_PACKAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.platform == 'ubuntu24' }}
+      # Package on every ubuntu24 build (PRs included): verify-packages and the
+      # release workflow both consume the artifact, and PR coverage catches
+      # packaging regressions before merge (same policy as wire-sysio).
+      SHOULD_PACKAGE: ${{ matrix.platform == 'ubuntu24' }}
       CCACHE_MAXSIZE: "10G"
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
