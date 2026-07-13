@@ -122,6 +122,10 @@ jobs:
             export CC=/usr/bin/clang-18
             export CXX=/usr/bin/clang++-18
             export CCACHE_DIR="$PWD/.ccache"
+            # VCPKG_BINARY_SOURCES only works as an environment variable: vcpkg.cmake
+            # consumes no -D of that name, so the previous -D form silently did nothing
+            # and vcpkg wrote its archives to ~/.cache/vcpkg outside the cached path.
+            export VCPKG_BINARY_SOURCES="clear;files,$PWD/.vcpkg-binary-cache,readwrite"
             cmake --version
             ccache --version
 
@@ -138,8 +142,7 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release \
               -DVCPKG_TARGET_TRIPLET=x64-linux-release \
               -DVCPKG_HOST_TRIPLET=x64-linux-release \
-              -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
-              "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
+              -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
             cmake --build build -- -j "$(nproc)"
         - name: Restore CTest cost data
