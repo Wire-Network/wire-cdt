@@ -69,11 +69,6 @@ namespace sysio {
       uint32_t max_transaction_net_usage;
 
       /**
-       * The base amount of net usage billed for a transaction to cover incidentals
-       */
-      uint32_t base_per_transaction_net_usage;
-
-      /**
        * The amount of net usage leeway available whilst executing a transaction (still checks against new limits without leeway at the end of the transaction)
        * @brief The amount of net usage leeway available whilst executing a transaction  (still checks against new limits without leeway at the end of the transaction)
        */
@@ -168,7 +163,7 @@ namespace sysio {
 
       SYSLIB_SERIALIZE( blockchain_parameters,
                         (max_block_net_usage)(target_block_net_usage_pct)
-                        (max_transaction_net_usage)(base_per_transaction_net_usage)(net_usage_leeway)
+                        (max_transaction_net_usage)(net_usage_leeway)
                         (context_free_discount_net_usage_num)(context_free_discount_net_usage_den)
 
                         (max_block_cpu_usage)(target_block_cpu_usage_pct)
