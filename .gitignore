@@ -64,3 +64,6 @@ __pycache__/
 
 tmp/
 /.env
+
+# oh-my-claudecode runtime state (operational artifacts, never committed)
+.omc/
