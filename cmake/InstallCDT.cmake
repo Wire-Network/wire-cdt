@@ -1,3 +1,13 @@
+# PUBLIC ENTRY POINTS -- the tool names that get a /usr/bin symlink in the deb
+# and the rpm (cmake/cpack-system-layout.cmake consumes this list via
+# CPACK_WIRE_PUBLIC_ENTRY_POINTS). It is appended by the install macros below so
+# there is ONE source of truth: the install rules themselves. Everything NOT in
+# this list -- notably the bundled clang / clang++ / lld / ld.lld / opt / llc /
+# wasm-ld / llvm-* binaries -- stays private to /usr/lib/cdt/bin and must never
+# reach /usr/bin, where it would collide with the distro's own toolchain
+# packages.
+set(CDT_PUBLIC_ENTRY_POINTS "")
+
 macro( cdt_tool_install file )
    set(BINARY_DIR ${CMAKE_BINARY_DIR}/tools/bin)
    add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/${file} ${CMAKE_BINARY_DIR}/bin/ )
@@ -19,6 +29,8 @@ macro( cdt_tool_install_and_symlink file symlink )
    if(NOT "${file}" STREQUAL "${symlink}")
       install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink \"${file}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/${symlink}\")" COMPONENT base)
    endif()
+   # Both the real binary and its alias are public entry points.
+   list(APPEND CDT_PUBLIC_ENTRY_POINTS "${file}" "${symlink}")
 endmacro( cdt_tool_install_and_symlink )
 
 macro( cdt_cmake_install_and_symlink file symlink )
@@ -74,6 +86,9 @@ endforeach()
 add_custom_command( TARGET CDTTools POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/tools/bin/cdt-protoc ${CMAKE_BINARY_DIR}/bin/ )
 install(PROGRAMS ${CMAKE_BINARY_DIR}/tools/bin/cdt-protoc
    DESTINATION bin COMPONENT base)
+# cdt-protoc is installed directly rather than through the macro, so it registers
+# itself as a public entry point here (wire-sysio's OPP model generation calls it).
+list(APPEND CDT_PUBLIC_ENTRY_POINTS "cdt-protoc")
 
 # Sysio plugins (built by tools project)
 foreach(plugin sysio_attrs sysio_codegen)

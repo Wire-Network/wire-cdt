@@ -13,10 +13,18 @@ endif()
 
 project(cdt)
 
-set(VERSION_MAJOR 4)
-set(VERSION_MINOR 2)
+# Version of the wire-cdt DISTRIBUTION (packages, tarballs, release tags). The
+# CMake project / find_package name stays `cdt` -- see project() above and
+# WIRE_PACKAGE_NAME in cmake/package.cmake for the distribution-identity split.
+#
+# VERSION_SUFFIX is the release channel: non-empty (`dev`, `rc1`, ...) => a
+# pre-release; empty => stable. These four lines are the single source of truth
+# for the version: prepare-release.yaml rewrites them, release.yaml cross-checks
+# them against the tag.
+set(VERSION_MAJOR 1)
+set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
-# set(VERSION_SUFFIX "") 
+set(VERSION_SUFFIX dev)
 
 if(VERSION_SUFFIX)
    set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_SUFFIX}")
@@ -73,17 +81,60 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchainPackage.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake.package @ONLY)
 
-# Package variants of the cmake config/toolchain files, configured for the
-# packaged root (/usr/cdt -- the deb/rpm packaging prefix; the portable
-# tarball documents extraction at / for toolchain-file workflows, matching
-# the legacy tarball's baked root). Templates are untouched; this is purely
-# installation configuration, same mechanism as the build-tree variants above.
-set(CDT_ROOT_DIR "/usr/cdt")
+# SYSTEM-PACKAGE variants of the cmake config/toolchain files, configured for
+# the deb/rpm root: `/usr/lib/cdt`.
+#
+# That is the DISTRO-TOOLCHAIN layout -- the same shape Debian/Fedora use for a
+# bundled compiler toolchain (/usr/lib/llvm-18/...): the ENTIRE self-contained
+# tree (bin/, lib/, include/, lib/cmake/cdt/, scripts/, share/, cdt.imports)
+# homes at /usr/lib/cdt, and /usr/bin receives ONLY symlinks for the public
+# entry points. The bundled clang/lld/llvm-* binaries therefore never appear in
+# /usr/bin, where they would collide head-on with the distro's own clang, llvm
+# and lld packages. There is NO /usr/cdt subtree: nothing installs there, ever.
+#
+# The /usr-level extras the deb/rpm need beside this tree -- the /usr/bin
+# symlinks, the CMake-default-searched copy of cdt-config.cmake at
+# /usr/lib/cmake/cdt/, and the licenses at /usr/share/licenses/wire-cdt/ -- are
+# produced by cmake/cpack-system-layout.cmake, a CPack pre-build hook registered
+# for DEB/RPM only. They cannot be plain install() rules: the destinations sit
+# OUTSIDE this prefix, and the tarball must not grow them.
+#
+# Templates are untouched; this is purely installation configuration, same
+# mechanism as the build-tree variants above.
+set(CDT_ROOT_DIR "/usr/lib/cdt")
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/cdt-config.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTMacros.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTInternalMacros.cmake ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTInternalMacros.cmake COPYONLY)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/ DESTINATION lib/cmake/cdt COMPONENT base)
+
+# PORTABLE-TARBALL variants. The tarball is rooted at `wire-cdt/` and its
+# DEFAULT install location is /opt -- extracted there the tree lands on exactly
+# `/opt/wire-cdt`, so that is the root its configs bake. (The old
+# `/nonexistent/...` sentinel is gone: the tarball now has a real documented
+# home, and baking it lets the toolchain FILE work straight out of the box too.)
+# The tarball's INTERNAL layout is identical to the deb/rpm's /usr/lib/cdt tree
+# -- same relative paths -- it simply keeps everything self-contained under its
+# own root and grows no /usr-level extras.
+#
+# Both files that bake @CDT_ROOT_DIR@ ABSOLUTELY get a variant:
+#   * cdt-config.cmake      -- short-circuits discovery when /opt/wire-cdt exists
+#   * CDTWasmToolchain.cmake -- has no discovery at all; every compiler path is
+#     baked, so it must name /opt/wire-cdt/bin/... to be usable from the tarball.
+# CDTMacros.cmake needs no variant: it consumes the RUNTIME ${CDT_ROOT} that
+# cdt-config resolves, so it is already relocatable.
+#
+# An extraction ANYWHERE ELSE is still handled: cdt-config.cmake.in's
+# relative-discovery fallback walks up from the config file's own location
+# whenever the baked root is not a directory. That fallback is deliberately
+# retained -- do not remove it.
+#
+# Staged only, NOT installed: cmake/cpack-project-config.cmake registers a CPack
+# pre-build hook that swaps these over the staged system-package variants for the
+# TGZ generator alone, so the deb/rpm payload is untouched.
+set(CDT_ROOT_DIR "/opt/wire-cdt")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/packaging/tgz/lib/cmake/cdt/cdt-config.cmake @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/packaging/tgz/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
 
 # Find zpp_bits header (from vcpkg) for contract compilation
 find_path(ZPP_BITS_INCLUDE_DIR zpp_bits.h
@@ -132,11 +183,9 @@ set(PROJECT_NAME "cdt")
 set(DESC "Toolchain and supporting tools to facilitate C/C++ development of contracts for Wire blockchains")
 set(URL "https://github.com/Wire-Network/wire-cdt")
 set(EMAIL "support@wire.network")
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_package.sh.in ${CMAKE_BINARY_DIR}/packages/generate_package.sh @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_deb.sh ${CMAKE_BINARY_DIR}/packages/generate_deb.sh COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_bottle.sh ${CMAKE_BINARY_DIR}/packages/generate_bottle.sh COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_rpm.sh ${CMAKE_BINARY_DIR}/packages/generate_rpm.sh COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/generate_tarball.sh ${CMAKE_BINARY_DIR}/packages/generate_tarball.sh COPYONLY)
+# Packaging is CPack-only (cmake/package.cmake); the legacy shell package
+# generators (scripts/generate_*.sh) were removed with their configure_file
+# staging.
 
 # add licenses
 configure_file(${CMAKE_SOURCE_DIR}/libraries/boost/boost.license ${CMAKE_BINARY_DIR}/licenses/boost.license COPYONLY)
