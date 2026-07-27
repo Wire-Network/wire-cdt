@@ -47,5 +47,6 @@ RUN apt-get update && apt-get upgrade -y && \
     clang++-18           \
     clang-tools-18       \
     clang-tidy           \
-    autoconf automake libtool 
+    rpm                  \
+    autoconf automake libtool
 RUN mkdir -p /opt/llvm && chmod 777 /opt/llvm

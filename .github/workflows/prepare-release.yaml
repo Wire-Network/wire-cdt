@@ -1,0 +1,111 @@
+name: Prepare Release
+
+# Strategy C, step 1 of 2 (see docs/release-workflow.md).
+#
+# Opens the version-bump PR for the release. `version` is the SOLE input: its
+# suffix IS the channel (`1.0.0-dev` / `1.1.0-rc1` => pre-release, `1.0.0` =>
+# stable), and every downstream step derives the channel from the same place --
+# the VERSION_* lines this workflow writes into CMakeLists.txt.
+#
+# Post-bump after a stable release is the SAME operation: dispatch this
+# workflow again with the next development version (e.g. `1.1.0-dev`).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to prepare, without the leading v (e.g. 1.0.0-dev, 1.1.0-rc1, 1.1.0)"
+        type: string
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: prepare-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Open version-bump PR
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Validate version and edit CMakeLists.txt
+        id: bump
+        run: |
+          set -euo pipefail
+
+          # Same conservative grammar cmake-version.py enforces.
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]]; then
+            echo "::error::Version '$VERSION' must be semver X.Y.Z with an optional -suffix (e.g. 1.0.0-dev)."
+            exit 1
+          fi
+          channel="stable"
+          [[ "$VERSION" == *-* ]] && channel="prerelease"
+
+          # The four VERSION_* lines are the single source of truth, and
+          # .github/scripts/cmake-version.py is the ONE parser that reads and
+          # writes them -- shared with tag-release.yaml's assertion and
+          # release.yaml's tag cross-check, so those can never drift apart.
+          # `write` prints the version it reads back, so a silent no-op edit
+          # (the failure mode of the inline sed this replaced) fails here.
+          previous="$(python3 .github/scripts/cmake-version.py read)"
+          written="$(python3 .github/scripts/cmake-version.py write "$VERSION")"
+          if [[ "$written" != "$VERSION" ]]; then
+            echo "::error::CMakeLists.txt reads back as '$written' after the edit, expected '$VERSION'."
+            exit 1
+          fi
+
+          echo "--- CMakeLists.txt version block ---"
+          grep -nE '^set\(VERSION_(MAJOR|MINOR|PATCH|SUFFIX)' CMakeLists.txt
+
+          {
+            echo "channel=$channel"
+            echo "previous=$previous"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Push branch and open PR
+        env:
+          CHANNEL: ${{ steps.bump.outputs.channel }}
+        run: |
+          branch="release/prep-v${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          if git diff --quiet; then
+            echo "::error::CMakeLists.txt already reads $VERSION on master; nothing to prepare."
+            exit 1
+          fi
+          git add CMakeLists.txt
+          git commit -m "chore(release): prepare v${VERSION}"
+          git push --force-with-lease origin "$branch"
+
+          # printf, not a heredoc: heredoc bodies would have to start at column
+          # 0, which terminates the YAML block scalar this step lives in.
+          body="$(printf '%s\n' \
+            "Prepares the \`v${VERSION}\` release (channel: **${CHANNEL}**)." \
+            "" \
+            "- \`CMakeLists.txt\` VERSION_MAJOR/MINOR/PATCH/SUFFIX set to \`${VERSION}\`." \
+            "- Every package / artifact / asset name derives from those lines; \`release.yaml\` fails fast on any tag-vs-version mismatch." \
+            "" \
+            "After merging, dispatch **Tag Release** with version \`${VERSION}\`.")"
+          # NOTE: a PR opened with GITHUB_TOKEN starts its checks in the
+          # approval-required state -- the human gate includes an
+          # "Approve and run" click before the packaging checks report.
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base master \
+            --head "$branch" \
+            --title "chore(release): prepare v${VERSION}" \
+            --body "$body"

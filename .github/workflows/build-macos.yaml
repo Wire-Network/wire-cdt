@@ -5,6 +5,12 @@ on:
     branches:
       - master
       - "release/*"
+    # Tag runs produce the macOS release asset. NOTE: a tag created by a
+    # workflow (GITHUB_TOKEN) fires no push event, so tag-release.yaml also
+    # dispatches this workflow explicitly on refs/tags/<tag>; the
+    # workflow_dispatch trigger below is what makes that possible.
+    tags:
+      - "v*"
   pull_request:
     branches:
       - master
@@ -30,24 +36,40 @@ jobs:
         run: |
           brew update
           brew install ccache ninja
-      - name: Cache ccache
-        uses: actions/cache@v5
+      # Caches are split restore/save (not actions/cache@v5) so the saves can
+      # run immediately after the Build step and bank the expensive vcpkg work
+      # even when the Test/package steps fail or the run is cancelled.
+      - name: Restore ccache
+        id: restore-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .ccache
           key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-macos-arm64-ccache-
-      - name: Cache vcpkg downloads
-        uses: actions/cache@v5
+      - name: Restore vcpkg downloads
+        id: restore-vcpkg-downloads
+        uses: actions/cache/restore@v5
         with:
           path: vcpkg/downloads
-          key: ${{ runner.os }}-macos-arm64-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
+          # Caches are immutable: save (below, on always()) uses this unique
+          # per-run key so failed/cancelled builds still bank their vcpkg work;
+          # restore takes the newest cache by prefix, preferring one built from
+          # the same manifests.
+          key: ${{ runner.os }}-macos-arm64-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            ${{ runner.os }}-macos-arm64-vcpkg-downloads-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
             ${{ runner.os }}-macos-arm64-vcpkg-downloads-
-      - name: Cache vcpkg binary archives
-        uses: actions/cache@v5
+      - name: Restore vcpkg binary archives
+        id: restore-vcpkg-binary
+        uses: actions/cache/restore@v5
         with:
           path: .vcpkg-binary-cache
+          # STABLE key (no run_id/run_attempt), matching wire-sysio: the paired
+          # save below runs on an exact-key MISS only, so `cache-hit == 'true'`
+          # has to be a reachable state. A per-run key would make the exact match
+          # impossible and turn every run into a wasted upload onto an
+          # already-existing key (caches are immutable).
           key: ${{ runner.os }}-macos-arm64-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
           restore-keys: |
             ${{ runner.os }}-macos-arm64-vcpkg-binary-
@@ -60,6 +82,11 @@ jobs:
 
           export CCACHE_DIR="$PWD/.ccache"
           export CCACHE_MAXSIZE=5G
+          # VCPKG_BINARY_SOURCES only works as an environment variable:
+          # vcpkg.cmake consumes no -D of that name, so the previous -D form
+          # silently did nothing and vcpkg wrote its archives to
+          # ~/.cache/vcpkg, outside the cached path.
+          export VCPKG_BINARY_SOURCES="clear;files,$PWD/.vcpkg-binary-cache,readwrite"
           cmake --version
           ccache --version
           ./vcpkg/bootstrap-vcpkg.sh
@@ -71,10 +98,33 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DVCPKG_TARGET_TRIPLET=arm64-osx-release \
             -DVCPKG_HOST_TRIPLET=arm64-osx-release \
-            -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets" \
-            "-DVCPKG_BINARY_SOURCES=clear;files,$PWD/.vcpkg-binary-cache,readwrite"
+            -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
           cmake --build build-macos-arm64 -- -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+      - name: Save ccache
+        if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+      - name: Save vcpkg downloads
+        # always(): bank the downloaded sources even when the build fails or is
+        # cancelled. The key is per-run, so there is never a collision; the guard
+        # only skips the save when the restore step never ran at all.
+        if: ${{ always() && steps.restore-vcpkg-downloads.outputs.cache-primary-key != '' }}
+        uses: actions/cache/save@v5
+        with:
+          path: vcpkg/downloads
+          key: ${{ steps.restore-vcpkg-downloads.outputs.cache-primary-key }}
+      - name: Save vcpkg binary archives
+        # wire-sysio's shape: stable key + save only on an exact-key MISS.
+        # Caches are immutable, so saving onto an existing key is a wasted upload
+        # that logs a warning.
+        if: ${{ success() && steps.restore-vcpkg-binary.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .vcpkg-binary-cache
+          key: ${{ runner.os }}-macos-arm64-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
       - name: Test
         run: |
           TEST_COUNT="$(ctest --test-dir build-macos-arm64 -N | sed -nE 's/^Total Tests:[[:space:]]*([0-9]+).*/\1/p' | tail -n 1)"
@@ -83,6 +133,27 @@ jobs:
             exit 1
           fi
           ctest --test-dir build-macos-arm64 -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)" --output-on-failure
+      - name: Build package (portable tgz)
+        # macOS ships the portable tarball only -- deb/rpm are Linux formats
+        # (cmake/package.cmake enables those generators on dpkg/rpmbuild
+        # presence). WIRE_ARCH_TAG names it wire-cdt-<version>-macos-arm64.
+        working-directory: build-macos-arm64
+        run: |
+          cmake --build . --target package-tgz
+          ls -lh wire-cdt-*-macos-arm64.tar.gz
+      - name: Verify package
+        run: |
+          tools/packaging/tests/verify-scripts.sh
+          # --no-service: the macOS tarball must carry no Linux service payload.
+          tools/packaging/tests/verify-tgz.sh --no-service build-macos-arm64/wire-cdt-*-macos-arm64.tar.gz
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: wire-cdt-packages-macos-arm64
+          path: build-macos-arm64/wire-cdt-*-macos-arm64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
   notification:
     name: Send Notification
     needs: [build-macos]

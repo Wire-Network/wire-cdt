@@ -5,6 +5,12 @@ on:
     branches:
       - master
       - "release/*"
+    # Tag runs produce the Linux release package set. NOTE: a tag created by a
+    # workflow (GITHUB_TOKEN) fires no push event, so tag-release.yaml also
+    # dispatches this workflow explicitly on the tag ref; the workflow_dispatch
+    # trigger below is what makes that possible. Mirrors build-macos.yaml.
+    tags:
+      - "v*"
   pull_request:
     branches: 
       - master
@@ -113,9 +119,13 @@ jobs:
           uses: actions/cache/restore@v5
           with:
             path: .vcpkg-binary-cache
-            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+            # STABLE key (no run_id/run_attempt), matching wire-sysio: the paired
+            # save below runs on an exact-key MISS only, so `cache-hit == 'true'`
+            # has to be a reachable state. A per-run key would make the exact
+            # match impossible and turn every run into a wasted upload onto an
+            # already-existing key (caches are immutable).
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
             restore-keys: |
-              ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-
         - name: Build
           run: |
@@ -145,6 +155,34 @@ jobs:
               -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
             cmake --build build -- -j "$(nproc)"
+        # The saves sit immediately after Build (same ordering as
+        # build-macos.yaml) so the expensive vcpkg/ccache work is banked even
+        # when Test or the packaging steps below fail.
+        - name: Save ccache
+          if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
+          uses: actions/cache/save@v5
+          with:
+            path: .ccache
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+        - name: Save vcpkg downloads
+          # always(): bank the downloaded sources even when the build fails or is
+          # cancelled — cancel-in-progress iteration otherwise discards them on
+          # every push. The key is per-run, so there is never a collision; the
+          # guard only skips the save when the restore step never ran at all.
+          if: ${{ always() && steps.restore-vcpkg-downloads.outputs.cache-primary-key != '' }}
+          uses: actions/cache/save@v5
+          with:
+            path: vcpkg/downloads
+            key: ${{ steps.restore-vcpkg-downloads.outputs.cache-primary-key }}
+        - name: Save vcpkg binary archives
+          # wire-sysio's shape: stable key + save only on an exact-key MISS.
+          # Caches are immutable, so saving onto an existing key is a wasted
+          # upload that logs a warning.
+          if: ${{ success() && steps.restore-vcpkg-binary.outputs.cache-hit != 'true' }}
+          uses: actions/cache/save@v5
+          with:
+            path: .vcpkg-binary-cache
+            key: ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}
         - name: Restore CTest cost data
           uses: actions/cache/restore@v5
           with:
@@ -168,47 +206,29 @@ jobs:
             # Caches are immutable; save under a unique key, restore by prefix.
             path: build/Testing/Temporary/CTestCostData.txt
             key: ctest-cost-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
-        - name: Save ccache
-          if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
-          uses: actions/cache/save@v5
-          with:
-            path: .ccache
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
-        - name: Save vcpkg downloads
-          # always(): bank vcpkg work even when the build fails or is cancelled —
-          # cancel-in-progress iteration otherwise discards it on every push. The
-          # guard only skips the save when the restore step never ran at all.
-          if: ${{ always() && steps.restore-vcpkg-downloads.outputs.cache-primary-key != '' }}
-          uses: actions/cache/save@v5
-          with:
-            path: vcpkg/downloads
-            key: ${{ steps.restore-vcpkg-downloads.outputs.cache-primary-key }}
-        - name: Save vcpkg binary archives
-          if: ${{ always() && steps.restore-vcpkg-binary.outputs.cache-primary-key != '' }}
-          uses: actions/cache/save@v5
-          with:
-            path: .vcpkg-binary-cache
-            key: ${{ steps.restore-vcpkg-binary.outputs.cache-primary-key }}
         - name: Build packages (tgz + deb + rpm, base + dev)
           if: env.SHOULD_PACKAGE == 'true'
           working-directory: build
           run: |
-            # The RPM generator needs rpmbuild; the builder image is Debian-based.
+            # The RPM generator needs rpmbuild. The ubuntu24 builder image bakes
+            # the `rpm` package (which ships /usr/bin/rpmbuild on Debian) in, so
+            # this normally does nothing; the apt fallback stays for an older
+            # cached image that predates that change.
             command -v rpmbuild >/dev/null || { apt-get update && apt-get install -y rpm; }
             cpack -G DEB
             cpack -G RPM
             cmake --build . --target package-tgz
-            ls -lh cdt*.deb cdt*.rpm cdt*.tar.gz
+            ls -lh wire-cdt*.deb wire-cdt*.rpm wire-cdt*.tar.gz
         - name: Upload package artifacts
           if: env.SHOULD_PACKAGE == 'true'
           uses: actions/upload-artifact@v7
           with:
-            name: cdt_ubuntu_package_amd64
+            name: wire-cdt-packages-amd64
             path: |
-              build/cdt_*.deb
-              build/cdt-dev_*.deb
-              build/cdt-*.rpm
-              build/cdt-*.tar.gz
+              build/wire-cdt_*.deb
+              build/wire-cdt-dev_*.deb
+              build/wire-cdt-*.rpm
+              build/wire-cdt-*.tar.gz
             if-no-files-found: error
             retention-days: 30
             compression-level: 0
@@ -224,20 +244,22 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v7
         with:
-          name: cdt_ubuntu_package_amd64
+          name: wire-cdt-packages-amd64
           path: artifacts
       - name: Run packaging verification suite
         run: |
           ls -la artifacts/
           tools/packaging/tests/verify-scripts.sh
-          tools/packaging/tests/verify-tgz.sh artifacts/cdt-*.tar.gz
-          tools/packaging/tests/verify-deb.sh artifacts/cdt_*_amd64.deb artifacts/cdt-dev_*_amd64.deb
-          # cdt-[0-9]* matches the base rpm only (the dev rpm is cdt-dev-*).
-          tools/packaging/tests/verify-rpm.sh artifacts/cdt-[0-9]*.rpm artifacts/cdt-dev-*.rpm
+          tools/packaging/tests/verify-tgz.sh artifacts/wire-cdt-*-x86_64.tar.gz
+          tools/packaging/tests/verify-deb.sh artifacts/wire-cdt_*_amd64.deb artifacts/wire-cdt-dev_*_amd64.deb
+          # wire-cdt-[0-9]* matches the base rpm only (the dev rpm is wire-cdt-dev-*).
+          tools/packaging/tests/verify-rpm.sh artifacts/wire-cdt-[0-9]*.rpm artifacts/wire-cdt-dev-*.rpm
 
   notification:
     name: Send Notification
-    needs: [discover, build-platforms, build]
+    # verify-packages is a real gate on this workflow's outcome, so the
+    # notification must both wait for it and report it.
+    needs: [discover, build-platforms, build, verify-packages]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -248,5 +270,5 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           notification-type: 1
           workflow-name: "CDT Build & Test"
-          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }} build:${{ needs.build.result }}"
+          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }} build:${{ needs.build.result }} verify-packages:${{ needs.verify-packages.result }}"
           github-context: ${{ toJSON(github) }}
