@@ -62,6 +62,35 @@ list(REMOVE_DUPLICATES _wire_roots)
 foreach(_wire_root IN LISTS _wire_roots)
    set(_wire_home "${_wire_root}/usr/lib/cdt")
 
+   # ---- /usr/lib/cdt-baked cmake files --------------------------------------
+   # The install rule (CMakeLists.txt) configures lib/cmake/cdt at INSTALL time
+   # against ${CMAKE_INSTALL_PREFIX} -- which under cpack is the STAGING
+   # directory, not /usr/lib/cdt. So the staged files name a build-machine temp
+   # path and must be replaced here with the variants configured for the real
+   # deb/rpm home. This is the DEB/RPM counterpart of the TGZ generator's
+   # /opt/wire-cdt swap in cmake/cpack-tgz-toolchain-root.cmake; the packaged
+   # roots are applied ONLY at staging, so a plain `cmake --install --prefix X`
+   # keeps prefix-correct files.
+   #
+   # Only the two files that bake @CDT_ROOT_DIR@ absolutely need swapping:
+   # cdt-config.cmake (its first branch short-circuits discovery) and
+   # CDTWasmToolchain.cmake (every compiler path is baked, no discovery at all).
+   # CDTMacros.cmake / CDTInternalMacros.cmake bake nothing -- they resolve
+   # through the RUNTIME ${CDT_ROOT} that cdt-config produces.
+   if(IS_DIRECTORY "${_wire_home}/lib/cmake/cdt")
+      foreach(_wire_name cdt-config.cmake CDTWasmToolchain.cmake)
+         set(_wire_variant "${CPACK_WIRE_SYSTEM_CMAKE_DIR}/${_wire_name}")
+         if(NOT EXISTS "${_wire_variant}")
+            message(FATAL_ERROR
+               "system-package cmake file '${_wire_variant}' was not staged -- see "
+               "the packaging/ configure_file block in CMakeLists.txt")
+         endif()
+         configure_file("${_wire_variant}"
+                        "${_wire_home}/lib/cmake/cdt/${_wire_name}" COPYONLY)
+         message(STATUS "wire-cdt: /usr/lib/cdt-baked ${_wire_name} staged into the deb/rpm home")
+      endforeach()
+   endif()
+
    # ---- /usr/bin symlinks, public entry points only -------------------------
    # Only the component that actually carries bin/ (base) grows them.
    if(IS_DIRECTORY "${_wire_home}/bin")

@@ -125,7 +125,19 @@ jobs:
     # the platform builds, so this job waits out a full cold build (a cold
     # LLVM-via-vcpkg build is hours, not minutes). Kept under the 6h
     # GitHub-hosted job ceiling.
-    timeout-minutes: 350
+    #
+    # PHASE BUDGET (the resolver is not the only tenant of this timeout):
+    #   resolver  <= 330m  330 polls x 60s sleep, in the "Resolve build runs" step
+    #   verify     ~ 20m   containerized deb+rpm install, find_package, contract
+    #                      compile and static-lib build, pulling ubuntu:24.04 and
+    #                      fedora:latest
+    #   publish    ~  5m   checksums + asset upload
+    #                ----
+    #   total      ~355m   -> 390 leaves headroom rather than letting a
+    #                         slow-but-SUCCESSFUL build time out during
+    #                         verification instead of failing on a real defect.
+    #   (was 350, i.e. under the sum of its own phases.)
+    timeout-minutes: 390
     permissions:
       actions: read
       contents: write

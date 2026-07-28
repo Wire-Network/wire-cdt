@@ -68,9 +68,33 @@ foreach(tool llvm-ranlib llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-readobj 
       OPTIONAL)
 endforeach()
 
-# CDT symlinks
+# CDT binutils aliases -- cdt-ar, cdt-ranlib, cdt-nm, ... each a SYMLINK onto its
+# llvm-* counterpart in the same bin/.
+#
+# These MUST be installed, not merely created in the build tree:
+# CDTWasmToolchain.cmake bakes CMAKE_AR=${CDT_ROOT}/bin/cdt-ar and
+# CMAKE_RANLIB=${CDT_ROOT}/bin/cdt-ranlib, so every consumer that builds a STATIC
+# library through the packaged toolchain invokes these paths. Without the install
+# rule the packages shipped a toolchain file naming binaries the payload did not
+# contain, and `add_library(... STATIC ...)` failed at the archive step with
+# "Error running link command: No such file or directory". (The deleted
+# scripts/generate_tarball.sh created these links by hand, so their absence was a
+# payload regression, not a deliberate omission.)
+#
+# NOT public entry points -- deliberately absent from CDT_PUBLIC_ENTRY_POINTS, so
+# they get NO /usr/bin symlink. The cdt- prefix means either choice is
+# collision-free, so the tie is broken on consistency with what the list means:
+# an entry point is a tool a HUMAN or a consuming build invokes BY NAME off PATH
+# (cdt-cpp, cdt-protoc, cdt-pp). These are build-system plumbing addressed only
+# by the ABSOLUTE ${CDT_ROOT}/bin/... path the toolchain file bakes, exactly like
+# the llvm-ar / llvm-ranlib binaries they point at -- which are themselves
+# private to the home. A /usr/bin/cdt-ar would therefore buy nothing and would
+# widen the public surface the layout deliberately keeps minimal.
 foreach(tool ranlib ar nm objcopy objdump readobj readelf strip)
    add_custom_command( TARGET CDTTools POST_BUILD COMMAND cd ${CMAKE_BINARY_DIR}/bin && ln -sf llvm-${tool} cdt-${tool} 2>/dev/null || true )
+   # A RELATIVE symlink onto the sibling llvm-* binary: resolves identically in
+   # the build tree, the cpack staging tree and after install, under any prefix.
+   install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink \"llvm-${tool}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/cdt-${tool}\")" COMPONENT base)
 endforeach()
 
 # CDT tools

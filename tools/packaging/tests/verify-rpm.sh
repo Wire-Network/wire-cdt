@@ -39,6 +39,22 @@ for f in $cdt_symlinks; do
     echo "$l" | grep -qx "/usr/lib/cdt/bin/$f" || fail "payload missing /usr/lib/cdt/bin/$f"
     echo "$l" | grep -qx "/usr/bin/$f" || fail "entry-point symlink missing /usr/bin/$f"
 done
+# BINUTILS ALIASES -- cdt-ar, cdt-ranlib and friends, each a symlink onto its
+# llvm-* counterpart. CDTWasmToolchain.cmake bakes CMAKE_AR=${CDT_ROOT}/bin/cdt-ar
+# and CMAKE_RANLIB=${CDT_ROOT}/bin/cdt-ranlib, so a payload without them ships a
+# toolchain naming binaries it does not contain and every static-library build
+# through it dies at the archive step. They shipped in no artifact at all until
+# cmake/InstallCDT.cmake grew install rules for them; RESOLUTION and actual USE
+# are covered by the container smoke below.
+#
+# Deliberately NOT entry points: unlike the cdt_symlinks above, these are never
+# invoked by name off PATH, only through the absolute path the toolchain file
+# bakes -- so they must be present in the home and ABSENT from /usr/bin.
+cdt_binutils="cdt-ar cdt-ranlib cdt-nm cdt-objcopy cdt-objdump cdt-readobj cdt-readelf cdt-strip"
+for f in $cdt_binutils; do
+    echo "$l" | grep -qx "/usr/lib/cdt/bin/$f" || fail "payload missing /usr/lib/cdt/bin/$f (CMAKE_AR/CMAKE_RANLIB target)"
+    echo "$l" | grep -qx "/usr/bin/$f" && fail "BANNED: /usr/bin/$f -- binutils aliases stay private to the home"
+done
 echo "$l" | grep -q "libnative" && fail "base rpm leaks native dev libs"
 v=$(rpm -qp --qf '%{VERSION}' "$r" 2>/dev/null)
 case "$v" in *-*) fail "version tag contains hyphen: $v" ;; esac
@@ -57,6 +73,24 @@ CONTRACT hello : public contract {
    ACTION hi(name user) { print("hi,", user); }
 };
 SRC
+# STATIC-LIBRARY smoke, built THROUGH the packaged toolchain file. This is the
+# end-to-end exercise of CMAKE_AR / CMAKE_RANLIB -- i.e. of the cdt-ar /
+# cdt-ranlib aliases asserted in the payload above. It is a distinct failure
+# mode from the contract compile below: a missing archiver still compiles the
+# object fine and only dies at `Linking CXX static library`, with
+# "Error running link command: No such file or directory". The entry-point and
+# payload checks alone missed exactly this, which is why the functional build is
+# here and not just a presence assertion.
+mkdir -p "$smoke/lib"
+cat > "$smoke/lib/lib.cpp" <<'LIBSRC'
+#include <sysio/sysio.hpp>
+int add_two(int a, int b) { return a + b; }
+LIBSRC
+cat > "$smoke/lib/CMakeLists.txt" <<'LIBCM'
+cmake_minimum_required(VERSION 3.19)
+project(cdt_static_lib_smoke CXX)
+add_library(mylib STATIC lib.cpp)
+LIBCM
 # find_package(cdt) with ZERO setup -- no CMAKE_PREFIX_PATH, no cdt_DIR. The
 # discoverable copy at /usr/lib/cmake/cdt is what makes that work (/usr/lib/cdt
 # is NOT on CMake's default search path); it bakes CDT_ROOT=/usr/lib/cdt, so
@@ -102,6 +136,19 @@ docker run --rm -v "$pkgdir":/pkg -v "$smoke":/smoke fedora:latest bash -ec "
     # The packaged toolchain must be reachable through plain find_package(cdt)
     # with no prefix hints at all.
     cmake -S /smoke/fp -B /tmp/fp > /tmp/fp.log 2>&1 || { echo 'SMOKE FAIL: find_package(cdt)'; tail -20 /tmp/fp.log; exit 1; }
+    # The binutils aliases must RESOLVE (test -x follows the link to llvm-*) ...
+    for tool in $cdt_binutils; do
+        test -x /usr/lib/cdt/bin/\$tool || { echo \"SMOKE FAIL: /usr/lib/cdt/bin/\$tool missing or dangling\"; exit 1; }
+        test -e /usr/bin/\$tool && { echo \"SMOKE FAIL: /usr/bin/\$tool -- binutils aliases must stay private\"; exit 1; }
+    done
+    # ... and must actually WORK as CMAKE_AR / CMAKE_RANLIB. Static archiving is
+    # the step the packaged toolchain could not perform before the aliases were
+    # installed.
+    cmake -S /smoke/lib -B /tmp/lib \\
+        -DCMAKE_TOOLCHAIN_FILE=/usr/lib/cdt/lib/cmake/cdt/CDTWasmToolchain.cmake \\
+        > /tmp/lib-cfg.log 2>&1 || { echo 'SMOKE FAIL: static-lib configure'; tail -20 /tmp/lib-cfg.log; exit 1; }
+    cmake --build /tmp/lib > /tmp/lib-bld.log 2>&1 || { echo 'SMOKE FAIL: static-lib build (CMAKE_AR/CMAKE_RANLIB)'; tail -20 /tmp/lib-bld.log; exit 1; }
+    test -s /tmp/lib/libmylib.a || { echo 'SMOKE FAIL: libmylib.a missing/empty'; exit 1; }
     # Functional smoke THROUGH THE /usr/bin SYMLINK. /usr/lib/cdt/bin is
     # deliberately NOT on PATH, so a bare \`cdt-cpp\` can only be the symlink.
     # This is the load-bearing check for whereami's realpath(/proc/self/exe)
@@ -121,4 +168,4 @@ docker run --rm -v "$pkgdir":/pkg -v "$smoke":/smoke fedora:latest bash -ec "
     test -s hello.wasm || { echo 'SMOKE FAIL: hello.wasm missing/empty'; exit 1; }
     test -s hello.abi || { echo 'SMOKE FAIL: hello.abi missing/empty'; exit 1; }
 " || fail "container install / contract-compile smoke"
-echo "S3 PASS: $r ${dev:+(+ $dev)} (contract smoke: wasm+abi produced)"
+echo "S3 PASS: $r ${dev:+(+ $dev)} (smoke: wasm+abi + static lib produced)"
