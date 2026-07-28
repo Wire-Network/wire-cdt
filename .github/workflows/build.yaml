@@ -248,18 +248,35 @@ jobs:
           path: artifacts
       - name: Run packaging verification suite
         run: |
-          ls -la artifacts/
-          tools/packaging/tests/verify-scripts.sh
-          tools/packaging/tests/verify-tgz.sh artifacts/wire-cdt-*-x86_64.tar.gz
-          tools/packaging/tests/verify-deb.sh artifacts/wire-cdt_*_amd64.deb artifacts/wire-cdt-dev_*_amd64.deb
-          # wire-cdt-[0-9]* matches the base rpm only (the dev rpm is wire-cdt-dev-*).
-          tools/packaging/tests/verify-rpm.sh artifacts/wire-cdt-[0-9]*.rpm artifacts/wire-cdt-dev-*.rpm
+          # No version argument: on this path the artifact names carry a version
+          # this job does not know, so the suite uses its documented safe globs.
+          # The suite owns the artifact list and the no-bare-tgz-glob rule, shared
+          # with release.yaml's verification of the same package set.
+          tools/packaging/tests/verify-all.sh artifacts
+
+  all-passing:
+    name: All Required Tests Passed
+    # THE required check for this workflow. It exists because `needs` on a
+    # SKIPPED job (build-platforms, whenever the builder image is already
+    # published) passes the default success() gate, so a branch-protection rule
+    # pointed at the individual jobs could go green on a run that never built.
+    # The verdict is therefore made explicitly below. Mirrors
+    # wire-sysio/.github/workflows/linux_amd64_build.yaml's all-passing.
+    needs: [discover, build-platforms, build, verify-packages]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # build and verify-packages are the only two that must SUCCEED:
+      # build-platforms is legitimately skipped, and a failed discover already
+      # shows up as a non-success `build`.
+      - if: needs.build.result != 'success' || needs.verify-packages.result != 'success'
+        run: false
 
   notification:
     name: Send Notification
-    # verify-packages is a real gate on this workflow's outcome, so the
-    # notification must both wait for it and report it.
-    needs: [discover, build-platforms, build, verify-packages]
+    # verify-packages and all-passing are real gates on this workflow's outcome,
+    # so the notification must both wait for them and report them.
+    needs: [discover, build-platforms, build, verify-packages, all-passing]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -270,5 +287,6 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           notification-type: 1
           workflow-name: "CDT Build & Test"
-          job-results: "discover:${{ needs.discover.result }} build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }} build:${{ needs.build.result }} verify-packages:${{ needs.verify-packages.result }}"
+          # Comma-separated, matching wire-sysio's all-passing notification.
+          job-results: "discover:${{ needs.discover.result }},build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }},build:${{ needs.build.result }},verify-packages:${{ needs.verify-packages.result }},all-passing:${{ needs.all-passing.result }}"
           github-context: ${{ toJSON(github) }}

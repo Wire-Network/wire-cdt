@@ -46,11 +46,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Same conservative grammar cmake-version.py enforces.
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]]; then
-            echo "::error::Version '$VERSION' must be semver X.Y.Z with an optional -suffix (e.g. 1.0.0-dev)."
-            exit 1
-          fi
+          # The grammar is cmake-version.py's VERSION_RE, asserted by the parser
+          # itself rather than re-spelled here: an inline copy is one edit away
+          # from accepting a version the writer below would then reject.
+          python3 .github/scripts/cmake-version.py validate "$VERSION" \
+            || { echo "::error::Version '$VERSION' must be semver X.Y.Z with an optional -suffix (e.g. 1.0.0-dev)."; exit 1; }
           channel="stable"
           [[ "$VERSION" == *-* ]] && channel="prerelease"
 

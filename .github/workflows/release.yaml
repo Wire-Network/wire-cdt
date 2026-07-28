@@ -63,13 +63,22 @@ jobs:
           set -euo pipefail
 
           tag="${INPUT_TAG:-$GITHUB_REF_NAME}"
-          if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            :
-          elif [[ -n "$INPUT_TAG" && "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[0-9A-Za-z.-]+$ ]]; then
-            # Suffixed tags are only reachable via the dispatch path.
-            :
-          else
-            echo "::error::Tag '$tag' must match vX.Y.Z (or vX.Y.Z-suffix via dispatch)."
+
+          # SHAPE is cmake-version.py's job: it owns the ONE VERSION_RE that
+          # prepare-release.yaml and tag-release.yaml also validate against, so an
+          # inline regex here could (and did) drift from the parser that writes
+          # the tree. NOTE this TIGHTENS the previous inline pattern, which also
+          # accepted a hyphen inside the suffix (v1.0.0-rc-1); the canonical
+          # grammar is dot-separated alphanumerics only.
+          tag_version="$(python3 .github/scripts/cmake-version.py validate --tag "$tag")" \
+            || { echo "::error::Tag '$tag' must match vX.Y.Z (or vX.Y.Z-suffix via dispatch)."; exit 1; }
+
+          # The PATH rule stays here, because it is about how this run was
+          # triggered rather than about the tag's grammar: a suffixed tag is
+          # reachable via the dispatch input alone (the `push` trigger filters
+          # `!v*-*`, and this is the belt to that braces).
+          if [[ -z "$INPUT_TAG" && "$tag_version" == *-* ]]; then
+            echo "::error::Tag '$tag' carries a pre-release suffix; suffixed tags are published via workflow_dispatch only."
             exit 1
           fi
 
@@ -122,7 +131,7 @@ jobs:
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
-      TAG_NAME: ${{ needs.validate-tag.outputs.tag }}
+      TAG: ${{ needs.validate-tag.outputs.tag }}
       TARGET_SHA: ${{ needs.validate-tag.outputs.target_sha }}
       VERSION: ${{ needs.validate-tag.outputs.version }}
       PRERELEASE: ${{ needs.validate-tag.outputs.prerelease }}
@@ -135,70 +144,26 @@ jobs:
         id: run
         run: |
           set -euo pipefail
-
-          # The run must be a build OF THE TAG REF, not merely of the same
-          # commit: a master-push build sits at the same SHA and does not
-          # carry the tag-only packaging behaviour. head_branch is the tag name
-          # for both a tag push and a workflow_dispatch on the tag ref
-          # (tag-release.yaml uses the latter -- a GITHUB_TOKEN-created tag
-          # fires no push event).
-          # Only the resolved id goes to stdout (it is captured); every progress
-          # and error line goes to stderr so it lands in the job log.
-          log_candidates=1
-          resolve_run() {
-            local workflow="$1" runs_json
-            runs_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs?head_sha=${TARGET_SHA}&per_page=50")"
-            if [[ "$log_candidates" == "1" ]]; then
-              # First attempt only: dump what the API actually returned. A
-              # head_branch-semantics mismatch (the classic resolver failure)
-              # is then visible in minute one instead of after 5.5 hours.
-              {
-                echo "--- ${workflow} candidate runs at ${TARGET_SHA} (want head_branch == ${TAG_NAME}) ---"
-                jq -r '.workflow_runs | length | "candidates: \(.)"' <<<"$runs_json"
-                jq -c '.workflow_runs[] | {id, head_branch, event, status, conclusion}' <<<"$runs_json"
-              } >&2
-            fi
-            jq -r --arg tag "$TAG_NAME" '
-              [.workflow_runs[]
-                | select(.status == "completed" and .conclusion == "success")
-                | select(.event == "push" or .event == "workflow_dispatch")
-                | select(.head_branch == $tag)]
-              | .[0].id // empty' <<<"$runs_json"
-          }
-
-          # 330 minute-spaced attempts, polling BOTH workflows every iteration:
-          # this workflow is dispatched alongside the builds, so it must outlast
-          # a cold full build, not just the artifact upload that follows one.
-          linux_run_id=""
-          macos_run_id=""
-          for attempt in {1..330}; do
-            [[ -n "$linux_run_id" ]] || linux_run_id="$(resolve_run build.yaml)"
-            [[ -n "$macos_run_id" ]] || macos_run_id="$(resolve_run build-macos.yaml)"
-            log_candidates=0
-            [[ -n "$linux_run_id" && -n "$macos_run_id" ]] && break
-            echo "Waiting for tag-ref builds of ${TAG_NAME} (${TARGET_SHA}) (linux=${linux_run_id:-pending} macos=${macos_run_id:-pending}, attempt ${attempt}/330)" >&2
-            sleep 60
-          done
-
-          [[ -n "$linux_run_id" ]] || { echo "::error::No successful build.yaml run found for ${TAG_NAME} (${TARGET_SHA})"; exit 1; }
-          [[ -n "$macos_run_id" ]] || { echo "::error::No successful build-macos.yaml run found for ${TAG_NAME} (${TARGET_SHA})"; exit 1; }
-          {
-            echo "linux-run-id=$linux_run_id"
-            echo "macos-run-id=$macos_run_id"
-          } >> "$GITHUB_OUTPUT"
+          # The resolver (poll loop, tag-ref filtering, candidate dump, budgets)
+          # is byte-identical with wire-sysio's copy of this script; only the
+          # workflows to wait for differ, so they are the arguments. It writes
+          # `build-run-id=` / `build-macos-run-id=` on stdout and every progress
+          # line on stderr, so this redirect cannot corrupt $GITHUB_OUTPUT.
+          .github/scripts/resolve-build-run.sh "$TAG" "$TARGET_SHA" \
+            build.yaml build-macos.yaml >> "$GITHUB_OUTPUT"
 
       - uses: actions/download-artifact@v7
         with:
           name: wire-cdt-packages-amd64
           path: dist
-          run-id: ${{ steps.run.outputs.linux-run-id }}
+          run-id: ${{ steps.run.outputs.build-run-id }}
           github-token: ${{ github.token }}
 
       - uses: actions/download-artifact@v7
         with:
           name: wire-cdt-packages-macos-arm64
           path: dist
-          run-id: ${{ steps.run.outputs.macos-run-id }}
+          run-id: ${{ steps.run.outputs.build-macos-run-id }}
           github-token: ${{ github.token }}
 
       - name: Guard release tag matches artifact version
@@ -209,18 +174,15 @@ jobs:
           # catches a suffixed mismatch (v1.0.0 vs a 1.0.0-dev tree) that a
           # core-version-only check would wave through.
           [[ -f "dist/wire-cdt_${VERSION}_amd64.deb" ]] \
-            || { echo "::error::Tag $TAG_NAME does not match the artifact version (bump VERSION_* in CMakeLists.txt before tagging)."; exit 1; }
+            || { echo "::error::Tag $TAG does not match the artifact version (bump VERSION_* in CMakeLists.txt before tagging)."; exit 1; }
 
       - name: Verify packages
         run: |
           set -euo pipefail
-          # Every verification names its artifact EXPLICITLY -- never a
-          # wire-cdt-*.tar.gz wildcard, which would glob the linux and macOS
-          # tarballs together and hand the verifier whichever sorted first.
-          tools/packaging/tests/verify-tgz.sh "dist/wire-cdt-${VERSION}-x86_64.tar.gz"
-          tools/packaging/tests/verify-tgz.sh --no-service "dist/wire-cdt-${VERSION}-macos-arm64.tar.gz"
-          tools/packaging/tests/verify-deb.sh "dist/wire-cdt_${VERSION}_amd64.deb" "dist/wire-cdt-dev_${VERSION}_amd64.deb"
-          tools/packaging/tests/verify-rpm.sh "dist/wire-cdt-${VERSION}-x86_64.rpm" "dist/wire-cdt-dev-${VERSION}-x86_64.rpm"
+          # Passing VERSION selects the explicit-names mode: the suite owns the
+          # artifact list and the no-bare-tgz-glob rule in one place, shared with
+          # build.yaml's verification of the same package set.
+          tools/packaging/tests/verify-all.sh dist "$VERSION"
 
       - name: Publish release
         run: |
@@ -245,20 +207,20 @@ jobs:
           )
           cat "dist/wire-cdt-${VERSION}-checksums.txt"
 
-          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             # Strategy C: tag-release.yaml already created the DRAFT release
             # (title, notes and the prerelease flag are set there). Attach the
             # assets, then make it public. A GITHUB_TOKEN draft flip does NOT
             # re-fire `release: published`, so there is no recursion.
-            gh release upload "$TAG_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
           else
             # Fallback only (a human-pushed tag with no draft prepared).
             prerelease_flag=""
             [[ "$PRERELEASE" == "true" ]] && prerelease_flag="--prerelease"
-            gh release create "$TAG_NAME" dist/* \
+            gh release create "$TAG" dist/* \
               --repo "$GITHUB_REPOSITORY" \
-              --title "$TAG_NAME" \
+              --title "$TAG" \
               --generate-notes \
               --verify-tag $prerelease_flag
           fi
