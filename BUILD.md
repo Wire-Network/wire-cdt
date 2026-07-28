@@ -237,7 +237,8 @@ Linux builds; the portable tarball builds on Linux and macOS:
 cd build
 cpack -G DEB                      # wire-cdt_<version>_amd64.deb + wire-cdt-dev_…
 cpack -G RPM                      # wire-cdt-<version>-x86_64.rpm + wire-cdt-dev-…
-cmake --build . --target package-tgz   # wire-cdt-<version>-<arch>.tar.gz
+cpack -G TGZ                      # wire-cdt-<version>-<arch>.tar.gz
+cmake --build . --target package-tgz   # same tarball, convenience alias
 
 sudo apt install ./wire-cdt_*_amd64.deb
 ```
@@ -254,6 +255,15 @@ Debian and Fedora use for a bundled compiler (`/usr/lib/llvm-18/…`):
 
 There is no `/usr/cdt` subtree. The relative layout **inside** `/usr/lib/cdt` is
 byte-for-byte the same one the tarball has under `wire-cdt/`.
+
+`bin/` also carries the **binutils aliases** — `cdt-ar`, `cdt-ranlib`, `cdt-nm`,
+`cdt-objcopy`, `cdt-objdump`, `cdt-readobj`, `cdt-readelf`, `cdt-strip`, each a
+symlink onto its `llvm-*` neighbour. `CDTWasmToolchain.cmake` bakes
+`CMAKE_AR`/`CMAKE_RANLIB` to `<root>/bin/cdt-ar` and `<root>/bin/cdt-ranlib`, so
+they are required for any `add_library(… STATIC …)` built through the packaged
+toolchain. They are deliberately **not** public entry points: nothing invokes
+them by name off `PATH`, only through that absolute path, so they stay private
+to the home like the `llvm-*` binaries they point at.
 
 **Why the private home:** the toolchain bundles its own LLVM. Installing those
 binaries into `/usr/bin` would put `/usr/bin/clang`, `/usr/bin/lld`,
@@ -294,6 +304,15 @@ export PATH=/opt/wire-cdt/bin:$PATH
 cdt-cpp --version
 ```
 
+The tarball carries **both** packaged components, `base` **and** `dev` — so it
+includes the native (host) contract-testing payload: `lib/libnative*.a`,
+`share/cdt/native-contract-src/` and `scripts/gen_native_dispatch.py`. That is
+required rather than optional, because `CDTMacros.cmake` ships in `base` and its
+native-test macros reference the first two by `${CDT_ROOT}` path; a base-only
+tarball would advertise native contract testing while omitting everything it
+needs — and since the tarball is the only macOS artifact, that made native
+contract testing unreachable on macOS entirely.
+
 For CMake projects, point `find_package(cdt)` at the extracted tree:
 
 ```bash
@@ -320,8 +339,11 @@ discovering `CDT_ROOT` **relative to its own location** whenever the baked
 is absolute — so a non-`/opt` extraction must go through `find_package(cdt)`
 rather than the toolchain file.
 
-The deb/rpm copies of both files bake `/usr/lib/cdt` instead; the TGZ variants
-are swapped in at package time by `cmake/cpack-tgz-toolchain-root.cmake`.
+The deb/rpm copies of both files bake `/usr/lib/cdt` instead. **Both packaged
+roots are applied at package time only**, by a CPack pre-build hook per
+generator — `cmake/cpack-system-layout.cmake` for the deb/rpm, and
+`cmake/cpack-tgz-toolchain-root.cmake` for the tarball. A plain
+`cmake --install` never sees either of them; see below.
 
 ### CMake Install
 
@@ -335,6 +357,21 @@ lands directly under `CMAKE_INSTALL_PREFIX` — `<prefix>/bin`, `<prefix>/lib`,
 `<prefix>/include`, `<prefix>/lib/cmake/cdt`, `<prefix>/cdt.imports`. With
 CMake's default prefix that means `/usr/local/bin`, `/usr/local/lib`, … Pass
 `-DCMAKE_INSTALL_PREFIX=<dir>` to choose another root.
+
+`lib/cmake/cdt/` is configured **at install time against the prefix actually in
+effect**, so `cdt-config.cmake` and `CDTWasmToolchain.cmake` name that prefix and
+nothing else — neither packaged root leaks into a plain install:
+
+```bash
+cmake --install build --prefix /tmp/cdt-prefix
+grep CMAKE_CXX_COMPILER /tmp/cdt-prefix/lib/cmake/cdt/CDTWasmToolchain.cmake
+# set(CMAKE_CXX_COMPILER "/tmp/cdt-prefix/bin/cdt-cpp")
+```
+
+This works for `--prefix` too, not just the configure-time
+`-DCMAKE_INSTALL_PREFIX`, because the prefix is only known once `cmake --install`
+runs. `DESTDIR` relocates the output path without changing the baked root, which
+stays the logical prefix the files will be read from.
 
 ### Use from the Build Directory
 

@@ -76,11 +76,6 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTMacros.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchain.cmake @ONLY)
 
-set(CDT_ROOT_DIR "_PREFIX_")
-configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTMacrosPackage.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/cmake/CDTWasmToolchainPackage.cmake @ONLY)
-configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}/cmake/cdt-config.cmake.package @ONLY)
-
 # SYSTEM-PACKAGE variants of the cmake config/toolchain files, configured for
 # the deb/rpm root: `/usr/lib/cdt`.
 #
@@ -106,7 +101,45 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in ${CMAKE_BINARY_DIR}
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTMacros.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTWasmToolchain.cmake @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CDTInternalMacros.cmake ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/CDTInternalMacros.cmake COPYONLY)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt/ DESTINATION lib/cmake/cdt COMPONENT base)
+
+# THE lib/cmake/cdt INSTALL RULE -- configured at INSTALL time, against the
+# EFFECTIVE prefix.
+#
+# WHY NOT a plain install(DIRECTORY) of one of the pre-configured variants above:
+# whichever variant were chosen would bake ITS root into every install. That is
+# what shipped before, and it made the documented `cmake --install build
+# --prefix X` path (BUILD.md) produce a toolchain naming /usr/lib/cdt -- so on a
+# machine without the deb, a consumer died immediately with
+# "The CMAKE_CXX_COMPILER: is not a full path to an existing compiler tool",
+# and a prefix-installed cdt-config.cmake preferred a coincidentally-present deb
+# over its own relative discovery.
+#
+# A CONFIGURE-time bake cannot fix this either: `--prefix` is chosen at INSTALL
+# time, long after configure_file has run. So the templates are configured HERE,
+# inside install(CODE), where ${CMAKE_INSTALL_PREFIX} holds the prefix actually
+# in effect -- the configure-time default, or whatever `--prefix` overrode it
+# with. DESTDIR only relocates the OUTPUT path; the baked root stays the logical
+# prefix, which is what the files must name once installed.
+#
+# The two PACKAGED roots are applied strictly at cpack staging, by the pre-build
+# hooks, and never here:
+#   deb / rpm -> /usr/lib/cdt   cmake/cpack-system-layout.cmake
+#   tarball   -> /opt/wire-cdt  cmake/cpack-tgz-toolchain-root.cmake
+# Under cpack, ${CMAKE_INSTALL_PREFIX} is the STAGING directory, so the files
+# this rule writes carry a staging path -- meaningless in a package, and exactly
+# why both hooks overwrite them unconditionally rather than only when they look
+# wrong.
+install(CODE "
+   set(CDT_ROOT_DIR \"\${CMAKE_INSTALL_PREFIX}\")
+   set(VERSION_FULL \"${VERSION_FULL}\")
+   set(SYSROOT_DIR \"${SYSROOT_DIR}\")
+   set(_cdt_cmake_dir \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/cmake/cdt\")
+   message(STATUS \"wire-cdt: configuring lib/cmake/cdt for prefix \${CMAKE_INSTALL_PREFIX}\")
+   configure_file(\"${CMAKE_SOURCE_DIR}/cmake/cdt-config.cmake.in\"        \"\${_cdt_cmake_dir}/cdt-config.cmake\"        @ONLY)
+   configure_file(\"${CMAKE_SOURCE_DIR}/cmake/CDTMacros.cmake.in\"         \"\${_cdt_cmake_dir}/CDTMacros.cmake\"         @ONLY)
+   configure_file(\"${CMAKE_SOURCE_DIR}/cmake/CDTWasmToolchain.cmake.in\"  \"\${_cdt_cmake_dir}/CDTWasmToolchain.cmake\" @ONLY)
+   configure_file(\"${CMAKE_SOURCE_DIR}/cmake/CDTInternalMacros.cmake\"    \"\${_cdt_cmake_dir}/CDTInternalMacros.cmake\" COPYONLY)
+" COMPONENT base)
 
 # PORTABLE-TARBALL variants. The tarball is rooted at `wire-cdt/` and its
 # DEFAULT install location is /opt -- extracted there the tree lands on exactly

@@ -156,24 +156,30 @@ set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_SOURCE_DIR}/cmake/cpack-project-config.cm
 set(CPACK_WIRE_PACKAGE_NAME "${WIRE_PACKAGE_NAME}")
 # Same reason: the TGZ-only toolchain-root swap (see cpack-project-config.cmake)
 # needs the hook script plus both portable cmake files staged by the
-# packaging/tgz configure_file block in CMakeLists.txt.
+# packaging/tgz configure_file block in CMakeLists.txt -- and the versioned
+# archive file name, which must differ from the tarball's `wire-cdt/` root.
 set(CPACK_WIRE_TGZ_PRE_BUILD_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/cpack-tgz-toolchain-root.cmake")
+set(CPACK_WIRE_TGZ_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 set(CPACK_WIRE_TGZ_CDT_CONFIG "${CMAKE_BINARY_DIR}/packaging/tgz/lib/cmake/cdt/cdt-config.cmake")
 set(CPACK_WIRE_TGZ_CDT_TOOLCHAIN "${CMAKE_BINARY_DIR}/packaging/tgz/lib/cmake/cdt/CDTWasmToolchain.cmake")
-# ... and the DEB/RPM-only distro-toolchain layout hook needs its script plus the
-# public entry-point list that cmake/InstallCDT.cmake collected from the install
-# rules themselves (one source of truth for "what gets a /usr/bin symlink").
+# ... and the DEB/RPM-only distro-toolchain layout hook needs its script, the
+# directory holding the /usr/lib/cdt-baked cmake variants it stages over the
+# install-time-configured files (see the lib/cmake/cdt install rule in
+# CMakeLists.txt), plus the public entry-point list that cmake/InstallCDT.cmake
+# collected from the install rules themselves (one source of truth for "what
+# gets a /usr/bin symlink").
 set(CPACK_WIRE_SYSTEM_LAYOUT_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/cpack-system-layout.cmake")
+set(CPACK_WIRE_SYSTEM_CMAKE_DIR "${CMAKE_BINARY_DIR}/packaging/lib/cmake/cdt")
 list(REMOVE_DUPLICATES CDT_PUBLIC_ENTRY_POINTS)
 list(SORT CDT_PUBLIC_ENTRY_POINTS)
 set(CPACK_WIRE_PUBLIC_ENTRY_POINTS "${CDT_PUBLIC_ENTRY_POINTS}")
 
-# Portable tarball with the versioned artifact name (see project-config for
-# why plain `cpack -G TGZ` emits wire-cdt.tar.gz).
+# Convenience target for "just build the tarball". `cpack -G TGZ` now emits the
+# versioned name on its own (see the archive-name/root decoupling in
+# cmake/cpack-project-config.cmake), so this no longer renames anything -- it is
+# a plain alias, kept because CI and the docs invoke it by name.
 add_custom_target(package-tgz
    COMMAND "${CMAKE_CPACK_COMMAND}" -G TGZ
-   COMMAND "${CMAKE_COMMAND}" -E rename "${CMAKE_BINARY_DIR}/${WIRE_PACKAGE_NAME}.tar.gz"
-           "${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.tar.gz"
    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
    COMMENT "Packaging ${CPACK_PACKAGE_FILE_NAME}.tar.gz (portable toolchain)"
    VERBATIM)

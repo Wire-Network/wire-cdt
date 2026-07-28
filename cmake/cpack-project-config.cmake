@@ -6,13 +6,43 @@
 # Both carry the SAME relative layout; only the home and the extras differ.
 if(CPACK_GENERATOR STREQUAL "TGZ")
    # Portable toolchain tarball: plain `wire-cdt` top-level directory (the
-   # distribution name -- CPACK_WIRE_PACKAGE_NAME, set in cmake/package.cmake).
-   # Monolithic archives take both the artifact name and top dir from
-   # CPACK_PACKAGE_FILE_NAME; the package-tgz target restores the versioned
-   # artifact name afterwards. Base component only.
-   set(CPACK_PACKAGING_INSTALL_PREFIX "/")
-   set(CPACK_PACKAGE_FILE_NAME "${CPACK_WIRE_PACKAGE_NAME}")
-   string(REPLACE ";ALL;/" ";base;/" CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS}")
+   # distribution name -- CPACK_WIRE_PACKAGE_NAME, set in cmake/package.cmake),
+   # in a VERSIONED archive file.
+   #
+   # DECOUPLING THE ARCHIVE NAME FROM THE ROOT DIRECTORY. For a MONOLITHIC
+   # archive CPack takes BOTH from CPACK_PACKAGE_FILE_NAME (the root is the
+   # basename of the staging dir, which is derived from it) and does NOT consult
+   # CPACK_ARCHIVE_FILE_NAME -- that is component-mode only, verified against
+   # this generator. Setting it alone therefore still produced `wire-cdt.tar.gz`.
+   #
+   # So the two are separated at the source instead:
+   #   CPACK_PACKAGE_FILE_NAME          -> the VERSIONED artifact name
+   #   CPACK_INCLUDE_TOPLEVEL_DIRECTORY -> 0, suppressing the automatic root
+   #                                       (which would otherwise be that same
+   #                                       versioned name)
+   #   CPACK_PACKAGING_INSTALL_PREFIX   -> /wire-cdt, so the payload lands under
+   #                                       a `wire-cdt/` root inside the archive
+   #
+   # Net effect: plain `cpack -G TGZ` / `ninja package` now emits
+   # wire-cdt-<VERSION_FULL>-<arch-tag>.tar.gz directly -- matching the CI upload
+   # glob (build/wire-cdt-*.tar.gz) and verify-tgz.sh's wire-cdt-*-<arch>.tar.gz
+   # -- while the root inside stays `wire-cdt/`. Previously only the package-tgz
+   # target's post-hoc rename produced that name, so anyone not running CI's
+   # exact command sequence got an artifact no glob picked up.
+   set(CPACK_PACKAGE_FILE_NAME "${CPACK_WIRE_TGZ_FILE_NAME}")
+   set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
+   set(CPACK_PACKAGING_INSTALL_PREFIX "/${CPACK_WIRE_PACKAGE_NAME}")
+   # base AND dev. CDTMacros.cmake ships in base and its native-test macros
+   # reference ${CDT_ROOT}/scripts/gen_native_dispatch.py and
+   # ${CDT_ROOT}/share/cdt/native-contract-src -- both COMPONENT dev. A
+   # base-only tarball therefore advertised native contract testing while
+   # omitting everything it needs, which also made native testing unreachable
+   # on macOS entirely, the tarball being the only macOS artifact.
+   # Enumerated per component rather than left as ALL so a component added
+   # later joins the tarball deliberately, not silently.
+   string(REPLACE ";ALL;/" ";base;/" _wire_tgz_base "${CPACK_INSTALL_CMAKE_PROJECTS}")
+   string(REPLACE ";ALL;/" ";dev;/"  _wire_tgz_dev  "${CPACK_INSTALL_CMAKE_PROJECTS}")
+   set(CPACK_INSTALL_CMAKE_PROJECTS "${_wire_tgz_base};${_wire_tgz_dev}")
    # The install rules stage the /usr/lib/cdt-baked cmake files (right for the
    # deb and the rpm, wrong for the tarball, whose home is /opt/wire-cdt). This
    # hook runs after staging and before the archive is written, and swaps in the
