@@ -219,13 +219,19 @@ jobs:
           )
           cat "dist/wire-cdt-${VERSION}-checksums.txt"
 
+          # Stable releases (no version suffix) are explicitly marked `latest`
+          # rather than relying on the API's make_latest default; prereleases
+          # can never hold the latest label, so no flag is passed for them.
+          latest_flag=""
+          [[ "$TAG" != *-* ]] && latest_flag="--latest"
+
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             # Strategy C: tag-release.yaml already created the DRAFT release
             # (title, notes and the prerelease flag are set there). Attach the
             # assets, then make it public. A GITHUB_TOKEN draft flip does NOT
             # re-fire `release: published`, so there is no recursion.
             gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false $latest_flag
           else
             # Fallback only (a human-pushed tag with no draft prepared).
             prerelease_flag=""
@@ -234,5 +240,5 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --title "$TAG" \
               --generate-notes \
-              --verify-tag $prerelease_flag
+              --verify-tag $prerelease_flag $latest_flag
           fi
