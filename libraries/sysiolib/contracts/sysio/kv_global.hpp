@@ -23,6 +23,7 @@
 #include <sysio/check.hpp>
 #include <sysio/name.hpp>
 #include <sysio/action.hpp>
+#include <sysio/kv_cached.hpp>
 
 #include <cstring>
 #include <optional>
@@ -33,6 +34,11 @@ template<name::raw Name, typename T>
 class global {
    static_assert(std::is_default_constructible_v<T>, "global value type must be default constructible");
 
+public:
+   /// Payload type. Lets generic wrappers (kv::cached_value) deduce it without repetition.
+   using value_type = T;
+
+private:
    static constexpr uint32_t _table_id = sysio::kv::compute_table_id(static_cast<uint64_t>(Name));
    uint64_t _code = 0;
 
@@ -84,8 +90,9 @@ public:
       return def;
    }
 
-private:
    /// Single kv_get call — returns true if found, populates \p out.
+   /// Public so generic wrappers (kv::cached_value) load through this single-kv_get path
+   /// instead of paying kv_contains followed by kv_get.
    bool try_get(T& out) const {
       auto k = make_key();
       if constexpr (is_fixed_serializable_v<T>) {
@@ -111,8 +118,6 @@ private:
       return true;
    }
 
-public:
-
    /// Stores or overwrites the value.
    void set(const T& val, sysio::name payer) {
       auto k = make_key();
@@ -137,5 +142,16 @@ public:
       ::kv_erase(_table_id, k.data, key_size);
    }
 };
+
+/**
+ * Write-deferring kv::global.
+ *
+ * Reads never issue a kv_set, so an action that only reads the singleton stays legal inside
+ * a read-only transaction. Use this in place of caching the value in a contract member and
+ * writing it back from the contract destructor. See kv_cached.hpp for the rationale and for
+ * the visibility rules that come with deferred writes.
+ */
+template<name::raw Name, typename T>
+using cached_global = cached_value<global<Name, T>>;
 
 }} // namespace sysio::kv

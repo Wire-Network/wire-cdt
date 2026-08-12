@@ -22,6 +22,7 @@ add_unit_test( system_tests )
 add_unit_test( time_tests )
 add_unit_test( varint_tests )
 add_unit_test( kv_table_tests )
+add_unit_test( kv_cached_tests )
 
 add_test( NAME toolchain_tests COMMAND ${CMAKE_BINARY_DIR}/tools/toolchain-tester/toolchain-tester ${CMAKE_SOURCE_DIR}/tests/toolchain --cdt ${CMAKE_BINARY_DIR}/bin --verbose )
 set_property(TEST toolchain_tests PROPERTY LABELS toolchain_tests)
