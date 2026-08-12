@@ -208,12 +208,18 @@ public:
       }
    }
 
-   /// Replace the value outright. Creates the row if absent. Deferred.
+   /**
+    * Replace the value outright. Creates the row if absent. Deferred.
+    *
+    * Passing kv::same_payer keeps whatever payer this handle already recorded, so set(v, payer)
+    * followed by set(w, same_payer) still bills the one coalesced write to payer -- see
+    * record_payer().
+    */
    void set(const T& val, sysio::name payer) {
       _loaded  = true;
       _present = true;
       _cache   = val;
-      _payer   = payer;
+      record_payer(payer);
       _pending = pending_op::write;
    }
 
@@ -265,13 +271,25 @@ private:
       // remove() through it. Recording a write here would convert that erase back into a store of
       // the value the caller just retired, and the caller would get no diagnostic.
       sysio::check(_pending != pending_op::erase, "singleton removed from inside a mutation callback");
-      // A default-constructed name is kv::same_payer -- "bill whoever already owns the row". It must
-      // not overwrite a real payer recorded earlier in this action: the deferred write coalesces
-      // every mutation into one kv_set, and the host rejects payer 0 when that kv_set creates the
-      // row. Uncached, the create and the update were separate writes and only the update could
-      // legally carry same_payer.
-      if (payer.value != 0) _payer = payer;
+      record_payer(payer);
       _pending = pending_op::write;
+   }
+
+   /**
+    * Record the account to bill for the pending write.
+    *
+    * A default-constructed name is kv::same_payer -- "bill whoever already owns the row" -- so it
+    * must never displace a real payer recorded earlier in this action. Every call that dirties the
+    * handle coalesces into a SINGLE kv_set, and the host rejects payer 0 when that kv_set creates
+    * the row; uncached, the create and the update were separate writes and only the update could
+    * legally carry same_payer. With no real payer recorded, 0 reaches the host untouched, which is
+    * what makes an update keep its existing payer and a create fail exactly as it does uncached.
+    *
+    * Every path that dirties the handle records its payer HERE rather than assigning _payer
+    * directly, so a new write path cannot reintroduce the divergence by forgetting the rule.
+    */
+   void record_payer(sysio::name payer) {
+      if (payer.value != 0) _payer = payer;
    }
 
    /// Populate the cache from the store. At most one store read per handle.

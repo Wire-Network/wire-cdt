@@ -527,6 +527,20 @@ SYSIO_TEST_BEGIN(cached_same_payer_preserves_recorded_payer)
       c.modify(payer_b, [](pod_state& s) { s.counter = 7; });
    }
    CHECK_EQUAL(counting_store::counters::get().payer, payer_b)
+
+   // set() obeys the same rule as modify(). Uncached, set(v, payer_a) then set(w, same_payer) is
+   // two writes -- a create billed to payer_a, then an update that legally carries same_payer. The
+   // cache coalesces them into ONE write, so letting same_payer through would bill a CREATE to
+   // payer 0, which the host rejects outright.
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.set(pod_state{1, 1}, payer_a);
+      c.set(pod_state{2, 2}, same_payer);
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
+   CHECK_EQUAL(counting_store::counters::get().payer, payer_a)
+   CHECK_EQUAL(counting_store::counters::get().val.counter, 2u)
 SYSIO_TEST_END
 
 /// seed_if_absent supplies defaults for reading WITHOUT owing a write -- the property that lets a
@@ -624,6 +638,25 @@ SYSIO_TEST_BEGIN(cached_global_deferred_write_roundtrip)
 SYSIO_TEST_END
 
 /// set() through the cache creates a row that was never there.
+/// The same sequence against the real kv::global and the mocked host. This is the end-to-end form
+/// of the payer rule: the mock enforces apply_context's "must specify a valid account to pay for new
+/// record" on the create branch, so if the coalesced write carried same_payer through, this case
+/// would abort inside the intrinsic rather than merely record the wrong payer.
+SYSIO_TEST_BEGIN(cached_global_set_then_same_payer_set_creates_row)
+   constexpr sysio::name same_payer{};
+   begin_kv_case();
+   {
+      pod_cached c(test_code);
+      CHECK_EQUAL(c.exists(), false)
+      c.set(pod_state{1, 1}, payer_a);       // would CREATE the row
+      c.set(pod_state{2, 2}, same_payer);    // legal uncached: the second write is an update
+      CHECK_EQUAL(mock_store().sets, 0u)
+   }
+   CHECK_EQUAL(mock_store().sets, 1u)
+   CHECK_EQUAL(mock_store().last_payer, payer_a.value)
+   CHECK_EQUAL(pod_global(test_code).get(), (pod_state{2, 2}))
+SYSIO_TEST_END
+
 SYSIO_TEST_BEGIN(cached_global_set_creates_row)
    begin_kv_case();
    {
@@ -785,6 +818,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_global_read_issues_no_write)
    SYSIO_TEST(cached_global_deferred_write_roundtrip)
    SYSIO_TEST(cached_global_set_creates_row)
+   SYSIO_TEST(cached_global_set_then_same_payer_set_creates_row)
    SYSIO_TEST(cached_global_remove_erases_row)
    SYSIO_TEST(cached_global_blob_roundtrip)
    SYSIO_TEST(cached_global_modify_or_create_creates_row)
