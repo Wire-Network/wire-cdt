@@ -713,9 +713,9 @@ SYSIO_TEST_END
 // ===========================================================================
 
 /// A stored row whose size does not match the fixed-serializable payload must be rejected outright.
-/// kv_get fills min(buffer, stored) bytes but reports the full stored size, so copying sizeof(T)
-/// out of a short row would splice indeterminate stack bytes into the payload -- different garbage
-/// on every node, and therefore a consensus hazard rather than a local bug.
+/// kv_get fills min(buffer, stored) bytes but reports the full stored size, so copying sizeof(T) out
+/// of a short row splices whatever the contract's linear memory held into the payload. Deterministic
+/// -- every node builds the same wrong value -- but it reads as authoritative stored data, so trap.
 SYSIO_TEST_BEGIN(global_rejects_wrong_sized_row)
    begin_kv_case();
    {

@@ -99,13 +99,15 @@ public:
          char vbuf[sizeof(T)];
          int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, vbuf, sizeof(T));
          if (sz < 0) return false;
-         // kv_get fills min(buffer, stored) bytes but returns the FULL stored size, so a row that
-         // is not exactly sizeof(T) must be rejected rather than memcpy'd. Copying sizeof(T) out of
-         // a partially filled buffer would splice indeterminate stack bytes into the payload, and
-         // since each node's stack holds different garbage the resulting value -- and any write
-         // derived from it -- would differ across nodes. A size mismatch means the stored row was
-         // written by an incompatible version of this type, so trap rather than report "absent":
-         // silently treating a real row as missing invites the caller to overwrite it.
+         // kv_get fills min(buffer, stored) bytes but returns the FULL stored size, so a row that is
+         // not exactly sizeof(T) must be rejected rather than memcpy'd. Copying sizeof(T) out of a
+         // partially filled buffer splices whatever this contract's linear memory happened to hold
+         // into the payload, so the caller silently gets stale bytes where it expects stored data.
+         // This is not a divergence risk -- linear memory is deterministic, so every node builds the
+         // same wrong value -- but a wrong value that reads as authoritative is worse than a trap. A
+         // size mismatch means the row was written by an incompatible version of this type, so trap
+         // rather than report "absent": silently treating a real row as missing invites the caller
+         // to overwrite it.
          sysio::check(sz == static_cast<int32_t>(sizeof(T)),
                       "kv::global: stored value size does not match the fixed-serializable payload");
          std::memcpy(&out, vbuf, sizeof(T));
