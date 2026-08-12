@@ -125,13 +125,13 @@ BOOST_FIXTURE_TEST_CASE(kv_cached_deferred_writes_persist, TESTER) { try {
    BOOST_REQUIRE_EQUAL(validate(), true);
 } FC_LOG_AND_RETHROW() }
 
-/// upsert() creates a row that was never seeded.
-BOOST_FIXTURE_TEST_CASE(kv_cached_upsert_creates, TESTER) { try {
+/// modify_or_create() creates a row that was never seeded.
+BOOST_FIXTURE_TEST_CASE(kv_cached_modify_or_create_creates, TESTER) { try {
    deploy(*this);
 
-   push_action(cached_acct, "upsertnew"_n, cached_acct, {});
+   push_action(cached_acct, "createnew"_n, cached_acct, {});
    produce_blocks(1);
-   push_action(cached_acct, "chkupsert"_n, cached_acct, {});
+   push_action(cached_acct, "chkcreate"_n, cached_acct, {});
 
    BOOST_REQUIRE_EQUAL(validate(), true);
 } FC_LOG_AND_RETHROW() }

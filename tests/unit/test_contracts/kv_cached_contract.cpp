@@ -108,17 +108,17 @@ public:
       check(_cfg.get().rate == 93, "chkmulti: cfg rate did not persist");
    }
 
-   /// upsert() creates from the default when the row is absent.
+   /// modify_or_create() creates from the default when the row is absent.
    [[sysio::action]]
-   void upsertnew() {
-      _cfg.upsert(get_self(), {100, 1}, [](cfg& c) { c.rate += 1; });
+   void createnew() {
+      _cfg.modify_or_create(get_self(), {100, 1}, [](cfg& c) { c.rate += 1; });
    }
 
-   /// Confirms the row upsertnew created actually persisted.
+   /// Confirms the row createnew created actually persisted.
    [[sysio::action]]
-   void chkupsert() {
-      check(_cfg.get().rate == 101, "chkupsert: cfg rate did not persist");
-      check(_cfg.get().flags == 1, "chkupsert: cfg flags did not persist");
+   void chkcreate() {
+      check(_cfg.get().rate == 101, "chkcreate: cfg rate did not persist");
+      check(_cfg.get().flags == 1, "chkcreate: cfg flags did not persist");
    }
 
    /// Deferred erase.

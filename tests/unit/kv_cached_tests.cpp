@@ -3,8 +3,8 @@
  *  @copyright defined in sysio.cdt/LICENSE.txt
  *
  *  Coverage for sysio::kv::cached_value and its kv::cached_global alias (kv_cached.hpp). The
- *  scoped sysio::cached_kv_singleton alias is covered by the kv_singleton_tests WASM contract
- *  -- see the note above main().
+ *  scoped sysio::cached_kv_singleton alias is covered on chain by kv_cached_contract, driven from
+ *  tests/integration/kv_cached_tests.cpp -- see the note above main().
  *
  *  The behaviour under test is WRITE SUPPRESSION. The classic singleton idiom caches state in
  *  a contract member and writes it back from the contract destructor, which the generated
@@ -186,8 +186,13 @@ void install_kv_intrinsics() {
          auto& m = mock_store();
          ++m.sets;
          m.last_payer = payer;
-         m.rows[mock_kv::row_key{m.receiver, table_id, as_key(key, key_size)}] =
-            std::string(static_cast<const char*>(value), value_size);
+         auto k = mock_kv::row_key{m.receiver, table_id, as_key(key, key_size)};
+         // apply_context::kv_set asserts a valid payer on the CREATE branch; an update may legally
+         // carry payer 0 (kv::same_payer), which means "keep billing whoever owns the row". Without
+         // this guard the mock silently accepts a malformed create that the chain would reject.
+         if (m.rows.find(k) == m.rows.end())
+            sysio::check(payer != 0, "must specify a valid account to pay for new record");
+         m.rows[k] = std::string(static_cast<const char*>(value), value_size);
          return 0;
       });
 
@@ -211,7 +216,11 @@ void install_kv_intrinsics() {
       [](uint32_t table_id, const void* key, uint32_t key_size) -> int64_t {
          auto& m = mock_store();
          ++m.erases;
-         m.rows.erase(mock_kv::row_key{m.receiver, table_id, as_key(key, key_size)});
+         auto k = mock_kv::row_key{m.receiver, table_id, as_key(key, key_size)};
+         // apply_context::kv_erase asserts the row exists. Issuing an erase for an absent row is a
+         // real defect -- it aborts the transaction on chain -- so the mock must not absorb it.
+         sysio::check(m.rows.find(k) != m.rows.end(), "Key not found in `kv_erase`");
+         m.rows.erase(k);
          return 0;
       });
 
@@ -332,23 +341,23 @@ SYSIO_TEST_BEGIN(cached_set_creates_and_defers)
    CHECK_EQUAL(counting_store::counters::get().val, (pod_state{3, 9}))
 SYSIO_TEST_END
 
-/// upsert() seeds from the default when absent, then applies the mutation.
-SYSIO_TEST_BEGIN(cached_upsert_creates_from_default)
+/// modify_or_create() seeds from the default when absent, then applies the mutation.
+SYSIO_TEST_BEGIN(cached_modify_or_create_seeds_default)
    counting_store::counters::reset();
    {
       counting_cache c;
-      c.upsert(payer_a, pod_state{100, 1}, [](pod_state& s) { s.counter += 1; });
+      c.modify_or_create(payer_a, pod_state{100, 1}, [](pod_state& s) { s.counter += 1; });
    }
    CHECK_EQUAL(counting_store::counters::get().sets, 1u)
    CHECK_EQUAL(counting_store::counters::get().val, (pod_state{101, 1}))
 SYSIO_TEST_END
 
-/// upsert() on an existing row ignores the default and mutates what is stored.
-SYSIO_TEST_BEGIN(cached_upsert_modifies_existing)
+/// modify_or_create() on an existing row ignores the default and mutates what is stored.
+SYSIO_TEST_BEGIN(cached_modify_or_create_mutates_existing)
    counting_store::counters::seed(pod_state{50, 7});
    {
       counting_cache c;
-      c.upsert(payer_a, pod_state{100, 1}, [](pod_state& s) { s.counter += 1; });
+      c.modify_or_create(payer_a, pod_state{100, 1}, [](pod_state& s) { s.counter += 1; });
    }
    CHECK_EQUAL(counting_store::counters::get().sets, 1u)
    CHECK_EQUAL(counting_store::counters::get().val, (pod_state{51, 7}))
@@ -408,13 +417,21 @@ SYSIO_TEST_BEGIN(cached_modify_after_flush_writes_again)
    CHECK_EQUAL(counting_store::counters::get().val, (pod_state{2, 0}))
 SYSIO_TEST_END
 
-/// modify() refuses to invent a row -- upsert() is the creating form.
+// NOTE for every CHECK_ASSERT case below: the native tester implements sysio_assert with longjmp,
+// so the handle's destructor -- and therefore its flush() -- does NOT run when the assert fires.
+// Each case must assert the store counters itself; without that it verifies only the message text,
+// and an implementation that dropped or duplicated the pending change would pass unchanged.
+
+/// modify() refuses to invent a row -- modify_or_create() is the creating form.
 SYSIO_TEST_BEGIN(cached_modify_absent_asserts)
    counting_store::counters::reset();
    CHECK_ASSERT("singleton does not exist", ([]() {
       counting_cache c;
       c.modify(payer_a, [](pod_state& s) { s.counter = 1; });
    }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
 SYSIO_TEST_END
 
 /// get() on an absent row asserts, with the caller's message when supplied.
@@ -428,6 +445,8 @@ SYSIO_TEST_BEGIN(cached_get_absent_asserts)
       counting_cache c;
       (void)c.get("config not initialized");
    }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
 SYSIO_TEST_END
 
 /// Mutating a removed handle is a caller bug, not a silent resurrection.
@@ -436,8 +455,130 @@ SYSIO_TEST_BEGIN(cached_mutate_after_remove_asserts)
    CHECK_ASSERT("singleton mutated after remove()", ([]() {
       counting_cache c;
       c.remove();
-      c.upsert(payer_a, pod_state{}, [](pod_state& s) { s.counter = 1; });
+      c.modify_or_create(payer_a, pod_state{}, [](pod_state& s) { s.counter = 1; });
    }))
+   // The rejected call must not have written, and because the longjmp skipped the destructor the
+   // pending erase was never committed either -- the seeded row is still there, untouched.
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, true)
+   CHECK_EQUAL(counting_store::counters::get().val.counter, 1u)
+
+   // modify() after remove() reports the erase, not the generic "does not exist".
+   counting_store::counters::seed(pod_state{1, 1});
+   CHECK_ASSERT("singleton mutated after remove()", ([]() {
+      counting_cache c;
+      c.remove();
+      c.modify(payer_a, [](pod_state& s) { s.counter = 2; });
+   }))
+
+   // A callback that removes the row through the same handle must not have its erase silently
+   // converted back into a write of the value it just retired.
+   counting_store::counters::seed(pod_state{1, 1});
+   CHECK_ASSERT("singleton removed from inside a mutation callback", ([]() {
+      counting_cache c;
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// remove() on a row that is not there owes nothing, so an action that only erases an absent
+/// singleton issues no host write and stays legal inside a read-only transaction. Leaving it to
+/// the store's own short-circuit would make that legality depend on chain data instead.
+SYSIO_TEST_BEGIN(cached_remove_absent_is_noop)
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.remove();
+      CHECK_EQUAL(c.dirty(), false)
+      CHECK_EQUAL(c.exists(), false)
+   }
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// same_payer must not overwrite a real payer recorded earlier in the same action. The deferred
+/// write coalesces both calls into one store(), and a create billed to payer 0 is rejected on chain.
+SYSIO_TEST_BEGIN(cached_same_payer_preserves_recorded_payer)
+   constexpr sysio::name same_payer{};
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.set(pod_state{1, 1}, payer_a);
+      c.modify(same_payer, [](pod_state& s) { s.counter = 2; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
+   CHECK_EQUAL(counting_store::counters::get().payer, payer_a)
+
+   // With no real payer anywhere in the action, same_payer is passed through untouched so the
+   // host can keep billing whoever owns the row.
+   counting_store::counters::seed(pod_state{5, 5});
+   {
+      counting_cache c;
+      c.modify(same_payer, [](pod_state& s) { s.counter = 6; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().payer, same_payer)
+
+   // A later real payer still wins over an earlier one.
+   counting_store::counters::seed(pod_state{5, 5});
+   {
+      counting_cache c;
+      c.modify(payer_a, [](pod_state& s) { s.counter = 6; });
+      c.modify(payer_b, [](pod_state& s) { s.counter = 7; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().payer, payer_b)
+SYSIO_TEST_END
+
+/// seed_if_absent supplies defaults for reading WITHOUT owing a write -- the property that lets a
+/// contract materialize defaults in its constructor and still serve read-only queries.
+SYSIO_TEST_BEGIN(cached_seed_if_absent_does_not_dirty)
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.seed_if_absent(pod_state{42, 7});
+      CHECK_EQUAL(c.dirty(), false)
+      CHECK_EQUAL(c.exists(), true)
+      CHECK_EQUAL(c.get().counter, 42u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+
+   // On an existing row the seed is ignored, and a later mutation writes the STORED value plus the
+   // change -- not the default.
+   counting_store::counters::seed(pod_state{5, 5});
+   {
+      counting_cache c;
+      c.seed_if_absent(pod_state{42, 7});
+      CHECK_EQUAL(c.get().counter, 5u)
+      c.modify(payer_a, [](pod_state& s) { s.counter += 1; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().val.counter, 6u)
+
+   // Seeded defaults do reach storage once something genuinely mutates.
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.seed_if_absent(pod_state{42, 7});
+      c.modify(payer_a, [](pod_state& s) { s.counter += 1; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
+   CHECK_EQUAL(counting_store::counters::get().val.counter, 43u)
+   CHECK_EQUAL(counting_store::counters::get().val.flags, 7u)
+SYSIO_TEST_END
+
+/// A reference handed out by get() must stay valid across a remove(): the row is gone but the
+/// cached object is not destroyed, so the caller's reference does not dangle.
+SYSIO_TEST_BEGIN(cached_reference_survives_remove)
+   counting_store::counters::seed(pod_state{11, 3});
+   {
+      counting_cache c;
+      const pod_state& ref = c.get();
+      c.remove();
+      CHECK_EQUAL(c.exists(), false)
+      CHECK_EQUAL(ref.counter, 11u)      // reading through the reference is still defined
+      CHECK_EQUAL(ref.flags, 3u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().removes, 1u)
 SYSIO_TEST_END
 
 // ===========================================================================
@@ -538,12 +679,12 @@ SYSIO_TEST_BEGIN(cached_global_blob_roundtrip)
    CHECK_EQUAL(blob_global(test_code).get(), expected)
 SYSIO_TEST_END
 
-/// upsert() creates through the real store when the row is absent.
-SYSIO_TEST_BEGIN(cached_global_upsert_creates_row)
+/// modify_or_create() creates through the real store when the row is absent.
+SYSIO_TEST_BEGIN(cached_global_modify_or_create_creates_row)
    begin_kv_case();
    {
       pod_cached c(test_code);
-      c.upsert(payer_a, pod_state{9, 9}, [](pod_state& s) { s.counter += 1; });
+      c.modify_or_create(payer_a, pod_state{9, 9}, [](pod_state& s) { s.counter += 1; });
       CHECK_EQUAL(mock_store().sets, 0u)
    }
    CHECK_EQUAL(mock_store().sets, 1u)
@@ -571,15 +712,48 @@ SYSIO_TEST_END
 // Group 3 -- Store conformance
 // ===========================================================================
 
+/// A stored row whose size does not match the fixed-serializable payload must be rejected outright.
+/// kv_get fills min(buffer, stored) bytes but reports the full stored size, so copying sizeof(T)
+/// out of a short row would splice indeterminate stack bytes into the payload -- different garbage
+/// on every node, and therefore a consensus hazard rather than a local bug.
+SYSIO_TEST_BEGIN(global_rejects_wrong_sized_row)
+   begin_kv_case();
+   {
+      pod_global g{test_code};
+      g.set(pod_state{1, 2}, payer_a);
+   }
+   // Shorten the stored row, as an incompatible earlier version of the payload would have left it.
+   for (auto& row : mock_store().rows) row.second.resize(row.second.size() - 1);
+
+   CHECK_ASSERT("kv::global: stored value size does not match the fixed-serializable payload", ([]() {
+      pod_global g{test_code};
+      pod_state  out;
+      (void)g.try_get(out);
+   }))
+
+   // The cached wrapper loads through the same path, so it inherits the rejection.
+   CHECK_ASSERT("kv::global: stored value size does not match the fixed-serializable payload", ([]() {
+      pod_cached c{test_code};
+      (void)c.exists();
+   }))
+SYSIO_TEST_END
+
 static_assert(std::is_same_v<pod_cached::value_type, pod_state>,
               "cached_global must expose the store's payload type");
 static_assert(!std::is_copy_constructible_v<pod_cached>,
               "cached_value must not be copyable -- two handles would own conflicting writes");
 
-// The scoped sysio::cached_kv_singleton is covered by the kv_singleton_tests WASM contract
-// instead of here: kv_singleton.hpp pulls in contracts/sysio/system.hpp, whose
-// is_feature_activated declaration conflicts with the C-API one the native tester already
-// declares, so the scoped singleton cannot be included in a native unit test at all.
+// The scoped sysio::cached_kv_singleton is exercised by kv_cached_contract, driven from
+// tests/integration/kv_cached_tests.cpp -- NOT by kv_singleton_tests, which predates this feature
+// and drives sysio::singleton.
+//
+// It is not covered here because kv_singleton is backed by kv_multi_index, whose find() needs the
+// kv_it_* iterator intrinsics on top of the four this file mocks. (Including the header natively is
+// no longer the obstacle: kv_singleton.hpp used to pull in contracts/sysio/system.hpp, whose
+// is_feature_activated declaration collides with the C-API one the native tester declares, and that
+// include has been removed as unused.) Extending the mock with a positioned iterator would bring
+// the scoped alias into this natively-run suite, which matters because the integration suite is
+// gated behind ENABLE_INTEGRATION_TESTS and does not run in CI.
 
 int main(int argc, char* argv[]) {
    bool verbose = false;
@@ -594,8 +768,8 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_modify_defers_single_write)
    SYSIO_TEST(cached_reads_see_pending_mutation)
    SYSIO_TEST(cached_set_creates_and_defers)
-   SYSIO_TEST(cached_upsert_creates_from_default)
-   SYSIO_TEST(cached_upsert_modifies_existing)
+   SYSIO_TEST(cached_modify_or_create_seeds_default)
+   SYSIO_TEST(cached_modify_or_create_mutates_existing)
    SYSIO_TEST(cached_remove_cancels_pending_write)
    SYSIO_TEST(cached_remove_defers)
    SYSIO_TEST(cached_flush_is_idempotent)
@@ -603,14 +777,19 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_modify_absent_asserts)
    SYSIO_TEST(cached_get_absent_asserts)
    SYSIO_TEST(cached_mutate_after_remove_asserts)
+   SYSIO_TEST(cached_remove_absent_is_noop)
+   SYSIO_TEST(cached_same_payer_preserves_recorded_payer)
+   SYSIO_TEST(cached_seed_if_absent_does_not_dirty)
+   SYSIO_TEST(cached_reference_survives_remove)
 
    SYSIO_TEST(cached_global_read_issues_no_write)
    SYSIO_TEST(cached_global_deferred_write_roundtrip)
    SYSIO_TEST(cached_global_set_creates_row)
    SYSIO_TEST(cached_global_remove_erases_row)
    SYSIO_TEST(cached_global_blob_roundtrip)
-   SYSIO_TEST(cached_global_upsert_creates_row)
+   SYSIO_TEST(cached_global_modify_or_create_creates_row)
    SYSIO_TEST(cached_global_sequential_handles_observe_flush)
+   SYSIO_TEST(global_rejects_wrong_sized_row)
 
    return has_failed();
 }

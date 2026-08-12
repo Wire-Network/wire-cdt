@@ -1228,6 +1228,21 @@ namespace sysio { namespace cdt {
 
          virtual bool VisitDecl(clang::Decl* decl) {
             if (const auto* d = dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
+               // kv::cached_value<Store> is a transparent wrapper: the table it stands for is the one
+               // its Store parameter describes. Unwrap to that Store, but keep the WRAPPER as the decl
+               // whose use marks the table as belonging to this contract -- the inner specialization is
+               // only ever named inside cached_value, so defined_in_contract() would reject it and a
+               // payload without [[sysio::table]] would silently lose its ABI table entry. Nothing
+               // fails at build time; it surfaces later as clio get table, SHiP, and the generated SDK
+               // types no longer seeing the table.
+               const clang::ClassTemplateSpecializationDecl* owner = d;
+               if (d->getName() == "cached_value" && d->getTemplateArgs().size() >= 1 &&
+                   d->getTemplateArgs()[0].getKind() == clang::TemplateArgument::Type) {
+                  if (const auto* store = d->getTemplateArgs()[0].getAsType().getTypePtr()->getAsCXXRecordDecl()) {
+                     if (const auto* store_spec = dyn_cast<clang::ClassTemplateSpecializationDecl>(store))
+                        d = store_spec;
+                  }
+               }
                if (d->getName() == "multi_index" || d->getName() == "singleton" ||
                    d->getName() == "kv_multi_index" || d->getName() == "table" ||
                    d->getName() == "scoped_table" || d->getName() == "global") {
@@ -1241,7 +1256,7 @@ namespace sysio { namespace cdt {
                      const auto* key_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
                      const auto* val_type = d->getTemplateArgs()[2].getAsType().getTypePtr()->getAsCXXRecordDecl();
                      auto val_decl = clang_wrapper::wrap_decl(val_type);
-                     if ((val_decl.isSysioTable() && ag.is_sysio_contract(val_decl, ag.get_contract_name())) || defined_in_contract(d)) {
+                     if ((val_decl.isSysioTable() && ag.is_sysio_contract(val_decl, ag.get_contract_name())) || defined_in_contract(owner)) {
                         auto table_name_raw = d->getTemplateArgs()[0].getAsIntegral().getLimitedValue();
 
                         // Extract secondary index info from Indices... (args[3..])
@@ -1287,7 +1302,7 @@ namespace sysio { namespace cdt {
                      // multi_index, singleton, kv_multi_index, global — arg[1] is value type
                      const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
                      auto table_decl = clang_wrapper::wrap_decl(table_type);
-                     if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(d)) {
+                     if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(owner)) {
                         const auto table_name_raw = d->getTemplateArgs()[0].getAsIntegral().getLimitedValue();
 
                         // Extract indexed_by<...> secondary indices for multi_index/kv_multi_index.

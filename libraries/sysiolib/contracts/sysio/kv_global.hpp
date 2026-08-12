@@ -99,6 +99,15 @@ public:
          char vbuf[sizeof(T)];
          int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, vbuf, sizeof(T));
          if (sz < 0) return false;
+         // kv_get fills min(buffer, stored) bytes but returns the FULL stored size, so a row that
+         // is not exactly sizeof(T) must be rejected rather than memcpy'd. Copying sizeof(T) out of
+         // a partially filled buffer would splice indeterminate stack bytes into the payload, and
+         // since each node's stack holds different garbage the resulting value -- and any write
+         // derived from it -- would differ across nodes. A size mismatch means the stored row was
+         // written by an incompatible version of this type, so trap rather than report "absent":
+         // silently treating a real row as missing invites the caller to overwrite it.
+         sysio::check(sz == static_cast<int32_t>(sizeof(T)),
+                      "kv::global: stored value size does not match the fixed-serializable payload");
          std::memcpy(&out, vbuf, sizeof(T));
       } else {
          char stack[kv_value_stack_size];
@@ -118,7 +127,16 @@ public:
       return true;
    }
 
-   /// Stores or overwrites the value.
+   /**
+    * Stores or overwrites the value.
+    *
+    * WRITES IGNORE code(). kv_get and kv_contains take a code parameter, so reads honour whatever
+    * account this handle was constructed with; kv_set and kv_erase have no such parameter and
+    * always land on the current receiver. A handle opened on a FOREIGN account is therefore
+    * read-only in practice -- calling this on one reads their row and writes your own. Nothing
+    * detects that at compile time, and a runtime guard would cost a current_receiver() host call on
+    * every write, so it is left to the caller: construct foreign-code handles for reading only.
+    */
    void set(const T& val, sysio::name payer) {
       auto k = make_key();
       if constexpr (is_fixed_serializable_v<T>) {

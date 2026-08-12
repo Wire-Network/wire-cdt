@@ -2,8 +2,12 @@
 /**
  * sysio::kv::cached_value -- write-deferring cache over a KV singleton store.
  *
- * Loads the stored value at most once, serves every read from that cache, and writes back
- * at most once -- on flush() or destruction -- and only when a mutating call actually ran.
+ * Loads the stored value at most once and serves every read from that cache. Each pending change
+ * is written back exactly once, by flush() or by destruction, and only when a mutating call
+ * actually ran -- so an action that only reads never writes. Note that flush() RE-ARMS the handle:
+ * it commits the pending change and clears it, so a later mutation owes a second write. N explicit
+ * flush/mutate cycles therefore produce N writes; leaving the commit to the destructor produces
+ * exactly one per action.
  *
  * WHY THIS EXISTS
  *
@@ -121,6 +125,15 @@ public:
 
    /**
     * Cached value. Asserts if the row is absent.
+    *
+    * Returns a REFERENCE into the cache, where kv::global::get() and kv_singleton::get() both
+    * return by value. Binding it (`const auto& s = h.get();`) therefore aliases the live cache
+    * rather than taking a snapshot: a later modify()/set()/modify_or_create() through this handle
+    * is visible through \p s. That is intentional -- copying a singleton payload on every read is
+    * what this class exists to avoid -- but it means a reference held across a mutation reports
+    * the new value, not the value that was read. Copy it if you need a snapshot. remove() keeps
+    * the cached object alive precisely so an outstanding reference never dangles.
+    *
     * @param msg assert message used when absent.
     */
    const T& get(const char* msg = "singleton does not exist") const {
@@ -136,8 +149,8 @@ public:
    }
 
    /**
-    * Mutate the value in place. Asserts if the row is absent -- use upsert() to create.
-    * The write is deferred to flush()/destruction.
+    * Mutate the value in place. Asserts if the row is absent -- use modify_or_create() to
+    * create. The write is deferred to flush()/destruction.
     *
     * @param payer account billed for the row when the change is written back.
     * @param f     callable receiving a mutable reference to the cached value.
@@ -145,22 +158,54 @@ public:
    template<typename Lambda>
    void modify(sysio::name payer, Lambda&& f) {
       load();
+      // Distinguish "never existed" from "you erased it earlier in this action". Without this the
+      // second case reports the first case's message, which sends the reader hunting for a missing
+      // row that their own remove() retired.
+      sysio::check(_pending != pending_op::erase, "singleton mutated after remove()");
       sysio::check(_present, "singleton does not exist");
       mutate(payer, std::forward<Lambda>(f));
    }
 
    /**
-    * Mutate the value in place, seeding the cache from \p def first when the row is
-    * absent. The write is deferred to flush()/destruction.
+    * Mutate the value in place, seeding the cache from \p def first when the row is absent.
+    * The write is deferred to flush()/destruction.
+    *
+    * NOT named upsert, deliberately. kv::table::upsert(payer, key, default_value, updater)
+    * stores default_value VERBATIM on the insert path and never invokes the updater there --
+    * callers pass a fully-populated default and treat the lambda as update-only. This does the
+    * opposite: \p def only seeds the cache and \p f runs in every case, so a blank default plus
+    * a lambda that fills it in is the idiomatic call. Two functions in sysio::kv with one name
+    * and opposite insert semantics would be applied interchangeably by mistake, and the
+    * mistake is silent -- the row is written either way, just with different contents.
     */
    template<typename Lambda>
-   void upsert(sysio::name payer, const T& def, Lambda&& f) {
+   void modify_or_create(sysio::name payer, const T& def, Lambda&& f) {
       load();
+      // Checked BEFORE seeding: on the erase path this call is rejected, and it must not leave the
+      // handle holding a seeded value it never gets to write.
+      sysio::check(_pending != pending_op::erase, "singleton mutated after remove()");
       if (!_present) {
          _cache   = def;
          _present = true;
       }
       mutate(payer, std::forward<Lambda>(f));
+   }
+
+   /**
+    * Materialize \p def into the cache when the row is absent, WITHOUT owing a write.
+    *
+    * This is the safe form of "give me defaults on a chain where nobody has written the row yet".
+    * Seeding through set()/modify_or_create() would mark the handle dirty, so every action --
+    * including a pure query -- would flush a kv_set and be refused inside a read-only transaction,
+    * which is the exact failure this class exists to prevent. After seeding, reads see \p def and
+    * the defaults reach storage only when an action genuinely mutates something.
+    */
+   void seed_if_absent(const T& def) {
+      load();
+      if (!_present) {
+         _cache   = def;
+         _present = true;
+      }
    }
 
    /// Replace the value outright. Creates the row if absent. Deferred.
@@ -172,11 +217,24 @@ public:
       _pending = pending_op::write;
    }
 
-   /// Erase the row, discarding any pending write. Deferred.
+   /**
+    * Erase the row, discarding any pending write. Deferred.
+    *
+    * Probes the store first so that erasing a row that is not there costs nothing and stays legal
+    * inside a read-only transaction. Without the probe, both backing stores short-circuit an erase
+    * of an absent row at flush time, so whether this action issued a write -- and therefore whether
+    * it was legal read-only -- would depend on chain data rather than on the code.
+    *
+    * The cached object is deliberately NOT destroyed: _present already records the row as gone, and
+    * keeping it alive means a reference handed out by an earlier get() never dangles.
+    */
    void remove() {
-      _loaded  = true;
+      load();
+      if (!_present) {
+         _pending = pending_op::none;
+         return;
+      }
       _present = false;
-      _cache.reset();
       _pending = pending_op::erase;
    }
 
@@ -198,12 +256,21 @@ public:
    }
 
 private:
-   /// Shared tail of modify()/upsert(): apply \p f and record the debt.
+   /// Shared tail of modify()/modify_or_create(): apply \p f and record the debt.
    template<typename Lambda>
    void mutate(sysio::name payer, Lambda&& f) {
       sysio::check(_pending != pending_op::erase, "singleton mutated after remove()");
       f(*_cache);
-      _payer   = payer;
+      // Re-checked AFTER f(): the callback holds a reference to this handle's cache and may call
+      // remove() through it. Recording a write here would convert that erase back into a store of
+      // the value the caller just retired, and the caller would get no diagnostic.
+      sysio::check(_pending != pending_op::erase, "singleton removed from inside a mutation callback");
+      // A default-constructed name is kv::same_payer -- "bill whoever already owns the row". It must
+      // not overwrite a real payer recorded earlier in this action: the deferred write coalesces
+      // every mutation into one kv_set, and the host rejects payer 0 when that kv_set creates the
+      // row. Uncached, the create and the update were separate writes and only the update could
+      // legally carry same_payer.
+      if (payer.value != 0) _payer = payer;
       _pending = pending_op::write;
    }
 

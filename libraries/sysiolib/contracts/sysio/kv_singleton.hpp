@@ -1,7 +1,10 @@
 #pragma once
 #include "kv_multi_index.hpp"
 #include "kv_cached.hpp"
-#include "system.hpp"
+// Deliberately does NOT include system.hpp: nothing here (nor in kv_multi_index.hpp or
+// kv_table.hpp) uses any symbol it declares, and its is_feature_activated declaration collides
+// with the C-API one, which made this header unusable from a native unit test that also includes
+// the C API -- so the scoped alias below could not be covered by the natively-run suite.
 
 namespace sysio {
 
@@ -39,8 +42,12 @@ namespace sysio {
             return itr->value;
          }
 
-         /// Single lookup: returns true and populates \p out when the row exists.
-         /// Present so generic wrappers (kv::cached_value) can load in one probe.
+         /// Returns true and populates \p out when the row exists, in one call.
+         ///
+         /// One CALL, not one intrinsic: this goes through kv_multi_index::find, which costs
+         /// several billed host calls on the row-exists path. It exists so kv::cached_value has a
+         /// non-asserting load that does not pay exists()-then-get() on top of that, not because it
+         /// is cheap. (kv::global::try_get genuinely is a single kv_get.)
          bool try_get( T& out ) const {
             auto itr = _t.find( pk_value );
             if( itr == _t.end() ) return false;
