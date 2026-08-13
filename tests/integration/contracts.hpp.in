@@ -64,6 +64,9 @@ namespace sysio::testing {
       static std::vector<uint8_t> kv_global_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_global_tests.wasm"); }
       static std::vector<char>    kv_global_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_global_tests.abi"); }
 
+      static std::vector<uint8_t> kv_cached_contract_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_cached_contract.wasm"); }
+      static std::vector<char>    kv_cached_contract_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/kv_cached_contract.abi"); }
+
       static std::vector<uint8_t> hash_id_tests_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/hash_id_tests.wasm"); }
       static std::vector<char>    hash_id_tests_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/hash_id_tests.abi"); }
    };
