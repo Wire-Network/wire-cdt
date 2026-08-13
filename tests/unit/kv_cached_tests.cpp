@@ -389,6 +389,39 @@ SYSIO_TEST_BEGIN(cached_remove_defers)
    CHECK_EQUAL(counting_store::counters::get().removes, 1u)
 SYSIO_TEST_END
 
+/// remove() is idempotent. The second call finds the row already absent per the cache -- absent
+/// BECAUSE of the first remove() -- and must keep the erase it owes instead of reading that state
+/// as "nothing was ever here" and cancelling it, which would leave the stored row untouched while
+/// the handle went on reporting it gone.
+SYSIO_TEST_BEGIN(cached_remove_is_idempotent)
+   counting_store::counters::seed(pod_state{4, 5});
+   {
+      counting_cache c;
+      c.remove();
+      c.remove();
+      CHECK_EQUAL(c.dirty(), true)
+      CHECK_EQUAL(c.exists(), false)
+      CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().removes, 1u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+
+   // Same rule when the first remove() also had a pending write to discard: the write stays
+   // cancelled and the erase still survives the second call.
+   counting_store::counters::seed(pod_state{6, 7});
+   {
+      counting_cache c;
+      c.modify(payer_a, [](pod_state& s) { s.counter = 999; });
+      c.remove();
+      c.remove();
+      CHECK_EQUAL(c.dirty(), true)
+   }
+   CHECK_EQUAL(counting_store::counters::get().removes, 1u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+SYSIO_TEST_END
+
 /// flush() applies the change once; a second flush and the destructor must not repeat it.
 SYSIO_TEST_BEGIN(cached_flush_is_idempotent)
    counting_store::counters::seed(pod_state{2, 2});
@@ -683,6 +716,22 @@ SYSIO_TEST_BEGIN(cached_global_remove_erases_row)
    CHECK_EQUAL(pod_global(test_code).exists(), false)
 SYSIO_TEST_END
 
+/// The double-remove case driven through the real kv::global and the mocked host. This is the
+/// sharper of the two: it asserts the row is actually gone from storage rather than merely reported
+/// gone by the handle, which is exactly what a dropped erase would get wrong.
+SYSIO_TEST_BEGIN(cached_global_double_remove_erases_row)
+   begin_kv_case();
+   pod_global(test_code).set(pod_state{3, 4}, payer_a);
+   {
+      pod_cached c(test_code);
+      c.remove();
+      c.remove();
+      CHECK_EQUAL(mock_store().erases, 0u)
+   }
+   CHECK_EQUAL(mock_store().erases, 1u)
+   CHECK_EQUAL(pod_global(test_code).exists(), false)
+SYSIO_TEST_END
+
 /// The packed (non-fixed-serializable) path, including a payload big enough to force
 /// kv::global's heap re-read. Reads must still issue no write.
 SYSIO_TEST_BEGIN(cached_global_blob_roundtrip)
@@ -805,6 +854,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_modify_or_create_mutates_existing)
    SYSIO_TEST(cached_remove_cancels_pending_write)
    SYSIO_TEST(cached_remove_defers)
+   SYSIO_TEST(cached_remove_is_idempotent)
    SYSIO_TEST(cached_flush_is_idempotent)
    SYSIO_TEST(cached_modify_after_flush_writes_again)
    SYSIO_TEST(cached_modify_absent_asserts)
@@ -820,6 +870,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_global_set_creates_row)
    SYSIO_TEST(cached_global_set_then_same_payer_set_creates_row)
    SYSIO_TEST(cached_global_remove_erases_row)
+   SYSIO_TEST(cached_global_double_remove_erases_row)
    SYSIO_TEST(cached_global_blob_roundtrip)
    SYSIO_TEST(cached_global_modify_or_create_creates_row)
    SYSIO_TEST(cached_global_sequential_handles_observe_flush)

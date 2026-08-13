@@ -233,11 +233,17 @@ public:
     *
     * The cached object is deliberately NOT destroyed: _present already records the row as gone, and
     * keeping it alive means a reference handed out by an earlier get() never dangles.
+    *
+    * Idempotent: calling this twice owes the same single erase as calling it once.
     */
    void remove() {
       load();
       if (!_present) {
-         _pending = pending_op::none;
+         // Absent per the cache -- but WHY it is absent decides what is owed. An erase this handle
+         // already recorded is the reason _present is false, and cancelling it here would leave the
+         // stored row in place while the handle went on reporting it gone. Only a row that was
+         // never there discards the debt, and there the debt can only be a pending write.
+         if (_pending != pending_op::erase) _pending = pending_op::none;
          return;
       }
       _present = false;
