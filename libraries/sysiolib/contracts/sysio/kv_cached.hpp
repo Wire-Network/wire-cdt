@@ -77,6 +77,27 @@
 namespace sysio { namespace kv {
 
 /**
+ * Satisfied by a cached_value that carries NO type-level default provider.
+ *
+ * The three calls taking an explicit default are constrained on this, so on a handle carrying
+ * MakeDefault they leave overload resolution entirely rather than failing once the body
+ * instantiates. Two things follow that a body-level static_assert could not give:
+ *
+ *   - CAPABILITY DETECTION STAYS TRUTHFUL. A `requires` expression or a detection idiom reports
+ *     them uncallable, so generic code selects another branch instead of matching and then hard
+ *     failing. An assertion in the body is invisible to that question -- the member is still found.
+ *   - EXPLICIT INSTANTIATION OF A DEFAULTED SPECIALIZATION STAYS LEGAL. `template class
+ *     cached_value<Store, &provider>;` instantiates every member body, so an assertion would fire
+ *     on members nothing ever calls.
+ *
+ * The concept's NAME is what the diagnostic carries, since a constraint cannot phrase its own
+ * message: clang reports `&provider does not satisfy 'no_default_provider'` and points at the
+ * declaration, whose doc comment names the replacement call.
+ */
+template<auto Provider>
+concept no_default_provider = (Provider == nullptr);
+
+/**
  * Write-deferring cache over a singleton-shaped KV store.
  *
  * @tparam Store       backing store satisfying the requirements documented above.
@@ -107,12 +128,11 @@ namespace sysio { namespace kv {
  *     one. It owes the store nothing when no row was ever written.
  *
  * WHAT DEFAULTS TAKE AWAY. The three calls that accept an explicit default -- get_or_default(),
- * modify_or_create() and seed_if_absent() -- are ILL-FORMED on a handle carrying MakeDefault, and
- * say so through a static_assert naming the replacement. Each asks "what should this read as when
- * absent", which is the question MakeDefault has already answered on the type. Accepting both would
- * let one singleton hold two notions of what an unwritten row means, and the argument would lose
- * SILENTLY: the caller's default is simply discarded, and the resulting value is wrong rather than
- * rejected. A compile error is the only outcome that cannot be missed.
+ * modify_or_create() and seed_if_absent() -- are CONSTRAINED AWAY on a handle carrying MakeDefault
+ * (see the no_default_provider concept). Each asks "what should this read as when absent", which is
+ * the question MakeDefault has already answered on the type. Accepting both would let one singleton
+ * hold two notions of what an unwritten row means, and the argument would lose SILENTLY: the
+ * caller's default is simply discarded, and the resulting value is wrong rather than rejected.
  *
  * Handles without defaults (MakeDefault = nullptr, the default) are entirely unaffected: exists()
  * keeps meaning "a row is stored", get() still asserts when absent, and all three calls above
@@ -200,13 +220,10 @@ public:
 
    /// Cached value, or \p def when absent. Never creates the row and never dirties.
    ///
-   /// Unavailable on a handle carrying MakeDefault: there is no absent case left for \p def to
-   /// answer, so every call would return the type's default and discard the argument in silence.
-   T get_or_default(const T& def) const {
-      static_assert(MakeDefault == nullptr,
-                    "get_or_default() is unavailable on a cached_value carrying MakeDefault: get() "
-                    "already returns the type's default for an unwritten row, so this argument "
-                    "could only be discarded. Call get().");
+   /// CONSTRAINED AWAY on a handle carrying MakeDefault -- **call get() instead**: there is no
+   /// absent case left for \p def to answer, so every call would return the type's default and
+   /// discard the argument in silence.
+   T get_or_default(const T& def) const requires no_default_provider<MakeDefault> {
       load();
       return _present ? *_cache : def;
    }
@@ -241,16 +258,14 @@ public:
     * and opposite insert semantics would be applied interchangeably by mistake, and the
     * mistake is silent -- the row is written either way, just with different contents.
     *
-    * Unavailable on a handle carrying MakeDefault: the absent case \p def exists to seed cannot
-    * arise there, so \p def would be dropped and the mutation would run on the type's default
-    * instead. modify() is the whole of what this call still means on such a handle.
+    * CONSTRAINED AWAY on a handle carrying MakeDefault -- **call modify() instead**: the absent
+    * case \p def exists to seed cannot arise there, so \p def would be dropped and the mutation
+    * would run on the type's default. modify() is the whole of what this call still means.
     */
    template<typename Lambda>
-   void modify_or_create(sysio::name payer, const T& def, Lambda&& f) {
-      static_assert(MakeDefault == nullptr,
-                    "modify_or_create() is unavailable on a cached_value carrying MakeDefault: the "
-                    "type already defines what an unwritten row reads as, leaving no absent case "
-                    "for this default to seed. Call modify().");
+   void modify_or_create(sysio::name payer, const T& def, Lambda&& f)
+      requires no_default_provider<MakeDefault>
+   {
       load();
       // Checked BEFORE seeding: on the removed path this call is rejected, and it must not leave
       // the handle holding a seeded value it never gets to write.
@@ -271,14 +286,11 @@ public:
     * which is the exact failure this class exists to prevent. After seeding, reads see \p def and
     * the defaults reach storage only when an action genuinely mutates something.
     *
-    * Unavailable on a handle carrying MakeDefault: load() already seeds from the provider on the
-    * same terms -- present, clean, no write owed -- so this call could only be a no-op.
+    * CONSTRAINED AWAY on a handle carrying MakeDefault -- **delete the call**: load() already
+    * seeds from the provider on the same terms (present, clean, no write owed), so this could
+    * only be a no-op.
     */
-   void seed_if_absent(const T& def) {
-      static_assert(MakeDefault == nullptr,
-                    "seed_if_absent() is unavailable on a cached_value carrying MakeDefault: load() "
-                    "already materializes the type's default without owing a write, so this call "
-                    "would do nothing. Delete it.");
+   void seed_if_absent(const T& def) requires no_default_provider<MakeDefault> {
       load();
       if (!_present) {
          _cache   = def;
@@ -363,8 +375,22 @@ public:
    /// True when a change is owed to the store.
    bool dirty() const { return _pending != pending_op::none; }
 
-   /// Apply the pending change, if any. Idempotent.
+   /**
+    * Apply the pending change, if any. Idempotent.
+    *
+    * Refused while a mutation callback is running. Committing there means committing a decision the
+    * enclosing mutate() has not finished making, and it defeats the two invariants that surround it:
+    * a callback that remove()s and then flushes would commit the erase, spend the removal marker,
+    * and let the outer mutation record a fresh write -- erasing the row and immediately recreating
+    * it, past a guard written to catch exactly that. A callback that dirties the handle and then
+    * flushes gets two writes out of one mutation instead of the single coalesced write this class
+    * exists to produce. Neither has a legitimate use: the callback holds a reference into a cache
+    * that is mid-change, so nothing it could commit is a state the caller asked to persist.
+    *
+    * Re-arming after a TOP-LEVEL flush is unaffected and remains the documented behaviour.
+    */
    void flush() {
+      sysio::check(_mutating == 0, "singleton flushed from inside a mutation callback");
       const auto op = _pending;
       // Cleared before the store call: a rejected write aborts the transaction anyway, so
       // there is no state to retry, and this keeps a manual flush() followed by the
@@ -387,7 +413,12 @@ private:
    template<typename Lambda>
    void mutate(sysio::name payer, Lambda&& f) {
       sysio::check(!_removed, "singleton mutated after remove()");
+      // Marks the mutation in flight for the duration of the callback, so flush() can refuse to
+      // commit a decision this call has not finished making. Counted rather than a flag so a
+      // nested modify() through the same handle does not clear the outer one's mark on return.
+      ++_mutating;
       f(*_cache);
+      --_mutating;
       // Re-checked AFTER f(): the callback holds a reference to this handle's cache and may call
       // remove() through it. Recording a write here would resurrect the value the caller just
       // retired, and the caller would get no diagnostic.
@@ -468,6 +499,9 @@ private:
    /// the same as owing an erase: removing a row that was never written owes the store nothing.
    /// Every "was this removed" guard reads this; _pending answers only "what does the store owe".
    bool                     _removed = false;
+   /// Nesting depth of mutate(): non-zero exactly while a mutation callback is running, which is
+   /// the window in which flush() must not commit.
+   uint8_t                  _mutating = 0;
    mutable row_state        _row     = row_state::unread;
    pending_op               _pending = pending_op::none;
 };

@@ -161,6 +161,24 @@ struct default_probe {
 /// Same store, but the type carries defaults. Contrast with counting_cache, which does not.
 using defaulted_cache = sysio::kv::cached_value<counting_store, &default_probe::make>;
 
+/// Capability detection must be TRUTHFUL: the three default-taking calls report uncallable on a
+/// handle carrying MakeDefault and callable without one. A body-level assertion cannot express
+/// this -- the member is still found, so generic code matches the branch and only then hard-fails.
+template<typename C>
+concept takes_get_or_default = requires(const C& c, const pod_state& d) { c.get_or_default(d); };
+template<typename C>
+concept takes_seed_if_absent = requires(C& c, const pod_state& d) { c.seed_if_absent(d); };
+template<typename C>
+concept takes_modify_or_create =
+   requires(C& c, const pod_state& d) { c.modify_or_create(sysio::name{}, d, [](pod_state&) {}); };
+
+static_assert(takes_get_or_default<counting_cache>);
+static_assert(takes_seed_if_absent<counting_cache>);
+static_assert(takes_modify_or_create<counting_cache>);
+static_assert(!takes_get_or_default<defaulted_cache>);
+static_assert(!takes_seed_if_absent<defaulted_cache>);
+static_assert(!takes_modify_or_create<defaulted_cache>);
+
 // ---------------------------------------------------------------------------
 // Mocked KV intrinsics -- faithful stand-in for the chain's KV store
 // ---------------------------------------------------------------------------
@@ -274,6 +292,15 @@ using blob_global  = sysio::kv::global<"blob"_n, blob_state>;
 using blob_cached  = sysio::kv::cached_global<"blob"_n, blob_state>;
 
 } // namespace
+
+/// Explicit instantiation of a DEFAULTED specialization must compile.
+///
+/// It instantiates every member body, so a restriction expressed as an assertion inside
+/// get_or_default()/seed_if_absent() would fire here even though nothing calls them -- making an
+/// otherwise usable specialization impossible to instantiate explicitly. Constrained members are
+/// simply not instantiated with the class, so this line is the pin for that. It sits at global
+/// scope because an explicit instantiation must appear in a namespace enclosing its template.
+template class sysio::kv::cached_value<counting_store, &default_probe::make>;
 
 // ===========================================================================
 // Group 1 -- generic cached_value semantics over counting_store
@@ -714,6 +741,51 @@ SYSIO_TEST_BEGIN(cached_mutate_after_remove_asserts)
    }))
    CHECK_EQUAL(counting_store::counters::get().sets, 0u)
    CHECK_EQUAL(counting_store::counters::get().present, false)
+SYSIO_TEST_END
+
+/// flush() inside a mutation callback is refused: it would commit a decision the enclosing
+/// mutate() has not finished making.
+///
+/// The sharp case is remove-then-flush. Unguarded, the erase commits, the re-arm spends the
+/// removal marker, and the outer mutation then records a fresh write -- so the row is erased and
+/// immediately recreated, straight past the guard written to catch a callback removal. (This one
+/// long predates defaults: the old guard read the pending erase, which flush() clears just the
+/// same.) The second case needs no remove at all -- a callback that dirties the handle and flushes
+/// gets two writes out of one mutation, where the class promises a single coalesced write.
+SYSIO_TEST_BEGIN(cached_flush_inside_mutation_callback_asserts)
+   counting_store::counters::seed(pod_state{7, 0});
+   CHECK_ASSERT("singleton flushed from inside a mutation callback", ([]() {
+      counting_cache c;
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); c.flush(); });
+   }))
+   // Refused before anything reached the store, so the seeded row is untouched -- not erased, and
+   // certainly not erased and rewritten.
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, true)
+   CHECK_EQUAL(counting_store::counters::get().val.counter, 7u)
+
+   // The defaulted/absent spelling, which materialized a row the callback had removed.
+   counting_store::counters::reset();
+   default_probe::reset();
+   CHECK_ASSERT("singleton flushed from inside a mutation callback", ([]() {
+      defaulted_cache c;
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); c.flush(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+
+   // No remove anywhere: one mutation, one write -- so the mid-callback commit is refused here too.
+   counting_store::counters::seed(pod_state{1, 0});
+   CHECK_ASSERT("singleton flushed from inside a mutation callback", ([]() {
+      counting_cache c;
+      c.modify(payer_a, [&c](pod_state& s) {
+         s.counter = 2;
+         c.set(pod_state{5, 5}, payer_a);
+         c.flush();
+      });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
 SYSIO_TEST_END
 
 /// set() then remove() RESOLVES whether a row is stored rather than assuming either way.
@@ -1160,6 +1232,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_modify_absent_asserts)
    SYSIO_TEST(cached_get_absent_asserts)
    SYSIO_TEST(cached_mutate_after_remove_asserts)
+   SYSIO_TEST(cached_flush_inside_mutation_callback_asserts)
    SYSIO_TEST(cached_set_then_remove_resolves_row_presence)
    SYSIO_TEST(cached_remove_absent_is_noop)
    SYSIO_TEST(cached_same_payer_preserves_recorded_payer)
