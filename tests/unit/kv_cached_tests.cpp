@@ -277,6 +277,22 @@ constexpr auto test_code = "testacct"_n;
 constexpr auto payer_a   = "payerone"_n;
 constexpr auto payer_b   = "payertwo"_n;
 
+/// Nests modify() \p depth levels deep through one handle, then removes and flushes at the
+/// innermost frame -- the call flush()'s in-flight guard must refuse however deep it is.
+struct nested_mutation {
+   counting_cache& cache;
+   int             depth;
+
+   void operator()(pod_state& state) {
+      if (depth > 0) cache.modify(payer_a, nested_mutation{cache, depth - 1});
+      else {
+         state.counter = 9;
+         cache.remove();
+         cache.flush();
+      }
+   }
+};
+
 /// Reset the mock store and install the intrinsics for a case.
 void begin_kv_case() {
    mock_store().reset(test_code.value);
@@ -788,6 +804,29 @@ SYSIO_TEST_BEGIN(cached_flush_inside_mutation_callback_asserts)
    CHECK_EQUAL(counting_store::counters::get().sets, 0u)
 SYSIO_TEST_END
 
+/// The mutation-in-flight mark must survive arbitrarily deep nesting.
+///
+/// It was a uint8_t depth counter, so every 256th nested modify() wrapped it back to zero and let
+/// the innermost flush() through -- committing the erase, after which the unwinding mutations each
+/// recorded a write and recreated the row. Measured on the counter version: depths 256 and 512 came
+/// out `removes=1 sets=1`, every other depth asserted. mutate() now saves and restores the previous
+/// value, so nesting is recorded only by the call stack and there is no width left to overflow.
+SYSIO_TEST_BEGIN(cached_flush_guard_survives_deep_nesting)
+   // 1 for the ordinary case, then the wrap points of the counter this replaced and their neighbours.
+   for (const int depth : {0, 254, 255, 256, 511, 512}) {
+      counting_store::counters::seed(pod_state{7, 0});
+      CHECK_ASSERT("singleton flushed from inside a mutation callback", ([depth]() {
+         counting_cache c;
+         c.modify(payer_a, nested_mutation{c, depth});
+      }))
+      // Refused before anything reached the store, at every depth.
+      CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+      CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+      CHECK_EQUAL(counting_store::counters::get().present, true)
+      CHECK_EQUAL(counting_store::counters::get().val.counter, 7u)
+   }
+SYSIO_TEST_END
+
 /// set() then remove() RESOLVES whether a row is stored rather than assuming either way.
 ///
 /// set() deliberately skips the store read, so presence is genuinely unknown at the remove, and
@@ -1233,6 +1272,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_get_absent_asserts)
    SYSIO_TEST(cached_mutate_after_remove_asserts)
    SYSIO_TEST(cached_flush_inside_mutation_callback_asserts)
+   SYSIO_TEST(cached_flush_guard_survives_deep_nesting)
    SYSIO_TEST(cached_set_then_remove_resolves_row_presence)
    SYSIO_TEST(cached_remove_absent_is_noop)
    SYSIO_TEST(cached_same_payer_preserves_recorded_payer)

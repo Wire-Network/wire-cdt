@@ -390,7 +390,7 @@ public:
     * Re-arming after a TOP-LEVEL flush is unaffected and remains the documented behaviour.
     */
    void flush() {
-      sysio::check(_mutating == 0, "singleton flushed from inside a mutation callback");
+      sysio::check(!_mutating, "singleton flushed from inside a mutation callback");
       const auto op = _pending;
       // Cleared before the store call: a rejected write aborts the transaction anyway, so
       // there is no state to retry, and this keeps a manual flush() followed by the
@@ -414,11 +414,16 @@ private:
    void mutate(sysio::name payer, Lambda&& f) {
       sysio::check(!_removed, "singleton mutated after remove()");
       // Marks the mutation in flight for the duration of the callback, so flush() can refuse to
-      // commit a decision this call has not finished making. Counted rather than a flag so a
-      // nested modify() through the same handle does not clear the outer one's mark on return.
-      ++_mutating;
+      // commit a decision this call has not finished making. RESTORED rather than cleared, so a
+      // nested modify() through the same handle leaves the outer frame's mark standing on return.
+      //
+      // Restoring, rather than counting depth in a member, is what makes the mark impossible to
+      // lose: nesting is already recorded by the call stack, and a fixed-width counter beside it
+      // is a second representation of the same thing that can disagree by wrapping.
+      const bool enclosing_mutation = _mutating;
+      _mutating = true;
       f(*_cache);
-      --_mutating;
+      _mutating = enclosing_mutation;
       // Re-checked AFTER f(): the callback holds a reference to this handle's cache and may call
       // remove() through it. Recording a write here would resurrect the value the caller just
       // retired, and the caller would get no diagnostic.
@@ -499,9 +504,10 @@ private:
    /// the same as owing an erase: removing a row that was never written owes the store nothing.
    /// Every "was this removed" guard reads this; _pending answers only "what does the store owe".
    bool                     _removed = false;
-   /// Nesting depth of mutate(): non-zero exactly while a mutation callback is running, which is
-   /// the window in which flush() must not commit.
-   uint8_t                  _mutating = 0;
+   /// Is a mutation in flight -- true exactly while a mutation callback is running, which is the
+   /// window in which flush() must not commit. Nesting is handled by save/restore in mutate()
+   /// rather than by a depth count, so there is no width for deep nesting to overflow.
+   bool                     _mutating = false;
    mutable row_state        _row     = row_state::unread;
    pending_op               _pending = pending_op::none;
 };
