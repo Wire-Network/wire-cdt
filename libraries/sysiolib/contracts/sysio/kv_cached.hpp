@@ -134,15 +134,21 @@ private:
       erase    ///< the row must be erased
    };
 
-   /// Whether the STORE holds a row, as far as this handle knows.
+   /// What this handle knows about the STORE: whether it has consulted it, and what it found.
+   ///
+   /// One field rather than a "have we read" flag beside a presence flag, because the two are the
+   /// same axis and only some of their combinations mean anything -- and the pair that DOES mean
+   /// something, cache-seeded-but-presence-unknown, is precisely where a set() followed by a
+   /// remove() decides whether to erase. Naming it leaves nothing to infer from two fields agreeing.
    ///
    /// A separate question from both _present ("is a value available", which defaults make
    /// unconditionally true) and _pending ("what is owed", which is `none` when the removed row was
    /// never written). Only `present` justifies an erase.
    enum class row_state : uint8_t {
-      unknown,   ///< set() skipped the store read; resolve_row_state() settles it on demand
-      present,   ///< a row is stored
-      absent     ///< no row is stored
+      unread,       ///< the store has not been consulted; load() will, and populates the cache
+      unresolved,   ///< set() seeded the cache without reading; resolve_row_state() settles it
+      present,      ///< a row is stored
+      absent        ///< no row is stored
    };
 
 public:
@@ -288,7 +294,10 @@ public:
     * record_payer().
     */
    void set(const T& val, sysio::name payer) {
-      _loaded  = true;
+      // Seeds the cache outright, so load() has nothing left to do -- but writing without reading
+      // leaves presence unknown. A load() that already settled it is NOT forgotten: that would cost
+      // a later remove() a probe for something this handle has already been told.
+      if (_row == row_state::unread) _row = row_state::unresolved;
       _present = true;
       _removed = false;   // this value supersedes any removal recorded earlier in the action
       _cache   = val;
@@ -415,8 +424,7 @@ private:
    /// singleton performs no store read and never calls the provider. The `if constexpr` means a
    /// handle without defaults emits none of this.
    void load() const {
-      if (_loaded) return;
-      _loaded = true;
+      if (_row != row_state::unread) return;
       T val;
       if (_store.try_get(val)) {
          _cache   = std::move(val);
@@ -443,7 +451,7 @@ private:
    /// what matters: resolving cannot make an otherwise-legal action illegal. The value is
    /// discarded -- _cache already holds what set() put there.
    void resolve_row_state() const {
-      if (_row != row_state::unknown) return;
+      if (_row != row_state::unresolved) return;
       T scratch;
       _row = _store.try_get(scratch) ? row_state::present : row_state::absent;
    }
@@ -451,13 +459,16 @@ private:
    Store                    _store;
    mutable std::optional<T> _cache;
    sysio::name              _payer{};
-   mutable bool             _loaded  = false;   ///< has the store been consulted yet
-   mutable bool             _present = false;   ///< is a value available, per cache
+   /// Is a value available in the cache. Kept apart from _removed rather than folded into _row,
+   /// because the two are independent: all four combinations occur, and which of them a removal
+   /// lands in depends on MakeDefault -- a COMPILE-time property that has no business appearing as
+   /// runtime state. A removed handle without defaults has no value; with them it has the default.
+   mutable bool             _present = false;
    /// Has remove() been called since the last set()/flush() -- the LOGICAL removal, which is not
    /// the same as owing an erase: removing a row that was never written owes the store nothing.
    /// Every "was this removed" guard reads this; _pending answers only "what does the store owe".
    bool                     _removed = false;
-   mutable row_state        _row     = row_state::unknown;
+   mutable row_state        _row     = row_state::unread;
    pending_op               _pending = pending_op::none;
 };
 
