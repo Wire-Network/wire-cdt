@@ -138,6 +138,47 @@ struct counting_store {
 
 using counting_cache = sysio::kv::cached_value<counting_store>;
 
+/// Default provider for the defaults cases.
+///
+/// Counts its invocations, because the property under test is not only "an absent row reads as the
+/// default" but "the provider is consulted lazily and at most once" -- that is what keeps an action
+/// which never touches the singleton from paying for it being a member.
+struct default_probe {
+   static constexpr pod_state value{111, 222};
+
+   static uint32_t& calls() {
+      static uint32_t n = 0;
+      return n;
+   }
+   static void reset() { calls() = 0; }
+
+   static pod_state make() {
+      ++calls();
+      return value;
+   }
+};
+
+/// Same store, but the type carries defaults. Contrast with counting_cache, which does not.
+using defaulted_cache = sysio::kv::cached_value<counting_store, &default_probe::make>;
+
+/// Capability detection must be TRUTHFUL: the three default-taking calls report uncallable on a
+/// handle carrying MakeDefault and callable without one. A body-level assertion cannot express
+/// this -- the member is still found, so generic code matches the branch and only then hard-fails.
+template<typename C>
+concept takes_get_or_default = requires(const C& c, const pod_state& d) { c.get_or_default(d); };
+template<typename C>
+concept takes_seed_if_absent = requires(C& c, const pod_state& d) { c.seed_if_absent(d); };
+template<typename C>
+concept takes_modify_or_create =
+   requires(C& c, const pod_state& d) { c.modify_or_create(sysio::name{}, d, [](pod_state&) {}); };
+
+static_assert(takes_get_or_default<counting_cache>);
+static_assert(takes_seed_if_absent<counting_cache>);
+static_assert(takes_modify_or_create<counting_cache>);
+static_assert(!takes_get_or_default<defaulted_cache>);
+static_assert(!takes_seed_if_absent<defaulted_cache>);
+static_assert(!takes_modify_or_create<defaulted_cache>);
+
 // ---------------------------------------------------------------------------
 // Mocked KV intrinsics -- faithful stand-in for the chain's KV store
 // ---------------------------------------------------------------------------
@@ -236,6 +277,22 @@ constexpr auto test_code = "testacct"_n;
 constexpr auto payer_a   = "payerone"_n;
 constexpr auto payer_b   = "payertwo"_n;
 
+/// Nests modify() \p depth levels deep through one handle, then removes and flushes at the
+/// innermost frame -- the call flush()'s in-flight guard must refuse however deep it is.
+struct nested_mutation {
+   counting_cache& cache;
+   int             depth;
+
+   void operator()(pod_state& state) {
+      if (depth > 0) cache.modify(payer_a, nested_mutation{cache, depth - 1});
+      else {
+         state.counter = 9;
+         cache.remove();
+         cache.flush();
+      }
+   }
+};
+
 /// Reset the mock store and install the intrinsics for a case.
 void begin_kv_case() {
    mock_store().reset(test_code.value);
@@ -244,10 +301,22 @@ void begin_kv_case() {
 
 using pod_global   = sysio::kv::global<"cfg"_n, pod_state>;
 using pod_cached   = sysio::kv::cached_global<"cfg"_n, pod_state>;
+/// Same table, but the type carries defaults -- for the remove() cases, where what a handle owes
+/// the store differs between the two.
+using pod_cached_defaulted = sysio::kv::cached_global<"cfg"_n, pod_state, &default_probe::make>;
 using blob_global  = sysio::kv::global<"blob"_n, blob_state>;
 using blob_cached  = sysio::kv::cached_global<"blob"_n, blob_state>;
 
 } // namespace
+
+/// Explicit instantiation of a DEFAULTED specialization must compile.
+///
+/// It instantiates every member body, so a restriction expressed as an assertion inside
+/// get_or_default()/seed_if_absent() would fire here even though nothing calls them -- making an
+/// otherwise usable specialization impossible to instantiate explicitly. Constrained members are
+/// simply not instantiated with the class, so this line is the pin for that. It sits at global
+/// scope because an explicit instantiation must appear in a namespace enclosing its template.
+template class sysio::kv::cached_value<counting_store, &default_probe::make>;
 
 // ===========================================================================
 // Group 1 -- generic cached_value semantics over counting_store
@@ -294,6 +363,160 @@ SYSIO_TEST_BEGIN(cached_absent_row_reads_without_writing)
       CHECK_EQUAL(counting_store::counters::get().gets, 1u)
    }
    CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// A handle constructed with defaults costs nothing until something asks for the value.
+///
+/// This is the reason defaults belong on the handle rather than in a seed call: seeding from a
+/// contract constructor reads the store on EVERY action, and an eagerly evaluated default argument
+/// also runs whatever host calls the default itself needs -- on actions that never look at the
+/// singleton. Here an untouched handle must issue no store read and never call the provider.
+SYSIO_TEST_BEGIN(cached_defaults_cost_nothing_until_used)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      // deliberately no get()/exists()/modify()
+   }
+   CHECK_EQUAL(counting_store::counters::get().gets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(default_probe::calls(), 0u)
+SYSIO_TEST_END
+
+/// An absent row reads as the default, and doing so owes NO write.
+///
+/// The distinction this pins down is the one that made read-only view actions fail: seeding through
+/// set() would leave the handle dirty, so the value would be flushed from every action including a
+/// pure query. Materializing the default must leave dirty() false and produce no set at destruction.
+SYSIO_TEST_BEGIN(cached_defaults_materialize_without_owing_a_write)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.exists(), true)                    // a value is available...
+      CHECK_EQUAL(c.get(), default_probe::value)
+      CHECK_EQUAL(c.dirty(), false)                    // ...but nothing is owed
+      CHECK_EQUAL(counting_store::counters::get().gets, 1u)
+      CHECK_EQUAL(default_probe::calls(), 1u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)   // still never stored
+SYSIO_TEST_END
+
+/// A stored row wins over the default, and the provider is never called.
+SYSIO_TEST_BEGIN(cached_defaults_yield_to_a_stored_row)
+   counting_store::counters::seed(pod_state{7, 3});
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.get(), (pod_state{7, 3}))
+      CHECK_EQUAL(c.dirty(), false)
+   }
+   CHECK_EQUAL(default_probe::calls(), 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// Repeated reads consult the provider once, as load() runs once.
+SYSIO_TEST_BEGIN(cached_defaults_provider_runs_at_most_once)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      // get_or_default is ill-formed on a defaulted handle (see the static_assert in
+      // kv_cached.hpp), so exists()/get() are the read paths available here.
+      (void)c.exists();
+      (void)c.get();
+      (void)c.get();
+      (void)c.get();
+      CHECK_EQUAL(counting_store::counters::get().gets, 1u)
+      CHECK_EQUAL(default_probe::calls(), 1u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// The first genuine mutation is what persists the row, carrying defaults plus the change.
+SYSIO_TEST_BEGIN(cached_defaults_reach_storage_on_first_mutation)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      c.modify(payer_a, [](pod_state& s) { s.counter = 5; });
+      CHECK_EQUAL(c.dirty(), true)
+      CHECK_EQUAL(counting_store::counters::get().sets, 0u)   // still deferred
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
+   // counter carries the mutation; flags carries the seeded default, proving the write is not a
+   // zero-initialized struct with the change laid on top.
+   CHECK_EQUAL(counting_store::counters::get().val, (pod_state{5, default_probe::value.flags}))
+   CHECK_EQUAL(counting_store::counters::get().payer, payer_a)
+SYSIO_TEST_END
+
+/// modify() on an absent row asserts without defaults, but a defaulted handle has a value to
+/// modify -- so the two constructors genuinely differ in behaviour, not just in cost.
+SYSIO_TEST_BEGIN(cached_defaults_make_modify_legal_on_an_absent_row)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      counting_cache plain;
+      CHECK_EQUAL(plain.exists(), false)
+   }
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.exists(), true)
+      c.modify(payer_a, [](pod_state& s) { s.flags = 1; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
+SYSIO_TEST_END
+
+/// remove() on a defaulted handle whose row was never written owes the store NOTHING.
+///
+/// The trap is that exists() is true here -- the default is available -- so deciding the erase off
+/// it would send Store::remove() after a row nobody ever wrote, and leave dirty() claiming a debt
+/// that does not exist. What the erase must key on is whether a row is STORED, which is a different
+/// question the moment defaults enter. Being inert also makes the call safe inside a read-only
+/// transaction, exactly as it is on a handle without defaults.
+SYSIO_TEST_BEGIN(cached_defaults_remove_absent_owes_nothing)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.get(), default_probe::value)
+      c.remove();
+      c.remove();                                   // idempotent, and no second provider call
+      CHECK_EQUAL(c.dirty(), false)                 // nothing stored, so nothing owed
+      CHECK_EQUAL(c.exists(), true)                 // the default is still available...
+      CHECK_EQUAL(c.get(), default_probe::value)    // ...and still what reads see
+      CHECK_EQUAL(default_probe::calls(), 1u)       // load() consulted it; remove() had no need to
+   }
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+SYSIO_TEST_END
+
+/// remove() on a defaulted handle holding a STORED row erases it and resets to the default.
+///
+/// The erase is owed, because a row really is there. What differs from a handle without defaults is
+/// what the handle reads as afterwards: the type promises get() never asserts for an unwritten row,
+/// and a removed row IS unwritten, so the value returns to the default rather than the handle going
+/// absent. The provider is consulted once, by the reset.
+SYSIO_TEST_BEGIN(cached_defaults_remove_resets_a_stored_row_to_the_default)
+   counting_store::counters::seed(pod_state{7, 3});
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.get(), (pod_state{7, 3}))       // the stored row wins while it is there
+      CHECK_EQUAL(default_probe::calls(), 0u)       // ...so the provider was never needed
+      c.remove();
+      CHECK_EQUAL(c.dirty(), true)                  // the erase is owed
+      CHECK_EQUAL(c.exists(), true)                 // a value is still available
+      CHECK_EQUAL(c.get(), default_probe::value)    // reset: reads as an unwritten row does
+      CHECK_EQUAL(counting_store::counters::get().removes, 0u)   // still deferred
+   }
+   CHECK_EQUAL(counting_store::counters::get().removes, 1u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+   CHECK_EQUAL(default_probe::calls(), 1u)
 SYSIO_TEST_END
 
 /// Many mutations collapse into exactly one write, carrying the final value and last payer.
@@ -513,6 +736,129 @@ SYSIO_TEST_BEGIN(cached_mutate_after_remove_asserts)
       c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); });
    }))
    CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+
+   // The same guard with NO row stored -- the case a pending erase cannot see, because removing a
+   // row that was never written owes no erase. Both spellings below reach mutate() with the row
+   // absent, and both persisted the mutated value instead of asserting until the removal was
+   // tracked in its own flag rather than inferred from what the store was owed.
+   counting_store::counters::reset();
+   default_probe::reset();
+   CHECK_ASSERT("singleton removed from inside a mutation callback", ([]() {
+      defaulted_cache c;   // absent row, yet a value is available -- so modify() is legal
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+
+   counting_store::counters::reset();
+   CHECK_ASSERT("singleton removed from inside a mutation callback", ([]() {
+      counting_cache c;    // absent row, made present by modify_or_create's own seeding
+      c.modify_or_create(payer_a, pod_state{5, 5}, [&c](pod_state& s) { s.counter = 9; c.remove(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+SYSIO_TEST_END
+
+/// flush() inside a mutation callback is refused: it would commit a decision the enclosing
+/// mutate() has not finished making.
+///
+/// The sharp case is remove-then-flush. Unguarded, the erase commits, the re-arm spends the
+/// removal marker, and the outer mutation then records a fresh write -- so the row is erased and
+/// immediately recreated, straight past the guard written to catch a callback removal. (This one
+/// long predates defaults: the old guard read the pending erase, which flush() clears just the
+/// same.) The second case needs no remove at all -- a callback that dirties the handle and flushes
+/// gets two writes out of one mutation, where the class promises a single coalesced write.
+SYSIO_TEST_BEGIN(cached_flush_inside_mutation_callback_asserts)
+   counting_store::counters::seed(pod_state{7, 0});
+   CHECK_ASSERT("singleton flushed from inside a mutation callback", ([]() {
+      counting_cache c;
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); c.flush(); });
+   }))
+   // Refused before anything reached the store, so the seeded row is untouched -- not erased, and
+   // certainly not erased and rewritten.
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, true)
+   CHECK_EQUAL(counting_store::counters::get().val.counter, 7u)
+
+   // The defaulted/absent spelling, which materialized a row the callback had removed.
+   counting_store::counters::reset();
+   default_probe::reset();
+   CHECK_ASSERT("singleton flushed from inside a mutation callback", ([]() {
+      defaulted_cache c;
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); c.flush(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+
+   // No remove anywhere: one mutation, one write -- so the mid-callback commit is refused here too.
+   counting_store::counters::seed(pod_state{1, 0});
+   CHECK_ASSERT("singleton flushed from inside a mutation callback", ([]() {
+      counting_cache c;
+      c.modify(payer_a, [&c](pod_state& s) {
+         s.counter = 2;
+         c.set(pod_state{5, 5}, payer_a);
+         c.flush();
+      });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// The mutation-in-flight mark must survive arbitrarily deep nesting.
+///
+/// It was a uint8_t depth counter, so every 256th nested modify() wrapped it back to zero and let
+/// the innermost flush() through -- committing the erase, after which the unwinding mutations each
+/// recorded a write and recreated the row. Measured on the counter version: depths 256 and 512 came
+/// out `removes=1 sets=1`, every other depth asserted. mutate() now saves and restores the previous
+/// value, so nesting is recorded only by the call stack and there is no width left to overflow.
+SYSIO_TEST_BEGIN(cached_flush_guard_survives_deep_nesting)
+   // 1 for the ordinary case, then the wrap points of the counter this replaced and their neighbours.
+   for (const int depth : {0, 254, 255, 256, 511, 512}) {
+      counting_store::counters::seed(pod_state{7, 0});
+      CHECK_ASSERT("singleton flushed from inside a mutation callback", ([depth]() {
+         counting_cache c;
+         c.modify(payer_a, nested_mutation{c, depth});
+      }))
+      // Refused before anything reached the store, at every depth.
+      CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+      CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+      CHECK_EQUAL(counting_store::counters::get().present, true)
+      CHECK_EQUAL(counting_store::counters::get().val.counter, 7u)
+   }
+SYSIO_TEST_END
+
+/// set() then remove() RESOLVES whether a row is stored rather than assuming either way.
+///
+/// set() deliberately skips the store read, so presence is genuinely unknown at the remove, and
+/// both guesses are wrong. Assuming a row is there issues an erase for one that never existed --
+/// breaking the absent-remove no-op contract, costing a host call, and aborting outright on a store
+/// that rejects a missing-key erase. Assuming there is none is worse and silent: the row the set()
+/// was about to overwrite would survive while the handle reported it gone.
+SYSIO_TEST_BEGIN(cached_set_then_remove_resolves_row_presence)
+   // Nothing stored: no erase is owed, and resolving costs exactly one read.
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.set(pod_state{3, 9}, payer_a);
+      CHECK_EQUAL(counting_store::counters::get().gets, 0u)   // set() still consults nothing
+      c.remove();
+      CHECK_EQUAL(c.dirty(), false)
+      CHECK_EQUAL(counting_store::counters::get().gets, 1u)   // resolved, once, only here
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+
+   // A row IS stored: the blind set() is discarded and the stored row is still erased.
+   counting_store::counters::seed(pod_state{1, 2});
+   {
+      counting_cache c;
+      c.set(pod_state{3, 9}, payer_a);
+      c.remove();
+      CHECK_EQUAL(c.dirty(), true)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 1u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
 SYSIO_TEST_END
 
 /// remove() on a row that is not there owes nothing, so an action that only erases an absent
@@ -732,6 +1078,63 @@ SYSIO_TEST_BEGIN(cached_global_double_remove_erases_row)
    CHECK_EQUAL(pod_global(test_code).exists(), false)
 SYSIO_TEST_END
 
+/// The defaulted remove-absent case driven through the real kv::global and the mocked host.
+///
+/// Sharper than the counting_store form, and for a specific reason: kv::global::remove() probes with
+/// kv_contains before kv_erase, so a Store::remove() that should never have been issued is absorbed
+/// there and leaves the erase counter at zero either way. The kv_contains it costs is what makes the
+/// wrong call visible at all -- which is also the whole point about store conformance, since the
+/// documented Store contract promises no such probe and the chain's own kv_erase aborts on a missing
+/// key.
+SYSIO_TEST_BEGIN(cached_global_defaults_remove_absent_touches_no_store)
+   begin_kv_case();
+   default_probe::reset();
+   {
+      pod_cached_defaulted c(test_code);
+      CHECK_EQUAL(c.get(), default_probe::value)
+      c.remove();
+      CHECK_EQUAL(c.dirty(), false)
+   }
+   CHECK_EQUAL(mock_store().contains, 0u)     // Store::remove() was never called
+   CHECK_EQUAL(mock_store().erases, 0u)
+   CHECK_EQUAL(mock_store().sets, 0u)
+   CHECK_EQUAL(pod_global(test_code).exists(), false)
+SYSIO_TEST_END
+
+/// The set-then-remove resolution through the real kv::global, on an empty table.
+///
+/// Store::remove() must never be reached, and kv_contains is what proves it: kv::global::remove()
+/// probes before erasing, so an erase that should not have been issued is absorbed there and leaves
+/// the erase counter at zero either way.
+SYSIO_TEST_BEGIN(cached_global_set_then_remove_on_empty_table_issues_no_erase)
+   begin_kv_case();
+   {
+      pod_cached c(test_code);
+      c.set(pod_state{3, 9}, payer_a);
+      c.remove();
+      CHECK_EQUAL(c.dirty(), false)
+   }
+   CHECK_EQUAL(mock_store().contains, 0u)   // Store::remove() was never called
+   CHECK_EQUAL(mock_store().erases, 0u)
+   CHECK_EQUAL(mock_store().sets, 0u)
+SYSIO_TEST_END
+
+/// A defaulted handle still erases a row that IS stored, and reads as the default afterwards.
+SYSIO_TEST_BEGIN(cached_global_defaults_remove_erases_a_stored_row)
+   begin_kv_case();
+   pod_global(test_code).set(pod_state{11, 22}, payer_a);
+   default_probe::reset();
+   {
+      pod_cached_defaulted c(test_code);
+      CHECK_EQUAL(c.get(), (pod_state{11, 22}))
+      c.remove();
+      CHECK_EQUAL(c.get(), default_probe::value)
+      CHECK_EQUAL(mock_store().erases, 0u)          // deferred
+   }
+   CHECK_EQUAL(mock_store().erases, 1u)
+   CHECK_EQUAL(pod_global(test_code).exists(), false)
+SYSIO_TEST_END
+
 /// The packed (non-fixed-serializable) path, including a payload big enough to force
 /// kv::global's heap re-read. Reads must still issue no write.
 SYSIO_TEST_BEGIN(cached_global_blob_roundtrip)
@@ -847,6 +1250,14 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_read_never_writes)
    SYSIO_TEST(cached_load_happens_once)
    SYSIO_TEST(cached_absent_row_reads_without_writing)
+   SYSIO_TEST(cached_defaults_cost_nothing_until_used)
+   SYSIO_TEST(cached_defaults_materialize_without_owing_a_write)
+   SYSIO_TEST(cached_defaults_yield_to_a_stored_row)
+   SYSIO_TEST(cached_defaults_provider_runs_at_most_once)
+   SYSIO_TEST(cached_defaults_reach_storage_on_first_mutation)
+   SYSIO_TEST(cached_defaults_make_modify_legal_on_an_absent_row)
+   SYSIO_TEST(cached_defaults_remove_absent_owes_nothing)
+   SYSIO_TEST(cached_defaults_remove_resets_a_stored_row_to_the_default)
    SYSIO_TEST(cached_modify_defers_single_write)
    SYSIO_TEST(cached_reads_see_pending_mutation)
    SYSIO_TEST(cached_set_creates_and_defers)
@@ -860,6 +1271,9 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_modify_absent_asserts)
    SYSIO_TEST(cached_get_absent_asserts)
    SYSIO_TEST(cached_mutate_after_remove_asserts)
+   SYSIO_TEST(cached_flush_inside_mutation_callback_asserts)
+   SYSIO_TEST(cached_flush_guard_survives_deep_nesting)
+   SYSIO_TEST(cached_set_then_remove_resolves_row_presence)
    SYSIO_TEST(cached_remove_absent_is_noop)
    SYSIO_TEST(cached_same_payer_preserves_recorded_payer)
    SYSIO_TEST(cached_seed_if_absent_does_not_dirty)
@@ -871,6 +1285,9 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_global_set_then_same_payer_set_creates_row)
    SYSIO_TEST(cached_global_remove_erases_row)
    SYSIO_TEST(cached_global_double_remove_erases_row)
+   SYSIO_TEST(cached_global_defaults_remove_absent_touches_no_store)
+   SYSIO_TEST(cached_global_set_then_remove_on_empty_table_issues_no_erase)
+   SYSIO_TEST(cached_global_defaults_remove_erases_a_stored_row)
    SYSIO_TEST(cached_global_blob_roundtrip)
    SYSIO_TEST(cached_global_modify_or_create_creates_row)
    SYSIO_TEST(cached_global_sequential_handles_observe_flush)

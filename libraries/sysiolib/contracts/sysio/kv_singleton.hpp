@@ -96,7 +96,7 @@ namespace sysio {
     * destructor -- that pattern makes every action, including pure queries, fail read-only
     * execution. See kv_cached.hpp for the rationale and the deferred-write visibility rules.
     */
-   template<name::raw SingletonName, typename T>
-   using cached_kv_singleton = kv::cached_value<kv_singleton<SingletonName, T>>;
+   template<name::raw SingletonName, typename T, T (*MakeDefault)() = nullptr>
+   using cached_kv_singleton = kv::cached_value<kv_singleton<SingletonName, T>, MakeDefault>;
 
 } /// namespace sysio
