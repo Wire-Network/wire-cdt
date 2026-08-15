@@ -138,6 +138,29 @@ struct counting_store {
 
 using counting_cache = sysio::kv::cached_value<counting_store>;
 
+/// Default provider for the defaults cases.
+///
+/// Counts its invocations, because the property under test is not only "an absent row reads as the
+/// default" but "the provider is consulted lazily and at most once" -- that is what keeps an action
+/// which never touches the singleton from paying for it being a member.
+struct default_probe {
+   static constexpr pod_state value{111, 222};
+
+   static uint32_t& calls() {
+      static uint32_t n = 0;
+      return n;
+   }
+   static void reset() { calls() = 0; }
+
+   static pod_state make() {
+      ++calls();
+      return value;
+   }
+};
+
+/// Same store, but the type carries defaults. Contrast with counting_cache, which does not.
+using defaulted_cache = sysio::kv::cached_value<counting_store, &default_probe::make>;
+
 // ---------------------------------------------------------------------------
 // Mocked KV intrinsics -- faithful stand-in for the chain's KV store
 // ---------------------------------------------------------------------------
@@ -294,6 +317,108 @@ SYSIO_TEST_BEGIN(cached_absent_row_reads_without_writing)
       CHECK_EQUAL(counting_store::counters::get().gets, 1u)
    }
    CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// A handle constructed with defaults costs nothing until something asks for the value.
+///
+/// This is the reason defaults belong on the handle rather than in a seed call: seeding from a
+/// contract constructor reads the store on EVERY action, and an eagerly evaluated default argument
+/// also runs whatever host calls the default itself needs -- on actions that never look at the
+/// singleton. Here an untouched handle must issue no store read and never call the provider.
+SYSIO_TEST_BEGIN(cached_defaults_cost_nothing_until_used)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      // deliberately no get()/exists()/modify()
+   }
+   CHECK_EQUAL(counting_store::counters::get().gets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(default_probe::calls(), 0u)
+SYSIO_TEST_END
+
+/// An absent row reads as the default, and doing so owes NO write.
+///
+/// The distinction this pins down is the one that made read-only view actions fail: seeding through
+/// set() would leave the handle dirty, so the value would be flushed from every action including a
+/// pure query. Materializing the default must leave dirty() false and produce no set at destruction.
+SYSIO_TEST_BEGIN(cached_defaults_materialize_without_owing_a_write)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.exists(), true)                    // a value is available...
+      CHECK_EQUAL(c.get(), default_probe::value)
+      CHECK_EQUAL(c.dirty(), false)                    // ...but nothing is owed
+      CHECK_EQUAL(counting_store::counters::get().gets, 1u)
+      CHECK_EQUAL(default_probe::calls(), 1u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)   // still never stored
+SYSIO_TEST_END
+
+/// A stored row wins over the default, and the provider is never called.
+SYSIO_TEST_BEGIN(cached_defaults_yield_to_a_stored_row)
+   counting_store::counters::seed(pod_state{7, 3});
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.get(), (pod_state{7, 3}))
+      CHECK_EQUAL(c.dirty(), false)
+   }
+   CHECK_EQUAL(default_probe::calls(), 0u)
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// Repeated reads consult the provider once, as load() runs once.
+SYSIO_TEST_BEGIN(cached_defaults_provider_runs_at_most_once)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      (void)c.exists();
+      (void)c.get();
+      (void)c.get();
+      (void)c.get_or_default(pod_state{9, 9});
+      CHECK_EQUAL(counting_store::counters::get().gets, 1u)
+      CHECK_EQUAL(default_probe::calls(), 1u)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+SYSIO_TEST_END
+
+/// The first genuine mutation is what persists the row, carrying defaults plus the change.
+SYSIO_TEST_BEGIN(cached_defaults_reach_storage_on_first_mutation)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      defaulted_cache c;
+      c.modify(payer_a, [](pod_state& s) { s.counter = 5; });
+      CHECK_EQUAL(c.dirty(), true)
+      CHECK_EQUAL(counting_store::counters::get().sets, 0u)   // still deferred
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
+   // counter carries the mutation; flags carries the seeded default, proving the write is not a
+   // zero-initialized struct with the change laid on top.
+   CHECK_EQUAL(counting_store::counters::get().val, (pod_state{5, default_probe::value.flags}))
+   CHECK_EQUAL(counting_store::counters::get().payer, payer_a)
+SYSIO_TEST_END
+
+/// modify() on an absent row asserts without defaults, but a defaulted handle has a value to
+/// modify -- so the two constructors genuinely differ in behaviour, not just in cost.
+SYSIO_TEST_BEGIN(cached_defaults_make_modify_legal_on_an_absent_row)
+   counting_store::counters::reset();
+   default_probe::reset();
+   {
+      counting_cache plain;
+      CHECK_EQUAL(plain.exists(), false)
+   }
+   {
+      defaulted_cache c;
+      CHECK_EQUAL(c.exists(), true)
+      c.modify(payer_a, [](pod_state& s) { s.flags = 1; });
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 1u)
 SYSIO_TEST_END
 
 /// Many mutations collapse into exactly one write, carrying the final value and last payer.
@@ -847,6 +972,12 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_read_never_writes)
    SYSIO_TEST(cached_load_happens_once)
    SYSIO_TEST(cached_absent_row_reads_without_writing)
+   SYSIO_TEST(cached_defaults_cost_nothing_until_used)
+   SYSIO_TEST(cached_defaults_materialize_without_owing_a_write)
+   SYSIO_TEST(cached_defaults_yield_to_a_stored_row)
+   SYSIO_TEST(cached_defaults_provider_runs_at_most_once)
+   SYSIO_TEST(cached_defaults_reach_storage_on_first_mutation)
+   SYSIO_TEST(cached_defaults_make_modify_legal_on_an_absent_row)
    SYSIO_TEST(cached_modify_defers_single_write)
    SYSIO_TEST(cached_reads_see_pending_mutation)
    SYSIO_TEST(cached_set_creates_and_defers)

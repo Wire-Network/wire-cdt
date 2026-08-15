@@ -79,9 +79,34 @@ namespace sysio { namespace kv {
 /**
  * Write-deferring cache over a singleton-shaped KV store.
  *
- * @tparam Store backing store satisfying the requirements documented above.
+ * @tparam Store       backing store satisfying the requirements documented above.
+ * @tparam MakeDefault supplies the value a never-written row reads as; nullptr for none.
+ *
+ * MakeDefault is a template parameter rather than a constructor argument so the call stays direct
+ * and a handle without defaults compiles to exactly what it did before this parameter existed. It
+ * also makes DEFAULTS A PROPERTY OF THE SINGLETON TYPE, which is where they belong: one singleton
+ * cannot have two different notions of what an unwritten row means.
+ *
+ * WHY NOT SEED IN THE CONTRACT CONSTRUCTOR. That was the previous idiom, and it charges every
+ * action for a singleton most actions never touch: it reads the row unconditionally, and an
+ * eagerly-evaluated default argument also runs whatever host calls the default itself needs. Here
+ * nothing happens until something asks for the value -- no store read, no provider call.
+ *
+ * WHAT DEFAULTS CHANGE. On a handle that carries them, exists() reports whether a VALUE IS
+ * AVAILABLE, not whether a row is stored -- true even on a chain where nothing was ever written,
+ * because the default is available. get() correspondingly never asserts. Two consequences worth
+ * knowing:
+ *
+ *   - the old "create it if missing" idiom, `if (!h.exists()) h.set(defaults, payer);`, becomes a
+ *     no-op rather than a hidden per-action write. That is the point: the idiom this parameter
+ *     replaces cannot quietly come back.
+ *   - a contract that genuinely needs "has anyone configured this yet" cannot ask this handle. Use
+ *     a singleton without defaults for that question, or record it in the payload.
+ *
+ * Handles without defaults (MakeDefault = nullptr, the default) are entirely unaffected: exists()
+ * keeps meaning "a row is stored" and get() still asserts when absent.
  */
-template<typename Store>
+template<typename Store, typename Store::value_type (*MakeDefault)() = nullptr>
 class cached_value {
 public:
    /// Payload type, taken from the backing store so it never has to be repeated.
@@ -299,12 +324,21 @@ private:
    }
 
    /// Populate the cache from the store. At most one store read per handle.
+   ///
+   /// When the row is absent and this type carries defaults, MakeDefault supplies the value here.
+   /// That leaves the handle PRESENT but CLEAN -- exactly what seed_if_absent does, except it
+   /// happens on first use rather than at construction, so an action that never touches the
+   /// singleton performs no store read and never calls the provider. The `if constexpr` means a
+   /// handle without defaults emits none of this.
    void load() const {
       if (_loaded) return;
       _loaded = true;
       T val;
       if (_store.try_get(val)) {
          _cache   = std::move(val);
+         _present = true;
+      } else if constexpr (MakeDefault != nullptr) {
+         _cache   = MakeDefault();
          _present = true;
       }
    }

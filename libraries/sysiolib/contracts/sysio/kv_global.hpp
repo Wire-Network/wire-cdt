@@ -171,7 +171,7 @@ public:
  * writing it back from the contract destructor. See kv_cached.hpp for the rationale and for
  * the visibility rules that come with deferred writes.
  */
-template<name::raw Name, typename T>
-using cached_global = cached_value<global<Name, T>>;
+template<name::raw Name, typename T, T (*MakeDefault)() = nullptr>
+using cached_global = cached_value<global<Name, T>, MakeDefault>;
 
 }} // namespace sysio::kv
