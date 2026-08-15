@@ -134,6 +134,17 @@ private:
       erase    ///< the row must be erased
    };
 
+   /// Whether the STORE holds a row, as far as this handle knows.
+   ///
+   /// A separate question from both _present ("is a value available", which defaults make
+   /// unconditionally true) and _pending ("what is owed", which is `none` when the removed row was
+   /// never written). Only `present` justifies an erase.
+   enum class row_state : uint8_t {
+      unknown,   ///< set() skipped the store read; resolve_row_state() settles it on demand
+      present,   ///< a row is stored
+      absent     ///< no row is stored
+   };
+
 public:
    /**
     * Construct a handle. All arguments are forwarded to the backing store, so this works
@@ -207,7 +218,7 @@ public:
       // Distinguish "never existed" from "you erased it earlier in this action". Without this the
       // second case reports the first case's message, which sends the reader hunting for a missing
       // row that their own remove() retired.
-      sysio::check(_pending != pending_op::erase, "singleton mutated after remove()");
+      sysio::check(!_removed, "singleton mutated after remove()");
       sysio::check(_present, "singleton does not exist");
       mutate(payer, std::forward<Lambda>(f));
    }
@@ -235,9 +246,9 @@ public:
                     "type already defines what an unwritten row reads as, leaving no absent case "
                     "for this default to seed. Call modify().");
       load();
-      // Checked BEFORE seeding: on the erase path this call is rejected, and it must not leave the
-      // handle holding a seeded value it never gets to write.
-      sysio::check(_pending != pending_op::erase, "singleton mutated after remove()");
+      // Checked BEFORE seeding: on the removed path this call is rejected, and it must not leave
+      // the handle holding a seeded value it never gets to write.
+      sysio::check(!_removed, "singleton mutated after remove()");
       if (!_present) {
          _cache   = def;
          _present = true;
@@ -279,6 +290,7 @@ public:
    void set(const T& val, sysio::name payer) {
       _loaded  = true;
       _present = true;
+      _removed = false;   // this value supersedes any removal recorded earlier in the action
       _cache   = val;
       record_payer(payer);
       _pending = pending_op::write;
@@ -292,12 +304,17 @@ public:
     * of an absent row at flush time, so whether this action issued a write -- and therefore whether
     * it was legal read-only -- would depend on chain data rather than on the code.
     *
-    * What is owed is decided by _row_present -- whether a row is STORED -- never by exists(). On a
-    * handle carrying defaults the two differ: a value is always available, and owing the erase off
-    * that would send Store::remove() after a row nobody ever wrote. Both shipped stores re-probe and
+    * What is owed is decided by _row -- whether a row is STORED -- never by exists(). On a handle
+    * carrying defaults the two differ: a value is always available, and owing the erase off that
+    * would send Store::remove() after a row nobody ever wrote. Both shipped stores re-probe and
     * absorb it, but the documented Store contract promises no such thing and the chain's own
     * kv_erase aborts on a missing key -- and dirty() would meanwhile report a debt that does not
-    * exist.
+    * exist. When set() left presence unresolved, this call resolves it rather than assuming.
+    *
+    * Removal itself is recorded in _removed, separately from what the store is owed, because those
+    * two came apart the moment an erase stopped being the only outcome: a row that was never
+    * written is genuinely removed and owes nothing. Guards that mean "has remove() been called"
+    * -- including the one protecting a mutation callback -- read _removed.
     *
     * On a handle carrying defaults this reads as RESET TO DEFAULTS: the stored row goes, and the
     * handle keeps serving what an unwritten row reads as, so get() stays non-asserting exactly as
@@ -311,18 +328,23 @@ public:
     */
    void remove() {
       load();
-      // An erase this handle already recorded is why the row is gone; re-deciding it here could
-      // cancel it and leave the stored row in place while the handle went on reporting it removed.
-      if (_pending == pending_op::erase) return;
-      // A pending write never reached the store, so there is nothing to undo -- drop it. Beyond
-      // that, only a row that is actually stored can be erased.
+      // The removal this call records is _removed, NOT the pending erase: a row that was never
+      // written owes no erase, so _pending cannot answer "did someone remove this". Every guard
+      // that means "has remove() been called" reads _removed. Re-entering is a no-op, which keeps
+      // the call idempotent and the default provider consulted at most once.
+      if (_removed) return;
+      _removed = true;
+      // set() may have left presence unresolved, and only a stored row can be erased.
+      resolve_row_state();
+      // A pending write never reached the store, so there is nothing to undo -- drop it.
       const bool discarded_write = _pending == pending_op::write;
-      _pending = _row_present ? pending_op::erase : pending_op::none;
+      const bool stored          = _row == row_state::present;
+      _pending = stored ? pending_op::erase : pending_op::none;
       if constexpr (MakeDefault != nullptr) {
          // Re-materialize only when the cache can have diverged from the default -- it was loaded
          // from a stored row, or a mutation changed it -- so repeated removes on a never-written
          // singleton do not re-run the provider.
-         if (_row_present || discarded_write) _cache = MakeDefault();
+         if (stored || discarded_write) _cache = MakeDefault();
          _present = true;
       } else {
          _present = false;
@@ -339,12 +361,15 @@ public:
       // there is no state to retry, and this keeps a manual flush() followed by the
       // destructor from attempting the same write twice.
       _pending = pending_op::none;
-      // _row_present tracks what the STORE holds, so it moves with the change this call applies --
-      // otherwise a mutate/flush/remove cycle would decide the next erase off a stale reading.
+      // flush() RE-ARMS the handle, so the removal it just committed is spent: a later mutation is
+      // a fresh operation on the current state, not one applied "after remove()".
+      _removed = false;
+      // _row tracks what the STORE holds, so it moves with the change this call applies -- otherwise
+      // a mutate/flush/remove cycle would decide the next erase off a stale reading.
       switch (op) {
-         case pending_op::write: _store.set(*_cache, _payer); _row_present = true;  break;
-         case pending_op::erase: _store.remove();             _row_present = false; break;
-         case pending_op::none:                                                     break;
+         case pending_op::write: _store.set(*_cache, _payer); _row = row_state::present; break;
+         case pending_op::erase: _store.remove();             _row = row_state::absent;  break;
+         case pending_op::none:                                                          break;
       }
    }
 
@@ -352,12 +377,15 @@ private:
    /// Shared tail of modify()/modify_or_create(): apply \p f and record the debt.
    template<typename Lambda>
    void mutate(sysio::name payer, Lambda&& f) {
-      sysio::check(_pending != pending_op::erase, "singleton mutated after remove()");
+      sysio::check(!_removed, "singleton mutated after remove()");
       f(*_cache);
       // Re-checked AFTER f(): the callback holds a reference to this handle's cache and may call
-      // remove() through it. Recording a write here would convert that erase back into a store of
-      // the value the caller just retired, and the caller would get no diagnostic.
-      sysio::check(_pending != pending_op::erase, "singleton removed from inside a mutation callback");
+      // remove() through it. Recording a write here would resurrect the value the caller just
+      // retired, and the caller would get no diagnostic.
+      //
+      // The guard reads _removed rather than the pending erase, because removing a row that was
+      // never written owes no erase -- and on THAT path the caller was silently getting a write.
+      sysio::check(!_removed, "singleton removed from inside a mutation callback");
       record_payer(payer);
       _pending = pending_op::write;
    }
@@ -391,11 +419,11 @@ private:
       _loaded = true;
       T val;
       if (_store.try_get(val)) {
-         _cache       = std::move(val);
-         _present     = true;
-         _row_present = true;
+         _cache   = std::move(val);
+         _present = true;
+         _row     = row_state::present;
       } else {
-         _row_present = false;
+         _row = row_state::absent;
          if constexpr (MakeDefault != nullptr) {
             _cache   = MakeDefault();
             _present = true;
@@ -403,17 +431,33 @@ private:
       }
    }
 
+   /// Settle whether a row is stored, for the one path that can reach remove() without knowing.
+   ///
+   /// set() deliberately skips the store read, so it leaves _row unknown. Guessing either way is
+   /// wrong: guess `present` and an erase goes out for a row that was never there; guess `absent`
+   /// and a set-then-remove silently leaves the row it was about to overwrite in place. So resolve
+   /// it, and only here -- a handle that never removes after a blind set pays nothing.
+   ///
+   /// try_get is the only presence query the Store contract exposes, so this costs a read rather
+   /// than a cheaper contains-style probe. A read is legal inside a read-only transaction, which is
+   /// what matters: resolving cannot make an otherwise-legal action illegal. The value is
+   /// discarded -- _cache already holds what set() put there.
+   void resolve_row_state() const {
+      if (_row != row_state::unknown) return;
+      T scratch;
+      _row = _store.try_get(scratch) ? row_state::present : row_state::absent;
+   }
+
    Store                    _store;
    mutable std::optional<T> _cache;
    sysio::name              _payer{};
    mutable bool             _loaded  = false;   ///< has the store been consulted yet
    mutable bool             _present = false;   ///< is a value available, per cache
-   /// Does the STORE hold a row, as far as this handle knows -- what remove() owes an erase for.
-   /// Distinct from _present, which on a handle carrying defaults is true even when nothing was
-   /// ever written. Starts true because set() deliberately skips the store read: until load() has
-   /// consulted the store, the conservative reading is that a row may be there, so a set() followed
-   /// by a remove() still erases whatever it would have overwritten.
-   mutable bool             _row_present = true;
+   /// Has remove() been called since the last set()/flush() -- the LOGICAL removal, which is not
+   /// the same as owing an erase: removing a row that was never written owes the store nothing.
+   /// Every "was this removed" guard reads this; _pending answers only "what does the store owe".
+   bool                     _removed = false;
+   mutable row_state        _row     = row_state::unknown;
    pending_op               _pending = pending_op::none;
 };
 

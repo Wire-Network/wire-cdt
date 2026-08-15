@@ -693,6 +693,61 @@ SYSIO_TEST_BEGIN(cached_mutate_after_remove_asserts)
       c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); });
    }))
    CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+
+   // The same guard with NO row stored -- the case a pending erase cannot see, because removing a
+   // row that was never written owes no erase. Both spellings below reach mutate() with the row
+   // absent, and both persisted the mutated value instead of asserting until the removal was
+   // tracked in its own flag rather than inferred from what the store was owed.
+   counting_store::counters::reset();
+   default_probe::reset();
+   CHECK_ASSERT("singleton removed from inside a mutation callback", ([]() {
+      defaulted_cache c;   // absent row, yet a value is available -- so modify() is legal
+      c.modify(payer_a, [&c](pod_state& s) { s.counter = 9; c.remove(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+
+   counting_store::counters::reset();
+   CHECK_ASSERT("singleton removed from inside a mutation callback", ([]() {
+      counting_cache c;    // absent row, made present by modify_or_create's own seeding
+      c.modify_or_create(payer_a, pod_state{5, 5}, [&c](pod_state& s) { s.counter = 9; c.remove(); });
+   }))
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
+SYSIO_TEST_END
+
+/// set() then remove() RESOLVES whether a row is stored rather than assuming either way.
+///
+/// set() deliberately skips the store read, so presence is genuinely unknown at the remove, and
+/// both guesses are wrong. Assuming a row is there issues an erase for one that never existed --
+/// breaking the absent-remove no-op contract, costing a host call, and aborting outright on a store
+/// that rejects a missing-key erase. Assuming there is none is worse and silent: the row the set()
+/// was about to overwrite would survive while the handle reported it gone.
+SYSIO_TEST_BEGIN(cached_set_then_remove_resolves_row_presence)
+   // Nothing stored: no erase is owed, and resolving costs exactly one read.
+   counting_store::counters::reset();
+   {
+      counting_cache c;
+      c.set(pod_state{3, 9}, payer_a);
+      CHECK_EQUAL(counting_store::counters::get().gets, 0u)   // set() still consults nothing
+      c.remove();
+      CHECK_EQUAL(c.dirty(), false)
+      CHECK_EQUAL(counting_store::counters::get().gets, 1u)   // resolved, once, only here
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 0u)
+
+   // A row IS stored: the blind set() is discarded and the stored row is still erased.
+   counting_store::counters::seed(pod_state{1, 2});
+   {
+      counting_cache c;
+      c.set(pod_state{3, 9}, payer_a);
+      c.remove();
+      CHECK_EQUAL(c.dirty(), true)
+   }
+   CHECK_EQUAL(counting_store::counters::get().sets, 0u)
+   CHECK_EQUAL(counting_store::counters::get().removes, 1u)
+   CHECK_EQUAL(counting_store::counters::get().present, false)
 SYSIO_TEST_END
 
 /// remove() on a row that is not there owes nothing, so an action that only erases an absent
@@ -935,6 +990,24 @@ SYSIO_TEST_BEGIN(cached_global_defaults_remove_absent_touches_no_store)
    CHECK_EQUAL(pod_global(test_code).exists(), false)
 SYSIO_TEST_END
 
+/// The set-then-remove resolution through the real kv::global, on an empty table.
+///
+/// Store::remove() must never be reached, and kv_contains is what proves it: kv::global::remove()
+/// probes before erasing, so an erase that should not have been issued is absorbed there and leaves
+/// the erase counter at zero either way.
+SYSIO_TEST_BEGIN(cached_global_set_then_remove_on_empty_table_issues_no_erase)
+   begin_kv_case();
+   {
+      pod_cached c(test_code);
+      c.set(pod_state{3, 9}, payer_a);
+      c.remove();
+      CHECK_EQUAL(c.dirty(), false)
+   }
+   CHECK_EQUAL(mock_store().contains, 0u)   // Store::remove() was never called
+   CHECK_EQUAL(mock_store().erases, 0u)
+   CHECK_EQUAL(mock_store().sets, 0u)
+SYSIO_TEST_END
+
 /// A defaulted handle still erases a row that IS stored, and reads as the default afterwards.
 SYSIO_TEST_BEGIN(cached_global_defaults_remove_erases_a_stored_row)
    begin_kv_case();
@@ -1087,6 +1160,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_modify_absent_asserts)
    SYSIO_TEST(cached_get_absent_asserts)
    SYSIO_TEST(cached_mutate_after_remove_asserts)
+   SYSIO_TEST(cached_set_then_remove_resolves_row_presence)
    SYSIO_TEST(cached_remove_absent_is_noop)
    SYSIO_TEST(cached_same_payer_preserves_recorded_payer)
    SYSIO_TEST(cached_seed_if_absent_does_not_dirty)
@@ -1099,6 +1173,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(cached_global_remove_erases_row)
    SYSIO_TEST(cached_global_double_remove_erases_row)
    SYSIO_TEST(cached_global_defaults_remove_absent_touches_no_store)
+   SYSIO_TEST(cached_global_set_then_remove_on_empty_table_issues_no_erase)
    SYSIO_TEST(cached_global_defaults_remove_erases_a_stored_row)
    SYSIO_TEST(cached_global_blob_roundtrip)
    SYSIO_TEST(cached_global_modify_or_create_creates_row)
