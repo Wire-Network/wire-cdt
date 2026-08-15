@@ -94,7 +94,7 @@ namespace sysio { namespace kv {
  *
  * WHAT DEFAULTS CHANGE. On a handle that carries them, exists() reports whether a VALUE IS
  * AVAILABLE, not whether a row is stored -- true even on a chain where nothing was ever written,
- * because the default is available. get() correspondingly never asserts. Two consequences worth
+ * because the default is available. get() correspondingly never asserts. Three consequences worth
  * knowing:
  *
  *   - the old "create it if missing" idiom, `if (!h.exists()) h.set(defaults, payer);`, becomes a
@@ -102,9 +102,21 @@ namespace sysio { namespace kv {
  *     replaces cannot quietly come back.
  *   - a contract that genuinely needs "has anyone configured this yet" cannot ask this handle. Use
  *     a singleton without defaults for that question, or record it in the payload.
+ *   - remove() reads as RESET TO DEFAULTS. It erases the stored row and the handle goes on serving
+ *     what an unwritten row reads as, which is what keeps get()'s never-asserts property true after
+ *     one. It owes the store nothing when no row was ever written.
+ *
+ * WHAT DEFAULTS TAKE AWAY. The three calls that accept an explicit default -- get_or_default(),
+ * modify_or_create() and seed_if_absent() -- are ILL-FORMED on a handle carrying MakeDefault, and
+ * say so through a static_assert naming the replacement. Each asks "what should this read as when
+ * absent", which is the question MakeDefault has already answered on the type. Accepting both would
+ * let one singleton hold two notions of what an unwritten row means, and the argument would lose
+ * SILENTLY: the caller's default is simply discarded, and the resulting value is wrong rather than
+ * rejected. A compile error is the only outcome that cannot be missed.
  *
  * Handles without defaults (MakeDefault = nullptr, the default) are entirely unaffected: exists()
- * keeps meaning "a row is stored" and get() still asserts when absent.
+ * keeps meaning "a row is stored", get() still asserts when absent, and all three calls above
+ * behave exactly as before.
  */
 template<typename Store, typename Store::value_type (*MakeDefault)() = nullptr>
 class cached_value {
@@ -142,7 +154,9 @@ public:
    /// Applies the pending change, if any.
    ~cached_value() { flush(); }
 
-   /// True if the row exists, accounting for a pending set()/remove().
+   /// True if a value is available, accounting for a pending set()/remove(). Without defaults that
+   /// is "the row exists"; with them it is always true, because the default is available even when
+   /// nothing was ever stored.
    bool exists() const {
       load();
       return _present;
@@ -168,7 +182,14 @@ public:
    }
 
    /// Cached value, or \p def when absent. Never creates the row and never dirties.
+   ///
+   /// Unavailable on a handle carrying MakeDefault: there is no absent case left for \p def to
+   /// answer, so every call would return the type's default and discard the argument in silence.
    T get_or_default(const T& def) const {
+      static_assert(MakeDefault == nullptr,
+                    "get_or_default() is unavailable on a cached_value carrying MakeDefault: get() "
+                    "already returns the type's default for an unwritten row, so this argument "
+                    "could only be discarded. Call get().");
       load();
       return _present ? *_cache : def;
    }
@@ -202,9 +223,17 @@ public:
     * a lambda that fills it in is the idiomatic call. Two functions in sysio::kv with one name
     * and opposite insert semantics would be applied interchangeably by mistake, and the
     * mistake is silent -- the row is written either way, just with different contents.
+    *
+    * Unavailable on a handle carrying MakeDefault: the absent case \p def exists to seed cannot
+    * arise there, so \p def would be dropped and the mutation would run on the type's default
+    * instead. modify() is the whole of what this call still means on such a handle.
     */
    template<typename Lambda>
    void modify_or_create(sysio::name payer, const T& def, Lambda&& f) {
+      static_assert(MakeDefault == nullptr,
+                    "modify_or_create() is unavailable on a cached_value carrying MakeDefault: the "
+                    "type already defines what an unwritten row reads as, leaving no absent case "
+                    "for this default to seed. Call modify().");
       load();
       // Checked BEFORE seeding: on the erase path this call is rejected, and it must not leave the
       // handle holding a seeded value it never gets to write.
@@ -224,8 +253,15 @@ public:
     * including a pure query -- would flush a kv_set and be refused inside a read-only transaction,
     * which is the exact failure this class exists to prevent. After seeding, reads see \p def and
     * the defaults reach storage only when an action genuinely mutates something.
+    *
+    * Unavailable on a handle carrying MakeDefault: load() already seeds from the provider on the
+    * same terms -- present, clean, no write owed -- so this call could only be a no-op.
     */
    void seed_if_absent(const T& def) {
+      static_assert(MakeDefault == nullptr,
+                    "seed_if_absent() is unavailable on a cached_value carrying MakeDefault: load() "
+                    "already materializes the type's default without owing a write, so this call "
+                    "would do nothing. Delete it.");
       load();
       if (!_present) {
          _cache   = def;
@@ -256,23 +292,41 @@ public:
     * of an absent row at flush time, so whether this action issued a write -- and therefore whether
     * it was legal read-only -- would depend on chain data rather than on the code.
     *
-    * The cached object is deliberately NOT destroyed: _present already records the row as gone, and
+    * What is owed is decided by _row_present -- whether a row is STORED -- never by exists(). On a
+    * handle carrying defaults the two differ: a value is always available, and owing the erase off
+    * that would send Store::remove() after a row nobody ever wrote. Both shipped stores re-probe and
+    * absorb it, but the documented Store contract promises no such thing and the chain's own
+    * kv_erase aborts on a missing key -- and dirty() would meanwhile report a debt that does not
+    * exist.
+    *
+    * On a handle carrying defaults this reads as RESET TO DEFAULTS: the stored row goes, and the
+    * handle keeps serving what an unwritten row reads as, so get() stays non-asserting exactly as
+    * the type promises. Without defaults the handle reports the row gone, as before.
+    *
+    * The cached object is deliberately NOT destroyed: the absence is recorded in the flags, and
     * keeping it alive means a reference handed out by an earlier get() never dangles.
     *
-    * Idempotent: calling this twice owes the same single erase as calling it once.
+    * Idempotent: calling this twice owes the same single erase as calling it once, and consults the
+    * default provider no more often than once.
     */
    void remove() {
       load();
-      if (!_present) {
-         // Absent per the cache -- but WHY it is absent decides what is owed. An erase this handle
-         // already recorded is the reason _present is false, and cancelling it here would leave the
-         // stored row in place while the handle went on reporting it gone. Only a row that was
-         // never there discards the debt, and there the debt can only be a pending write.
-         if (_pending != pending_op::erase) _pending = pending_op::none;
-         return;
+      // An erase this handle already recorded is why the row is gone; re-deciding it here could
+      // cancel it and leave the stored row in place while the handle went on reporting it removed.
+      if (_pending == pending_op::erase) return;
+      // A pending write never reached the store, so there is nothing to undo -- drop it. Beyond
+      // that, only a row that is actually stored can be erased.
+      const bool discarded_write = _pending == pending_op::write;
+      _pending = _row_present ? pending_op::erase : pending_op::none;
+      if constexpr (MakeDefault != nullptr) {
+         // Re-materialize only when the cache can have diverged from the default -- it was loaded
+         // from a stored row, or a mutation changed it -- so repeated removes on a never-written
+         // singleton do not re-run the provider.
+         if (_row_present || discarded_write) _cache = MakeDefault();
+         _present = true;
+      } else {
+         _present = false;
       }
-      _present = false;
-      _pending = pending_op::erase;
    }
 
    /// True when a change is owed to the store.
@@ -285,10 +339,12 @@ public:
       // there is no state to retry, and this keeps a manual flush() followed by the
       // destructor from attempting the same write twice.
       _pending = pending_op::none;
+      // _row_present tracks what the STORE holds, so it moves with the change this call applies --
+      // otherwise a mutate/flush/remove cycle would decide the next erase off a stale reading.
       switch (op) {
-         case pending_op::write: _store.set(*_cache, _payer); break;
-         case pending_op::erase: _store.remove();             break;
-         case pending_op::none:                               break;
+         case pending_op::write: _store.set(*_cache, _payer); _row_present = true;  break;
+         case pending_op::erase: _store.remove();             _row_present = false; break;
+         case pending_op::none:                                                     break;
       }
    }
 
@@ -335,11 +391,15 @@ private:
       _loaded = true;
       T val;
       if (_store.try_get(val)) {
-         _cache   = std::move(val);
-         _present = true;
-      } else if constexpr (MakeDefault != nullptr) {
-         _cache   = MakeDefault();
-         _present = true;
+         _cache       = std::move(val);
+         _present     = true;
+         _row_present = true;
+      } else {
+         _row_present = false;
+         if constexpr (MakeDefault != nullptr) {
+            _cache   = MakeDefault();
+            _present = true;
+         }
       }
    }
 
@@ -347,7 +407,13 @@ private:
    mutable std::optional<T> _cache;
    sysio::name              _payer{};
    mutable bool             _loaded  = false;   ///< has the store been consulted yet
-   mutable bool             _present = false;   ///< does the row exist, per cache
+   mutable bool             _present = false;   ///< is a value available, per cache
+   /// Does the STORE hold a row, as far as this handle knows -- what remove() owes an erase for.
+   /// Distinct from _present, which on a handle carrying defaults is true even when nothing was
+   /// ever written. Starts true because set() deliberately skips the store read: until load() has
+   /// consulted the store, the conservative reading is that a row may be there, so a set() followed
+   /// by a remove() still erases whatever it would have overwritten.
+   mutable bool             _row_present = true;
    pending_op               _pending = pending_op::none;
 };
 
