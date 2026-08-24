@@ -14,8 +14,10 @@ ExternalProject_Add(
     -D__APPLE=${APPLE}
     -DENABLE_NATIVE_COMPILER=${ENABLE_NATIVE_COMPILER}
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
-    -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+    # cdt-cc/cdt-cpp select Wasm or native code generation after preprocessing.
+    # A host compiler cache can therefore reuse an object from the wrong mode.
+    -DCMAKE_C_COMPILER_LAUNCHER=
+    -DCMAKE_CXX_COMPILER_LAUNCHER=
   UPDATE_COMMAND ""
   PATCH_COMMAND  ""
   TEST_COMMAND   ""
