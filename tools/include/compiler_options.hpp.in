@@ -615,7 +615,11 @@ static void GetLdDefaults(std::vector<std::string>& ldopts) {
 #ifndef __APPLE__
       ldopts.emplace_back("-static");
 #endif
-      ldopts.insert(ldopts.end(), {"-lnative_c++", "-lnative_c", "-lnative_sysio", "-lnative", "-lnative_rt"});
+      // NOTE: the -lnative_* runtime archives are deliberately NOT added here.
+      // GetLdDefaults runs before the object files and the -L search paths are
+      // appended, and an archive listed ahead of the objects satisfies nothing
+      // on a single-pass linker. They are appended in CreateOptions instead --
+      // see "native runtime archives" there.
    }
 }
 #endif
@@ -700,6 +704,32 @@ static Options CreateOptions(bool add_defaults=true) {
 #ifndef __APPLE__
    ldopts.emplace_back("-L"+sysio::cdt::whereami::where()+"/../lib64");
 #endif
+
+   // Native runtime archives.
+   //
+   // These MUST come after the object files and after the -L search paths. A
+   // traditional single-pass linker -- Apple's ld -- only extracts an archive
+   // member that resolves an ALREADY-undefined symbol, so archives listed ahead
+   // of the objects contribute nothing and everything they define comes back
+   // undefined. lld happens to be order-insensitive (it registers every archive
+   // member as a lazy symbol up front and extracts on demand), which is why the
+   // old ordering worked on Linux and only ever failed on macOS.
+   //
+   // Order runs dependents -> providers, and the set is repeated because the
+   // dependencies are genuinely cyclic:
+   //   libnative     (crt.cpp / intrinsics.cpp) -> libnative_c++, libnative_c
+   //   libnative_c++                            -> libnative_c
+   //   libnative_c                              -> libnative_rt
+   //   libnative_rt  (long double builtins)     -> libnative's softfloat
+   // Repeating the group is the portable cycle-breaker: Apple's ld has no
+   // --start-group, and re-listing an archive is free once its members are in.
+   if (fnative_opt && add_defaults) {
+      static constexpr const char* native_runtime_libs[] = {
+         "-lnative_sysio", "-lnative", "-lnative_c++", "-lnative_c", "-lnative_rt"
+      };
+      for (int pass = 0; pass < 2; ++pass)
+         ldopts.insert(ldopts.end(), std::begin(native_runtime_libs), std::end(native_runtime_libs));
+   }
 #endif
 #ifndef ONLY_LD
    if (!isystem_opt.empty()) {
