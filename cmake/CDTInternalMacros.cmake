@@ -3,6 +3,20 @@
 # External consumers should use add_contract() and add_native_contract()
 # from CDTMacros.cmake instead.
 
+function(_cdt_use_native_compiler_cache TARGET)
+  if(NOT CDT_INTERNAL_LIBRARY_BUILD OR NOT CDT_NATIVE_CCACHE_DIR)
+    return()
+  endif()
+
+  foreach(LANG C CXX)
+    get_target_property(LAUNCHER ${TARGET} ${LANG}_COMPILER_LAUNCHER)
+    if(LAUNCHER)
+      set_property(TARGET ${TARGET} PROPERTY ${LANG}_COMPILER_LAUNCHER
+        "${CMAKE_COMMAND};-E;env;CCACHE_DIR=${CDT_NATIVE_CCACHE_DIR};${LAUNCHER}")
+    endif()
+  endforeach()
+endfunction()
+
 # Adds a native library target that can be used in native and WASM builds
 # @param TARGET The target name
 # @param ARGN Additional source files
@@ -16,6 +30,7 @@ macro(add_native_library TARGET)
     set_cdt_include_directories(${TARGET})
     set_target_properties(${TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dummy)
   endif()
+  _cdt_use_native_compiler_cache(${TARGET})
   # sysio_wasm_import is only understood by the WASM clang plugin; suppress for native builds
   target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
 endmacro()
@@ -42,6 +57,7 @@ macro(add_native_executable TARGET)
     set_cdt_include_directories(${TARGET})
     set_target_properties(${TARGET} PROPERTIES EXECUTABLE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dummy)
   endif()
+  _cdt_use_native_compiler_cache(${TARGET})
   # sysio_wasm_import is only understood by the WASM clang plugin; suppress for native builds
   target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
 endmacro()

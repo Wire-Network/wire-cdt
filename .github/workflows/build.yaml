@@ -93,14 +93,21 @@ jobs:
         - uses: actions/checkout@v5
           with:
             submodules: recursive
+        - name: Read ccache identity
+          id: ccache-info
+          run: |
+            ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
+            echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
         - name: Restore ccache
           id: restore-ccache
           uses: actions/cache/restore@v5
           with:
-            path: .ccache
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+            path: |
+              .ccache
+              .ccache-native
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
             restore-keys: |
-              ${{ runner.os }}-${{ matrix.platform }}-ccache-
+              ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-
         - name: Restore vcpkg downloads
           id: restore-vcpkg-downloads
           uses: actions/cache/restore@v5
@@ -147,6 +154,8 @@ jobs:
               -DCMAKE_CXX_COMPILER="$CXX" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
+              -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
               -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
               -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
               -DCMAKE_BUILD_TYPE=Release \
@@ -155,6 +164,8 @@ jobs:
               -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
             cmake --build build -- -j "$(nproc)"
+            ccache --show-stats
+            CCACHE_DIR="$PWD/.ccache-native" ccache --show-stats
         # The saves sit immediately after Build (same ordering as
         # build-macos.yaml) so the expensive vcpkg/ccache work is banked even
         # when Test or the packaging steps below fail.
@@ -162,8 +173,10 @@ jobs:
           if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
           uses: actions/cache/save@v5
           with:
-            path: .ccache
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+            path: |
+              .ccache
+              .ccache-native
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
         - name: Save vcpkg downloads
           # always(): bank the downloaded sources even when the build fails or is
           # cancelled — cancel-in-progress iteration otherwise discards them on

@@ -36,6 +36,11 @@ jobs:
         run: |
           brew update
           brew install ccache ninja
+      - name: Read ccache identity
+        id: ccache-info
+        run: |
+          ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
+          echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
       # Caches are split restore/save (not actions/cache@v5) so the saves can
       # run immediately after the Build step and bank the expensive vcpkg work
       # even when the Test/package steps fail or the run is cancelled.
@@ -43,10 +48,12 @@ jobs:
         id: restore-ccache
         uses: actions/cache/restore@v5
         with:
-          path: .ccache
-          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+          path: |
+            .ccache
+            .ccache-native
+          key: ${{ runner.os }}-macos-arm64-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-macos-arm64-ccache-
+            ${{ runner.os }}-macos-arm64-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-
       - name: Restore vcpkg downloads
         id: restore-vcpkg-downloads
         uses: actions/cache/restore@v5
@@ -94,6 +101,8 @@ jobs:
           cmake -B build-macos-arm64 -S . -G Ninja \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
+            -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -DCMAKE_BUILD_TYPE=Release \
             -DVCPKG_TARGET_TRIPLET=arm64-osx-release \
@@ -101,12 +110,16 @@ jobs:
             -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
           cmake --build build-macos-arm64 -- -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+          ccache --show-stats
+          CCACHE_DIR="$PWD/.ccache-native" ccache --show-stats
       - name: Save ccache
         if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v5
         with:
-          path: .ccache
-          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+          path: |
+            .ccache
+            .ccache-native
+          key: ${{ runner.os }}-macos-arm64-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
       - name: Save vcpkg downloads
         # always(): bank the downloaded sources even when the build fails or is
         # cancelled. The key is per-run, so there is never a collision; the guard
