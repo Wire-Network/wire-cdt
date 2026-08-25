@@ -99,15 +99,12 @@ jobs:
             set -euo pipefail
             ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
             echo "version=${ccache_version}" >> "$GITHUB_OUTPUT"
-            case "${ccache_version}" in
-              4.9.1|4.13.6)
-                echo "allow_cdt_launcher=ON" >> "$GITHUB_OUTPUT"
-                ;;
-              *)
-                echo "allow_cdt_launcher=OFF" >> "$GITHUB_OUTPUT"
-                echo "::warning::Disabling CDT wrapper caching for unvalidated ccache ${ccache_version}"
-                ;;
-            esac
+            if ./.cicd/validated-cdt-ccache-version.sh "$ccache_version"; then
+              echo "allow_cdt_launcher=ON" >> "$GITHUB_OUTPUT"
+            else
+              echo "allow_cdt_launcher=OFF" >> "$GITHUB_OUTPUT"
+              echo "::warning::Disabling CDT wrapper caching for unvalidated ccache ${ccache_version}"
+            fi
             host_compiler=/usr/bin/clang-18
             host_compiler_hash=$(sha256sum "$host_compiler")
             host_compiler_version=$("$host_compiler" --version)

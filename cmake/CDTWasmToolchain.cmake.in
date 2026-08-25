@@ -20,9 +20,12 @@ set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 # by default. Consumers on a known-good launcher/version may explicitly opt in
 # for object-only targets. add_contract() still disables launchers because its
 # compiler invocations also emit ABI and dispatcher sidecars that ccache does
-# not restore on a cache hit.
+# not restore on a cache hit. Native-mode targets use CDT_NATIVE_CCACHE_DIR when
+# provided and otherwise remain uncached so Wasm and native objects cannot mix.
 set(CDT_ALLOW_COMPILER_LAUNCHER OFF CACHE BOOL
     "Allow compiler launchers for object-only CDT targets (do not use ccache 4.14)")
+set(CDT_NATIVE_CCACHE_DIR "" CACHE PATH
+    "Separate ccache directory for CDT -fnative targets")
 if(NOT CDT_ALLOW_COMPILER_LAUNCHER)
   set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
   set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)

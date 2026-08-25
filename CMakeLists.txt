@@ -40,9 +40,9 @@ include(CMakeDependentOption)
 cmake_dependent_option(ENABLE_INTEGRATION_TESTS "Build integration tests" OFF "ENABLE_TESTS" OFF)
 option(ENABLE_PACKAGE "enable cpack" ON)
 option(CDT_ALLOW_COMPILER_LAUNCHER
-    "Allow compiler launchers for CDT's object-only internal library build" OFF)
+    "Allow compiler launchers for CDT object-only builds" OFF)
 set(CDT_NATIVE_CCACHE_DIR "" CACHE PATH
-    "Separate ccache directory for CDT's internal native runtime archives")
+    "Separate ccache directory for CDT -fnative targets")
 set(CDT_CCACHE_COMPILER_CHECK "" CACHE STRING
     "Stable ccache compiler identity for CDT's internal runtime-library build")
 

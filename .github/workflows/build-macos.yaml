@@ -33,6 +33,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install build dependencies
+        id: install-ccache
         env:
           CCACHE_VERSION: 4.13.6
           CCACHE_SHA256: 0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9
@@ -45,11 +46,24 @@ jobs:
           echo "${CCACHE_SHA256}  $RUNNER_TEMP/ccache.tar.gz" | shasum -a 256 --check
           tar -xzf "$RUNNER_TEMP/ccache.tar.gz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/ccache-${CCACHE_VERSION}-darwin" >> "$GITHUB_PATH"
+          echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
       - name: Read ccache identity
         id: ccache-info
+        env:
+          EXPECTED_CCACHE_VERSION: ${{ steps.install-ccache.outputs.version }}
         run: |
           set -euo pipefail
-          ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
+          ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
+          if [[ "$ccache_version" != "$EXPECTED_CCACHE_VERSION" ]]; then
+            echo "::error::Expected ccache $EXPECTED_CCACHE_VERSION, found $ccache_version on PATH"
+            exit 1
+          fi
+          if ! ./.cicd/validated-cdt-ccache-version.sh "$ccache_version"; then
+            echo "::error::Pinned ccache $ccache_version is not validated with CDT wrappers"
+            exit 1
+          fi
+          echo "version=${ccache_version}" >> "$GITHUB_OUTPUT"
+          echo "allow_cdt_launcher=ON" >> "$GITHUB_OUTPUT"
           host_compiler=$(xcrun --find clang)
           host_compiler_hash=$(shasum -a 256 "$host_compiler")
           host_compiler_version=$("$host_compiler" --version)
@@ -124,7 +138,7 @@ jobs:
           cmake -B build-macos-arm64 -S . -G Ninja \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCDT_ALLOW_COMPILER_LAUNCHER=ON \
+            -DCDT_ALLOW_COMPILER_LAUNCHER=${{ steps.ccache-info.outputs.allow_cdt_launcher }} \
             -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
             -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \

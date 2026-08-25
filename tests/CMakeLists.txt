@@ -53,8 +53,11 @@ add_test(
    NAME compiler_launcher_guard_tests
    COMMAND ${CMAKE_BINARY_DIR}/tests/compiler_launcher_guard/run_test.sh
       "${CMAKE_BINARY_DIR}"
-      "${CMAKE_CURRENT_SOURCE_DIR}/compiler_launcher_guard")
-set_property(TEST compiler_launcher_guard_tests PROPERTY LABELS toolchain_tests)
+      "${CMAKE_CURRENT_SOURCE_DIR}/compiler_launcher_guard"
+      "${CMAKE_SOURCE_DIR}/.cicd/validated-cdt-ccache-version.sh")
+set_tests_properties(compiler_launcher_guard_tests PROPERTIES
+   LABELS toolchain_tests
+   SKIP_RETURN_CODE 77)
 
 if (sysio_FOUND)
    add_test(integration_tests ${CMAKE_BINARY_DIR}/tests/integration/integration_tests)
