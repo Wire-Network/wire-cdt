@@ -34,10 +34,8 @@ ExternalProject_Add(
     -DCMAKE_MODULE_PATH=${_TEST_MODULE_PATH}
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     -DCDT_CONTRACT_INCLUDE_PATH=${VCPKG_LOCAL_INCLUDE_DIR}
-    # Keep host compiler launchers away from the CDT compiler wrappers. The
-    # wrappers select Wasm or native code generation after preprocessing.
-    -DCMAKE_C_COMPILER_LAUNCHER=
-    -DCMAKE_CXX_COMPILER_LAUNCHER=
+    -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+    -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
   UPDATE_COMMAND ""
   PATCH_COMMAND ""
   TEST_COMMAND ""

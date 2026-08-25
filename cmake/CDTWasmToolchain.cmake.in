@@ -15,6 +15,13 @@ set(CMAKE_ASM_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cc")
 set(CMAKE_AR "@CDT_ROOT_DIR@/bin/cdt-ar")
 set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
+# ccache 4.14 regressed handling of the wrapper-specific flags that distinguish
+# Wasm and native compilation; 4.13.6 correctly cached them separately. Disable
+# compiler launchers for every consumer of this toolchain until that regression
+# is fixed. This intentionally trades cache speed for correct CDT artifacts.
+set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
+set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
+
 # Toolchain files are evaluated before project(), but CMAKE_SOURCE_DIR is
 # already set from the consumer's -S source directory before the toolchain loads.
 set(_CDT_SOURCE_PREFIX_MAP "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
