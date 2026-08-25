@@ -8,7 +8,7 @@ function(_cdt_use_native_compiler_cache TARGET)
     return()
   endif()
 
-  foreach(LANG C CXX ASM)
+  foreach(LANG C CXX)
     get_target_property(LAUNCHER ${TARGET} ${LANG}_COMPILER_LAUNCHER)
     if(LAUNCHER)
       list(LENGTH LAUNCHER LAUNCHER_LENGTH)
