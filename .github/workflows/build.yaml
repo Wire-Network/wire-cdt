@@ -96,7 +96,17 @@ jobs:
         - name: Read ccache identity
           id: ccache-info
           run: |
-            ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
+            ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
+            echo "version=${ccache_version}" >> "$GITHUB_OUTPUT"
+            case "${ccache_version}" in
+              4.9.1|4.13.6)
+                echo "allow_cdt_launcher=ON" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "allow_cdt_launcher=OFF" >> "$GITHUB_OUTPUT"
+                echo "::warning::Disabling CDT wrapper caching for unvalidated ccache ${ccache_version}"
+                ;;
+            esac
             echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt plugins vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
         - name: Restore ccache
           id: restore-ccache
@@ -154,7 +164,7 @@ jobs:
               -DCMAKE_CXX_COMPILER="$CXX" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-              -DCDT_ALLOW_COMPILER_LAUNCHER=ON \
+              -DCDT_ALLOW_COMPILER_LAUNCHER=${{ steps.ccache-info.outputs.allow_cdt_launcher }} \
               -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
               -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
               -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
