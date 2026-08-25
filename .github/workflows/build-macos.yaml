@@ -49,7 +49,10 @@ jobs:
         id: ccache-info
         run: |
           ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
-          echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt plugins vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
+          compiler_identity=$(git ls-files -s \
+            CMakeLists.txt cmake tools plugins .github/vcpkg-triplets \
+            vcpkg vcpkg.json vcpkg-configuration.json | git hash-object --stdin)
+          echo "compiler=${compiler_identity}" >> "$GITHUB_OUTPUT"
       # Caches are split restore/save (not actions/cache@v5) so the saves can
       # run immediately after the Build step and bank the expensive vcpkg work
       # even when the Test/package steps fail or the run is cancelled.

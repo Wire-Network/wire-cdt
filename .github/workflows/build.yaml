@@ -107,7 +107,10 @@ jobs:
                 echo "::warning::Disabling CDT wrapper caching for unvalidated ccache ${ccache_version}"
                 ;;
             esac
-            echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt plugins vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
+            compiler_identity=$(git ls-files -s \
+              CMakeLists.txt cmake tools plugins .github/vcpkg-triplets \
+              vcpkg vcpkg.json vcpkg-configuration.json | git hash-object --stdin)
+            echo "compiler=${compiler_identity}" >> "$GITHUB_OUTPUT"
         - name: Restore ccache
           id: restore-ccache
           uses: actions/cache/restore@v5
