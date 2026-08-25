@@ -96,6 +96,7 @@ jobs:
         - name: Read ccache identity
           id: ccache-info
           run: |
+            set -euo pipefail
             ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
             echo "version=${ccache_version}" >> "$GITHUB_OUTPUT"
             case "${ccache_version}" in
@@ -107,9 +108,17 @@ jobs:
                 echo "::warning::Disabling CDT wrapper caching for unvalidated ccache ${ccache_version}"
                 ;;
             esac
-            compiler_identity=$(git ls-files -s \
-              CMakeLists.txt cmake tools plugins .github/vcpkg-triplets \
-              vcpkg vcpkg.json vcpkg-configuration.json | git hash-object --stdin)
+            host_compiler=/usr/bin/clang-18
+            host_compiler_hash=$(sha256sum "$host_compiler")
+            host_compiler_version=$("$host_compiler" --version)
+            os_version=$(cat /etc/os-release)
+            compiler_identity=$({
+              git ls-files -s \
+                CMakeLists.txt cmake tools plugins .cicd .github/vcpkg-triplets \
+                vcpkg vcpkg.json vcpkg-configuration.json
+              printf '%s\n' "$host_compiler_hash" "$host_compiler_version" \
+                "$os_version"
+            } | git hash-object --stdin)
             echo "compiler=${compiler_identity}" >> "$GITHUB_OUTPUT"
         - name: Restore ccache
           id: restore-ccache

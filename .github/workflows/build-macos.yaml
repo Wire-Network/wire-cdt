@@ -48,10 +48,21 @@ jobs:
       - name: Read ccache identity
         id: ccache-info
         run: |
+          set -euo pipefail
           ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
-          compiler_identity=$(git ls-files -s \
-            CMakeLists.txt cmake tools plugins .github/vcpkg-triplets \
-            vcpkg vcpkg.json vcpkg-configuration.json | git hash-object --stdin)
+          host_compiler=$(xcrun --find clang)
+          host_compiler_hash=$(shasum -a 256 "$host_compiler")
+          host_compiler_version=$("$host_compiler" --version)
+          sdk_path=$(xcrun --sdk macosx --show-sdk-path)
+          sdk_version=$(xcrun --sdk macosx --show-sdk-version)
+          os_version=$(sw_vers)
+          compiler_identity=$({
+            git ls-files -s \
+              CMakeLists.txt cmake tools plugins .cicd .github/vcpkg-triplets \
+              vcpkg vcpkg.json vcpkg-configuration.json
+            printf '%s\n' "$host_compiler_hash" "$host_compiler_version" \
+              "$sdk_path" "$sdk_version" "$os_version"
+          } | git hash-object --stdin)
           echo "compiler=${compiler_identity}" >> "$GITHUB_OUTPUT"
       # Caches are split restore/save (not actions/cache@v5) so the saves can
       # run immediately after the Build step and bank the expensive vcpkg work

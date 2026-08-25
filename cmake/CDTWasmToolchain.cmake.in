@@ -24,6 +24,7 @@ set(CDT_ALLOW_COMPILER_LAUNCHER OFF CACHE BOOL
 if(NOT CDT_ALLOW_COMPILER_LAUNCHER)
   set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
   set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
+  set(CMAKE_ASM_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
 endif()
 
 # Toolchain files are evaluated before project(), but CMAKE_SOURCE_DIR is
