@@ -17,10 +17,12 @@ set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
 # ccache 4.14 was observed returning cached objects for different source files
 # compiled through the CDT wrappers. Compiler launchers are therefore disabled
-# by default. Consumers on a known-good launcher/version may explicitly opt in;
-# CDT's CI pins a known-good ccache and separates native and Wasm cache entries.
+# by default. Consumers on a known-good launcher/version may explicitly opt in
+# for object-only targets. add_contract() still disables launchers because its
+# compiler invocations also emit ABI and dispatcher sidecars that ccache does
+# not restore on a cache hit.
 set(CDT_ALLOW_COMPILER_LAUNCHER OFF CACHE BOOL
-    "Allow compiler launchers with the CDT toolchain (do not use ccache 4.14)")
+    "Allow compiler launchers for object-only CDT targets (do not use ccache 4.14)")
 if(NOT CDT_ALLOW_COMPILER_LAUNCHER)
   set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
   set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
