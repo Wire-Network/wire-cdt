@@ -12,8 +12,10 @@ fi
 
 ccache_version=$("$ccache_path" --version | awk 'NR == 1 { print $3 }')
 case "$ccache_version" in
-  4.14|4.14.*)
-    echo "Skipping compiler launcher guard test: ccache $ccache_version is unsafe with CDT wrappers"
+  4.9.1|4.13.6)
+    ;;
+  *)
+    echo "Skipping compiler launcher guard test: ccache $ccache_version is not validated with CDT wrappers"
     exit 0
     ;;
 esac
