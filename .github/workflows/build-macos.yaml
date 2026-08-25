@@ -33,14 +33,23 @@ jobs:
         with:
           submodules: recursive
       - name: Install build dependencies
+        env:
+          CCACHE_VERSION: 4.13.6
+          CCACHE_SHA256: 0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9
         run: |
           brew update
-          brew install ccache ninja
+          brew install ninja
+          curl --fail --location --retry 3 \
+            "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-darwin.tar.gz" \
+            --output "$RUNNER_TEMP/ccache.tar.gz"
+          echo "${CCACHE_SHA256}  $RUNNER_TEMP/ccache.tar.gz" | shasum -a 256 --check
+          tar -xzf "$RUNNER_TEMP/ccache.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/ccache-${CCACHE_VERSION}-darwin" >> "$GITHUB_PATH"
       - name: Read ccache identity
         id: ccache-info
         run: |
           ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
-          echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
+          echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt plugins vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
       # Caches are split restore/save (not actions/cache@v5) so the saves can
       # run immediately after the Build step and bank the expensive vcpkg work
       # even when the Test/package steps fail or the run is cancelled.
@@ -101,6 +110,7 @@ jobs:
           cmake -B build-macos-arm64 -S . -G Ninja \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCDT_ALLOW_COMPILER_LAUNCHER=ON \
             -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
             -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
@@ -113,6 +123,8 @@ jobs:
           ccache --show-stats
           CCACHE_DIR="$PWD/.ccache-native" ccache --show-stats
       - name: Save ccache
+        # PRs restore matching caches seeded by trusted pushes. Compiler-changing
+        # PRs intentionally build cold instead of publishing executable objects.
         if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v5
         with:

@@ -15,11 +15,13 @@ set(CMAKE_ASM_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cc")
 set(CMAKE_AR "@CDT_ROOT_DIR@/bin/cdt-ar")
 set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
-# ccache 4.14 regressed preprocessing through the CDT compiler wrappers. Only
-# CDT's internal runtime-library build opts in to dependency-mode caching, and
-# it assigns native targets a separate cache directory. Contract builds remain
-# uncached because the compiler wrappers also produce side files.
-if(NOT CDT_INTERNAL_LIBRARY_BUILD OR NOT CDT_NATIVE_CCACHE_DIR)
+# ccache 4.14 was observed returning cached objects for different source files
+# compiled through the CDT wrappers. Compiler launchers are therefore disabled
+# by default. Consumers on a known-good launcher/version may explicitly opt in;
+# CDT's CI pins a known-good ccache and separates native and Wasm cache entries.
+set(CDT_ALLOW_COMPILER_LAUNCHER OFF CACHE BOOL
+    "Allow compiler launchers with the CDT toolchain (do not use ccache 4.14)")
+if(NOT CDT_ALLOW_COMPILER_LAUNCHER)
   set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
   set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
 endif()

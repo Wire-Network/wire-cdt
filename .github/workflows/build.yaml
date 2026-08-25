@@ -97,7 +97,7 @@ jobs:
           id: ccache-info
           run: |
             ccache --version | awk 'NR == 1 { print "version=" $3 }' >> "$GITHUB_OUTPUT"
-            echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
+            echo "compiler=$(git ls-files -s tools/cc tools/include tools/CMakeLists.txt plugins vcpkg.json vcpkg-configuration.json | git hash-object --stdin)" >> "$GITHUB_OUTPUT"
         - name: Restore ccache
           id: restore-ccache
           uses: actions/cache/restore@v5
@@ -154,6 +154,7 @@ jobs:
               -DCMAKE_CXX_COMPILER="$CXX" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DCDT_ALLOW_COMPILER_LAUNCHER=ON \
               -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
               -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
               -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
@@ -170,6 +171,8 @@ jobs:
         # build-macos.yaml) so the expensive vcpkg/ccache work is banked even
         # when Test or the packaging steps below fail.
         - name: Save ccache
+          # PRs restore matching caches seeded by trusted pushes. Compiler-changing
+          # PRs intentionally build cold instead of publishing executable objects.
           if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
           uses: actions/cache/save@v5
           with:

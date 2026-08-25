@@ -6,9 +6,10 @@ list(APPEND CMAKE_MODULE_PATH ${CDT_BIN})
 include(CDTMacros)
 include(CDTInternalMacros)
 
-# ccache 4.14's preprocessor mode can treat different cdt-cc/cdt-cpp inputs as
-# the same compilation. Depend mode hashes the compiler-produced dependency
-# graph instead and is safe for these object-only internal library builds.
+# ccache 4.14 was observed returning an object for a different source file even
+# within one CDT compilation mode, so CI must not opt that version in. For
+# known-good versions, depend mode avoids wrapper preprocessing and hashes the
+# compiler-produced dependency graph for these object-only internal builds.
 if(CDT_INTERNAL_LIBRARY_BUILD AND CDT_NATIVE_CCACHE_DIR)
   set(CDT_CCACHE_ENV CCACHE_DEPEND=true)
   if(CDT_CCACHE_COMPILER_CHECK)
