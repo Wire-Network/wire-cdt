@@ -57,8 +57,13 @@ int main(int argc, const char **argv) {
          output = opts.output_fn.empty() ? "a.out" : opts.output_fn;
       }
 
-      new_opts.insert(new_opts.begin(), "-o"+output);
-      outputs.push_back(output);
+      // Match the compiler driver's preprocessing contract: without an
+      // explicit -o, -E writes to stdout. This is also what compiler caches
+      // expect when they invoke the wrapper to derive a preprocessor key.
+      if (!opts.pp_only || opts.has_o_opt) {
+         new_opts.insert(new_opts.begin(), "-o"+output);
+         outputs.push_back(output);
+      }
       if (!sysio::cdt::environment::exec_subprogram("clang", new_opts)) {
          llvm::sys::fs::remove(tmp_file);
          return -1;

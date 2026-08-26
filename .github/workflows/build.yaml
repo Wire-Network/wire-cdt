@@ -89,6 +89,9 @@ jobs:
       CCACHE_MAXSIZE: "10G"
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
+      # cdt-cc/cdt-cpp are reproducible but rebuilt in every clean CI tree, so
+      # their timestamps are not a stable compiler identity.
+      CCACHE_COMPILERCHECK: content
     steps:
         - uses: actions/checkout@v5
           with:
@@ -98,9 +101,11 @@ jobs:
           uses: actions/cache/restore@v5
           with:
             path: .ccache
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+            # The epoch prevents reuse of objects cached while the CDT wrappers' -E mode wrote
+            # its preprocessed stream to an implicit output file.
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
             restore-keys: |
-              ${{ runner.os }}-${{ matrix.platform }}-ccache-
+              ${{ runner.os }}-${{ matrix.platform }}-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
         - name: Restore vcpkg downloads
           id: restore-vcpkg-downloads
           uses: actions/cache/restore@v5
@@ -163,7 +168,7 @@ jobs:
           uses: actions/cache/save@v5
           with:
             path: .ccache
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ github.sha }}
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
         - name: Save vcpkg downloads
           # always(): bank the downloaded sources even when the build fails or is
           # cancelled — cancel-in-progress iteration otherwise discards them on

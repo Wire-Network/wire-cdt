@@ -45,6 +45,29 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/postpass_tests.sh ${CMAKE_BINARY
 add_test(NAME postpass_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/postpass_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST postpass_tests PROPERTY LABELS unit_tests)
 
+configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_preprocessor/run_test.sh
+   ${CMAKE_BINARY_DIR}/tests/compiler_preprocessor/run_test.sh
+   COPYONLY)
+add_test(
+   NAME compiler_preprocessor_tests
+   COMMAND ${CMAKE_BINARY_DIR}/tests/compiler_preprocessor/run_test.sh
+      "${CMAKE_BINARY_DIR}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/compiler_preprocessor")
+set_property(TEST compiler_preprocessor_tests PROPERTY LABELS toolchain_tests)
+
+configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/contract_cache_guard/run_test.sh
+   ${CMAKE_BINARY_DIR}/tests/contract_cache_guard/run_test.sh
+   COPYONLY)
+add_test(
+   NAME contract_cache_guard_tests
+   COMMAND ${CMAKE_BINARY_DIR}/tests/contract_cache_guard/run_test.sh
+      "${CMAKE_BINARY_DIR}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/contract_cache_guard")
+set_property(TEST contract_cache_guard_tests PROPERTY LABELS toolchain_tests)
+set_property(TEST contract_cache_guard_tests PROPERTY SKIP_RETURN_CODE 77)
+
 if (sysio_FOUND)
    add_test(integration_tests ${CMAKE_BINARY_DIR}/tests/integration/integration_tests)
    set_property(TEST integration_tests PROPERTY LABELS integration_tests)

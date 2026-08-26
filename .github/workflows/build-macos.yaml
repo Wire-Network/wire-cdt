@@ -28,15 +28,35 @@ jobs:
   build-macos:
     name: Build & Test macOS Arm64
     runs-on: macos-26
+    env:
+      # cdt-cc/cdt-cpp are reproducible but rebuilt in every clean CI tree, so
+      # their timestamps are not a stable compiler identity.
+      CCACHE_COMPILERCHECK: content
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Install build dependencies
+        env:
+          CCACHE_VERSION: 4.14
+          CCACHE_SHA256: 353a81ea8680d93387102cfde288ebed381a54272cfdc18224f241add6332b39
         run: |
           brew update
-          brew install ccache ninja
-      # Caches are split restore/save (not actions/cache@v5) so the saves can
+          brew install ninja
+          curl --fail --location --retry 3 \
+            "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-darwin.tar.gz" \
+            --output "$RUNNER_TEMP/ccache.tar.gz"
+          echo "${CCACHE_SHA256}  $RUNNER_TEMP/ccache.tar.gz" | shasum -a 256 --check
+          tar -xzf "$RUNNER_TEMP/ccache.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/ccache-${CCACHE_VERSION}-darwin" >> "$GITHUB_PATH"
+      - name: Verify ccache 4.14
+        run: |
+          ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
+          if [[ "$ccache_version" != "4.14" ]]; then
+            echo "::error::Expected ccache 4.14, found $ccache_version on PATH"
+            exit 1
+          fi
+      # Cache restore and save are separate steps (not actions/cache@v5) so saves can
       # run immediately after the Build step and bank the expensive vcpkg work
       # even when the Test/package steps fail or the run is cancelled.
       - name: Restore ccache
@@ -44,9 +64,11 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: .ccache
-          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+          # The epoch prevents reuse of objects cached while the CDT wrappers' -E mode wrote
+          # its preprocessed stream to an implicit output file.
+          key: ${{ runner.os }}-macos-arm64-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-macos-arm64-ccache-
+            ${{ runner.os }}-macos-arm64-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
       - name: Restore vcpkg downloads
         id: restore-vcpkg-downloads
         uses: actions/cache/restore@v5
@@ -106,7 +128,7 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: .ccache
-          key: ${{ runner.os }}-macos-arm64-ccache-${{ github.sha }}
+          key: ${{ runner.os }}-macos-arm64-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
       - name: Save vcpkg downloads
         # always(): bank the downloaded sources even when the build fails or is
         # cancelled. The key is per-run, so there is never a collision; the guard
