@@ -107,6 +107,17 @@ macro(add_contract CONTRACT_NAME TARGET)
   find_cdt_magic_enum()
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "wasm")
     add_executable(${TARGET} ${ARGN})
+
+    # Contract compilation produces ABI, dispatcher, descriptor, and finalize
+    # sidecars in addition to the object file. Generic compiler caches restore
+    # only their declared outputs, so a cache hit would skip cdt-cpp and leave
+    # the contract incomplete even when the cached object itself is correct.
+    foreach(_CDT_CONTRACT_LANG C CXX)
+      set_property(TARGET ${TARGET} PROPERTY
+        ${_CDT_CONTRACT_LANG}_COMPILER_LAUNCHER "")
+    endforeach()
+    unset(_CDT_CONTRACT_LANG)
+
     get_target_property(BINOUTPUT ${TARGET} BINARY_DIR)
     target_compile_options(${TARGET} PUBLIC -abigen)
     target_compile_options(${TARGET} PUBLIC -abigen_output=${BINOUTPUT}/${TARGET}.abi)
