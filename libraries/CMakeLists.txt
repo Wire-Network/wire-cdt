@@ -6,25 +6,6 @@ list(APPEND CMAKE_MODULE_PATH ${CDT_BIN})
 include(CDTMacros)
 include(CDTInternalMacros)
 
-# ccache 4.14 was observed returning an object for a different source file even
-# within one CDT compilation mode, so CI must not opt that version in. For
-# known-good versions, depend mode avoids wrapper preprocessing and hashes the
-# compiler-produced dependency graph for these object-only internal builds.
-if(CDT_INTERNAL_LIBRARY_BUILD AND CDT_NATIVE_CCACHE_DIR)
-  set(CDT_CCACHE_ENV CCACHE_DEPEND=true)
-  if(CDT_CCACHE_COMPILER_CHECK)
-    list(APPEND CDT_CCACHE_ENV
-      "CCACHE_COMPILERCHECK=${CDT_CCACHE_COMPILER_CHECK}")
-  endif()
-
-  foreach(LANG C CXX)
-    if(CMAKE_${LANG}_COMPILER_LAUNCHER)
-      set(CMAKE_${LANG}_COMPILER_LAUNCHER
-        "${CMAKE_COMMAND};-E;env;${CDT_CCACHE_ENV};${CMAKE_${LANG}_COMPILER_LAUNCHER}")
-    endif()
-  endforeach()
-endif()
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -no-missing-ricardian-clause")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

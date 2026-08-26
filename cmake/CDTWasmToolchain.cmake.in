@@ -15,23 +15,6 @@ set(CMAKE_ASM_COMPILER "@CDT_ROOT_DIR@/bin/cdt-cc")
 set(CMAKE_AR "@CDT_ROOT_DIR@/bin/cdt-ar")
 set(CMAKE_RANLIB "@CDT_ROOT_DIR@/bin/cdt-ranlib")
 
-# ccache 4.14 was observed returning cached objects for different source files
-# compiled through the CDT wrappers. Compiler launchers are therefore disabled
-# by default. Consumers on a known-good launcher/version may explicitly opt in
-# for object-only targets. add_contract() still disables launchers because its
-# compiler invocations also emit ABI and dispatcher sidecars that ccache does
-# not restore on a cache hit. Native-mode targets use CDT_NATIVE_CCACHE_DIR when
-# provided and otherwise remain uncached so Wasm and native objects cannot mix.
-set(CDT_ALLOW_COMPILER_LAUNCHER OFF CACHE BOOL
-    "Allow compiler launchers for object-only CDT targets (do not use ccache 4.14)")
-set(CDT_NATIVE_CCACHE_DIR "" CACHE PATH
-    "Separate ccache directory for CDT -fnative targets")
-if(NOT CDT_ALLOW_COMPILER_LAUNCHER)
-  set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
-  set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
-  set(CMAKE_ASM_COMPILER_LAUNCHER "" CACHE STRING "Compiler launchers are unsupported by the CDT toolchain" FORCE)
-endif()
-
 # Toolchain files are evaluated before project(), but CMAKE_SOURCE_DIR is
 # already set from the consumer's -S source directory before the toolchain loads.
 set(_CDT_SOURCE_PREFIX_MAP "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")

@@ -46,18 +46,15 @@ add_test(NAME postpass_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/postpass_tes
 set_property(TEST postpass_tests PROPERTY LABELS unit_tests)
 
 configure_file(
-   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_launcher_guard/run_test.sh
-   ${CMAKE_BINARY_DIR}/tests/compiler_launcher_guard/run_test.sh
+   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_preprocessor/run_test.sh
+   ${CMAKE_BINARY_DIR}/tests/compiler_preprocessor/run_test.sh
    COPYONLY)
 add_test(
-   NAME compiler_launcher_guard_tests
-   COMMAND ${CMAKE_BINARY_DIR}/tests/compiler_launcher_guard/run_test.sh
+   NAME compiler_preprocessor_tests
+   COMMAND ${CMAKE_BINARY_DIR}/tests/compiler_preprocessor/run_test.sh
       "${CMAKE_BINARY_DIR}"
-      "${CMAKE_CURRENT_SOURCE_DIR}/compiler_launcher_guard"
-      "${CMAKE_SOURCE_DIR}/.cicd/validated-cdt-ccache-version.sh")
-set_tests_properties(compiler_launcher_guard_tests PROPERTIES
-   LABELS toolchain_tests
-   SKIP_RETURN_CODE 77)
+      "${CMAKE_CURRENT_SOURCE_DIR}/compiler_preprocessor")
+set_property(TEST compiler_preprocessor_tests PROPERTY LABELS toolchain_tests)
 
 if (sysio_FOUND)
    add_test(integration_tests ${CMAKE_BINARY_DIR}/tests/integration/integration_tests)

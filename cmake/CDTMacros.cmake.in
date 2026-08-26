@@ -85,51 +85,6 @@ macro(find_cdt_magic_enum)
   endif()
 endmacro()
 
-# Assign a distinct ccache directory to object-only -fnative targets. Without
-# one, leave those targets uncached so an opted-in downstream build cannot mix
-# Wasm and native objects in the same cache.
-function(_cdt_use_native_compiler_cache TARGET)
-  if(NOT CDT_ALLOW_COMPILER_LAUNCHER OR
-      NOT CMAKE_SYSTEM_PROCESSOR MATCHES "wasm")
-    return()
-  endif()
-
-  foreach(LANG C CXX)
-    get_target_property(LAUNCHER ${TARGET} ${LANG}_COMPILER_LAUNCHER)
-    if(NOT LAUNCHER)
-      continue()
-    endif()
-
-    if(NOT CDT_NATIVE_CCACHE_DIR)
-      set_property(TARGET ${TARGET} PROPERTY ${LANG}_COMPILER_LAUNCHER "")
-      continue()
-    endif()
-
-    list(LENGTH LAUNCHER LAUNCHER_LENGTH)
-    set(IS_CMAKE_ENV_LAUNCHER FALSE)
-    if(LAUNCHER_LENGTH GREATER 2)
-      list(GET LAUNCHER 0 LAUNCHER_COMMAND)
-      list(GET LAUNCHER 1 LAUNCHER_MODE)
-      list(GET LAUNCHER 2 LAUNCHER_SUBCOMMAND)
-      if(LAUNCHER_COMMAND STREQUAL "${CMAKE_COMMAND}"
-          AND LAUNCHER_MODE STREQUAL "-E"
-          AND LAUNCHER_SUBCOMMAND STREQUAL "env")
-        set(IS_CMAKE_ENV_LAUNCHER TRUE)
-      endif()
-    endif()
-
-    if(IS_CMAKE_ENV_LAUNCHER)
-      list(FILTER LAUNCHER EXCLUDE REGEX "^CCACHE_DIR=")
-      list(INSERT LAUNCHER 3 "CCACHE_DIR=${CDT_NATIVE_CCACHE_DIR}")
-    else()
-      set(LAUNCHER
-        "${CMAKE_COMMAND};-E;env;CCACHE_DIR=${CDT_NATIVE_CCACHE_DIR};${LAUNCHER}")
-    endif()
-    set_property(TARGET ${TARGET} PROPERTY ${LANG}_COMPILER_LAUNCHER
-      "${LAUNCHER}")
-  endforeach()
-endfunction()
-
 # Sets the include directories for a CDT target
 # @param TARGET The target to set include directories for
 macro(set_cdt_include_directories TARGET)
@@ -152,17 +107,6 @@ macro(add_contract CONTRACT_NAME TARGET)
   find_cdt_magic_enum()
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "wasm")
     add_executable(${TARGET} ${ARGN})
-
-    # Contract compilation produces ABI, dispatcher, and finalize sidecars in
-    # addition to the object file. Generic compiler caches only restore their
-    # declared object/dependency outputs, so a cache hit can leave the contract
-    # incomplete even on ccache versions that correctly distinguish sources.
-    foreach(_CDT_CONTRACT_LANG C CXX)
-      set_property(TARGET ${TARGET} PROPERTY
-        ${_CDT_CONTRACT_LANG}_COMPILER_LAUNCHER "")
-    endforeach()
-    unset(_CDT_CONTRACT_LANG)
-
     get_target_property(BINOUTPUT ${TARGET} BINARY_DIR)
     target_compile_options(${TARGET} PUBLIC -abigen)
     target_compile_options(${TARGET} PUBLIC -abigen_output=${BINOUTPUT}/${TARGET}.abi)
@@ -355,7 +299,6 @@ macro(add_contract_native CONTRACT_NAME TARGET)
     set_target_properties(${TARGET} PROPERTIES EXCLUDE_FROM_ALL TRUE)
     set_cdt_include_directories(${TARGET})
   endif()
-  _cdt_use_native_compiler_cache(${TARGET})
   target_compile_options(${TARGET} PRIVATE -Wno-unknown-attributes)
 endmacro()
 

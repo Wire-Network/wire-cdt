@@ -89,44 +89,23 @@ jobs:
       CCACHE_MAXSIZE: "10G"
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
+      # cdt-cc/cdt-cpp are reproducible but rebuilt in every clean CI tree, so
+      # their timestamps are not a stable compiler identity.
+      CCACHE_COMPILERCHECK: content
     steps:
         - uses: actions/checkout@v5
           with:
             submodules: recursive
-        - name: Read ccache identity
-          id: ccache-info
-          run: |
-            set -euo pipefail
-            ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
-            echo "version=${ccache_version}" >> "$GITHUB_OUTPUT"
-            if ./.cicd/validated-cdt-ccache-version.sh "$ccache_version"; then
-              echo "allow_cdt_launcher=ON" >> "$GITHUB_OUTPUT"
-            else
-              echo "allow_cdt_launcher=OFF" >> "$GITHUB_OUTPUT"
-              echo "::warning::Disabling CDT wrapper caching for unvalidated ccache ${ccache_version}"
-            fi
-            host_compiler=/usr/bin/clang-18
-            host_compiler_hash=$(sha256sum "$host_compiler")
-            host_compiler_version=$("$host_compiler" --version)
-            os_version=$(cat /etc/os-release)
-            compiler_identity=$({
-              git ls-files -s \
-                CMakeLists.txt cmake tools plugins .cicd .github/vcpkg-triplets \
-                vcpkg vcpkg.json vcpkg-configuration.json
-              printf '%s\n' "$host_compiler_hash" "$host_compiler_version" \
-                "$os_version"
-            } | git hash-object --stdin)
-            echo "compiler=${compiler_identity}" >> "$GITHUB_OUTPUT"
         - name: Restore ccache
           id: restore-ccache
           uses: actions/cache/restore@v5
           with:
-            path: |
-              .ccache
-              .ccache-native
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
+            path: .ccache
+            # The epoch prevents reuse of objects cached while the CDT wrappers' -E mode wrote
+            # its preprocessed stream to an implicit output file.
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
             restore-keys: |
-              ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-
+              ${{ runner.os }}-${{ matrix.platform }}-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
         - name: Restore vcpkg downloads
           id: restore-vcpkg-downloads
           uses: actions/cache/restore@v5
@@ -173,9 +152,6 @@ jobs:
               -DCMAKE_CXX_COMPILER="$CXX" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-              -DCDT_ALLOW_COMPILER_LAUNCHER=${{ steps.ccache-info.outputs.allow_cdt_launcher }} \
-              -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
-              -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
               -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
               -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
               -DCMAKE_BUILD_TYPE=Release \
@@ -184,21 +160,15 @@ jobs:
               -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
             cmake --build build -- -j "$(nproc)"
-            ccache --show-stats
-            CCACHE_DIR="$PWD/.ccache-native" ccache --show-stats
         # The saves sit immediately after Build (same ordering as
         # build-macos.yaml) so the expensive vcpkg/ccache work is banked even
         # when Test or the packaging steps below fail.
         - name: Save ccache
-          # PRs restore matching caches seeded by trusted pushes. Compiler-changing
-          # PRs intentionally build cold instead of publishing executable objects.
           if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
           uses: actions/cache/save@v5
           with:
-            path: |
-              .ccache
-              .ccache-native
-            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
+            path: .ccache
+            key: ${{ runner.os }}-${{ matrix.platform }}-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
         - name: Save vcpkg downloads
           # always(): bank the downloaded sources even when the build fails or is
           # cancelled — cancel-in-progress iteration otherwise discards them on

@@ -28,15 +28,18 @@ jobs:
   build-macos:
     name: Build & Test macOS Arm64
     runs-on: macos-26
+    env:
+      # cdt-cc/cdt-cpp are reproducible but rebuilt in every clean CI tree, so
+      # their timestamps are not a stable compiler identity.
+      CCACHE_COMPILERCHECK: content
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Install build dependencies
-        id: install-ccache
         env:
-          CCACHE_VERSION: 4.13.6
-          CCACHE_SHA256: 0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9
+          CCACHE_VERSION: 4.14
+          CCACHE_SHA256: 353a81ea8680d93387102cfde288ebed381a54272cfdc18224f241add6332b39
         run: |
           brew update
           brew install ninja
@@ -46,51 +49,26 @@ jobs:
           echo "${CCACHE_SHA256}  $RUNNER_TEMP/ccache.tar.gz" | shasum -a 256 --check
           tar -xzf "$RUNNER_TEMP/ccache.tar.gz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/ccache-${CCACHE_VERSION}-darwin" >> "$GITHUB_PATH"
-          echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
-      - name: Read ccache identity
-        id: ccache-info
-        env:
-          EXPECTED_CCACHE_VERSION: ${{ steps.install-ccache.outputs.version }}
+      - name: Verify ccache 4.14
         run: |
-          set -euo pipefail
           ccache_version=$(ccache --version | awk 'NR == 1 { print $3 }')
-          if [[ "$ccache_version" != "$EXPECTED_CCACHE_VERSION" ]]; then
-            echo "::error::Expected ccache $EXPECTED_CCACHE_VERSION, found $ccache_version on PATH"
+          if [[ "$ccache_version" != "4.14" ]]; then
+            echo "::error::Expected ccache 4.14, found $ccache_version on PATH"
             exit 1
           fi
-          if ! ./.cicd/validated-cdt-ccache-version.sh "$ccache_version"; then
-            echo "::error::Pinned ccache $ccache_version is not validated with CDT wrappers"
-            exit 1
-          fi
-          echo "version=${ccache_version}" >> "$GITHUB_OUTPUT"
-          echo "allow_cdt_launcher=ON" >> "$GITHUB_OUTPUT"
-          host_compiler=$(xcrun --find clang)
-          host_compiler_hash=$(shasum -a 256 "$host_compiler")
-          host_compiler_version=$("$host_compiler" --version)
-          sdk_path=$(xcrun --sdk macosx --show-sdk-path)
-          sdk_version=$(xcrun --sdk macosx --show-sdk-version)
-          os_version=$(sw_vers)
-          compiler_identity=$({
-            git ls-files -s \
-              CMakeLists.txt cmake tools plugins .cicd .github/vcpkg-triplets \
-              vcpkg vcpkg.json vcpkg-configuration.json
-            printf '%s\n' "$host_compiler_hash" "$host_compiler_version" \
-              "$sdk_path" "$sdk_version" "$os_version"
-          } | git hash-object --stdin)
-          echo "compiler=${compiler_identity}" >> "$GITHUB_OUTPUT"
-      # Caches are split restore/save (not actions/cache@v5) so the saves can
+      # Cache restore and save are separate steps (not actions/cache@v5) so saves can
       # run immediately after the Build step and bank the expensive vcpkg work
       # even when the Test/package steps fail or the run is cancelled.
       - name: Restore ccache
         id: restore-ccache
         uses: actions/cache/restore@v5
         with:
-          path: |
-            .ccache
-            .ccache-native
-          key: ${{ runner.os }}-macos-arm64-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
+          path: .ccache
+          # The epoch prevents reuse of objects cached while the CDT wrappers' -E mode wrote
+          # its preprocessed stream to an implicit output file.
+          key: ${{ runner.os }}-macos-arm64-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-macos-arm64-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-
+            ${{ runner.os }}-macos-arm64-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-
       - name: Restore vcpkg downloads
         id: restore-vcpkg-downloads
         uses: actions/cache/restore@v5
@@ -138,9 +116,6 @@ jobs:
           cmake -B build-macos-arm64 -S . -G Ninja \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCDT_ALLOW_COMPILER_LAUNCHER=${{ steps.ccache-info.outputs.allow_cdt_launcher }} \
-            -DCDT_NATIVE_CCACHE_DIR="$PWD/.ccache-native" \
-            -DCDT_CCACHE_COMPILER_CHECK="string:${{ steps.ccache-info.outputs.compiler }}" \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -DCMAKE_BUILD_TYPE=Release \
             -DVCPKG_TARGET_TRIPLET=arm64-osx-release \
@@ -148,18 +123,12 @@ jobs:
             -DVCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
 
           cmake --build build-macos-arm64 -- -j "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
-          ccache --show-stats
-          CCACHE_DIR="$PWD/.ccache-native" ccache --show-stats
       - name: Save ccache
-        # PRs restore matching caches seeded by trusted pushes. Compiler-changing
-        # PRs intentionally build cold instead of publishing executable objects.
         if: ${{ always() && github.event_name != 'pull_request' && steps.restore-ccache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v5
         with:
-          path: |
-            .ccache
-            .ccache-native
-          key: ${{ runner.os }}-macos-arm64-ccache-${{ steps.ccache-info.outputs.version }}-${{ steps.ccache-info.outputs.compiler }}-${{ github.sha }}
+          path: .ccache
+          key: ${{ runner.os }}-macos-arm64-ccache-cdt-preprocessor-v1-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'tools/**', 'plugins/**', 'vcpkg.json', 'vcpkg-configuration.json', '.github/vcpkg-triplets/**') }}-${{ github.sha }}
       - name: Save vcpkg downloads
         # always(): bank the downloaded sources even when the build fails or is
         # cancelled. The key is per-run, so there is never a collision; the guard
