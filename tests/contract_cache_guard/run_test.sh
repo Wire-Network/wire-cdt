@@ -19,12 +19,16 @@ vcpkg_installed=$(awk -F= \
 if [[ -z "$vcpkg_installed" ]]; then
   vcpkg_installed="$build_root/vcpkg_installed"
 fi
+if [[ ! -d "$vcpkg_installed" ]]; then
+  echo "Skipping contract cache guard test: vcpkg tree is unavailable"
+  exit 77
+fi
 
 magic_enum_header=$(find "$vcpkg_installed" \
   -path '*/include/magic_enum/magic_enum.hpp' -print -quit)
 if [[ -z "$magic_enum_header" ]]; then
-  echo "Could not find the vcpkg magic_enum headers" >&2
-  exit 1
+  echo "Skipping contract cache guard test: magic_enum headers are unavailable"
+  exit 77
 fi
 contract_include=${magic_enum_header%/magic_enum/magic_enum.hpp}
 

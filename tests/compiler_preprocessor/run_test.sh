@@ -99,11 +99,11 @@ run_ccache_regression() {
     "$source_dir/cache_probe_b.$extension"
 
   if ! cmp -s "$direct_a" "$cached_a" || ! cmp -s "$direct_b" "$cached_b"; then
-    echo "ccache returned an object for the wrong $label source" >&2
+    echo "$ccache_description returned an object for the wrong $label source" >&2
     exit 1
   fi
   if cmp -s "$cached_a" "$cached_b"; then
-    echo "Distinct $label sources collapsed to the same object" >&2
+    echo "$ccache_description collapsed distinct $label sources to the same object" >&2
     exit 1
   fi
 
@@ -133,7 +133,8 @@ run_preprocessor_tests "$cdt_cc" c cdt-cc
 run_preprocessor_tests "$cdt_cpp" cpp cdt-cpp
 
 if ccache_path=$(command -v ccache); then
-  echo "Testing $("$ccache_path" --version | sed -n '1p')"
+  ccache_description=$("$ccache_path" --version | sed -n '1p')
+  echo "Testing $ccache_description"
   run_ccache_regression "$ccache_path" "$cdt_cc" c cdt-cc
   run_ccache_regression "$ccache_path" "$cdt_cpp" cpp cdt-cpp
 else
