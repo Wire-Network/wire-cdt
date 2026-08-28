@@ -7,6 +7,80 @@
 #include <vector>
 #include <unordered_set>
 
+/**
+ * The ABI format version this toolchain emits.
+ *
+ * Single source of truth for every host tool and for the abigen plugin: cdt-cpp,
+ * cdt-cc, cdt-ld, cdt-codegen and `sysio_abigen` all take their default from here,
+ * so a standalone `cdt-codegen` run and an `add_contract()` build cannot stamp
+ * different versions into a contract's `.abi`. Bumping the format is a one-line
+ * change here plus a refresh of the `tests/toolchain/abigen-pass/*.abi` fixtures,
+ * which pin the emitted string byte-for-byte.
+ */
+namespace abi_version {
+   inline constexpr int default_major = 1;
+   inline constexpr int default_minor = 2;
+
+   /// "<major>.<minor>" -- the spelling accepted by the `-abi-version` driver flag
+   /// and by the abigen plugin's `abi_version=` plugin argument.
+   inline std::string spelling(int major_v, int minor_v) {
+      return std::to_string(major_v) + "." + std::to_string(minor_v);
+   }
+
+   inline std::string default_spelling() { return spelling(default_major, default_minor); }
+
+   /// The minor from which the `protobuf_types` ABI section is understood. A
+   /// contract that emits one is bumped from the baseline to here; a contract that
+   /// does not stays at the baseline.
+   inline constexpr int protobuf_minor = 3;
+
+   /// The full "sysio::abi/<major>.<minor>" string stamped into a contract's ABI.
+   inline std::string version_string(int major_v, int minor_v) {
+      return "sysio::abi/" + spelling(major_v, minor_v);
+   }
+
+   /**
+    * Parse a "<major>" or "<major>.<minor>" spelling.
+    *
+    * Integer parsing throughout: the previous float round-trip
+    * (`(int)((stof(v) - (int)stof(v)) * 10)`) truncated on any minor whose decimal
+    * expansion falls short in binary -- "1.3" parsed as minor 2 -- which silently
+    * desynced the version handed to the plugin from the one handed to ABIMerger.
+    *
+    * @param text      the spelling to parse
+    * @param major_out set to the major component on success; untouched on failure
+    * @param minor_out set to the minor component on success (0 when omitted);
+    *                  untouched on failure
+    * @return true when @p text is a well-formed version, false otherwise. Callers
+    *         are expected to emit a diagnostic and exit non-zero on false rather
+    *         than proceeding with a partially-parsed version.
+    */
+   inline bool parse(const std::string& text, int& major_out, int& minor_out) {
+      if (text.empty())
+         return false;
+
+      const auto dot = text.find('.');
+      const std::string major_text = text.substr(0, dot);
+      const std::string minor_text = (dot == std::string::npos) ? std::string("0")
+                                                                : text.substr(dot + 1);
+
+      // Reject anything std::stoi would otherwise accept by prefix ("1x", " 1", "1.2.3").
+      auto all_digits = [](const std::string& v) {
+         return !v.empty() && v.find_first_not_of("0123456789") == std::string::npos;
+      };
+      if (!all_digits(major_text) || !all_digits(minor_text))
+         return false;
+
+      try {
+         major_out = std::stoi(major_text);
+         minor_out = std::stoi(minor_text);
+      } catch (const std::exception&) {
+         return false;   // out of int range
+      }
+      return true;
+   }
+} // namespace abi_version
+
 struct abi_typedef {
    std::string new_type_name;
    std::string type;
@@ -119,9 +193,9 @@ struct abi_action_result {
 
 /// From sysio libraries/chain/include/sysio/chain/abi_def.hpp
 struct abi {
-   int version_major = 1;
-   int version_minor = 1;
-   std::string version_string()const { return std::string("sysio::abi/")+std::to_string(version_major)+"."+std::to_string(version_minor); }
+   int version_major = abi_version::default_major;
+   int version_minor = abi_version::default_minor;
+   std::string version_string()const { return abi_version::version_string(version_major, version_minor); }
    std::set<abi_struct>                   structs;
    std::set<abi_typedef>                  typedefs;
    std::set<abi_action>                   actions;

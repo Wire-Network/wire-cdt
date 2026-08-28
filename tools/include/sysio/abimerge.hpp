@@ -17,7 +17,7 @@ class ABIMerger {
       ABIMerger(ojson a) : abi(a) {}
       ABIMerger(ojson a, int version_major, int version_minor) : abi(a) {
          if (abi.empty()) {
-            abi["version"] = std::string("sysio::abi/") + std::to_string(version_major) + "." + std::to_string(version_minor);
+            abi["version"] = abi_version::version_string(version_major, version_minor);
             abi["types"] = ojson::array();
             abi["structs"] = ojson::array();
             abi["actions"] = ojson::array();

@@ -1018,13 +1018,16 @@ static Options CreateOptions(bool add_defaults=true) {
 
 #endif
 
-   int abi_version_major = 1;
-   int abi_version_minor = 2;
+   int abi_version_major = abi_version::default_major;
+   int abi_version_minor = abi_version::default_minor;
 
    if (!abi_version_opt.empty()) {
-      abi_version_major = std::stoi(abi_version_opt);
-      float tmp         = std::stof(abi_version_opt);
-      abi_version_minor = ((tmp - (int)tmp)*10);
+      if (!abi_version::parse(abi_version_opt, abi_version_major, abi_version_minor)) {
+         std::cerr << "invalid -abi-version '" << abi_version_opt
+                   << "': expected <major>[.<minor>], e.g. "
+                   << abi_version::default_spelling() << "\n";
+         exit(1);
+      }
    }
 
 #ifndef ONLY_LD
