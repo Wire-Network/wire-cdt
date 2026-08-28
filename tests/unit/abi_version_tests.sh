@@ -129,25 +129,36 @@ check_emitted_version() {
     check "$desc" "$abi" "\"version\": \"sysio::abi/${expected}\""
 }
 
-check_emitted_version ""    "1.2"   # no flag -> the toolchain baseline
-check_emitted_version "1.2" "1.2"
-check_emitted_version "1.3" "1.3"   # float parse gave 1.2 here
-check_emitted_version "1.4" "1.4"   # float parse gave 1.3 here
+check_emitted_version ""     "1.2"   # no flag -> the toolchain baseline
+check_emitted_version "1.2"  "1.2"
+check_emitted_version "1.3"  "1.3"   # float parse gave 1.2 here
+check_emitted_version "1.4"  "1.4"   # float parse gave 1.3 here
+check_emitted_version "1.10" "1.10"  # two-digit minor: see below
 
-# A malformed version must be rejected with a diagnostic, not silently coerced.
-if "$CDT_CPP" -abi-version "not-a-version" -abigen -contract verparse \
-      "-abigen_output=${WORK}/bad.abi" "${WORK}/verparse.cpp" \
-      -o "${WORK}/bad.wasm" > "${WORK}/bad.log" 2>&1; then
-    fail "malformed -abi-version is rejected"
-else
-    if grep -q "invalid -abi-version" "${WORK}/bad.log"; then
-        echo "  PASS: malformed -abi-version is rejected with a diagnostic"
+# A two-digit minor exercised three separate parsers, each of which got it wrong:
+# the driver's stof/modf, the abigen plugin's stof/modf, and ABIMerger deriving the
+# version from the string's last three characters (".10" -> 0.10). The last one also
+# silently dropped action_results, because 0.10*10 failed its >= 12 gate. All three
+# now share abi_version::parse / parse_version_string, so the section must survive.
+check "1.10 keeps action_results (ABIMerger no longer parses the suffix)" \
+    "${WORK}/v1.10.abi" \
+    '"action_results"'
+
+# There is no ABI 0.x, and cdt-cpp reads a zero major as "option absent" -- accepting
+# one would reopen the driver/codegen divergence. Must be rejected, not coerced.
+for bad in "not-a-version" "0.1" "1.2.3" "1x"; do
+    if "$CDT_CPP" -abi-version "$bad" -abigen -contract verparse \
+          "-abigen_output=${WORK}/bad.abi" "${WORK}/verparse.cpp" \
+          -o "${WORK}/bad.wasm" > "${WORK}/bad.log" 2>&1; then
+        fail "-abi-version ${bad} is rejected"
+    elif grep -q "invalid -abi-version" "${WORK}/bad.log"; then
+        echo "  PASS: -abi-version ${bad} is rejected with a diagnostic"
         PASS=$((PASS + 1))
     else
-        fail "malformed -abi-version rejected, but without the expected diagnostic"
+        fail "-abi-version ${bad} rejected, but without the expected diagnostic"
         sed 's/^/    /' "${WORK}/bad.log"
     fi
-fi
+done
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

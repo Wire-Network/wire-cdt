@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 #include <unordered_set>
 
@@ -14,8 +15,8 @@
  * cdt-cc, cdt-ld, cdt-codegen and `sysio_abigen` all take their default from here,
  * so a standalone `cdt-codegen` run and an `add_contract()` build cannot stamp
  * different versions into a contract's `.abi`. Bumping the format is a one-line
- * change here plus a refresh of the `tests/toolchain/abigen-pass/*.abi` fixtures,
- * which pin the emitted string byte-for-byte.
+ * change here plus a refresh of the `tests/toolchain/abigen-pass/<fixture>.abi`
+ * fixtures, which pin the emitted string byte-for-byte.
  */
 namespace abi_version {
    inline constexpr int default_major = 1;
@@ -34,6 +35,10 @@ namespace abi_version {
    /// does not stays at the baseline.
    inline constexpr int protobuf_minor = 3;
 
+   /// The minor from which `action_results` is part of the format. ABIMerger only
+   /// merges that section for a document at or above this version.
+   inline constexpr int action_results_minor = 2;
+
    /// The full "sysio::abi/<major>.<minor>" string stamped into a contract's ABI.
    inline std::string version_string(int major_v, int minor_v) {
       return "sysio::abi/" + spelling(major_v, minor_v);
@@ -46,6 +51,12 @@ namespace abi_version {
     * (`(int)((stof(v) - (int)stof(v)) * 10)`) truncated on any minor whose decimal
     * expansion falls short in binary -- "1.3" parsed as minor 2 -- which silently
     * desynced the version handed to the plugin from the one handed to ABIMerger.
+    *
+    * A zero major is rejected: there is no ABI 0.x, and cdt-cpp reads a zero major
+    * as "the option was never given" (tools/cc/cdt-cpp.cpp.in), so accepting one
+    * would let `cdt-cpp -abi-version 0.1` fall back to the default while
+    * `cdt-codegen --abi-version 0.1` honoured it -- reintroducing exactly the
+    * divergence this namespace exists to remove.
     *
     * @param text      the spelling to parse
     * @param major_out set to the major component on success; untouched on failure
@@ -71,13 +82,39 @@ namespace abi_version {
       if (!all_digits(major_text) || !all_digits(minor_text))
          return false;
 
+      int major_v = 0;
+      int minor_v = 0;
       try {
-         major_out = std::stoi(major_text);
-         minor_out = std::stoi(minor_text);
+         major_v = std::stoi(major_text);
+         minor_v = std::stoi(minor_text);
       } catch (const std::exception&) {
          return false;   // out of int range
       }
+      if (major_v == 0)
+         return false;
+
+      major_out = major_v;
+      minor_out = minor_v;
       return true;
+   }
+
+   /**
+    * Parse the "<ns>::abi/<major>.<minor>" string stamped into a contract's ABI.
+    *
+    * The namespace prefix is not inspected, so a descriptor carrying an inherited
+    * `eosio::abi/1.2` parses the same as a `sysio::abi/1.2` one. Everything up to
+    * and including the last '/' is dropped and the remainder handed to parse();
+    * a string with no '/' is parsed whole.
+    *
+    * @param text      the version string to parse
+    * @param major_out set to the major component on success; untouched on failure
+    * @param minor_out set to the minor component on success; untouched on failure
+    * @return true when @p text carries a well-formed version, false otherwise
+    */
+   inline bool parse_version_string(const std::string& text, int& major_out, int& minor_out) {
+      const auto slash = text.rfind('/');
+      return parse(slash == std::string::npos ? text : text.substr(slash + 1),
+                   major_out, minor_out);
    }
 } // namespace abi_version
 

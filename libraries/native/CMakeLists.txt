@@ -364,6 +364,4 @@ add_custom_command( TARGET native POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<
 
 add_custom_command( TARGET sf POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sf> ${BASE_BINARY_DIR}/lib )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION ${BASE_BINARY_DIR}/include/sysio FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "softfloat" EXCLUDE)
-
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/native DESTINATION ${BASE_BINARY_DIR}/include/sysiolib FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "softfloat" EXCLUDE)
+# Header staging lives in the stage_cdt_headers target (cmake/stage_headers.cmake).

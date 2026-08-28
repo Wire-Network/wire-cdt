@@ -19,6 +19,18 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+# Stage the CDT-owned headers into ${BASE_BINARY_DIR}/include at BUILD time, pruning
+# any whose source has been deleted. See cmake/stage_headers.cmake for why this cannot
+# be a configure-time file(COPY).
+add_custom_target(stage_cdt_headers ALL
+   COMMAND ${CMAKE_COMMAND}
+           -DSTAGE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+           -DSTAGE_BINARY_DIR=${BASE_BINARY_DIR}
+           -DSTAGE_NATIVE=$<BOOL:${ENABLE_NATIVE_COMPILER}>
+           -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/stage_headers.cmake
+   COMMENT "Staging CDT headers into ${BASE_BINARY_DIR}/include"
+   VERBATIM)
+
 add_subdirectory(libc)
 add_subdirectory(libc++)
 add_subdirectory(sysiolib)
@@ -27,6 +39,13 @@ add_subdirectory(rt)
 if (ENABLE_NATIVE_COMPILER)
    add_subdirectory(native)
 endif()
+
+# Anything compiled against the staged tree must see the pruned copy, not a leftover.
+foreach(staged_consumer sysio native native_sysio)
+   if(TARGET ${staged_consumer})
+      add_dependencies(${staged_consumer} stage_cdt_headers)
+   endif()
+endforeach()
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/boost/include/boost/preprocessor DESTINATION ${BASE_BINARY_DIR}/include/boost)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/meta_refl/include/bluegrass DESTINATION ${BASE_BINARY_DIR}/include)

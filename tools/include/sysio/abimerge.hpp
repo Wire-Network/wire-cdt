@@ -7,6 +7,7 @@
 #include "abi.hpp"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 using jsoncons::json;
@@ -14,8 +15,10 @@ using jsoncons::ojson;
 
 class ABIMerger {
    public:
-      ABIMerger(ojson a) : abi(a) {}
-      ABIMerger(ojson a, int version_major, int version_minor) : abi(a) {
+      ABIMerger(ojson a, int version_major, int version_minor)
+         : abi(a)
+         , major(version_major)
+         , minor(version_minor) {
          if (abi.empty()) {
             abi["version"] = abi_version::version_string(version_major, version_minor);
             abi["types"] = ojson::array();
@@ -48,8 +51,12 @@ class ABIMerger {
          ret["tables"]   = merge_tables(other);
          ret["ricardian_clauses"]  = merge_clauses(other);
          ret["variants"] = merge_variants(other);
-         std::string vers = abi["version"].as<std::string>();
-         if (std::stod(vers.substr(vers.size()-3))*10 >= 12) {
+         // action_results entered the format at abi_version::action_results_minor.
+         // Compare parsed components: deriving them from the string's last three
+         // characters mis-read any two-digit minor ("sysio::abi/1.10" -> ".10") and
+         // any major >= 10 ("sysio::abi/10.2" -> "0.2").
+         if (version_of(abi) >= std::pair<int, int>{abi_version::default_major,
+                                                    abi_version::action_results_minor}) {
             ret["action_results"] = merge_action_results(other);
          }
          {
@@ -60,11 +67,19 @@ class ABIMerger {
          return ret;
       }
    private:
+      /// The (major, minor) a document declares, falling back to this merger's own
+      /// version when it carries none or an unparsable one.
+      std::pair<int, int> version_of(const ojson& doc) const {
+         int major_v = major;
+         int minor_v = minor;
+         if (doc.has_key("version"))
+            abi_version::parse_version_string(doc["version"].as<std::string>(), major_v, minor_v);
+         return {major_v, minor_v};
+      }
+
       std::string merge_version(ojson b) {
-         std::string ver_a = abi["version"].as<std::string>();
-         std::string ver_b = b["version"].as<std::string>();
-         return std::stod(ver_a.substr(ver_a.size()-3))*10 < std::stod(ver_b.substr(ver_b.size()-3))*10 ?
-            ver_b : ver_a;
+         return version_of(abi) < version_of(b) ? b["version"].as<std::string>()
+                                                : abi["version"].as<std::string>();
       }
 
       static bool struct_is_same(ojson a, ojson b) {
@@ -243,5 +258,7 @@ class ABIMerger {
       }
 
       ojson abi;
+      int   major = abi_version::default_major;   ///< version this merger was constructed for
+      int   minor = abi_version::default_minor;
 };
 #pragma GCC diagnostic pop
