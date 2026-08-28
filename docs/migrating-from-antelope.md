@@ -11,7 +11,7 @@ serialization format are all the ones you already know. Three things are genuine
 | What | Size of the job |
 |---|---|
 | **Every `eosio` identifier is spelled `sysio`** | Mechanical. One `sed` pass over the source. |
-| **The legacy `db_*_i64` table store no longer exists** | Usually zero source changes — `sysio::multi_index` is a drop-in shim over the new KV store — but RAM sizing and client-side `get_table_rows` calls both change. |
+| **The legacy `db_*_i64` table store no longer exists** | Small: `sysio::multi_index` is a shim over the new KV store, so your table declarations carry over. Expect a mechanical `it++` → `++it` sweep, and note that RAM sizing and client-side `get_table_rows` calls both change. |
 | **The contract is billed for CPU, NET, and RAM — by default, not the signer** | One decision, and often one line: where your contract bills RAM. Everything else follows from it. A signer *can* still volunteer to pay, by opting in with the reserved `sysio.payer` permission — but that is the exception, not how ordinary traffic works. |
 
 Plus a short list of Antelope features Wire does not carry: deferred transactions and two
@@ -38,20 +38,38 @@ permission intrinsics. See [Features with no Wire equivalent](#features-with-no-
 ### Install the toolchain
 
 Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its own LLVM 18, its own
-libc and libc++, the WASM contract library, and the CMake package. Only the `cdt-*` and `sysio-*`
-entry points land on `PATH`; the bundled `clang`, `lld` and `llvm-*` binaries stay private under the
-toolchain's own home, so nothing shadows your distro's compiler.
-
-> **If AntelopeIO CDT 3.0+ is already installed**, both packages publish a `cdt-cpp` (and `cdt-cc`,
-> `cdt-ld`, `cdt-init`) on `PATH`. Install Wire CDT from the portable tarball to `/opt/wire-cdt` and
-> put `/opt/wire-cdt/bin` ahead on `PATH` for Wire work, or check `which cdt-cpp` before every build.
+libc and libc++, the WASM contract library, and the CMake package.
 
 ```bash
-sudo apt install ./wire-cdt_<version>_amd64.deb    # deb / rpm → /usr/lib/cdt
+sudo apt install ./wire-cdt_<version>_amd64.deb ./wire-cdt-dev_<version>_amd64.deb
 ```
+
+Install **both** packages. The base package carries the compiler drivers and the WASM libraries;
+`wire-cdt-dev` carries `libnative*`, `scripts/gen_native_dispatch.py` and
+`share/cdt/native-contract-src`, which is what the [native-testing path](#test-without-a-chain)
+below needs. Neither package pulls in CMake or a build tool, so on a clean machine also:
+
+```bash
+sudo apt install cmake ninja-build   # or build-essential for make
+```
+
+Under the deb/rpm layout the toolchain lives in `/usr/lib/cdt` and only the public entry points —
+the `cdt-*` and `sysio-*` names — are symlinked into `/usr/bin`. The bundled `clang`, `lld`,
+`wasm-ld`, `opt`, `llc` and `llvm-*` binaries stay in `/usr/lib/cdt/bin`, off `PATH`, so nothing
+shadows your distro's compiler.
 
 Or extract the portable tarball to `/opt` (`/opt/wire-cdt`), which coexists with a deb install.
 Building from source is documented in [BUILD.md](../BUILD.md).
+
+> **The tarball has no such separation.** Its `bin/` holds every binary, the unprefixed `clang`,
+> `clang++`, `lld`, `ld.lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` included, so putting
+> `/opt/wire-cdt/bin` on `PATH` *does* shadow the distro toolchain. Invoke it by absolute path
+> (`/opt/wire-cdt/bin/cdt-cpp`), alias the `cdt-*` names, or symlink just the public entry points
+> into a directory of your own that is on `PATH`.
+>
+> The same applies if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
+> `cdt-cc`, `cdt-ld` and `cdt-init`, so those names collide. Check `which cdt-cpp`, or invoke the
+> one you want by absolute path.
 
 Verify:
 
@@ -143,14 +161,19 @@ fatal, because on Wire the contract is the payer. Before anyone can call it, a n
 issue it a policy:
 
 ```bash
-clio push action sysio.roa addpolicy \
-  '{"owner":"mycontract","issuer":"<nodeowner>","netWeight":"0.1000 SYS", \
-    "cpuWeight":"0.1000 SYS","ramWeight":"1.0000 SYS","timeBlock":0,"networkGen":0}' \
-  -p <nodeowner>@active
+clio push action sysio.roa addpolicy '{"owner":"mycontract","issuer":"<nodeowner>","net_weight":"0.1000 SYS","cpu_weight":"0.1000 SYS","ram_weight":"1.0000 SYS","time_block":0,"network_gen":0}' -p <nodeowner>@active
 ```
 
-Without it, every call fails with `account mycontract net usage is too high: 132 > 0` — which looks
-like a broken contract and is not one.
+The field names are the ABI's, which are `snake_case` — not the `camelCase` of the C++ action
+parameters. Keep the JSON on one line: a `\` used to wrap it would fall *inside* the single quotes
+and be passed through as a literal backslash.
+
+Without it, an ordinary call fails with `account mycontract net usage is too high: 132 > 0` — which
+looks like a broken contract and is not one. "Ordinary" is the operative word: because billing keys
+on the payer alone, a caller that names itself with `sysio.payer` (see
+[Step 3](#step-3--resources-the-contract-pays)) pays for the action itself and never consults the
+contract's zero limits. So an unprovisioned contract is unreachable for ordinary users, not
+universally inert — a provisioned caller or relayer can still drive it.
 
 ### Deploy
 
@@ -186,13 +209,22 @@ A first pass that gets nearly all of it:
 
 ```bash
 grep -rl 'eosio\|EOSIO\|EOSLIB' src include \
-  | xargs sed -i -e 's/\beosio\b/sysio/g' -e 's/\bEOSIO_/SYSIO_/g' -e 's/\bEOSLIB_/SYSLIB_/g'
+  | xargs sed -i -e 's/\beosio\b/sysio/g' \
+                 -e 's/\beosio_\(assert\|assert_message\|assert_code\|exit\)\b/sysio_\1/g' \
+                 -e 's/\bEOSIO_/SYSIO_/g' \
+                 -e 's/\bEOSLIB_/SYSLIB_/g'
 ```
+
+The second expression is not redundant. `_` is a word character, so `\beosio\b` finds no boundary
+in `eosio_assert` and leaves the whole C API — `eosio_assert`, `eosio_assert_message`,
+`eosio_assert_code`, `eosio_exit` — untouched. They are named explicitly instead.
 
 Review the diff before trusting it: a `sed` this broad will also rewrite `eosio.token` to
 `sysio.token` inside string literals and `"eosio"_n` to `"sysio"_n`. On Wire those renames are
 usually correct — the system account is `sysio` and the token contract is `sysio.token` — but the
-account names in *your* contract's own tables and constants are yours to decide.
+account names in *your* contract's own tables and constants are yours to decide. Whatever the
+recipe misses, the compiler will name for you: with no `eosio` compatibility aliases, every
+survivor is an error with a file and line.
 
 ### The ABI
 
@@ -211,7 +243,17 @@ layout:
 }
 ```
 
-`cdt-abidiff <old.abi> <new.abi>` will show you exactly what moved.
+Do not reach for `cdt-abidiff` to see this particular change. It compares tables only by `name` and
+`type`, so `index_type`, `key_names`, `key_types`, `table_id` and the secondary-index metadata are
+all invisible to it, and its version check reduces `eosio::abi/1.2` and `sysio::abi/1.2` to the same
+number — a port whose tables kept their names can come back reporting no difference at all. For this
+comparison, normalize and diff the JSON directly:
+
+```bash
+jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /tmp/old.json /tmp/new.json
+```
+
+`cdt-abidiff` remains useful for what it does check — structs, fields, actions, types and variants.
 
 ---
 
@@ -225,20 +267,37 @@ the chain. `<sysio/db.h>` is a stub that forwards to `<sysio/kv.h>`. Contract st
 key-value store addressed by a compile-time `table_id`.
 
 Code that called those intrinsics directly must be rewritten. Code that used `multi_index` — which
-is nearly all of it — usually does not change at all.
+is nearly all of it — carries over with one mechanical exception, below.
 
 ### `multi_index` still works
 
-`sysio::multi_index` is a drop-in replacement implemented over the KV intrinsics. It keeps
+`sysio::multi_index` is a near-drop-in replacement implemented over the KV intrinsics. It keeps
 `emplace` / `modify` / `erase` / `find` / `require_find` / `get` / `lower_bound` / `upper_bound`,
 `available_primary_key()`, `begin`/`end`/`cbegin`/`cend`/`rbegin`/`rend`, `indexed_by` +
 `const_mem_fun` with up to 16 secondary indices, and object caching. `sysio::singleton` is likewise
 preserved.
 
+**The one source change: postfix `++` and `--` on iterators are deleted.** Wire declares
+`operator++(int)` and `operator--(int)` as `= delete` on both the primary and the secondary-index
+iterator, so the classic loop stops compiling:
+
+```cpp
+for (auto it = idx.begin(); it != idx.end(); it++)   // error: call to deleted operator
+for (auto it = idx.begin(); it != idx.end(); ++it)   // rewrite to this
+```
+
+A postfix increment has to copy the iterator, and a KV iterator owns a host-side handle. The sweep
+is mechanical — `it++` → `++it`, `it--` → `--it` — and the compiler finds every one.
+
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
-`checksum256` (and anything else with a CDT serializer, via the generic encoder). Iteration order
-is `memcmp` order over a big-endian encoding, so the fixed-width numeric types sort exactly as they
-did.
+`checksum256`. Iteration order is `memcmp` order over a big-endian encoding, so the fixed-width
+numeric types sort exactly as they did.
+
+The constraint is **`std::is_trivially_copyable`**, enforced by a `static_assert` in
+`secondary_index_view`, not "has a serializer" — so `std::string` and `std::vector` secondary keys
+are rejected at compile time even though CDT can serialize them. A variable-length secondary key
+needs a fixed-width surrogate: hash it into a `checksum256`, or truncate to a `uint64_t` and
+disambiguate collisions against the primary row.
 
 What changed underneath, and where it shows:
 
@@ -283,6 +342,20 @@ kv::table<"user_balance_history"_i, my_key, my_val> users(get_self());
 Annotate the value struct with `[[sysio::table("user_balance_history")]]` so the ABI carries the
 readable name.
 
+> **Use `_i` only for names longer than 13 characters.** The two sides currently derive `table_id`
+> differently for short names: `_i` always DJB2-hashes the string, but the ABI generator routes an
+> annotated name of 13 characters or fewer through the legacy `string_to_name` encoding instead. The
+> row is written under one id and described in the ABI under another, so RPC metadata points at the
+> wrong table:
+>
+> | Annotated name | Runtime `table_id` (`_i`) | ABI `table_id` |
+> |---|---|---|
+> | `user_table` (10 chars) | 61956 | 3509 |
+> | `user_balance_history` (20 chars) | 26461 | 26461 ✓ |
+>
+> Above 13 characters both sides hash, so they agree — which is the case `_i` exists for. Short
+> names should use `_n`, where runtime and ABI both use `string_to_name` and likewise agree.
+
 ---
 
 ## Step 3 — resources: the contract pays
@@ -292,8 +365,16 @@ works at all.
 
 **On Wire, the account billed for an action's CPU and NET is the contract that action invokes, not
 the account that signed it.** An ordinary transaction names no payer, so the signer is neither
-charged nor limit-checked. A user account with zero CPU, zero NET and no tokens can call every
-provisioned contract on the network.
+charged nor limit-checked *by consensus*. A user account with zero CPU, zero NET and no tokens can
+call every provisioned contract on the network.
+
+The qualifier matters. Objective billing keys on the payer and nothing else, so the signer's own
+limits are never consulted — but a producer also runs **subjective** billing, which meters the
+transaction's first authorizer even when it is not the payer, and can refuse a transaction whose
+signer has burned its subjective budget on earlier failures
+(`Subjectively terminated trx ... Authorized account ... exceeded subjective CPU limit`). That is
+node-local rather than consensus, and it is a spam control rather than a charge, but "the signer is
+never metered" is too strong: a signer that fails transactions in a loop can be throttled.
 
 Capacity reaches a contract as a **policy** — a grant of CPU, NET and RAM weight issued by a
 registered node owner through the `sysio.roa` contract. A contract with no policy has nothing to pay
@@ -361,8 +442,18 @@ account within a notify context`) — the same rule Antelope has. Bill to `get_s
 
 CPU is metered per **top-level** action — timed across that action's entire execution, including
 every inline action and notification handler it triggers — and billed to that top-level action's
-payer. NET is likewise charged per top-level action, on the transaction's serialized bytes; inline
-actions add no NET, because they are not on the wire.
+payer. NET is likewise charged per top-level action, but not on the whole transaction's bytes:
+
+```
+action NET = that action's own serialized billable size
+           + (16 + signatures + extensions + header) / number of actions, rounded up
+           + its matching context_free_data, for a context-free action
+```
+
+Inline actions add no NET at all, because they never appear on the wire. Two consequences worth
+designing around: **signatures cost NET**, so a co-signed action is dearer than a solo one; and
+**batching amortizes the overhead**, so ten actions in one transaction cost less NET than ten
+separate transactions.
 
 So the payer of the top-level action absorbs the CPU of the whole call tree beneath it:
 
@@ -467,19 +558,25 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 
 ## Porting checklist
 
-1. Install Wire CDT; confirm `cdt-cpp --version`.
-2. Rename `eosio` → `sysio` across sources, headers and CMake. Review the diff for string literals.
+1. Install Wire CDT — the **base and `-dev` packages both** — plus CMake and a build tool. Confirm
+   `cdt-cpp --version` resolves to the binary you meant.
+2. Rename `eosio` → `sysio` across sources, headers and CMake, including the `eosio_assert` /
+   `eosio_exit` C API that a `\beosio\b` pass skips. Review the diff for string literals.
 3. Build. Every remaining `eosio` reference is now a compiler error with a file and line.
-4. Search for direct `db_*_i64` / `db_idx*` calls. `multi_index` users have nothing to do here.
-5. **Find every `emplace` / `modify` that names a user as payer.** Decide, per table, whether the
+4. Sweep `it++` → `++it` and `it--` → `--it` on table iterators; the postfix forms are deleted.
+5. Search for direct `db_*_i64` / `db_idx*` calls. `multi_index` users have nothing to do here.
+6. Check secondary-index key types are `std::is_trivially_copyable`; give any `std::string` or
+   `std::vector` key a fixed-width surrogate.
+7. **Find every `emplace` / `modify` that names a user as payer.** Decide, per table, whether the
    contract absorbs the RAM (`get_self()`) or the client will supply `sysio.payer`.
-6. Replace any `send_deferred` with an inline action, an off-chain relayer, or a crank action.
-7. Regenerate the ABI and diff it: `cdt-abidiff old.abi new.abi`.
-8. Test natively — see [native-tester-compilation.md](native-tester-compilation.md).
-9. Deploy to a test network. Get a policy on the **contract account** before the first call, sized
-   from the ×10 `setcode` charge plus the rows the contract will hold.
-10. Update front-end `get_table_rows` calls for the `{key, value}` response shape.
-11. Measure `cpu_usage_us` and the action's billable NET size from a real trace, and size the
+8. Replace any `send_deferred` with an inline action, an off-chain relayer, or a crank action.
+9. Regenerate the ABI and diff it — `jq -S . old.abi > a && jq -S . new.abi > b && diff -u a b`,
+   not `cdt-abidiff`, which does not compare the table metadata that changed.
+10. Test natively — see [native-tester-compilation.md](native-tester-compilation.md).
+11. Deploy to a test network. Get a policy on the **contract account** before the first call, sized
+    from the ×10 `setcode` charge plus the rows the contract will hold.
+12. Update front-end `get_table_rows` calls for the `{key, value}` response shape.
+13. Measure `cpu_usage_us` and the action's billable NET size from a real trace, and size the
     production policy from those numbers.
 
 ---
