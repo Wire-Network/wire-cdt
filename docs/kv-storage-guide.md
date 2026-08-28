@@ -182,6 +182,10 @@ For custom keys via `[[sysio::kv_key("key_struct")]]`, `key_names`/`key_types` r
 
 ## Migration from multi\_index
 
+> Porting a contract from EOS/Telos/WAX or another Antelope chain? Start with
+> [Migrating a Contract from an Antelope Chain to Wire](migrating-from-antelope.md) — `multi_index`
+> is a drop-in shim there, so this section is the optional second step.
+
 `multi_index` continues to work. To migrate to `kv::table`:
 
 1. Define a key struct with your primary key fields + `SYSLIB_SERIALIZE`

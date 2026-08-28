@@ -392,6 +392,7 @@ When a change is likely to be visible downstream, build wire-sysio's contracts a
 
 | Doc | Topic |
 |---|---|
+| [docs/migrating-from-antelope.md](./docs/migrating-from-antelope.md) | Porting a contract from EOS/Telos/WAX/Antelope: getting started, renames, storage, resources, host-function diff |
 | [docs/kv-storage-guide.md](./docs/kv-storage-guide.md) | Overview of the KV storage layer |
 | [docs/kv-table.md](./docs/kv-table.md) | `sysio::kv::table` |
 | [docs/kv-multi-index.md](./docs/kv-multi-index.md) | `sysio::multi_index` |
