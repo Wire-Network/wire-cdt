@@ -5,6 +5,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <utility>
+
+#include <sysio/abi.hpp>
 
 #include <jsoncons/json.hpp>
 
@@ -46,9 +49,18 @@ class abidiff {
 
       }
       
-      int get_version(const ojson& abi) {
-         std::string ver = abi["version"].as<std::string>();
-         return (std::stod(ver.substr(ver.size()-3))*10);
+      /// The (major, minor) an ABI declares.
+      ///
+      /// The previous form -- stod over the string's last three characters -- read
+      /// "sysio::abi/1.10" as ".10" -> 1, so both capability gates below silently
+      /// skipped the variant and action-result diffs for a two-digit minor. It also
+      /// collapsed eosio::abi/1.2 and sysio::abi/1.2 to the same number.
+      std::pair<int, int> get_version(const ojson& abi) {
+         int major_v = abi_version::default_major;
+         int minor_v = abi_version::default_minor;
+         if (abi.has_key("version"))
+            abi_version::parse_version_string(abi["version"].as<std::string>(), major_v, minor_v);
+         return {major_v, minor_v};
       }
 
       void diff_version() {
@@ -263,9 +275,13 @@ class abidiff {
          diff_actions();
          diff_tables();
          diff_clauses();
-         if ( get_version(abi_1) >= 11 && get_version(abi_2) >= 11 )
+         const auto [v1_major, v1_minor] = get_version(abi_1);
+         const auto [v2_major, v2_minor] = get_version(abi_2);
+         if ( abi_version::supports_variants(v1_major, v1_minor) &&
+              abi_version::supports_variants(v2_major, v2_minor) )
             diff_variants();
-         if ( get_version(abi_1) >= 12 && get_version(abi_2) >= 12 )
+         if ( abi_version::supports_action_results(v1_major, v1_minor) &&
+              abi_version::supports_action_results(v2_major, v2_minor) )
             diff_action_results();
       }
 };

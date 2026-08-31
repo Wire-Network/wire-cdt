@@ -30,14 +30,36 @@ namespace abi_version {
 
    inline std::string default_spelling() { return spelling(default_major, default_minor); }
 
+   /// The highest ABI major this toolchain can emit. `to_json` only knows how to
+   /// serialize the 1.x shape, so accepting a higher major would stamp a version we
+   /// cannot honour -- a 2.0 ABI would silently lose every section gated below.
+   inline constexpr int max_supported_major = 1;
+
    /// The minor from which the `protobuf_types` ABI section is understood. A
    /// contract that emits one is bumped from the baseline to here; a contract that
    /// does not stays at the baseline.
    inline constexpr int protobuf_minor = 3;
 
-   /// The minor from which `action_results` is part of the format. ABIMerger only
-   /// merges that section for a document at or above this version.
+   /// The minor from which `variants` is part of the format.
+   inline constexpr int variants_minor = 1;
+
+   /// The minor from which `action_results` is part of the format.
    inline constexpr int action_results_minor = 2;
+
+   /// Does a version carry the `variants` section?
+   inline constexpr bool supports_variants(int major_v, int minor_v) {
+      return major_v == max_supported_major && minor_v >= variants_minor;
+   }
+
+   /// Does a version carry the `action_results` section?
+   ///
+   /// One predicate for the whole toolchain: the abigen plugin decides with it
+   /// whether to emit the section, ABIMerger whether to merge it, and cdt-abidiff
+   /// whether to diff it. Three separate spellings of this rule is how a contract
+   /// ends up with a version stamp that promises a section its ABI does not carry.
+   inline constexpr bool supports_action_results(int major_v, int minor_v) {
+      return major_v == max_supported_major && minor_v >= action_results_minor;
+   }
 
    /// The full "sysio::abi/<major>.<minor>" string stamped into a contract's ABI.
    inline std::string version_string(int major_v, int minor_v) {
@@ -57,6 +79,11 @@ namespace abi_version {
     * would let `cdt-cpp -abi-version 0.1` fall back to the default while
     * `cdt-codegen --abi-version 0.1` honoured it -- reintroducing exactly the
     * divergence this namespace exists to remove.
+    *
+    * A major above max_supported_major is rejected too. to_json only knows the 1.x
+    * shape and gates action_results on major == 1, so a 2.0 or 10.2 request would
+    * otherwise be accepted, compared as "newer than 1.2" by the merger, and then
+    * emitted without the very sections the higher version implies.
     *
     * @param text      the spelling to parse
     * @param major_out set to the major component on success; untouched on failure
@@ -90,7 +117,7 @@ namespace abi_version {
       } catch (const std::exception&) {
          return false;   // out of int range
       }
-      if (major_v == 0)
+      if (major_v == 0 || major_v > max_supported_major)
          return false;
 
       major_out = major_v;

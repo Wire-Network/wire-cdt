@@ -178,11 +178,17 @@ set(CPACK_WIRE_PUBLIC_ENTRY_POINTS "${CDT_PUBLIC_ENTRY_POINTS}")
 # versioned name on its own (see the archive-name/root decoupling in
 # cmake/cpack-project-config.cmake), so this no longer renames anything -- it is
 # a plain alias, kept because CI and the docs invoke it by name.
+# Depends on CDTWasmLibraries because header staging (and its pruning) happens in that
+# nested build -- see cmake/stage_headers.cmake. The generated `package` and `install`
+# targets are ordered after `all` and so pick it up for free, but this convenience
+# target is standalone: without the dependency, `cmake --build . --target package-tgz`
+# on a reused tree could run CPack over a stale staged header a prior build deleted.
 add_custom_target(package-tgz
    COMMAND "${CMAKE_CPACK_COMMAND}" -G TGZ
    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
    COMMENT "Packaging ${CPACK_PACKAGE_FILE_NAME}.tar.gz (portable toolchain)"
    VERBATIM)
+add_dependencies(package-tgz CDTWasmLibraries)
 
 set(CPACK_SET_DESTDIR OFF)
 set(CPACK_PACKAGE_RELOCATABLE OFF)

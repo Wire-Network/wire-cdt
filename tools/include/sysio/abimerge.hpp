@@ -44,6 +44,11 @@ class ABIMerger {
             ret["____comment"] = abi["____comment"];
          else if (other.has_key("____comment"))
             ret["____comment"] = other["____comment"];
+         // The emitted version is the newer of the two documents, so the capability
+         // gate below must consult THAT, not just the left-hand side. Gating on the
+         // left alone emitted e.g. 1.10 while dropping the action_results the newer
+         // side carried -- a version stamp promising a section the ABI lacks.
+         const std::pair<int, int> merged_version = std::max(version_of(abi), version_of(other));
          ret["version"]  = merge_version(other);
          ret["types"]    = merge_types(other);
          ret["structs"]  = merge_structs(other);
@@ -51,12 +56,9 @@ class ABIMerger {
          ret["tables"]   = merge_tables(other);
          ret["ricardian_clauses"]  = merge_clauses(other);
          ret["variants"] = merge_variants(other);
-         // action_results entered the format at abi_version::action_results_minor.
          // Compare parsed components: deriving them from the string's last three
-         // characters mis-read any two-digit minor ("sysio::abi/1.10" -> ".10") and
-         // any major >= 10 ("sysio::abi/10.2" -> "0.2").
-         if (version_of(abi) >= std::pair<int, int>{abi_version::default_major,
-                                                    abi_version::action_results_minor}) {
+         // characters mis-read any two-digit minor ("sysio::abi/1.10" -> ".10").
+         if (abi_version::supports_action_results(merged_version.first, merged_version.second)) {
             ret["action_results"] = merge_action_results(other);
          }
          {

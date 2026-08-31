@@ -11,11 +11,12 @@
 # pins the resulting invariant -- every staged header has a source counterpart -- so it
 # catches ANY future stale staging, not just the deletion that prompted it.
 #
-# Usage: staged_headers_tests.sh <build_dir> <source_dir>
+# Usage: staged_headers_tests.sh <build_dir> <source_dir> <enable_native_compiler>
 set -euo pipefail
 
 BUILD_DIR="$1"
 SOURCE_DIR="$2"
+ENABLE_NATIVE="${3:-ON}"
 INCLUDE_DIR="${BUILD_DIR}/include"
 PASS=0
 FAIL=0
@@ -75,6 +76,31 @@ else
     echo "    ${#stale[@]} staged header(s) no longer exist in libraries/:"
     for f in "${stale[@]}"; do echo "      include/${f}"; done
     echo "    stage_cdt_headers should have pruned these; see cmake/stage_headers.cmake"
+fi
+
+# With native mode off, the native headers must not be staged at all. They are pruned
+# unconditionally rather than inside the STAGE_NATIVE branch, because a build tree whose
+# ENABLE_NATIVE_COMPILER flipped ON -> OFF would otherwise keep the previous build's copy
+# -- and InstallCDT.cmake installs the whole include tree, so the OFF package would ship
+# an API it was configured not to build. The counterpart check above cannot catch that:
+# those files still have source counterparts, they simply should not be there.
+if [ "$ENABLE_NATIVE" = "ON" ] || [ "$ENABLE_NATIVE" = "on" ] || [ "$ENABLE_NATIVE" = "1" ]; then
+    if [ -d "${INCLUDE_DIR}/sysio/native" ]; then
+        pass "native headers are staged (ENABLE_NATIVE_COMPILER=ON)"
+    else
+        fail "native headers are staged (ENABLE_NATIVE_COMPILER=ON)"
+    fi
+else
+    leftovers=()
+    for d in "${INCLUDE_DIR}/sysio/native" "${INCLUDE_DIR}/sysiolib/native"; do
+        [ -d "$d" ] && leftovers+=("$d")
+    done
+    if [ "${#leftovers[@]}" -eq 0 ]; then
+        pass "native headers are absent (ENABLE_NATIVE_COMPILER=OFF)"
+    else
+        fail "native headers are absent (ENABLE_NATIVE_COMPILER=OFF)"
+        for d in "${leftovers[@]}"; do echo "      still staged: $d"; done
+    fi
 fi
 
 echo ""

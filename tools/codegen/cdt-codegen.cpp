@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdint>
 #include <sysio/abi.hpp>
 #include <sysio/abimerge.hpp>
@@ -314,6 +315,19 @@ static void parse_args(int argc, const char** argv) {
       } else {
          input_files.push_back(arg);
       }
+   }
+
+   // A contract with protobuf files ends up stamped at abi_version::protobuf_minor, so
+   // settle the effective version here -- before gen_actions hands it to the plugin and
+   // before the finalize pass stamps the merged ABI. The plugin gates its own sections on
+   // the version it is told, so promoting afterwards produced an ABI claiming 1.3 while
+   // missing the action_results that 1.2 already required, with the descriptors already
+   // written and the entries unrecoverable. Both passes run this, because cdt-ld forwards
+   // --protobuf-files and --abi-version into the finalize invocation.
+   if (protobuf_files.size() && abi_version_major == abi_version::default_major &&
+       abi_version_minor < abi_version::protobuf_minor) {
+      abi_version_minor = abi_version::protobuf_minor;
+      abi_version_arg   = abi_version::spelling(abi_version_major, abi_version_minor);
    }
 
    // The finalize pass does not compile anything (it only merges existing .desc files),
@@ -701,13 +715,12 @@ int main(int argc, const char** argv) {
 
                abi["protobuf_types"] = ojson::parse(protobuf_types_json);
 
-               // The protobuf_types section is only understood from abi_version::protobuf_minor
-               // onwards, so a contract that emits one is bumped up to it.
-               if (abi_version_major == abi_version::default_major &&
-                   abi_version_minor < abi_version::protobuf_minor) {
-                  abi_version_minor = abi_version::protobuf_minor;
-                  abi["version"]    = abi_version::version_string(abi_version_major, abi_version_minor);
-               }
+               // The promotion itself happened before gen_actions ran (see above), so the
+               // plugin already gated its sections on this version. All that is left is to
+               // stamp the merged document, whose version came from the descriptors.
+               assert(abi_version_minor >= abi_version::protobuf_minor ||
+                      abi_version_major != abi_version::default_major);
+               abi["version"] = abi_version::version_string(abi_version_major, abi_version_minor);
             } else if (referenced_pb_types.size()) {
                std::cerr << "protobuf types are used but no protobuf files are specified for contract " << contract_name
                          << ", please use `contract_use_protobuf()` cmake function to specify the protobuf files it depends on\n";

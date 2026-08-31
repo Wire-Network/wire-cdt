@@ -1,9 +1,10 @@
 #!/bin/bash
 # Test ABI version and protobuf_types generation
-# Usage: abi_version_tests.sh <build_dir>
+# Usage: abi_version_tests.sh <build_dir> [source_dir]
 set -euo pipefail
 
 BUILD_DIR="$1"
+SOURCE_DIR="${2:-}"
 CONTRACTS_DIR="${BUILD_DIR}/tests/unit/test_contracts"
 PASS=0
 FAIL=0
@@ -146,7 +147,10 @@ check "1.10 keeps action_results (ABIMerger no longer parses the suffix)" \
 
 # There is no ABI 0.x, and cdt-cpp reads a zero major as "option absent" -- accepting
 # one would reopen the driver/codegen divergence. Must be rejected, not coerced.
-for bad in "not-a-version" "0.1" "1.2.3" "1x"; do
+# 2.0 and 10.2 are rejected rather than accepted: abigen's to_json only serializes
+# action_results when major == 1, so a higher major would be stamped onto an ABI missing
+# the sections that version implies, and the merger would rank it above 1.2 regardless.
+for bad in "not-a-version" "0.1" "1.2.3" "1x" "2.0" "10.2"; do
     if "$CDT_CPP" -abi-version "$bad" -abigen -contract verparse \
           "-abigen_output=${WORK}/bad.abi" "${WORK}/verparse.cpp" \
           -o "${WORK}/bad.wasm" > "${WORK}/bad.log" 2>&1; then
@@ -159,6 +163,39 @@ for bad in "not-a-version" "0.1" "1.2.3" "1x"; do
         sed 's/^/    /' "${WORK}/bad.log"
     fi
 done
+
+# --- protobuf version promotion ---------------------------------------------------
+#
+# A contract with protobuf files is stamped at 1.3. That promotion used to happen after
+# the abigen plugin had already run, so `-abi-version 1.1` made the plugin suppress
+# action_results under its own 1.2 gate, and codegen then stamped the incomplete output
+# as 1.3 -- a version promising a section the descriptors no longer carried. The
+# promotion now happens before the plugin is told the version, so a non-void protobuf
+# action keeps its result entry.
+echo "-- protobuf version promotion --"
+
+PB_SRC="${SOURCE_DIR:-}"
+PB_GEN="${BUILD_DIR}/tests/unit/test_contracts"
+MAGIC_ENUM_DIR="$(find "${BUILD_DIR}/vcpkg_installed" -maxdepth 3 -type d -name magic_enum 2>/dev/null | head -1)"
+
+if [ -z "$PB_SRC" ] || [ ! -f "${PB_SRC}/tests/unit/test_contracts/pb_tests.cpp" ] \
+   || [ ! -d "${PB_GEN}/test" ] || [ -z "$MAGIC_ENUM_DIR" ]; then
+    echo "  SKIP: protobuf inputs not locatable in this build tree"
+else
+    if "$CDT_CPP" -abigen -abi-version 1.1 -contract pb_tests \
+          -protobuf-dir "${PB_SRC}/tests/unit/test_contracts" -protobuf-files test.proto \
+          -I "$PB_GEN" -I "${PB_SRC}/tests/unit/test_contracts" -I "$(dirname "$MAGIC_ENUM_DIR")" \
+          "-abigen_output=${WORK}/pb11.abi" "${PB_SRC}/tests/unit/test_contracts/pb_tests.cpp" \
+          -o "${WORK}/pb11.wasm" > "${WORK}/pb11.log" 2>&1; then
+        check "1.1 + protobuf is promoted to 1.3" \
+            "${WORK}/pb11.abi" '"version": "sysio::abi/1.3"'
+        check "1.1 + protobuf keeps the non-void action's result" \
+            "${WORK}/pb11.abi" '"name": "hiproto"'
+    else
+        fail "1.1 + protobuf builds"
+        sed 's/^/    /' "${WORK}/pb11.log"
+    fi
+fi
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

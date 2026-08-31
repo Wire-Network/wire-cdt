@@ -30,15 +30,22 @@ endforeach()
 
 set(header_patterns FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
-# sysiolib -> include/sysiolib. Pruned first, before native repopulates its subtree.
+# Prune BOTH trees before either is repopulated, and prune the native tree whether or
+# not native mode is on. Pruning it inside the STAGE_NATIVE branch left the previous
+# build's native headers staged when a reused tree flipped ENABLE_NATIVE_COMPILER from
+# ON to OFF -- and since InstallCDT.cmake installs the whole include tree, an OFF build
+# then packaged an API it was configured not to build. (include/sysiolib/native happens
+# to vanish with its parent; include/sysio/native has no such parent.)
 file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/sysiolib")
+file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/sysio/native")
+
+# sysiolib -> include/sysiolib
 file(COPY "${STAGE_SOURCE_DIR}/sysiolib"
      DESTINATION "${STAGE_BINARY_DIR}/include"
      ${header_patterns})
 
 if(STAGE_NATIVE)
    # native -> include/sysio/native
-   file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/sysio/native")
    file(COPY "${STAGE_SOURCE_DIR}/native"
         DESTINATION "${STAGE_BINARY_DIR}/include/sysio"
         ${header_patterns} PATTERN "softfloat" EXCLUDE)
