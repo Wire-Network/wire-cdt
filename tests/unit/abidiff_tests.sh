@@ -95,6 +95,41 @@ else
     pass "identical ABIs report no difference"
 fi
 
+# Reordered but equivalent action_results must NOT report a difference. find_action_results
+# compared the matched entry against abi2[...].at(i) instead of .at(j), so once a name matched
+# at a different index the result_type comparison read the wrong entry and reported all four
+# sides as changed. Pre-existing, but this PR routes 1.10 through that path.
+cat > "${WORK}/r1.abi" <<'EOF'
+{ "version": "sysio::abi/1.10", "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [ { "name": "geta", "result_type": "uint64" }, { "name": "getb", "result_type": "uint32" } ] }
+EOF
+cat > "${WORK}/r2.abi" <<'EOF'
+{ "version": "sysio::abi/1.10", "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [ { "name": "getb", "result_type": "uint32" }, { "name": "geta", "result_type": "uint64" } ] }
+EOF
+out="$("$ABIDIFF" "${WORK}/r1.abi" "${WORK}/r2.abi" 2>&1 || true)"
+if grep -qE "geta|getb" <<< "$out"; then
+    fail "reordered equivalent action_results report no difference"
+    sed 's/^/      /' <<< "$out"
+else
+    pass "reordered equivalent action_results report no difference"
+fi
+
+# An unsupported or unparsable version must be refused, not silently read as the 1.2 default.
+# parse() rejects majors above 1, so seeding the outputs with 1.2 and ignoring the result made
+# a 2.0 document compare equal to a 1.2 one.
+cat > "${WORK}/v20.abi" <<'EOF'
+{ "version": "sysio::abi/2.0", "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [], "action_results": [] }
+EOF
+if "$ABIDIFF" "${WORK}/v20.abi" "${WORK}/v1.abi" > "${WORK}/v20.log" 2>&1; then
+    fail "an unsupported ABI version is refused"
+elif grep -q "unsupported ABI version" "${WORK}/v20.log"; then
+    pass "an unsupported ABI version is refused with a diagnostic"
+else
+    fail "unsupported ABI version refused, but without the expected diagnostic"
+    sed 's/^/      /' "${WORK}/v20.log"
+fi
+
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

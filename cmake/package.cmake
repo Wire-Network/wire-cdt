@@ -179,7 +179,7 @@ set(CPACK_WIRE_PUBLIC_ENTRY_POINTS "${CDT_PUBLIC_ENTRY_POINTS}")
 # cmake/cpack-project-config.cmake), so this no longer renames anything -- it is
 # a plain alias, kept because CI and the docs invoke it by name.
 # Depends on CDTWasmLibraries because header staging (and its pruning) happens in that
-# nested build -- see cmake/stage_headers.cmake. The generated `package` and `install`
+# nested build -- see cmake/stage_cdt_tree.cmake. The generated `package` and `install`
 # targets are ordered after `all` and so pick it up for free, but this convenience
 # target is standalone: without the dependency, `cmake --build . --target package-tgz`
 # on a reused tree could run CPack over a stale staged header a prior build deleted.

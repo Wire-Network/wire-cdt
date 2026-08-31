@@ -20,15 +20,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 # Stage the CDT-owned headers into ${BASE_BINARY_DIR}/include at BUILD time, pruning
-# any whose source has been deleted. See cmake/stage_headers.cmake for why this cannot
+# any whose source has been deleted. See cmake/stage_cdt_tree.cmake for why this cannot
 # be a configure-time file(COPY).
-add_custom_target(stage_cdt_headers ALL
+add_custom_target(stage_cdt_tree ALL
    COMMAND ${CMAKE_COMMAND}
            -DSTAGE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
            -DSTAGE_BINARY_DIR=${BASE_BINARY_DIR}
            -DSTAGE_NATIVE=$<BOOL:${ENABLE_NATIVE_COMPILER}>
-           -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/stage_headers.cmake
-   COMMENT "Staging CDT headers into ${BASE_BINARY_DIR}/include"
+           -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/stage_cdt_tree.cmake
+   COMMENT "Staging CDT build tree into ${BASE_BINARY_DIR}/include"
    VERBATIM)
 
 add_subdirectory(libc)
@@ -43,7 +43,7 @@ endif()
 # Anything compiled against the staged tree must see the pruned copy, not a leftover.
 foreach(staged_consumer sysio native native_sysio)
    if(TARGET ${staged_consumer})
-      add_dependencies(${staged_consumer} stage_cdt_headers)
+      add_dependencies(${staged_consumer} stage_cdt_tree)
    endif()
 endforeach()
 

@@ -46,9 +46,14 @@ macro( cdt_libraries_install)
    install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib COMPONENT base
       PATTERN "libnative*" EXCLUDE
       PATTERN "cmake" EXCLUDE)
-   install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib COMPONENT dev
-      FILES_MATCHING PATTERN "libnative*"
-      PATTERN "cmake" EXCLUDE)
+   # Guarded on the option, not merely on what happens to be sitting in lib/: a tree
+   # reconfigured from native ON to OFF can still hold archives from the previous build.
+   # stage_cdt_tree prunes those, and this makes packaging one impossible regardless.
+   if(ENABLE_NATIVE_COMPILER)
+      install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib COMPONENT dev
+         FILES_MATCHING PATTERN "libnative*"
+         PATTERN "cmake" EXCLUDE)
+   endif()
    install(DIRECTORY ${CMAKE_BINARY_DIR}/include/ DESTINATION include COMPONENT base)
 endmacro( cdt_libraries_install )
 

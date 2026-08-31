@@ -69,13 +69,21 @@ class ABIMerger {
          return ret;
       }
    private:
-      /// The (major, minor) a document declares, falling back to this merger's own
-      /// version when it carries none or an unparsable one.
+      /// The (major, minor) a document declares.
+      ///
+      /// A document with no `version` at all legitimately inherits this merger's version --
+      /// that is how an empty accumulator is seeded. A document whose `version` is present
+      /// but unparsable is malformed, and is rejected rather than quietly treated as the
+      /// default: every capability gate below keys off this value.
       std::pair<int, int> version_of(const ojson& doc) const {
-         int major_v = major;
-         int minor_v = minor;
-         if (doc.has_key("version"))
-            abi_version::parse_version_string(doc["version"].as<std::string>(), major_v, minor_v);
+         if (!doc.has_key("version"))
+            return {major, minor};
+
+         const auto text = doc["version"].as<std::string>();
+         int major_v = 0;
+         int minor_v = 0;
+         if (!abi_version::parse_version_string(text, major_v, minor_v))
+            throw std::runtime_error("Error, ABI declares an unsupported version : " + text);
          return {major_v, minor_v};
       }
 
@@ -160,12 +168,24 @@ class ABIMerger {
                 a["values"] == b["values"];
       }
 
+      /// A section a document does not carry reads as empty.
+      ///
+      /// Sections enter the format at a version (action_results at 1.2), so a valid older
+      /// document simply omits them. Once the capability gate consults the *merged* version,
+      /// a 1.1 accumulator merged with a 1.10 descriptor reaches this code and indexing the
+      /// older side unconditionally threw `Key 'action_results' not found` -- failing exactly
+      /// the mixed-version merge the gate was changed to support.
+      static const ojson& section(const ojson& doc, const std::string& type) {
+         static const ojson empty = ojson::array();
+         return doc.has_key(type) ? doc[type] : empty;
+      }
+
       template <typename F>
       void add_object_to_array(ojson& ret, ojson a, ojson b, std::string type, std::string id, F&& is_same_func) {
-         for (auto obj_a : a[type].array_range()) {
+         for (auto obj_a : section(a, type).array_range()) {
             ret.push_back(obj_a);
          }
-         for (auto obj_b : b[type].array_range()) {
+         for (auto obj_b : section(b, type).array_range()) {
             bool should_skip = false;
             for (size_t i = 0; i < ret.size(); ++i) {
                if (ret[i][id] == obj_b[id]) {

@@ -364,4 +364,4 @@ add_custom_command( TARGET native POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<
 
 add_custom_command( TARGET sf POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sf> ${BASE_BINARY_DIR}/lib )
 
-# Header staging lives in the stage_cdt_headers target (cmake/stage_headers.cmake).
+# Header staging lives in the stage_cdt_tree target (cmake/stage_cdt_tree.cmake).

@@ -1,6 +1,7 @@
-# Stage the CDT-owned header trees into <build>/include, pruning first.
+# Stage the CDT-owned parts of the build tree -- headers into <build>/include and the
+# native archives in <build>/lib -- pruning first.
 #
-# Run in script mode (`cmake -P`) from the `stage_cdt_headers` build target, not at
+# Run in script mode (`cmake -P`) from the `stage_cdt_tree` build target, not at
 # configure time. Configure-time `file(COPY)` is additive: it never removes a staged
 # copy whose source has been deleted, so a removed header stayed in <build>/include
 # forever -- shipped by install/CPack, and visible to native consumers whose compiled
@@ -24,7 +25,7 @@
 
 foreach(var STAGE_SOURCE_DIR STAGE_BINARY_DIR)
    if(NOT DEFINED ${var})
-      message(FATAL_ERROR "stage_headers.cmake: ${var} is required")
+      message(FATAL_ERROR "stage_cdt_tree.cmake: ${var} is required")
    endif()
 endforeach()
 
@@ -43,6 +44,18 @@ file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/sysio/native")
 file(COPY "${STAGE_SOURCE_DIR}/sysiolib"
      DESTINATION "${STAGE_BINARY_DIR}/include"
      ${header_patterns})
+
+# The native archives are copied into lib/ by POST_BUILD commands that exist only while
+# ENABLE_NATIVE_COMPILER is on. Reconfiguring a reused tree to OFF removes those targets but
+# not the files they already copied, and InstallCDT.cmake installs lib/ wholesale -- so an OFF
+# build packaged archives its own configuration never produced, still carrying whatever symbols
+# the last ON build put in them.
+if(NOT STAGE_NATIVE)
+   file(GLOB stale_native "${STAGE_BINARY_DIR}/lib/libnative*" "${STAGE_BINARY_DIR}/lib/libsf.a")
+   if(stale_native)
+      file(REMOVE ${stale_native})
+   endif()
+endif()
 
 if(STAGE_NATIVE)
    # native -> include/sysio/native

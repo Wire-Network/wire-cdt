@@ -55,16 +55,29 @@ class abidiff {
       /// "sysio::abi/1.10" as ".10" -> 1, so both capability gates below silently
       /// skipped the variant and action-result diffs for a two-digit minor. It also
       /// collapsed eosio::abi/1.2 and sysio::abi/1.2 to the same number.
-      std::pair<int, int> get_version(const ojson& abi) {
-         int major_v = abi_version::default_major;
-         int minor_v = abi_version::default_minor;
-         if (abi.has_key("version"))
-            abi_version::parse_version_string(abi["version"].as<std::string>(), major_v, minor_v);
+      /// A failed parse is refused, not defaulted. Seeding the outputs with 1.2 and
+      /// ignoring the result meant an unparsable or unsupported version -- including
+      /// `sysio::abi/2.0`, which the shared parser rejects -- silently compared equal to
+      /// a 1.2 document. Every gate below keys off this value, so a version we cannot
+      /// read is a reason to stop rather than to guess.
+      std::pair<int, int> get_version(const ojson& abi, const std::string& which) {
+         if (!abi.has_key("version")) {
+            std::cerr << "cdt-abidiff: " << which << " has no \"version\" field\n";
+            exit(1);
+         }
+         const auto text = abi["version"].as<std::string>();
+         int major_v = 0;
+         int minor_v = 0;
+         if (!abi_version::parse_version_string(text, major_v, minor_v)) {
+            std::cerr << "cdt-abidiff: " << which << " declares an unsupported ABI version '"
+                      << text << "'\n";
+            exit(1);
+         }
          return {major_v, minor_v};
       }
 
       void diff_version() {
-         if (get_version(abi_1) != get_version(abi_2)) {
+         if (get_version(abi_1, "file1") != get_version(abi_2, "file2")) {
             std::cout << "< version\n\t";
             std::cout << abi_1["version"] << "\n";
             std::cout << "> version\n\t";
@@ -223,7 +236,10 @@ class abidiff {
             bool found = false;
             for ( int j=0; j < abi2["action_results"].size(); j++ ) {
                if (abi1["action_results"].at(i)["name"] == abi2["action_results"].at(j)["name"]) {
-                  if (abi1["action_results"].at(i)["result_type"] != abi2["action_results"].at(i)["result_type"])
+                  // .at(j), not .at(i): j is the entry whose name just matched. Comparing
+                  // against .at(i) reported reordered-but-equivalent results as changed, and
+                  // threw outright when abi2 held fewer entries than abi1.
+                  if (abi1["action_results"].at(i)["result_type"] != abi2["action_results"].at(j)["result_type"])
                      break;
                   found = true;
                }
@@ -275,8 +291,8 @@ class abidiff {
          diff_actions();
          diff_tables();
          diff_clauses();
-         const auto [v1_major, v1_minor] = get_version(abi_1);
-         const auto [v2_major, v2_minor] = get_version(abi_2);
+         const auto [v1_major, v1_minor] = get_version(abi_1, "file1");
+         const auto [v2_major, v2_minor] = get_version(abi_2, "file2");
          if ( abi_version::supports_variants(v1_major, v1_minor) &&
               abi_version::supports_variants(v2_major, v2_minor) )
             diff_variants();

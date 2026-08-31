@@ -7,16 +7,20 @@
 # the rebuilt library. Reusing a build tree across such a deletion never recovered,
 # because the ExternalProject's configure step is stamped and does not re-run.
 #
-# stage_cdt_headers (cmake/stage_headers.cmake) now prunes before it copies. This test
+# stage_cdt_tree (cmake/stage_cdt_tree.cmake) now prunes before it copies. This test
 # pins the resulting invariant -- every staged header has a source counterpart -- so it
 # catches ANY future stale staging, not just the deletion that prompted it.
 #
-# Usage: staged_headers_tests.sh <build_dir> <source_dir> <enable_native_compiler>
+# Usage: staged_headers_tests.sh <build_dir> <source_dir> <native_enabled: 0|1>
+#
+# The caller passes $<BOOL:${ENABLE_NATIVE_COMPILER}>, the same canonicalization the stage
+# target uses. Comparing the raw cache spelling here meant a valid setting like
+# -DENABLE_NATIVE_COMPILER=TRUE staged the native trees while this script took its OFF branch.
 set -euo pipefail
 
 BUILD_DIR="$1"
 SOURCE_DIR="$2"
-ENABLE_NATIVE="${3:-ON}"
+NATIVE_ENABLED="${3:-1}"
 INCLUDE_DIR="${BUILD_DIR}/include"
 PASS=0
 FAIL=0
@@ -75,7 +79,7 @@ else
     fail "every staged header has a source counterpart"
     echo "    ${#stale[@]} staged header(s) no longer exist in libraries/:"
     for f in "${stale[@]}"; do echo "      include/${f}"; done
-    echo "    stage_cdt_headers should have pruned these; see cmake/stage_headers.cmake"
+    echo "    stage_cdt_tree should have pruned these; see cmake/stage_cdt_tree.cmake"
 fi
 
 # With native mode off, the native headers must not be staged at all. They are pruned
@@ -84,21 +88,27 @@ fi
 # -- and InstallCDT.cmake installs the whole include tree, so the OFF package would ship
 # an API it was configured not to build. The counterpart check above cannot catch that:
 # those files still have source counterparts, they simply should not be there.
-if [ "$ENABLE_NATIVE" = "ON" ] || [ "$ENABLE_NATIVE" = "on" ] || [ "$ENABLE_NATIVE" = "1" ]; then
+if [ "$NATIVE_ENABLED" = "1" ]; then
     if [ -d "${INCLUDE_DIR}/sysio/native" ]; then
-        pass "native headers are staged (ENABLE_NATIVE_COMPILER=ON)"
+        pass "native headers are staged (native enabled)"
     else
-        fail "native headers are staged (ENABLE_NATIVE_COMPILER=ON)"
+        fail "native headers are staged (native enabled)"
     fi
 else
     leftovers=()
     for d in "${INCLUDE_DIR}/sysio/native" "${INCLUDE_DIR}/sysiolib/native"; do
         [ -d "$d" ] && leftovers+=("$d")
     done
+    # The native archives are copied into lib/ by POST_BUILD commands that only exist while
+    # native mode is on. They survive a reconfigure to OFF, and InstallCDT installs lib/
+    # wholesale, so a stale one gets packaged carrying the previous build's symbols.
+    for f in "${BUILD_DIR}"/lib/libnative* "${BUILD_DIR}/lib/libsf.a"; do
+        [ -e "$f" ] && leftovers+=("$f")
+    done
     if [ "${#leftovers[@]}" -eq 0 ]; then
-        pass "native headers are absent (ENABLE_NATIVE_COMPILER=OFF)"
+        pass "native headers and archives are absent (native disabled)"
     else
-        fail "native headers are absent (ENABLE_NATIVE_COMPILER=OFF)"
+        fail "native headers and archives are absent (native disabled)"
         for d in "${leftovers[@]}"; do echo "      still staged: $d"; done
     fi
 fi

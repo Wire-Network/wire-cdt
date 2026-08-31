@@ -48,4 +48,4 @@ if (ENABLE_NATIVE_COMPILER)
    add_custom_command( TARGET native_sysio POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native_sysio> ${BASE_BINARY_DIR}/lib )
 endif()
 
-# Header staging lives in the stage_cdt_headers target (cmake/stage_headers.cmake).
+# Header staging lives in the stage_cdt_tree target (cmake/stage_cdt_tree.cmake).

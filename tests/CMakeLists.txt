@@ -49,7 +49,7 @@ set_property(TEST abidiff_tests PROPERTY LABELS unit_tests)
 # Staged-header hygiene — every header under <build>/include must still exist in
 # libraries/. Catches a stale copy left behind when a source header is deleted.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/staged_headers_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/staged_headers_tests.sh COPYONLY)
-add_test(NAME staged_headers_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/staged_headers_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" "${ENABLE_NATIVE_COMPILER}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME staged_headers_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/staged_headers_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" "$<BOOL:${ENABLE_NATIVE_COMPILER}>" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST staged_headers_tests PROPERTY LABELS unit_tests)
 
 # sysio-pp (WABT post-pass) regression — guards the WSA-020 / SEC-10

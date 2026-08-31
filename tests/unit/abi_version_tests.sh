@@ -194,12 +194,49 @@ else
           -o "${WORK}/pb11.wasm" > "${WORK}/pb11.log" 2>&1; then
         check "1.1 + protobuf is promoted to 1.3" \
             "${WORK}/pb11.abi" '"version": "sysio::abi/1.3"'
+        # Must key on result_type: "name": "hiproto" also appears in the top-level actions
+        # array, so asserting the name passed even when the old late-promotion path had
+        # suppressed action_results entirely -- i.e. it passed on the regression it exists
+        # to catch. result_type appears only under action_results.
         check "1.1 + protobuf keeps the non-void action's result" \
-            "${WORK}/pb11.abi" '"name": "hiproto"'
+            "${WORK}/pb11.abi" '"result_type": "protobuf::test.ActResult"'
     else
         fail "1.1 + protobuf builds"
         sed 's/^/    /' "${WORK}/pb11.log"
     fi
+fi
+
+# --- mixed-version descriptor merge -----------------------------------------------
+#
+# Sections enter the format at a version, so a valid 1.1 descriptor omits action_results.
+# Once the capability gate consults the MERGED version, such a descriptor merged with a
+# newer one reaches merge_action_results, and indexing the older side unconditionally threw
+# `Key 'action_results' not found` -- failing the very mixed-version case the gate enables.
+# Driven through `cdt-codegen --finalize`, which is the real ABIMerger entry point.
+echo "-- mixed-version descriptor merge --"
+
+CDT_CODEGEN="${BUILD_DIR}/bin/cdt-codegen"
+MERGE_COMMON='"types":[],"tables":[],"ricardian_clauses":[],"variants":[],"abi_extensions":[],"pb_types":[],"wasm_actions":[],"wasm_entries":[],"wasm_notifies":[]'
+
+cat > "${WORK}/old.desc" <<EOF
+{"version":"sysio::abi/1.1","structs":[{"name":"acta","base":"","fields":[]}],"actions":[{"name":"acta","type":"acta","ricardian_contract":""}],${MERGE_COMMON}}
+EOF
+cat > "${WORK}/new.desc" <<EOF
+{"version":"sysio::abi/1.10","structs":[{"name":"actb","base":"","fields":[]}],"actions":[{"name":"actb","type":"actb","ricardian_contract":""}],${MERGE_COMMON},"action_results":[{"name":"actb","result_type":"uint64"}]}
+EOF
+
+if "$CDT_CODEGEN" --finalize --contract mix --output-dir "$WORK" \
+      --abi-output "${WORK}/mix.abi" \
+      --desc-file "${WORK}/old.desc" --desc-file "${WORK}/new.desc" > "${WORK}/mix.log" 2>&1; then
+    check "1.1 + 1.10 merge emits the newer version" \
+        "${WORK}/mix.abi" '"version": "sysio::abi/1.10"'
+    # result_type, not name: "actb" is in the actions array too, so asserting the name
+    # would pass even with action_results dropped entirely.
+    check "1.1 + 1.10 merge retains the newer side's action_result" \
+        "${WORK}/mix.abi" '"result_type": "uint64"'
+else
+    fail "1.1 + 1.10 descriptors merge"
+    sed 's/^/    /' "${WORK}/mix.log"
 fi
 
 echo ""
