@@ -33,7 +33,7 @@ add_test(NAME version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/version_tests
 set_property(TEST version_tests PROPERTY LABELS unit_tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/abi_version_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh COPYONLY)
-add_test(NAME abi_version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME abi_version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST abi_version_tests PROPERTY LABELS unit_tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/multidir_contract_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh COPYONLY)

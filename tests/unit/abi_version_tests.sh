@@ -1,10 +1,11 @@
 #!/bin/bash
 # Test ABI version and protobuf_types generation
-# Usage: abi_version_tests.sh <build_dir> [source_dir]
+# Usage: abi_version_tests.sh <build_dir> [source_dir] [magic_enum_include_dir]
 set -euo pipefail
 
 BUILD_DIR="$1"
 SOURCE_DIR="${2:-}"
+MAGIC_ENUM_INC="${3:-}"
 CONTRACTS_DIR="${BUILD_DIR}/tests/unit/test_contracts"
 PASS=0
 FAIL=0
@@ -174,17 +175,21 @@ done
 # action keeps its result entry.
 echo "-- protobuf version promotion --"
 
+# The magic_enum include directory is passed in from CMake, which already resolves it.
+# Searching for it here found `vcpkg_installed/<triplet>/share/magic_enum` as readily as
+# the include/ one -- find(1) does not order its matches -- and the share copy has no
+# headers under it.
 PB_SRC="${SOURCE_DIR:-}"
 PB_GEN="${BUILD_DIR}/tests/unit/test_contracts"
-MAGIC_ENUM_DIR="$(find "${BUILD_DIR}/vcpkg_installed" -maxdepth 3 -type d -name magic_enum 2>/dev/null | head -1)"
 
 if [ -z "$PB_SRC" ] || [ ! -f "${PB_SRC}/tests/unit/test_contracts/pb_tests.cpp" ] \
-   || [ ! -d "${PB_GEN}/test" ] || [ -z "$MAGIC_ENUM_DIR" ]; then
+   || [ ! -d "${PB_GEN}/test" ] \
+   || [ -z "$MAGIC_ENUM_INC" ] || [ ! -f "${MAGIC_ENUM_INC}/magic_enum/magic_enum.hpp" ]; then
     echo "  SKIP: protobuf inputs not locatable in this build tree"
 else
     if "$CDT_CPP" -abigen -abi-version 1.1 -contract pb_tests \
           -protobuf-dir "${PB_SRC}/tests/unit/test_contracts" -protobuf-files test.proto \
-          -I "$PB_GEN" -I "${PB_SRC}/tests/unit/test_contracts" -I "$(dirname "$MAGIC_ENUM_DIR")" \
+          -I "$PB_GEN" -I "${PB_SRC}/tests/unit/test_contracts" -I "$MAGIC_ENUM_INC" \
           "-abigen_output=${WORK}/pb11.abi" "${PB_SRC}/tests/unit/test_contracts/pb_tests.cpp" \
           -o "${WORK}/pb11.wasm" > "${WORK}/pb11.log" 2>&1; then
         check "1.1 + protobuf is promoted to 1.3" \
