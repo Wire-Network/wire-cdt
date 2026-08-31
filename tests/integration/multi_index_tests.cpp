@@ -37,6 +37,10 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    push_action( "testapi"_n, "s1g"_n,  "testapi"_n, {} );        // idx64_general
    push_action( "testapi"_n, "s1namepk"_n, "testapi"_n, {} );    // name_pk_bounds
 
+   // A foreign-code handle cannot mutate: reads honour the handle's code but writes land on
+   // the receiver, so without the guard this silently wrote the receiver's own row.
+   check_failure( "s1foreign"_n, "cannot create objects in table of another contract" );
+
    // Duplicate primary key aborts instead of upserting. Without the guard this action
    // succeeded and left the previous secondary mapping stranded.
    check_failure( "s1dupidx"_n, "object with the same primary key already exists" );

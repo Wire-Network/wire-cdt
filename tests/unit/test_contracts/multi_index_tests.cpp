@@ -407,6 +407,21 @@ namespace _test_multi_index
                      "name_pk_bounds - lower_bound(uint64_t) regressed");
     }
 
+    // Mutating through a handle opened on another account must abort. Reads honour the
+    // handle's code; kv_set/kv_idx_store do not and always land on the receiver, and table_id
+    // derives from the table name alone -- so without the guard this writes the receiver's
+    // own row of the same name. Upstream multi_index rejects it.
+    template <uint64_t TableName>
+    void foreign_code_mutation(sysio::name receiver)
+    {
+        typedef record_idx64 record;
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
+            foreign("bob"_n, receiver.value);
+
+        foreign.emplace(receiver, [&](auto& r) { r.id = 1; r.sec = 1; });
+    }
+
 } /// _test_multi_index
 
 class [[sysio::contract]] test_multi_index : public sysio::contract
@@ -417,6 +432,10 @@ public:
     [[sysio::action("s1g")]] void idx64_general() {
         _test_multi_index::idx64_store_only<"indextable2"_n.value>( get_self() );
         _test_multi_index::idx64_check_without_storing<"indextable2"_n.value>( get_self() );
+    }
+
+    [[sysio::action("s1foreign")]] void foreign_code_mutation() {
+        _test_multi_index::foreign_code_mutation<"foreigntbl"_n.value>(get_self());
     }
 
     [[sysio::action("s1namepk")]] void name_pk_bounds() {

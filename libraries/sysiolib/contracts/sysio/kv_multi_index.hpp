@@ -22,6 +22,7 @@
 #include <sysio/datastream.hpp>
 #include <sysio/check.hpp>
 #include <sysio/action.hpp>
+#include <sysio/context.hpp>
 
 #include <vector>
 #include <memory>
@@ -154,6 +155,20 @@ class kv_multi_index {
    // Helper: convert primary_key() result to uint64_t regardless of return type (uint64_t or name)
    static uint64_t to_pk_uint64(uint64_t pk) { return pk; }
    static uint64_t to_pk_uint64(name pk) { return pk.value; }
+
+   /// The receiving account, avoiding a host call where possible.
+   ///
+   /// The generated dispatcher stores the receiver in sysio_contract_name at the top of
+   /// apply() -- and apply() is re-entered per receiver, so it is correct under notification
+   /// too -- making this a plain global read. SYSIO_DISPATCH emits its own strong apply() and
+   /// the native dispatch sets nothing, leaving the global 0, which is not a valid account
+   /// name and so is a safe "unset" sentinel; there we pay the intrinsic, as upstream always
+   /// does. Deliberately not cached on the object: a contract may hold a `static` table, and
+   /// the receiver differs between the initial action and a notification handler.
+   static name receiving_account() {
+      const name ctx = current_context_contract();
+      return ctx.value ? ctx : current_receiver();
+   }
 
    name     _code;
    uint64_t _scope;
@@ -592,25 +607,29 @@ public:
       return *obj;
    }
 
-   /// Templated on the primary key type, matching upstream multi_index, which routes
-   /// through to_raw_key. Taking a bare uint64_t here rejected the `name` primary keys
-   /// that compile fine upstream. to_pk_uint64 is the same conversion the rest of this
-   /// class uses, so a uint64_t argument still binds exactly as before.
-   template<typename PK>
-   const_iterator lower_bound(PK primary) const {
-      auto key = make_pk(to_pk_uint64(primary));
+   /// Overloads rather than a template on the primary key type.
+   ///
+   /// Upstream templates these and routes through to_raw_key, but a member template is not a
+   /// drop-in for a concrete overload: `lower_bound({42})` cannot deduce from a braced list,
+   /// and `&table_type::lower_bound` cannot form a pointer to an undeduced template. Both
+   /// compile against a plain uint64_t parameter. Two overloads cover exactly the types
+   /// to_pk_uint64 accepts, which is the same reach the template had, without the break.
+   const_iterator lower_bound(uint64_t primary) const {
+      auto key = make_pk(primary);
       auto prefix = make_prefix();
       uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
       int32_t status = ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, status == 0);
    }
 
-   template<typename PK>
-   const_iterator upper_bound(PK primary) const {
-      const uint64_t pk = to_pk_uint64(primary);
-      if (pk == std::numeric_limits<uint64_t>::max()) return end();
-      return lower_bound(pk + 1);
+   const_iterator lower_bound(name primary) const { return lower_bound(to_pk_uint64(primary)); }
+
+   const_iterator upper_bound(uint64_t primary) const {
+      if (primary == std::numeric_limits<uint64_t>::max()) return end();
+      return lower_bound(primary + 1);
    }
+
+   const_iterator upper_bound(name primary) const { return upper_bound(to_pk_uint64(primary)); }
 
    const_iterator iterator_to(const T& obj) const {
       uint64_t pk = to_pk_uint64(obj.primary_key());
@@ -627,6 +646,14 @@ public:
 
    template<typename Lambda>
    const_iterator emplace(name payer, Lambda&& constructor) {
+      // Reads honour _code (kv_get/kv_contains take a code argument) but writes do not:
+      // kv_set and kv_idx_store have no code parameter and always land on the receiver. A
+      // foreign-code handle would therefore probe one account and write another -- upstream
+      // rejects that, and a ported contract relying on the abort would otherwise get a silent
+      // write to its own row. Checked before the constructor runs, so a lambda with side
+      // effects is not executed on the rejected path.
+      check(_code == receiving_account(), "cannot create objects in table of another contract");
+
       T obj;
       constructor(obj);
 
@@ -667,6 +694,8 @@ public:
 
    template<typename Lambda>
    void modify(const T& obj, name payer, Lambda&& updater) {
+      check(_code == receiving_account(), "cannot modify objects in table of another contract");
+
       T old_obj = obj;
       // Cast away const for modification (same pattern as legacy multi_index)
       auto& mutable_obj = const_cast<T&>(obj);
@@ -694,6 +723,8 @@ public:
    }
 
    void erase(const T& obj) {
+      check(_code == receiving_account(), "cannot erase objects in table of another contract");
+
       uint64_t pk = to_pk_uint64(obj.primary_key());
       auto key = make_pk(pk);
 

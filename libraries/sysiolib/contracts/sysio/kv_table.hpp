@@ -703,6 +703,17 @@ public:
 
    /// Insert a new row. Asserts if the key already exists. Use upsert()/set()
    /// for insert-or-update semantics.
+   ///
+   /// WRITES IGNORE code(), as they do in kv::global. kv_get and kv_contains take a code
+   /// argument, so reads honour whatever account this handle was constructed with; kv_set,
+   /// kv_erase and kv_idx_store have no such parameter and always land on the current
+   /// receiver. A handle opened on a FOREIGN account is therefore read-only in practice --
+   /// mutating through one probes their table and writes your own, and because table_id is
+   /// derived from the table name alone, that write lands on your row of the same name.
+   /// Nothing detects it at compile time. Construct foreign-code handles for reading only.
+   ///
+   /// (sysio::multi_index does guard this, because upstream does and ported contracts rely
+   /// on the abort; these wrappers have no such compatibility obligation.)
    void emplace(name payer, const K& key, const V& value, const char* exists_msg = "key already exists") {
       auto k = make_key(key);
       sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()), exists_msg);
