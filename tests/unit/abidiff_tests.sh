@@ -52,7 +52,7 @@ check_reports_diff() {
     # cdt-abidiff exits non-zero when it finds differences, so tolerate that.
     local out
     out="$("$ABIDIFF" "${WORK}/a.abi" "${WORK}/b.abi" 2>&1 || true)"
-    if grep -q "geta\|getb" <<< "$out"; then
+    if grep -qE "geta|getb" <<< "$out"; then
         pass "$desc"
     else
         fail "$desc"
@@ -88,7 +88,7 @@ fi
 
 # Identical inputs must stay quiet.
 out="$("$ABIDIFF" "${WORK}/v1.abi" "${WORK}/v1.abi" 2>&1 || true)"
-if grep -q "version\|action_results" <<< "$out"; then
+if grep -qE "version|action_results" <<< "$out"; then
     fail "identical ABIs report no difference"
     sed 's/^/      /' <<< "$out"
 else
