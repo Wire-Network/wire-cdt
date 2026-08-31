@@ -214,9 +214,20 @@ class abidiff {
             bool found = false;
             for ( int j=0; j < abi2["variants"].size(); j++ ) {
                if (abi1["variants"].at(i)["name"] == abi2["variants"].at(j)["name"]) {
-                  for (int k=0; k < abi1["variants"].at(i)["types"].size(); k++)
-                     if (abi1["variants"].at(i)["types"].at(k) != abi2["variants"].at(j)["types"].at(k))
-                        break;
+                  // Compare the whole type list, length first. The previous form broke out of
+                  // the element loop on a mismatch and then set found unconditionally, so a
+                  // same-named variant always counted as unchanged however its types differed;
+                  // and with no length check, at(k) threw on a shorter right-hand side.
+                  const auto& t1 = abi1["variants"].at(i)["types"];
+                  const auto& t2 = abi2["variants"].at(j)["types"];
+                  if (t1.size() != t2.size())
+                     break;
+                  bool same_types = true;
+                  for (size_t k = 0; k < t1.size(); ++k) {
+                     if (t1.at(k) != t2.at(k)) { same_types = false; break; }
+                  }
+                  if (!same_types)
+                     break;
                   found = true;
                }
 

@@ -24,6 +24,7 @@ check() {
 }
 
 fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
+pass() { echo "  PASS: $1"; PASS=$((PASS + 1)); }
 
 check_absent() {
     local desc="$1" file="$2" pattern="$3"
@@ -225,18 +226,44 @@ cat > "${WORK}/new.desc" <<EOF
 {"version":"sysio::abi/1.10","structs":[{"name":"actb","base":"","fields":[]}],"actions":[{"name":"actb","type":"actb","ricardian_contract":""}],${MERGE_COMMON},"action_results":[{"name":"actb","result_type":"uint64"}]}
 EOF
 
-if "$CDT_CODEGEN" --finalize --contract mix --output-dir "$WORK" \
-      --abi-output "${WORK}/mix.abi" \
-      --desc-file "${WORK}/old.desc" --desc-file "${WORK}/new.desc" > "${WORK}/mix.log" 2>&1; then
-    check "1.1 + 1.10 merge emits the newer version" \
-        "${WORK}/mix.abi" '"version": "sysio::abi/1.10"'
-    # result_type, not name: "actb" is in the actions array too, so asserting the name
-    # would pass even with action_results dropped entirely.
-    check "1.1 + 1.10 merge retains the newer side's action_result" \
-        "${WORK}/mix.abi" '"result_type": "uint64"'
+# Both merge orders. cdt-codegen sorts the descriptor paths, so the filenames -- not the
+# --desc-file argument order -- decide which document becomes the accumulator. Naming them
+# a_/b_ makes each case explicit instead of accidental.
+merge_case() {
+    local label="$1" first="$2" second="$3"
+    local dir="${WORK}/${label}"
+    mkdir -p "$dir"
+    cp "${WORK}/${first}.desc"  "${dir}/a_first.desc"
+    cp "${WORK}/${second}.desc" "${dir}/b_second.desc"
+    if "$CDT_CODEGEN" --finalize --contract mix --output-dir "$dir" \
+          --abi-output "${dir}/mix.abi" \
+          --desc-file "${dir}/a_first.desc" --desc-file "${dir}/b_second.desc" \
+          > "${dir}/mix.log" 2>&1; then
+        check "${label}: emits the newer version" "${dir}/mix.abi" '"version": "sysio::abi/1.10"'
+        # result_type, not name: "actb" is in the actions array too, so asserting the name
+        # would pass even with action_results dropped entirely.
+        check "${label}: retains the newer side's action_result" "${dir}/mix.abi" '"result_type": "uint64"'
+    else
+        fail "${label}: descriptors merge"
+        sed 's/^/    /' "${dir}/mix.log"
+    fi
+}
+
+merge_case "older-first" old new
+merge_case "newer-first" new old
+
+# A descriptor missing a REQUIRED section is truncated, not merely older, and must be
+# rejected rather than merged as empty -- otherwise contract interface content is dropped
+# silently. Only version-gated sections (action_results, variants, enums) may be absent.
+cat > "${WORK}/truncated.desc" <<EOF
+{"version":"sysio::abi/1.2","structs":[],"types":[],"tables":[],"ricardian_clauses":[],"variants":[],"abi_extensions":[],"pb_types":[],"wasm_actions":[],"wasm_entries":[],"wasm_notifies":[],"action_results":[]}
+EOF
+if "$CDT_CODEGEN" --finalize --contract trunc --output-dir "$WORK" \
+      --abi-output "${WORK}/trunc.abi" --desc-file "${WORK}/truncated.desc" \
+      > "${WORK}/trunc.log" 2>&1; then
+    fail "a descriptor missing a required section is rejected"
 else
-    fail "1.1 + 1.10 descriptors merge"
-    sed 's/^/    /' "${WORK}/mix.log"
+    pass "a descriptor missing a required section is rejected"
 fi
 
 echo ""

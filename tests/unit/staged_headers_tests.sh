@@ -113,6 +113,52 @@ else
     fi
 fi
 
+# --- ON -> OFF prune, in an isolated tree ------------------------------------------
+#
+# The checks above only describe the mode this build was configured in, and
+# ENABLE_NATIVE_COMPILER defaults ON with neither workflow overriding it -- so the OFF
+# assertions never ran in CI. A clean OFF build would not prove the prune either: it has no
+# stale native outputs to remove. So drive the staging script directly against a scratch tree
+# seeded the way a previous ON build leaves one, which is mode-independent and always runs.
+echo "-- ON -> OFF prune (isolated tree) --"
+
+if ! command -v cmake > /dev/null 2>&1; then
+    echo "  SKIP: cmake not on PATH"
+else
+    SCRATCH="$(mktemp -d)"
+    trap 'rm -rf "$SCRATCH"' EXIT
+    mkdir -p "${SCRATCH}/lib" "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"
+    for f in libnative.a libnative_sysio.a libsf.a libc.a; do echo stale > "${SCRATCH}/lib/${f}"; done
+    : > "${SCRATCH}/include/sysio/native/sentinel.hpp"
+    : > "${SCRATCH}/include/sysiolib/native/sentinel.hpp"
+
+    if cmake -DSTAGE_SOURCE_DIR="${SOURCE_DIR}/libraries" -DSTAGE_BINARY_DIR="${SCRATCH}" \
+             -DSTAGE_NATIVE=0 -P "${SOURCE_DIR}/cmake/stage_cdt_tree.cmake" \
+             > "${SCRATCH}/stage.log" 2>&1; then
+        leftovers=()
+        for f in "${SCRATCH}/lib/libnative.a" "${SCRATCH}/lib/libnative_sysio.a" "${SCRATCH}/lib/libsf.a" \
+                 "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"; do
+            [ -e "$f" ] && leftovers+=("$f")
+        done
+        if [ "${#leftovers[@]}" -eq 0 ]; then
+            pass "STAGE_NATIVE=0 prunes stale native archives and header trees"
+        else
+            fail "STAGE_NATIVE=0 prunes stale native archives and header trees"
+            for f in "${leftovers[@]}"; do echo "      survived: $f"; done
+        fi
+
+        # An unrelated archive must be left alone -- the prune is targeted, not a wipe.
+        if [ -e "${SCRATCH}/lib/libc.a" ]; then
+            pass "the prune leaves unrelated archives alone"
+        else
+            fail "the prune leaves unrelated archives alone"
+        fi
+    else
+        fail "stage_cdt_tree.cmake runs with STAGE_NATIVE=0"
+        sed 's/^/    /' "${SCRATCH}/stage.log"
+    fi
+fi
+
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

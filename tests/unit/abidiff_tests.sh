@@ -130,6 +130,50 @@ else
     sed 's/^/      /' "${WORK}/v20.log"
 fi
 
+# Variants at 1.10. find_variants broke out of the element loop on a type mismatch and then
+# set found unconditionally, so a same-named variant counted as unchanged however its types
+# differed; with no length check, at(k) threw on a shorter right-hand side. This PR is what
+# routes 1.10 into that matcher.
+mkvariant() { # file, types-json
+    cat > "$1" <<EOF
+{ "version": "sysio::abi/1.10", "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [],
+  "variants": [ { "name": "v", "types": $2 } ], "action_results": [] }
+EOF
+}
+
+mkvariant "${WORK}/va.abi" '["uint64"]'
+mkvariant "${WORK}/vb.abi" '["string"]'
+out="$("$ABIDIFF" "${WORK}/va.abi" "${WORK}/vb.abi" 2>&1 || true)"
+if grep -q "variant" <<< "$out"; then
+    pass "1.10 variants differing by type report a difference"
+else
+    fail "1.10 variants differing by type report a difference"
+    sed 's/^/      /' <<< "$out"
+fi
+
+mkvariant "${WORK}/vlong.abi"  '["uint64", "string"]'
+mkvariant "${WORK}/vshort.abi" '["uint64"]'
+out="$("$ABIDIFF" "${WORK}/vlong.abi" "${WORK}/vshort.abi" 2>&1 || true)"
+if grep -qiE "invalid array subscript|terminate|Aborted" <<< "$out"; then
+    fail "1.10 variants of differing length are compared without throwing"
+    sed 's/^/      /' <<< "$out"
+elif grep -q "variant" <<< "$out"; then
+    pass "1.10 variants of differing length report a difference"
+else
+    fail "1.10 variants of differing length report a difference"
+    sed 's/^/      /' <<< "$out"
+fi
+
+mkvariant "${WORK}/vsame1.abi" '["uint64", "string"]'
+mkvariant "${WORK}/vsame2.abi" '["uint64", "string"]'
+out="$("$ABIDIFF" "${WORK}/vsame1.abi" "${WORK}/vsame2.abi" 2>&1 || true)"
+if grep -q "variant" <<< "$out"; then
+    fail "identical 1.10 variants report no difference"
+    sed 's/^/      /' <<< "$out"
+else
+    pass "identical 1.10 variants report no difference"
+fi
+
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

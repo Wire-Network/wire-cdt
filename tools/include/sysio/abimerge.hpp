@@ -168,24 +168,31 @@ class ABIMerger {
                 a["values"] == b["values"];
       }
 
-      /// A section a document does not carry reads as empty.
+      /// Whether a descriptor may legitimately omit a section.
       ///
-      /// Sections enter the format at a version (action_results at 1.2), so a valid older
-      /// document simply omits them. Once the capability gate consults the *merged* version,
-      /// a 1.1 accumulator merged with a 1.10 descriptor reaches this code and indexing the
-      /// older side unconditionally threw `Key 'action_results' not found` -- failing exactly
-      /// the mixed-version merge the gate was changed to support.
-      static const ojson& section(const ojson& doc, const std::string& type) {
+      /// Only sections that entered the format at a version are optional -- a valid 1.1
+      /// document has no `action_results`, a 1.0 one has no `variants`. The baseline arrays
+      /// are always emitted by abigen, so a descriptor missing one is truncated or corrupt
+      /// and must not be quietly merged as empty: that would drop contract interface content
+      /// silently. An earlier revision made every section optional and did exactly that.
+      enum class section_kind { required, version_gated };
+
+      static const ojson& section(const ojson& doc, const std::string& type, section_kind kind) {
          static const ojson empty = ojson::array();
-         return doc.has_key(type) ? doc[type] : empty;
+         if (doc.has_key(type))
+            return doc[type];
+         if (kind == section_kind::version_gated)
+            return empty;
+         throw std::runtime_error("Error, ABI is missing required section : " + type);
       }
 
       template <typename F>
-      void add_object_to_array(ojson& ret, ojson a, ojson b, std::string type, std::string id, F&& is_same_func) {
-         for (auto obj_a : section(a, type).array_range()) {
+      void add_object_to_array(ojson& ret, ojson a, ojson b, std::string type, std::string id,
+                               F&& is_same_func, section_kind kind = section_kind::required) {
+         for (auto obj_a : section(a, type, kind).array_range()) {
             ret.push_back(obj_a);
          }
-         for (auto obj_b : section(b, type).array_range()) {
+         for (auto obj_b : section(b, type, kind).array_range()) {
             bool should_skip = false;
             for (size_t i = 0; i < ret.size(); ++i) {
                if (ret[i][id] == obj_b[id]) {
@@ -241,7 +248,7 @@ class ABIMerger {
 
       ojson merge_variants(ojson b) {
          ojson vars = ojson::array();
-         add_object_to_array(vars, abi, b, "variants", "name", variant_is_same);
+         add_object_to_array(vars, abi, b, "variants", "name", variant_is_same, section_kind::version_gated);
          return vars;
       }
 
@@ -265,7 +272,7 @@ class ABIMerger {
 
       ojson merge_action_results(ojson b) {
          ojson res = ojson::array();
-         add_object_to_array(res, abi, b, "action_results", "name", action_result_is_same);
+         add_object_to_array(res, abi, b, "action_results", "name", action_result_is_same, section_kind::version_gated);
          return res;
       }
 
@@ -274,7 +281,7 @@ class ABIMerger {
          if (abi.has_key("enums") || b.has_key("enums")) {
             if (!abi.has_key("enums")) abi["enums"] = ojson::array();
             if (!b.has_key("enums")) b["enums"] = ojson::array();
-            add_object_to_array(enums, abi, b, "enums", "name", enum_is_same);
+            add_object_to_array(enums, abi, b, "enums", "name", enum_is_same, section_kind::version_gated);
          }
          return enums;
       }
