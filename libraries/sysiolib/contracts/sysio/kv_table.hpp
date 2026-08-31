@@ -435,7 +435,14 @@ public:
       sec_ops::update_all(*this, payer, pri.data(), pri.size(), old_val, new_val);
    }
 
-   // Internal insert (no duplicate check — caller must verify)
+private:
+   // Internal insert (no duplicate check — caller must verify).
+   //
+   // Private deliberately. Inserting over an existing key here silently overwrites the row
+   // and, because store_secondaries is an unconditional kv_idx_store, either strands the old
+   // (sec_key -> pri_key) mapping (when the secondary value changed) or trips the host's
+   // ordered_unique constraint on (code, table_id, sec_key, pri_key). emplace() pays one
+   // kv_contains to make that unreachable; there is no supported way to skip it.
    void do_insert(uint64_t payer, const be_key_stream& k, const K& key, const V& value) {
       if constexpr (is_fixed_serializable_v<V>) {
          char vbuf[sizeof(V)];
@@ -448,6 +455,7 @@ public:
       store_secondaries(payer, key, value);
    }
 
+public:
    // Internal erase used by both primary and secondary erase paths
    void do_erase(const K& key, const V& value) {
       remove_secondaries(key, value);

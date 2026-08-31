@@ -342,6 +342,71 @@ namespace _test_multi_index
         return table;
     }
 
+    // Duplicate primary key must be rejected.
+    //
+    // On Antelope the guard was db_store_i64's, at the chain layer, and it was lost when
+    // the legacy DB was removed. kv_set is an upsert, so without an explicit check the row
+    // is silently overwritten and store_secondaries -- an unconditional kv_idx_store --
+    // strands the previous (sec_key -> pri_key) mapping. Verified against the real runtime:
+    // before the guard, a lookup of the OLD secondary value still resolved to this row
+    // after it had been overwritten with a new one.
+    template <uint64_t TableName>
+    void idx64_duplicate_emplace(sysio::name receiver)
+    {
+        typedef record_idx64 record;
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
+            table(receiver, receiver.value);
+        auto payer = receiver;
+
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = "aaa"_n.value; });
+
+        // Changing the secondary value is what made the stale mapping observable.
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = "bbb"_n.value; });
+    }
+
+    // A `name` primary key exercises the templated lower_bound/upper_bound. These took a
+    // bare uint64_t, so this did not compile, while upstream multi_index accepts it via
+    // to_raw_key.
+    struct record_name_pk
+    {
+        sysio::name owner;
+        uint64_t    sec;
+
+        sysio::name primary_key() const { return owner; }
+        uint64_t get_secondary() const { return sec; }
+
+        SYSLIB_SERIALIZE(record_name_pk, (owner)(sec))
+    };
+
+    template <uint64_t TableName>
+    void name_pk_bounds(sysio::name receiver)
+    {
+        typedef record_name_pk record;
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
+            table(receiver, receiver.value);
+        auto payer = receiver;
+
+        table.emplace(payer, [&](auto& r) { r.owner = "alice"_n;   r.sec = 10; });
+        table.emplace(payer, [&](auto& r) { r.owner = "bob"_n;     r.sec = 20; });
+        table.emplace(payer, [&](auto& r) { r.owner = "charlie"_n; r.sec = 30; });
+
+        // Passing a name, not a uint64_t.
+        auto lb = table.lower_bound("bob"_n);
+        sysio::check(lb != table.end() && lb->owner == "bob"_n,
+                     "name_pk_bounds - lower_bound(name) did not land on bob");
+
+        auto ub = table.upper_bound("bob"_n);
+        sysio::check(ub != table.end() && ub->owner == "charlie"_n,
+                     "name_pk_bounds - upper_bound(name) did not land on charlie");
+
+        // The uint64_t form must keep working unchanged.
+        auto lb_raw = table.lower_bound("bob"_n.value);
+        sysio::check(lb_raw != table.end() && lb_raw->owner == "bob"_n,
+                     "name_pk_bounds - lower_bound(uint64_t) regressed");
+    }
+
 } /// _test_multi_index
 
 class [[sysio::contract]] test_multi_index : public sysio::contract
@@ -352,6 +417,14 @@ public:
     [[sysio::action("s1g")]] void idx64_general() {
         _test_multi_index::idx64_store_only<"indextable2"_n.value>( get_self() );
         _test_multi_index::idx64_check_without_storing<"indextable2"_n.value>( get_self() );
+    }
+
+    [[sysio::action("s1namepk")]] void name_pk_bounds() {
+        _test_multi_index::name_pk_bounds<"namepktable"_n.value>(get_self());
+    }
+
+    [[sysio::action("s1dupidx")]] void idx64_duplicate_emplace() {
+        _test_multi_index::idx64_duplicate_emplace<"duptable1"_n.value>(get_self());
     }
 
     [[sysio::action("s1store")]] void idx64_store_only() {

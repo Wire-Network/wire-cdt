@@ -312,7 +312,7 @@ class kv_multi_index {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
-         auto pri_key = idx.pk_to_bytes(obj.primary_key());
+         auto pri_key = idx.pk_to_bytes(kv_multi_index::to_pk_uint64(obj.primary_key()));
          ::kv_idx_store(payer, _sec_tid,
                         pri_key.data, _kv_multi_index_detail::u64_size,
                         sec_key.data(), sec_key.size());
@@ -325,7 +325,7 @@ class kv_multi_index {
          using extractor_t = typename Index::secondary_extractor_type;
          extractor_t ext;
          auto sec_key = idx.encode_scoped_secondary(ext(obj));
-         auto pri_key = idx.pk_to_bytes(obj.primary_key());
+         auto pri_key = idx.pk_to_bytes(kv_multi_index::to_pk_uint64(obj.primary_key()));
          ::kv_idx_remove(_sec_tid,
                          pri_key.data, _kv_multi_index_detail::u64_size,
                          sec_key.data(), sec_key.size());
@@ -339,7 +339,7 @@ class kv_multi_index {
          extractor_t ext;
          auto old_sec = idx.encode_scoped_secondary(ext(old_obj));
          auto new_sec = idx.encode_scoped_secondary(ext(new_obj));
-         auto pri_key = idx.pk_to_bytes(old_obj.primary_key());
+         auto pri_key = idx.pk_to_bytes(kv_multi_index::to_pk_uint64(old_obj.primary_key()));
          if (old_sec != new_sec) {
             ::kv_idx_update(payer, _sec_tid,
                             pri_key.data, _kv_multi_index_detail::u64_size,
@@ -592,17 +592,24 @@ public:
       return *obj;
    }
 
-   const_iterator lower_bound(uint64_t primary) const {
-      auto key = make_pk(primary);
+   /// Templated on the primary key type, matching upstream multi_index, which routes
+   /// through to_raw_key. Taking a bare uint64_t here rejected the `name` primary keys
+   /// that compile fine upstream. to_pk_uint64 is the same conversion the rest of this
+   /// class uses, so a uint64_t argument still binds exactly as before.
+   template<typename PK>
+   const_iterator lower_bound(PK primary) const {
+      auto key = make_pk(to_pk_uint64(primary));
       auto prefix = make_prefix();
       uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
       int32_t status = ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, status == 0);
    }
 
-   const_iterator upper_bound(uint64_t primary) const {
-      if (primary == std::numeric_limits<uint64_t>::max()) return end();
-      return lower_bound(primary + 1);
+   template<typename PK>
+   const_iterator upper_bound(PK primary) const {
+      const uint64_t pk = to_pk_uint64(primary);
+      if (pk == std::numeric_limits<uint64_t>::max()) return end();
+      return lower_bound(pk + 1);
    }
 
    const_iterator iterator_to(const T& obj) const {
@@ -626,6 +633,14 @@ public:
       uint64_t pk = to_pk_uint64(obj.primary_key());
       auto key = make_pk(pk);
       auto value = serialize_row(obj);
+
+      // Reject a duplicate primary key, as db_store_i64 did on Antelope. That guard lived
+      // at the chain layer and was lost with the legacy DB: kv_set is an upsert, so without
+      // this the row is silently overwritten AND store_secondaries -- an unconditional
+      // kv_idx_store -- leaves the old (sec_key -> pri_key) mapping behind, pointing at a
+      // row whose secondary value has changed. kv::table::emplace checks the same way.
+      sysio::check(!::kv_contains(_table_id, _code.value, key.data, key_size),
+                   "object with the same primary key already exists");
 
       ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
       store_secondaries(payer.value, obj);

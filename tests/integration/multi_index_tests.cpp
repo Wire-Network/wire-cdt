@@ -35,6 +35,11 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    };
 
    push_action( "testapi"_n, "s1g"_n,  "testapi"_n, {} );        // idx64_general
+   push_action( "testapi"_n, "s1namepk"_n, "testapi"_n, {} );    // name_pk_bounds
+
+   // Duplicate primary key aborts instead of upserting. Without the guard this action
+   // succeeded and left the previous secondary mapping stranded.
+   check_failure( "s1dupidx"_n, "object with the same primary key already exists" );
    push_action( "testapi"_n, "s1store"_n,  "testapi"_n, {} );    // idx64_store_only
    push_action( "testapi"_n, "s1check"_n,  "testapi"_n, {} );    // idx64_check_without_storing
    push_action( "testapi"_n, "s2g"_n,  "testapi"_n, {} );        // idx128_general
