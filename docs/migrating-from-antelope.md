@@ -2,7 +2,8 @@
 
 For developers arriving with a working contract from EOS, Telos, WAX, Jungle, or any other
 Antelope-family chain. It covers what to install, what to change in the source, and — the part that
-surprises people — why the contract, not the user, has to be provisioned before anyone can call it.
+surprises people — why the contract, not the user, is the one that has to be provisioned before
+ordinary calls will go through.
 
 Wire is Antelope-derived. The account model, permissions, actions, inline actions, notifications,
 ABIs, `check()`, `name`, `asset`, `symbol`, `time_point`, the cryptographic intrinsics and the
@@ -11,7 +12,7 @@ serialization format are all the ones you already know. Three things are genuine
 | What | Size of the job |
 |---|---|
 | **Every `eosio` identifier is spelled `sysio`** | Mechanical. One `sed` pass over the source. |
-| **The legacy `db_*_i64` table store no longer exists** | Small: `sysio::multi_index` is a shim over the new KV store, so your table declarations carry over. Expect a mechanical `it++` → `++it` sweep, and note that RAM sizing and client-side `get_table_rows` calls both change. |
+| **The legacy `db_*_i64` table store no longer exists** | Small: `sysio::multi_index` is a compatibility shim over the new KV store, so your table declarations carry over. Expect a mechanical `it++` → `++it` sweep, and note that RAM sizing and client-side `get_table_rows` calls both change. |
 | **The contract is billed for CPU, NET, and RAM — by default, not the signer** | One decision, and often one line: where your contract bills RAM. Everything else follows from it. A signer *can* still volunteer to pay, by opting in with the reserved `sysio.payer` permission — but that is the exception, not how ordinary traffic works. |
 
 Plus a short list of Antelope features Wire does not carry: deferred transactions and two
@@ -50,8 +51,11 @@ Install **both** packages. The base package carries the compiler drivers and the
 below needs. Neither package pulls in CMake or a build tool, so on a clean machine also:
 
 ```bash
-sudo apt install cmake ninja-build   # or build-essential for make
+sudo apt install cmake build-essential jq
 ```
+
+`build-essential` for the `make` the generated project uses, and `jq` for the ABI diff in
+[Step 1](#step-1--rename-eosio-to-sysio).
 
 Under the deb/rpm layout the toolchain lives in `/usr/lib/cdt` and only the public entry points —
 the `cdt-*` and `sysio-*` names — are symlinked into `/usr/bin`. The bundled `clang`, `lld`,
@@ -86,7 +90,7 @@ Tool-name mapping, if you have scripts to update:
 | `eosio-ld` / `cdt-ld` | `cdt-ld` |
 | `eosio-abidiff` | `cdt-abidiff` |
 | `eosio-init` | `cdt-init` |
-| `eosio-wast2wasm` / `-wasm2wast` | `cdt-wast2wasm` / `cdt-wasm2wast` |
+| `eosio-wast2wasm` / `eosio-wasm2wast` | `cdt-wast2wasm` / `cdt-wasm2wast` |
 | `eosio-pp` | `sysio-pp` (also aliased `cdt-pp`) |
 | `find_package(cdt)` / `${CDT_ROOT}` | unchanged — the CMake package is still named `cdt` |
 
@@ -100,7 +104,9 @@ cd mycontract/build && cmake .. && make
 ```
 
 `cdt-init` scaffolds `src/`, `include/`, `ricardian/`, `build/` and a CMake project that already
-calls `find_package(cdt)` and `add_contract`. `-bare` emits just the `.hpp`/`.cpp` skeleton.
+calls `find_package(cdt)` and `add_contract`. `-bare` skips the directories and the CMake
+files, emitting four files into the project root: `<name>.hpp`, `<name>.cpp`,
+`<name>.contracts.md` and `README.txt`.
 
 The generated skeleton is the familiar shape, with `sysio` in place of `eosio`:
 
@@ -161,19 +167,33 @@ fatal, because on Wire the contract is the payer. Before anyone can call it, a n
 issue it a policy:
 
 ```bash
-clio push action sysio.roa addpolicy '{"owner":"mycontract","issuer":"<nodeowner>","net_weight":"0.1000 SYS","cpu_weight":"0.1000 SYS","ram_weight":"1.0000 SYS","time_block":0,"network_gen":0}' -p <nodeowner>@active
+clio push action sysio.roa addpolicy '{"owner":"mycontract","issuer":"<nodeowner>","net_weight":"0.1000 SYS","cpu_weight":"0.1000 SYS","ram_weight":"1.0000 SYS","time_block":0,"network_gen":<gen>}' -p <nodeowner>@active
 ```
 
-The field names are the ABI's, which are `snake_case` — not the `camelCase` of the C++ action
-parameters. Keep the JSON on one line: a `\` used to wrap it would fall *inside* the single quotes
-and be passed through as a literal backslash.
+`<gen>` is the **network generation the issuer is registered in**, not a constant. `addpolicy`
+opens `nodeowners` scoped to the generation you pass and requires the issuer to be present there, so
+hard-coding `0` fails once the network has rolled over — or, worse, draws against an older
+generation's allocation. Read the current generation from the `roastate` singleton and confirm the
+issuer appears in that generation's `nodeowners`:
 
-Without it, an ordinary call fails with `account mycontract net usage is too high: 132 > 0` — which
-looks like a broken contract and is not one. "Ordinary" is the operative word: because billing keys
-on the payer alone, a caller that names itself with `sysio.payer` (see
-[Step 3](#step-3--resources-the-contract-pays)) pays for the action itself and never consults the
-contract's zero limits. So an unprovisioned contract is unreachable for ordinary users, not
-universally inert — a provisioned caller or relayer can still drive it.
+```bash
+clio get table sysio.roa sysio.roa roastate               # network_gen
+clio get table sysio.roa <gen> nodeowners --limit 100     # issuer must be listed here
+```
+
+Keep the JSON on one line: a `\` used to wrap it would fall *inside* the single quotes and be
+passed through as a literal backslash rather than continuing the command.
+
+Without it, an ordinary contract-paid call fails with
+`account mycontract net usage is too high: 132 > 0` — which looks like a broken contract and is not
+one. "Ordinary" is the operative word: because billing keys on the payer alone, a caller that names
+itself with `sysio.payer` (see [Step 3](#step-3--resources-the-contract-pays)) pays for the action
+itself and never consults the contract's zero CPU and NET. So an unprovisioned contract is
+unreachable by default, not universally inert — a provisioned caller or relayer can still drive it.
+
+That escape hatch covers bandwidth only. RAM the contract bills to **itself** still comes out of the
+contract's own quota, so a contract with no policy can be driven only as far as its first write to
+its own tables.
 
 ### Deploy
 
@@ -271,13 +291,13 @@ is nearly all of it — carries over with one mechanical exception, below.
 
 ### `multi_index` still works
 
-`sysio::multi_index` is a near-drop-in replacement implemented over the KV intrinsics. It keeps
+`sysio::multi_index` is a compatibility shim implemented over the KV intrinsics. It keeps
 `emplace` / `modify` / `erase` / `find` / `require_find` / `get` / `lower_bound` / `upper_bound`,
 `available_primary_key()`, `begin`/`end`/`cbegin`/`cend`/`rbegin`/`rend`, `indexed_by` +
 `const_mem_fun` with up to 16 secondary indices, and object caching. `sysio::singleton` is likewise
 preserved.
 
-**The one source change: postfix `++` and `--` on iterators are deleted.** Wire declares
+**The source change: postfix `++` and `--` on iterators are deleted.** Wire declares
 `operator++(int)` and `operator--(int)` as `= delete` on both the primary and the secondary-index
 iterator, so the classic loop stops compiling:
 
@@ -288,6 +308,15 @@ for (auto it = idx.begin(); it != idx.end(); ++it)   // rewrite to this
 
 A postfix increment has to copy the iterator, and a KV iterator owns a host-side handle. The sweep
 is mechanical — `it++` → `++it`, `it--` → `--it` — and the compiler finds every one.
+
+Two behaviours that a port depends on match upstream, and are worth knowing were checked rather than
+assumed:
+
+- **A duplicate primary key aborts.** `emplace` rejects a key that already exists, as `db_store_i64`
+  did on Antelope, so a contract that relied on that failure keeps failing loudly instead of
+  silently overwriting the row.
+- **`lower_bound` / `upper_bound` accept the primary key type**, not only `uint64_t`, so a table
+  keyed on `name` compiles as it does upstream.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
 `checksum256`. Iteration order is `memcmp` order over a big-endian encoding, so the fixed-width
@@ -353,8 +382,13 @@ readable name.
 > | `user_table` (10 chars) | 61956 | 3509 |
 > | `user_balance_history` (20 chars) | 26461 | 26461 ✓ |
 >
-> Above 13 characters both sides hash, so they agree — which is the case `_i` exists for. Short
-> names should use `_n`, where runtime and ABI both use `string_to_name` and likewise agree.
+> Above 13 characters both sides hash, so they agree — which is the case `_i` exists for.
+>
+> **`_n` is not always a way out.** Its alphabet is `.12345a-z`, so a name containing any other
+> character cannot be expressed at all: `"user_table"_n` is a *compile* error, because `_` is not in
+> the alphabet. `_n` is the fix only for short names that are already valid Antelope names. A short
+> identifier that is not — anything with `_`, a digit outside `1-5`, or an uppercase letter — has to
+> be renamed, or lengthened past 13 characters, until abigen is fixed.
 
 ---
 
@@ -368,13 +402,15 @@ the account that signed it.** An ordinary transaction names no payer, so the sig
 charged nor limit-checked *by consensus*. A user account with zero CPU, zero NET and no tokens can
 call every provisioned contract on the network.
 
-The qualifier matters. Objective billing keys on the payer and nothing else, so the signer's own
-limits are never consulted — but a producer also runs **subjective** billing, which meters the
-transaction's first authorizer even when it is not the payer, and can refuse a transaction whose
-signer has burned its subjective budget on earlier failures
-(`Subjectively terminated trx ... Authorized account ... exceeded subjective CPU limit`). That is
-node-local rather than consensus, and it is a spam control rather than a charge, but "the signer is
-never metered" is too strong: a signer that fails transactions in a loop can be throttled.
+The qualifier matters. Objective billing keys on the payer and nothing else, so the signers' own
+limits are never consulted — but a producer also runs **subjective** billing, which meters **each
+top-level action's first authorizer** where that account is not the payer, and can refuse the
+transaction when one of them has burned its subjective budget on earlier failures
+(`Subjectively terminated trx ... Authorized account ... exceeded subjective CPU limit`). A
+multi-action transaction therefore has as many candidates as it has distinct first authorizers, and
+any one of them can stop it. That is node-local rather than consensus, and a spam control rather
+than a charge, but "the signer is never metered" is too strong: an account that fails transactions
+in a loop can be throttled.
 
 Capacity reaches a contract as a **policy** — a grant of CPU, NET and RAM weight issued by a
 registered node owner through the `sysio.roa` contract. A contract with no policy has nothing to pay
@@ -382,9 +418,10 @@ with, so ordinary calls into it fail.
 
 The full model — policies, node-owner tiers, how weight becomes throughput, subjective billing, and
 how it compares to staking, REX and PowerUp — is documented in wire-sysio:
-**[docs/roa-overview.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/roa-overview.md)**
-(landing via [wire-sysio#583](https://github.com/Wire-Network/wire-sysio/pull/583)). What follows is
-only what changes in *contract code*.
+`wire-sysio`'s `docs/roa-overview.md`, which lands with
+[wire-sysio#583](https://github.com/Wire-Network/wire-sysio/pull/583) — read it there until that
+merges; the path does not exist on `master` yet. What follows is only what changes in *contract
+code*.
 
 ### The one mandatory source change: where you bill RAM
 
@@ -420,9 +457,17 @@ _table.emplace( user, [&]( auto& row ) { ... } );
 ```
 
 Option (b) has a consequence worth stating plainly: because `sysio.payer` must sit at **index 0**,
-adding it also makes that user the CPU and NET payer for the action — so the user then needs their
-own allocation. There is no way to charge a user for storage while the contract absorbs their
-bandwidth. Most ports want (a).
+adding it also makes that user the CPU and NET payer for **that action** — so the user then needs
+their own allocation. For the direct, top-level call shown above, there is no way to charge a user
+for storage while the contract absorbs their bandwidth. Most ports want (a).
+
+> **The separation is possible, but not at this level.** If the user pre-delegates a real permission
+> to `<contract>@sysio.code`, the contract can send an *inline* action authorized
+> `{user, sysio.payer}, {user, delegated}`. RAM validation reads the marker on the inline action, so
+> the row bills to the user; objective CPU and NET are accounted only over the transaction's
+> top-level actions, so the contract remains the bandwidth payer. It costs a persistent, up-front
+> delegation from every user — not just a signature on the call — so it is an advanced pattern
+> rather than an alternative to the two options above.
 
 CDT has no helper for building the `sysio.payer` authorization; the client constructs it, as
 `permission_level{ user, "sysio.payer"_n }` at position 0 with a real, signed permission of the same
@@ -445,10 +490,18 @@ every inline action and notification handler it triggers — and billed to that 
 payer. NET is likewise charged per top-level action, but not on the whole transaction's bytes:
 
 ```
+overhead   = 16 + signatures + extensions + header      (whole transaction)
+per_action = overhead / number_of_actions + 1           (integer division, then +1)
+
 action NET = that action's own serialized billable size
-           + (16 + signatures + extensions + header) / number of actions, rounded up
+           + per_action
            + its matching context_free_data, for a context-free action
 ```
+
+The `+ 1` is unconditional, not a rounding step: consensus divides, then adds one. Where the
+overhead divides evenly — every single-action transaction, for instance — that is one byte *more*
+than a true ceiling, so the split over-bills by up to a byte per action rather than under-billing.
+Immaterial for sizing, but it is the arithmetic, and `transaction.cpp` says as much.
 
 Inline actions add no NET at all, because they never appear on the wire. Two consequences worth
 designing around: **signatures cost NET**, so a co-signed action is dearer than a solo one; and
@@ -464,8 +517,11 @@ So the payer of the top-level action absorbs the CPU of the whole call tree bene
 - A contract notifies your `on_notify` handler. The top-level payer pays your handler's CPU; your
   own policy covers only the RAM your handler writes.
 
-The CPU and NET a contract must be provisioned for is therefore the cost of everything its actions
-*cause*, not just its own action bodies.
+**Only CPU has that property.** A contract's CPU provisioning has to cover everything its actions
+*cause*, since the whole tree is timed against the top-level payer. Its NET provisioning does not:
+NET is fixed by what arrives on the wire — the input action's own bytes, its share of the
+transaction overhead, and its context-free data — and no inline action or notification adds to it,
+however deep the tree goes.
 
 ### Sizing
 
@@ -503,7 +559,7 @@ Antelope; what changed is only *who* the payment lands on by default.
 
 | Function(s) | What to do instead |
 |---|---|
-| `db_store_i64`, `db_update_i64`, `db_remove_i64`, `db_get_i64`, `db_next_i64`, `db_previous_i64`, `db_find_i64`, `db_lowerbound_i64`, `db_upperbound_i64`, `db_end_i64` | Use `multi_index` (unchanged source) or the `kv_*` intrinsics. |
+| `db_store_i64`, `db_update_i64`, `db_remove_i64`, `db_get_i64`, `db_next_i64`, `db_previous_i64`, `db_find_i64`, `db_lowerbound_i64`, `db_upperbound_i64`, `db_end_i64` | Use `multi_index` (see the [compatibility adjustments](#step-2--storage)) or the `kv_*` intrinsics. |
 | `db_idx64_*`, `db_idx128_*`, `db_idx256_*`, `db_idx_double_*`, `db_idx_long_double_*` (50 in total) | `indexed_by` on `multi_index`, or `kv_idx_*`. |
 | `send_deferred`, `cancel_deferred` | See [Features with no Wire equivalent](#features-with-no-wire-equivalent). |
 | `get_permission_last_used`, `get_account_creation_time` | No equivalent intrinsic. Track it in contract state, or read it off-chain. |
@@ -564,7 +620,8 @@ None of this is required to ship. Do it after the contract builds, deploys and p
    `eosio_exit` C API that a `\beosio\b` pass skips. Review the diff for string literals.
 3. Build. Every remaining `eosio` reference is now a compiler error with a file and line.
 4. Sweep `it++` → `++it` and `it--` → `--it` on table iterators; the postfix forms are deleted.
-5. Search for direct `db_*_i64` / `db_idx*` calls. `multi_index` users have nothing to do here.
+5. Search for direct `db_*_i64` / `db_idx*` calls — those must be rewritten. `multi_index` users
+   need only the iterator sweep in step 4.
 6. Check secondary-index key types are `std::is_trivially_copyable`; give any `std::string` or
    `std::vector` key a fixed-width surrogate.
 7. **Find every `emplace` / `modify` that names a user as payer.** Decide, per table, whether the
@@ -598,7 +655,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 
 | Doc | Topic |
 |---|---|
-| [docs/roa-overview.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/roa-overview.md) | The resource model in full — policies, tiers, throughput, spam control, scenarios ([#583](https://github.com/Wire-Network/wire-sysio/pull/583)) |
+| `docs/roa-overview.md` — in [wire-sysio#583](https://github.com/Wire-Network/wire-sysio/pull/583) until it merges | The resource model in full — policies, tiers, throughput, spam control, scenarios |
 | [docs/kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md) | KV vs legacy RAM billing, with the per-row constants |
 | [docs/get-table-rows-api.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/get-table-rows-api.md) | Querying tables, and what changed from the old endpoint |
 | [docs/key-formats.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/key-formats.md) | Supported public-key formats |
