@@ -27,6 +27,14 @@ kv::global<"app_configuration"_i, config_type>  cfg(get_self());  // long name
 
 **ABI requirement:** When using `_i`, annotate the value struct with `[[sysio::table("app_configuration")]]` so CDT generates the ABI entry.
 
+> **Prefer `_n` for a global.** A `_i`-named `kv::global` with a matching `[[sysio::table]]`
+> annotation emits **two** ABI table entries — the annotated name under one `table_id`, and a
+> decoded-hash name under the one the row actually uses — so `get_table_rows` by the readable
+> name finds nothing. Reads and writes through the contract are unaffected. A name of more than
+> 13 characters, as above, fails to link outright with a `table_id collision`. `_n` produces a
+> single correct entry and covers any name that fits `.12345a-z` in 13 characters. See
+> [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
+
 ## API
 
 | Method | Description |

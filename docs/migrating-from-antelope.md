@@ -57,10 +57,14 @@ sudo apt install cmake build-essential jq
 `build-essential` for the `make` the generated project uses, and `jq` for the ABI diff in
 [Step 1](#step-1--rename-eosio-to-sysio).
 
-Under the deb/rpm layout the toolchain lives in `/usr/lib/cdt` and only the public entry points —
-the `cdt-*` and `sysio-*` names — are symlinked into `/usr/bin`. The bundled `clang`, `lld`,
-`wasm-ld`, `opt`, `llc` and `llvm-*` binaries stay in `/usr/lib/cdt/bin`, off `PATH`, so nothing
-shadows your distro's compiler.
+Under the deb/rpm layout the toolchain lives in `/usr/lib/cdt`, and only an enumerated list of
+public entry points is symlinked into `/usr/bin`: `cdt-cc`, `cdt-cpp`, `cdt-ld`, `cdt-abidiff`,
+`cdt-init`, `cdt-codegen`, `cdt-protoc`, `cdt-protoc-gen-zpp`, `cdt-pp`, `cdt-wast2wasm`,
+`cdt-wasm2wast` and their `sysio-*` originals. The bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc`
+and `llvm-*` binaries stay in `/usr/lib/cdt/bin`, off `PATH`, so nothing shadows your distro's
+compiler — and so do the eight binutils aliases `cdt-ar`, `cdt-ranlib`, `cdt-nm`, `cdt-objcopy`,
+`cdt-objdump`, `cdt-readobj`, `cdt-readelf` and `cdt-strip`, which are build-system plumbing
+addressed by absolute path. Invoke those as `/usr/lib/cdt/bin/cdt-ar`, not off `PATH`.
 
 Or extract the portable tarball to `/opt` (`/opt/wire-cdt`), which coexists with a deb install.
 Building from source is documented in [BUILD.md](../BUILD.md).
@@ -181,7 +185,7 @@ clio get table sysio.roa roastate                          # network_gen
 clio get table sysio.roa nodeowners --limit 100            # issuer must be listed here
 ```
 
-`nodeowners` is a scoped table keyed by generation, but **do not pass `-S <gen>`**. CDT declares
+`nodeowners` is scoped by generation and keyed by owner, but **do not pass `-S <gen>`**. CDT declares
 every scoped table's scope as a `name`, and the chain honours that: it tries `name(scope)` first
 and only falls back to a plain integer when that throws. `1`-`5` are valid `name` characters, so
 `-S 1` is read as the name `"1"` — 576460752303423488 — and the query returns `{"rows":[]}`, which
@@ -262,9 +266,12 @@ survivor is an error with a file and line.
 
 ### The ABI
 
-The generated ABI's version string changes from `eosio::abi/1.x` to **`sysio::abi/1.2`**. Table
-entries carry two Wire additions — `table_id`, and `key_names`/`key_types` describing the key
-layout:
+The generated ABI's version string changes from `eosio::abi/1.x` to **`sysio::abi/1.2`** — or
+**1.3** for a contract using protobuf actions, which the ABI needs in order to carry the
+`protobuf_types` section. Table
+entries carry `table_id`, a Wire addition that is the table's on-chain identity. `key_names` and
+`key_types` are original EOSIO `table_def` fields; what changed is that Wire populates them to
+describe the key layout:
 
 ```json
 {
@@ -277,11 +284,13 @@ layout:
 }
 ```
 
-Do not reach for `cdt-abidiff` to see this particular change. It compares tables only by `name` and
-`type`, so `index_type`, `key_names`, `key_types`, `table_id` and the secondary-index metadata are
-all invisible to it, and its version check reduces `eosio::abi/1.2` and `sysio::abi/1.2` to the same
-number — a port whose tables kept their names can come back reporting no difference at all. For this
-comparison, normalize and diff the JSON directly:
+Do not reach for `cdt-abidiff` to see this particular change — **on a CDT built before
+[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112)**, which fixes both limitations
+below. It compares tables only by `name` and `type`, so `index_type`, `key_names`, `key_types`,
+`table_id` and the secondary-index metadata are all invisible to it, and its version check reduces
+`eosio::abi/1.2` and `sysio::abi/1.2` to the same number — a port whose tables kept their names can
+come back reporting no difference at all. Either way, normalizing and diffing the JSON directly is
+the check that does not depend on your toolchain's vintage:
 
 ```bash
 jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /tmp/old.json /tmp/new.json
@@ -297,10 +306,14 @@ jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /t
 
 The `db_store_i64` / `db_find_i64` / `db_idx64_*` / `db_idx128_*` / `db_idx256_*` /
 `db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire. The chain exports none
-of them. Today a contract declaring one still *links*, because CDT's `imports/cdt.imports.in` is
-handed to `wasm-ld` as `--allow-undefined-file` and still lists them, so the failure surfaces at
-deploy; once [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) removes them from
-that list it becomes a link error instead. `<sysio/db.h>` is a stub that forwards to
+of them, so a contract that reaches one fails at deploy. Whether it fails earlier depends on how
+it was declared: a plain `extern "C"` declaration links only because CDT's
+`imports/cdt.imports.in` is handed to `wasm-ld` as `--allow-undefined-file` and still lists these
+names, and [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) turns that into a
+link error by removing them. A declaration carrying `__attribute__((sysio_wasm_import))` — which
+is how the old `<sysio/db.h>` declared them — emits an explicit WASM import and links either way,
+so those keep failing at deploy. (The 22 `kv_*` intrinsics are the proof: none is in the
+allow-list, and they all link.) `<sysio/db.h>` is a stub that forwards to
 `<sysio/kv.h>`. Contract state lives in a key-value store addressed by a compile-time
 `table_id`.
 
@@ -320,14 +333,19 @@ preserved.
 iterator, so the classic loop stops compiling:
 
 ```cpp
-for (auto it = idx.begin(); it != idx.end(); it++)   // error: call to deleted operator
+for (auto it = idx.begin(); it != idx.end(); it++)   // error: overload resolution selected deleted operator '++'
 for (auto it = idx.begin(); it != idx.end(); ++it)   // rewrite to this
 ```
 
 A postfix increment has to copy the iterator, and copying a KV iterator means duplicating a
 host-side handle — affordable to do deliberately, not to do once per loop step, which is why the
-postfix forms are deleted rather than merely discouraged. The sweep
-is mechanical — `it++` → `++it`, `it--` → `--it` — and the compiler finds every one.
+postfix forms are deleted rather than merely discouraged. The sweep is mechanical —
+`it++` → `++it`, `it--` → `--it`.
+
+**The compiler does not find every one.** `rbegin()`/`rend()` hand back a
+`std::reverse_iterator`, whose postfix operators belong to the adaptor and are *not* deleted, so
+`for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
+handle-duplicating copy the deletion exists to prevent. Grep reverse loops by hand.
 
 Two behaviours that a port depends on match upstream. **Both arrive with
 [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are not present in a CDT built
@@ -341,19 +359,23 @@ secondary mapping, and the bounds take only `uint64_t`:
   `name` reads as it does upstream. (Taking the bare address of either — `&table_type::lower_bound`
   — does not compile here, because they are an overload set, and does not compile upstream
   either, because upstream's are member templates whose parameter cannot be deduced. A named
-  `static_cast<const_iterator (table_type::*)(uint64_t) const>(...)` resolves one on Wire.)
+  `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
+  resolves one on Wire.)
 
 #113 also makes `emplace`, `modify` and `erase` abort when the handle's code is not the receiving
 account, again matching upstream. If your port constructs a table handle on another contract's
 account, it must be read-only.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
-`checksum256`. Iteration order is `memcmp` order over a big-endian encoding, so the fixed-width
+`checksum256`. Iteration order is `memcmp` order over a big-endian encoding — with an additional sign-flip
+transform for `double` and `long double`, so negatives order correctly — and the fixed-width
 numeric types sort exactly as they did.
 
-The constraint is **`std::is_trivially_copyable`**, enforced by a `static_assert` in
-`secondary_index_view`, not "has a serializer" — so `std::string` and `std::vector` secondary keys
-are rejected at compile time even though CDT can serialize them. A variable-length secondary key
+The constraint is **`std::is_trivially_copyable`**, not "has a serializer" — so `std::string`
+and `std::vector` secondary keys are rejected even though CDT can serialize them. The
+`static_assert` sits in `secondary_index_view`, so it fires when you first call
+`get_index<...>()`, not at the declaration: a variable-length secondary index compiles, and can
+even be written through `emplace`, until something reads it back. A variable-length secondary key
 needs a fixed-width surrogate: hash it into a `checksum256`, or truncate to a `uint64_t` and
 disambiguate collisions against the primary row.
 
@@ -454,13 +476,14 @@ readable name.
 > Renaming past 13 characters fixes this for `kv::table`, but for a `kv::global` it turns the
 > mismatch into a build failure: both entries then compute the same id under different names and
 > trip the duplicate check —
-> `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322`. (From
+> `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322. Rename one
+> of the tables to avoid the collision.` (From
 > `cdt-codegen`'s link-stage ABI finalize; `cdt-cpp -c` on the same file succeeds.)
 >
 > So for a config singleton prefer `_n`, whose name fits `.12345a-z` in 13 characters in almost
-> every case, and which produces a single correct entry. `tests/unit/test_contracts/hash_id_tests.cpp`
-> and `examples/hash_id_example` both use the short `_i` form; they work, and their integration
-> tests pass, but their ABIs carry the extra entry.
+> every case, and which produces a single correct entry.
+> `tests/unit/test_contracts/hash_id_tests.cpp` uses the short `_i` form: it works, its
+> integration test passes, and its ABI carries the extra entry.
 
 ---
 
@@ -607,7 +630,8 @@ however deep the tree goes.
   million rows. This is where a port's costs actually live.
 - **Failed transactions cost the payer nothing objectively** — `add_transaction_usage` is reached
   only on the success path. They are not free, but the cost does not land on your contract:
-  a failure accrues *subjective* CPU against the transaction's **first authorizer** on the node
+  a failure accrues *subjective* CPU against each top-level action's **first authorizer** (the
+  transaction's, for an action carrying no authorization) on the node
   that ran it, and a stock node ships with `disable-subjective-payer-billing` **on**
   (`producer_plugin.cpp`), so `subjective_bill_failure` skips the payer entirely and bills only
   the authorizer. Under contract-pays those are different accounts — the payer is your contract,
@@ -651,7 +675,8 @@ Everything else you already use is present with the same signature: `require_aut
 `get_code_hash`, `set_action_return_value`, `current_time`, `get_block_num`, `is_feature_activated`,
 the whole `print*` family, the transaction and TAPOS accessors, `check_transaction_authorization` /
 `check_permission_authorization`, every `privileged.h` setter, `set_finalizers`, and the full
-cryptographic surface — `sha1`/`sha256`/`sha512`/`sha3`/`ripemd160` and their `assert_` forms,
+cryptographic surface — `sha1`/`sha256`/`sha512`/`ripemd160` with their `assert_` forms, plus `sha3` (which has no
+`assert_` form, here or upstream),
 `recover_key`, `assert_recover_key`, `k1_recover`, `blake2_f`, `alt_bn128_add`/`_mul`/`_pair`,
 `mod_exp`, and the ten `bls_*` functions.
 

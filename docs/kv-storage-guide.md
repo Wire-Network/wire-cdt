@@ -28,7 +28,7 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 | Secondary indices | Optional (up to 16) | Optional (up to 16) | No | Up to 16 |
 | Scope | No (table_id isolation) | Yes (required) | No | Yes |
 | Key layout | `[K encoded]` | `[scope:8B][K encoded]` | `[name:8B]` | `[scope:8B][pk:8B]` |
-| Long table names (`_i`) | Yes | Yes | Yes | No (`_n` only) |
+| Long table names (`_i`) | Yes | Yes | Not usable — see below | No (`_n` only) |
 | Zero-copy | Yes (trivially_copyable) | Yes | Yes | Yes |
 | Lambda emplace | Yes | Yes | No | Yes |
 | auto-increment PK | Yes (`primary_key()`) | Yes (`primary_key()`) | No | `available_primary_key()` |
@@ -52,12 +52,19 @@ For table names longer than 13 characters or with characters outside `a-z1-5.`:
 
 ```cpp
 #include <sysio/hash_id.hpp>
+#include <sysio/kv_table.hpp>
 
 kv::table<"user_balance_history"_i, my_key, my_val>  users(get_self());
-kv::global<"app_configuration"_i, config>             cfg(get_self());
 ```
 
-The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` for ABI generation.
+The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` for ABI generation — **and keep the annotated name above 13 characters**, or abigen will describe the table under a different `table_id` than the one the rows use.
+
+> **Not for `kv::global`.** A `_i`-named `kv::global` emits two ABI table entries — the annotated
+> name under one `table_id`, and a decoded-hash name under the one the rows actually use — so a
+> `get_table_rows` by the readable name finds nothing. Above 13 characters it fails to link with
+> a `table_id collision`. Reads and writes through the contract are correct either way. Use `_n`
+> for a config singleton; see
+> [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
 
 ## Key Encoding
 

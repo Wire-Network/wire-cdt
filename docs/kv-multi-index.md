@@ -20,7 +20,8 @@ divergences are:
 - the primary `lower_bound` / `upper_bound` take a `name` as well as a `uint64_t`, where
   upstream uses a member template — so the bare `&table_type::lower_bound` does not compile on
   either (here because it is an overload set, upstream because `PK` cannot be deduced); a named
-  `static_cast<const_iterator (table_type::*)(uint64_t) const>(...)` resolves one on Wire.
+  `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
+  resolves one on Wire.
   **The `name` overload arrives with
   [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; before it the bounds took
   `uint64_t` only, and a `name` primary key needed `.value` at the call;
