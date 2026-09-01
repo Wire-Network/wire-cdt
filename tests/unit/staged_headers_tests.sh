@@ -36,13 +36,32 @@ fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
 #   include/sysio/native/<rest>     <-  libraries/native/<rest>
 #
 # The sysiolib/native rule is tested first because it is the more specific prefix.
+# Maps a staged path back to the source it was copied from, for every tree
+# stage_cdt_tree.cmake owns. The vendored four were added when staging took them over from
+# their configure-time copies; leaving them out of this map is what let that half of the
+# rework ship untested.
 source_for() {
     local staged="$1"
     case "$staged" in
-        sysiolib/native/*) echo "${SOURCE_DIR}/libraries/native/native/${staged#sysiolib/native/}" ;;
-        sysiolib/*)        echo "${SOURCE_DIR}/libraries/${staged}" ;;
-        sysio/native/*)    echo "${SOURCE_DIR}/libraries/native/${staged#sysio/native/}" ;;
-        *)                 echo "" ;;
+        sysiolib/native/*)   echo "${SOURCE_DIR}/libraries/native/native/${staged#sysiolib/native/}" ;;
+        sysiolib/*)          echo "${SOURCE_DIR}/libraries/${staged}" ;;
+        sysio/native/*)      echo "${SOURCE_DIR}/libraries/native/${staged#sysio/native/}" ;;
+        libcxx/*)            echo "${SOURCE_DIR}/libraries/libc++/cdt-libcxx/include/${staged#libcxx/}" ;;
+        bluegrass/*)         echo "${SOURCE_DIR}/libraries/meta_refl/include/${staged}" ;;
+        boost/preprocessor/*) echo "${SOURCE_DIR}/libraries/boost/include/${staged}" ;;
+        # libc is stitched together from three source roots, so a staged file legitimately
+        # matches any one of them; first hit wins.
+        libc/*)
+            local rest="${staged#libc/}" root
+            for root in "libraries/libc/cdt-musl/include" \
+                        "libraries/libc/cdt-musl/src/internal" \
+                        "libraries/libc/cdt-musl/arch/eos"; do
+                [ -f "${SOURCE_DIR}/${root}/${rest}" ] && { echo "${SOURCE_DIR}/${root}/${rest}"; return; }
+            done
+            # Not found under any root -- report the first so the failure names a real path.
+            echo "${SOURCE_DIR}/libraries/libc/cdt-musl/include/${rest}"
+            ;;
+        *)                   echo "" ;;
     esac
 }
 
@@ -54,8 +73,8 @@ if [ ! -d "$INCLUDE_DIR" ]; then
     exit 1
 fi
 
-# Only the CDT-owned trees are checked. The vendored trees (libc, libcxx, boost,
-# bluegrass) are still staged by their own configure-time copies and are out of scope.
+# Every tree stage_cdt_tree.cmake owns, vendored ones included. A staged file with no source
+# counterpart is one the pruning step failed to remove -- the whole point of the rework.
 staged_count=0
 stale=()
 while IFS= read -r abs; do
@@ -64,8 +83,14 @@ while IFS= read -r abs; do
     [ -z "$src" ] && continue
     staged_count=$((staged_count + 1))
     [ -f "$src" ] || stale+=("$rel")
-done < <(find "${INCLUDE_DIR}/sysiolib" "${INCLUDE_DIR}/sysio" \
-              \( -name '*.h' -o -name '*.hpp' \) -type f 2>/dev/null)
+# No extension filter on the vendored trees: libc++ ships extensionless headers (<vector>,
+# <cstdint>), which a '*.h;*.hpp' find would skip entirely -- and those are exactly the files
+# a whole-directory copy stages and an extension-filtered one would have dropped.
+done < <( { find "${INCLUDE_DIR}/sysiolib" "${INCLUDE_DIR}/sysio" \
+                 \( -name '*.h' -o -name '*.hpp' \) -type f 2>/dev/null
+            find "${INCLUDE_DIR}/libc" "${INCLUDE_DIR}/libcxx" \
+                 "${INCLUDE_DIR}/boost/preprocessor" "${INCLUDE_DIR}/bluegrass" \
+                 -type f 2>/dev/null; } )
 
 if [ "$staged_count" -eq 0 ]; then
     fail "found staged CDT headers to check (none under ${INCLUDE_DIR})"

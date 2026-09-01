@@ -45,7 +45,6 @@ macro( cdt_libraries_install)
    # variants installed from ${CMAKE_BINARY_DIR}/packaging (see CMakeLists.txt).
    install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib COMPONENT base
       PATTERN "libnative*" EXCLUDE
-      PATTERN "libsf.a" EXCLUDE
       PATTERN "cmake" EXCLUDE)
    # Guarded on the option, not merely on what happens to be sitting in lib/: a tree
    # reconfigured from native ON to OFF can still hold archives from the previous build.

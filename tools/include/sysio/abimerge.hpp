@@ -51,24 +51,57 @@ class ABIMerger {
          // gate below must consult THAT, not just the left-hand side. Gating on the
          // left alone emitted e.g. 1.10 while dropping the action_results the newer
          // side carried -- a version stamp promising a section the ABI lacks.
-         const std::pair<int, int> merged_version = std::max(version_of(abi), version_of(other));
+         std::pair<int, int> merged_version = std::max(version_of(abi), version_of(other));
+         const std::pair<int, int> declared_version = merged_version;
+         // Inserted HERE, before any other section, because ojson preserves insertion order
+         // and "version" is the first key of every ABI this toolchain has ever emitted.
+         // The value is corrected in place below once promotion is known; overwriting an
+         // existing key keeps its position, whereas assigning it late would move it to the
+         // end of the object and change the bytes of every contract's ABI.
          ret["version"]  = merge_version(other);
          ret["types"]    = merge_types(other);
          ret["structs"]  = merge_structs(other);
          ret["actions"]  = merge_actions(other);
          ret["tables"]   = merge_tables(other);
          ret["ricardian_clauses"]  = merge_clauses(other);
-         // Both version-gated sections consult the MERGED version, and both are compared as
-         // parsed components: deriving them from the string's last three characters mis-read
-         // any two-digit minor ("sysio::abi/1.10" -> ".10"). variants was previously emitted
-         // unconditionally, so a 1.0 document merged at 1.0 produced a 1.0 ABI carrying a
-         // variants array -- contradicting the variants_since rule declared below.
-         if (abi_version::supports_variants(merged_version.first, merged_version.second)) {
-            ret["variants"] = merge_variants(other);
-         }
-         if (abi_version::supports_action_results(merged_version.first, merged_version.second)) {
-            ret["action_results"] = merge_action_results(other);
-         }
+
+         // A section belongs to the emitted document if it has content, and the emitted
+         // VERSION is then raised to one that admits it. Gating the other way -- dropping a
+         // populated section because the requested version predates it -- emits a document
+         // that references a type it does not define: abigen writes `variants`
+         // unconditionally, so a contract with a std::variant parameter built at
+         // -abi-version 1.0 had its struct field still typed `variant_uint64_string` while
+         // the variants array itself was silently discarded. Promoting is what the protobuf
+         // path already does when it moves a document to 1.3.
+         // Promote FIRST, from every gated section, then emit -- so the outcome does not
+         // depend on the order the sections are considered in. (Emitting as we go meant a
+         // populated action_results could raise the version to 1.2 after an empty variants
+         // had already been skipped, leaving a 1.2 document missing a section 1.2 requires.)
+         ojson variants_section = merge_variants(other);
+         ojson results_section  = merge_action_results(other);
+         if (!variants_section.empty() && variants_since)
+            merged_version = std::max(merged_version, *variants_since);
+         if (!results_section.empty() && action_results_since)
+            merged_version = std::max(merged_version, *action_results_since);
+
+         // A gated section is emitted when it has content, or when the version requires it to
+         // be present -- an empty array is the correct representation in that second case,
+         // and section() rejects a document that omits it. Below its version, absent.
+         const auto emit_section = [&](const char* key, ojson section,
+                                       const section_since& since) {
+            if (!section.empty() || (since && merged_version >= *since))
+               ret[key] = std::move(section);
+         };
+         emit_section("variants", std::move(variants_section), variants_since);
+         emit_section("action_results", std::move(results_section), action_results_since);
+
+         // Corrected in place (keeping its leading position) only if emit_section raised the
+         // version above what either input declared. When nothing forced a promotion the
+         // newer document's own version STRING stands -- parse ignores the namespace prefix,
+         // so an inherited "eosio::abi/1.2" is valid and rewriting it to "sysio::abi/" would
+         // be a silent change to every merged document.
+         if (merged_version != declared_version)
+            ret["version"] = abi_version::version_string(merged_version.first, merged_version.second);
          {
             ojson merged_enums = merge_enums(other);
             if (!merged_enums.empty())
@@ -154,14 +187,28 @@ class ABIMerger {
          // key_names/key_types may differ: template-detected tables have them
          // populated while attribute-only tables have empty arrays. Both are
          // valid representations of the same table — treat as compatible.
-         const auto compatible = [](const ojson& x, const ojson& y) {
+         // Optional-key tolerant: an ABI from another toolchain need not carry the Wire
+         // extensions (table_id, secondary_indexes) at all.
+         const auto field = [](const ojson& o, const char* k) {
+            static const ojson absent = ojson::null();
+            return o.has_key(k) ? o[k] : absent;
+         };
+         const auto compatible = [&](const char* k) {
+            const ojson x = field(a, k);
+            const ojson y = field(b, k);
             return x == y || x.empty() || y.empty();
          };
          return a["name"] == b["name"] &&
                 a["type"] == b["type"] &&
-                a["index_type"] == b["index_type"] &&
-                compatible(a["key_names"], b["key_names"]) &&
-                compatible(a["key_types"], b["key_types"]);
+                field(a, "index_type") == field(b, "index_type") &&
+                // table_id is where the row physically lives and each secondary index carries
+                // its own, so a difference in either is a different table -- not a merge.
+                // These were omitted while cdt-abidiff's tables_match compared them, leaving
+                // the differ and the merger disagreeing on table identity.
+                field(a, "table_id") == field(b, "table_id") &&
+                compatible("key_names") &&
+                compatible("key_types") &&
+                compatible("secondary_indexes");
       }
 
       static bool clause_is_same(ojson a, ojson b) {

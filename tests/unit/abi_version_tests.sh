@@ -308,6 +308,43 @@ merge_refuses_both_orders() {
     done
 }
 
+# A populated gated section PROMOTES the emitted version rather than being dropped. abigen
+# writes `variants` at every version, so gating the merge output on the requested version
+# discarded the array while the struct field still referenced `variant_uint64_string` -- an
+# ABI naming a type it does not define. Promotion is what the protobuf path already does.
+# Asserted end to end, since the interesting part is abigen and the merger agreeing.
+promo_dir="${WORK}/promote_1_0"; mkdir -p "$promo_dir"
+cat > "${promo_dir}/v.cpp" <<'EOF'
+#include <sysio/sysio.hpp>
+#include <variant>
+#include <string>
+using namespace sysio;
+class [[sysio::contract]] v : public contract { public: using contract::contract;
+   [[sysio::action]] void go(std::variant<uint64_t, std::string> p) { (void)p; }
+};
+EOF
+if (cd "$promo_dir" && "${BUILD_DIR}/bin/cdt-cpp" -abigen -abigen_output=v.abi -contract=v \
+        -abi-version 1.0 -o v.wasm v.cpp) > "${promo_dir}/build.log" 2>&1; then
+    check "a variant at -abi-version 1.0 promotes to 1.1" \
+        "${promo_dir}/v.abi" '"version": "sysio::abi/1.1"'
+    check "the promoted document still defines the variant it references" \
+        "${promo_dir}/v.abi" '"name": "variant_uint64_string"'
+else
+    fail "a variant at -abi-version 1.0 builds"
+    sed 's/^/    /' "${promo_dir}/build.log"
+fi
+
+# "version" is the first key of every ABI this toolchain emits and ojson preserves insertion
+# order, so assigning it after the sections moved it to the end of the object -- changing the
+# bytes of every contract's ABI. The abigen-pass fixtures pin this too; asserted here as well
+# because the merger is where the ordering is decided.
+if [ "$(head -3 "${promo_dir}/v.abi" | grep -c '"version"')" -eq 1 ]; then
+    pass "version stays the leading key of the emitted ABI"
+else
+    fail "version stays the leading key of the emitted ABI"
+    sed 's/^/    /' <<< "$(head -3 "${promo_dir}/v.abi")"
+fi
+
 mkdesc_variant "${WORK}/v_short.desc" '["uint64"]'
 mkdesc_variant "${WORK}/v_long.desc"  '["uint64","string"]'
 merge_refuses_both_orders "variants of differing length conflict" \

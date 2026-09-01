@@ -261,15 +261,141 @@ EOF
 
 mktable "${WORK}/t_base.abi"  i64  '["id"]'          '["uint64"]'         100
 mktable "${WORK}/t_idx.abi"   kv64 '["id"]'          '["uint64"]'         100
-mktable "${WORK}/t_names.abi" i64  '["owner","id"]'  '["name","uint64"]'  100
+# key_names alone -- an earlier version varied key_types at the same time, so deleting the
+# key_names comparison left the suite green.
+mktable "${WORK}/t_names.abi" i64  '["owner"]'       '["uint64"]'         100
 mktable "${WORK}/t_types.abi" i64  '["id"]'          '["name"]'           100
 mktable "${WORK}/t_id.abi"    i64  '["id"]'          '["uint64"]'         200
 
+cat > "${WORK}/t_type.abi" <<EOF
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "tables": [ { "name": "t", "type": "other_row", "index_type": "i64",
+                "key_names": ["id"], "key_types": ["uint64"], "table_id": 100 } ]
+}
+EOF
+expect_reports "a changed table row type is reported"   "${WORK}/t_base.abi" "${WORK}/t_type.abi"  "table"
 expect_reports "a changed table index_type is reported" "${WORK}/t_base.abi" "${WORK}/t_idx.abi"   "table"
 expect_reports "changed table key_names are reported"   "${WORK}/t_base.abi" "${WORK}/t_names.abi" "table"
 expect_reports "changed table key_types are reported"   "${WORK}/t_base.abi" "${WORK}/t_types.abi" "table"
 expect_reports "a changed table_id is reported"         "${WORK}/t_base.abi" "${WORK}/t_id.abi"    "table"
 expect_quiet   "an identical table reports no difference" "${WORK}/t_base.abi" "${WORK}/t_base.abi" "table"
+
+# secondary_indexes is a table field too, and each entry carries its own table_id.
+cat > "${WORK}/t_sec_a.abi" <<'EOF'
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "tables": [ { "name": "t", "type": "row", "index_type": "i64",
+                "key_names": ["id"], "key_types": ["uint64"], "table_id": 100,
+                "secondary_indexes": [ { "name": "byowner", "type": "name", "table_id": 37799 } ] } ]
+}
+EOF
+sed 's/37799/60481/' "${WORK}/t_sec_a.abi" > "${WORK}/t_sec_b.abi"
+expect_reports "a changed secondary index table_id is reported" \
+    "${WORK}/t_sec_a.abi" "${WORK}/t_sec_b.abi" "table"
+expect_quiet "an identical table with secondary indexes reports no difference" \
+    "${WORK}/t_sec_a.abi" "${WORK}/t_sec_a.abi" "table"
+
+# --- optional keys ---------------------------------------------------------------------
+#
+# table_id, index_type and secondary_indexes are Wire extensions: a stock Antelope/eosio-cdt
+# ABI carries none of them. Reading an absent key through jsoncons' const operator[] throws,
+# so comparing them naively aborted the tool (exit 255) on every such ABI -- including two
+# byte-identical ones. capture() already fails a case whose process exits non-zero, so these
+# assert the comparison happens at all, not merely that it is quiet.
+cat > "${WORK}/t_antelope.abi" <<'EOF'
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "tables": [ { "name": "t", "type": "row", "index_type": "i64",
+                "key_names": ["id"], "key_types": ["uint64"] } ]
+}
+EOF
+expect_quiet "an ABI with no table_id diffs cleanly against itself" \
+    "${WORK}/t_antelope.abi" "${WORK}/t_antelope.abi" "table"
+expect_reports "an ABI with no table_id differs from one that has it" \
+    "${WORK}/t_antelope.abi" "${WORK}/t_base.abi" "table"
+
+cat > "${WORK}/t_minimal.abi" <<'EOF'
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "tables": [ { "name": "t", "type": "row" } ]
+}
+EOF
+expect_quiet "a name+type-only table diffs cleanly against itself" \
+    "${WORK}/t_minimal.abi" "${WORK}/t_minimal.abi" "table"
+
+# A struct with no "base" key, as ABIs from other toolchains emit.
+cat > "${WORK}/s_nobase.abi" <<'EOF'
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "structs": [ { "name": "s", "fields": [ {"name":"a","type":"uint64"} ] } ]
+}
+EOF
+expect_quiet "a struct with no base key diffs cleanly against itself" \
+    "${WORK}/s_nobase.abi" "${WORK}/s_nobase.abi" "struct"
+
+# --- ricardian clauses -----------------------------------------------------------------
+#
+# find_clauses iterates "ricardian_clauses" but print_clause read "clauses", so the tool
+# aborted the moment it had a clause difference to report -- it could never report one.
+mkclause() {   # $1=path  $2=body
+    cat > "$1" <<EOF
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "tables": [], "variants": [],
+  "action_results": [],
+  "ricardian_clauses": [ { "id": "c1", "body": "$2" } ]
+}
+EOF
+}
+mkclause "${WORK}/c_a.abi" "original text"
+mkclause "${WORK}/c_b.abi" "revised text"
+expect_reports "a changed ricardian clause is reported" "${WORK}/c_a.abi" "${WORK}/c_b.abi" "clause"
+expect_quiet   "an identical ricardian clause reports no difference" \
+    "${WORK}/c_a.abi" "${WORK}/c_a.abi" "clause"
+
+# --- sections that were compared by nothing ----------------------------------------------
+mkenum() {   # $1=path  $2=values JSON
+    cat > "$1" <<EOF
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [],
+  "variants": [], "action_results": [],
+  "enums": [ { "name": "e", "type": "uint8", "values": $2 } ]
+}
+EOF
+}
+mkenum "${WORK}/e_a.abi" '["A","B"]'
+mkenum "${WORK}/e_b.abi" '["A","B","C"]'
+expect_reports "a changed enum is reported"            "${WORK}/e_a.abi" "${WORK}/e_b.abi" "enum"
+expect_quiet   "an identical enum reports no difference" "${WORK}/e_a.abi" "${WORK}/e_a.abi" "enum"
+
+mkpb() {   # $1=path  $2=package
+    cat > "$1" <<EOF
+{
+  "version": "sysio::abi/1.3",
+  "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [],
+  "variants": [], "action_results": [],
+  "protobuf_types": { "file": [ { "name": "a.proto", "package": "$2" } ] }
+}
+EOF
+}
+mkpb "${WORK}/pb_a.abi" "test"
+mkpb "${WORK}/pb_b.abi" "other"
+expect_reports "a changed protobuf descriptor is reported" \
+    "${WORK}/pb_a.abi" "${WORK}/pb_b.abi" "protobuf_types"
+expect_quiet "an identical protobuf descriptor reports no difference" \
+    "${WORK}/pb_a.abi" "${WORK}/pb_a.abi" "protobuf_types"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

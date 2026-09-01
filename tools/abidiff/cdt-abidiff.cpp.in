@@ -90,6 +90,15 @@ class abidiff {
          std::cout << pretty_print(abi["structs"].at(index)) << "\n";
       }
       
+      // An absent key read through the CONST operator[] throws, and ABIs legitimately omit
+      // keys: table_id, index_type and secondary_indexes are Wire extensions, so a stock
+      // Antelope ABI carries none of them. Every optional field is read through this, so
+      // absent compares equal to absent and never equal to present.
+      static const ojson& field_or_null(const ojson& o, const char* key) {
+         static const ojson absent = ojson::null();
+         return o.count(key) ? o.at(key) : absent;
+      }
+
       // Element-wise equality over a JSON array. Used for the ABI's list-valued fields, where
       // both length and order are significant -- order is serialization order.
       static bool arrays_equal(const ojson& a, const ojson& b) {
@@ -110,10 +119,10 @@ class abidiff {
       // field but the first left the flag set from the previous iteration and the changed
       // struct was reported as unchanged.
       static bool structs_match(const ojson& a, const ojson& b) {
-         if (a["base"] != b["base"])
+         if (field_or_null(a, "base") != field_or_null(b, "base"))
             return false;
-         const auto& fa = a["fields"];
-         const auto& fb = b["fields"];
+         const auto& fa = field_or_null(a, "fields");
+         const auto& fb = field_or_null(b, "fields");
          if (fa.size() != fb.size())
             return false;
          for (size_t k = 0; k < fa.size(); ++k)
@@ -145,11 +154,12 @@ class abidiff {
          for ( int i=0; i < abi1["types"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["types"].size(); j++ ) {
-               if (abi1["types"].at(i)["new_type_name"] == abi2["types"].at(j)["new_type_name"]) {
-                  if (abi1["types"].at(i)["type"] != abi2["types"].at(j)["type"])
-                     break;
-                  found = true;
-               }
+               if (abi1["types"].at(i)["new_type_name"] != abi2["types"].at(j)["new_type_name"])
+                  continue;
+               if (field_or_null(abi1["types"].at(i), "type") != field_or_null(abi2["types"].at(j), "type"))
+                  break;
+               found = true;
+               break;
             }
             if (!found)
                print_type(abi1, i, direction);
@@ -165,13 +175,14 @@ class abidiff {
          for ( int i=0; i < abi1["actions"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["actions"].size(); j++ ) {
-               if (abi1["actions"].at(i)["name"] == abi2["actions"].at(j)["name"]) {
-                  if (abi1["actions"].at(i)["type"] != abi2["actions"].at(j)["type"])
-                     break;
-                  if (abi1["actions"].at(i)["ricardian_contract"] != abi2["actions"].at(j)["ricardian_contract"])
-                     break;
-                  found = true;
-               }
+               if (abi1["actions"].at(i)["name"] != abi2["actions"].at(j)["name"])
+                  continue;
+               if (field_or_null(abi1["actions"].at(i), "type") != field_or_null(abi2["actions"].at(j), "type"))
+                  break;
+               if (field_or_null(abi1["actions"].at(i), "ricardian_contract") != field_or_null(abi2["actions"].at(j), "ricardian_contract"))
+                  break;
+               found = true;
+               break;
             }
             if (!found)
                print_action(abi1, i, direction);
@@ -183,16 +194,22 @@ class abidiff {
          std::cout << pretty_print(abi["tables"].at(index)) << "\n";
       }
 
-      // Every field a table entry carries. Comparing only name and type -- as this did -- made
-      // the tool silent about the metadata it exists to check: index_type, key_names,
-      // key_types and table_id could all change and it reported no difference. table_id in
-      // particular is where the row physically lives, so a change there is a migration.
+      // Every field a table entry can carry. Comparing only name and type -- as this did --
+      // made the tool silent about the metadata it exists to check: index_type, key_names,
+      // key_types, table_id and secondary_indexes could all change and it reported no
+      // difference. table_id is where the row physically lives and each secondary index
+      // carries its own, so a change to either is a migration.
+      //
+      // All of these are optional: read through field_or_null so an ABI that omits them is
+      // compared, not aborted on.
       static bool tables_match(const ojson& a, const ojson& b) {
-         return a["type"]       == b["type"]
-             && a["index_type"] == b["index_type"]
-             && a["table_id"]   == b["table_id"]
-             && arrays_equal(a["key_names"], b["key_names"])
-             && arrays_equal(a["key_types"], b["key_types"]);
+         for (const char* key : {"type", "index_type", "table_id"})
+            if (field_or_null(a, key) != field_or_null(b, key))
+               return false;
+         for (const char* key : {"key_names", "key_types", "secondary_indexes"})
+            if (!arrays_equal(field_or_null(a, key), field_or_null(b, key)))
+               return false;
+         return true;
       }
 
       void find_tables(const ojson& abi1, const ojson& abi2, char direction) {
@@ -211,18 +228,19 @@ class abidiff {
 
       void print_clause(const ojson& abi, int index, char direction) {
          std::cout << direction << " clause\n";
-         std::cout << pretty_print(abi["clauses"].at(index)) << "\n";
+         std::cout << pretty_print(abi["ricardian_clauses"].at(index)) << "\n";
       }
 
       void find_clauses(const ojson& abi1, const ojson& abi2, char direction) {
          for ( int i=0; i < abi1["ricardian_clauses"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["ricardian_clauses"].size(); j++ ) {
-               if (abi1["ricardian_clauses"].at(i)["id"] == abi2["ricardian_clauses"].at(j)["id"]) {
-                  if (abi1["ricardian_clauses"].at(i)["body"] != abi2["ricardian_clauses"].at(j)["body"])
-                     break;
-                  found = true;
-               }
+               if (abi1["ricardian_clauses"].at(i)["id"] != abi2["ricardian_clauses"].at(j)["id"])
+                  continue;
+               if (field_or_null(abi1["ricardian_clauses"].at(i), "body") != field_or_null(abi2["ricardian_clauses"].at(j), "body"))
+                  break;
+               found = true;
+               break;
             }
             if (!found)
                print_clause(abi1, i, direction);
@@ -244,7 +262,8 @@ class abidiff {
                // loop on a mismatch and then set found unconditionally, so a same-named variant
                // counted as unchanged however its types differed; with no length check, at(k)
                // also threw on a shorter right-hand side.
-               found = arrays_equal(abi1["variants"].at(i)["types"], abi2["variants"].at(j)["types"]);
+               found = arrays_equal(field_or_null(abi1["variants"].at(i), "types"),
+                                    field_or_null(abi2["variants"].at(j), "types"));
                break;
             }
             if (!found)
@@ -261,14 +280,12 @@ class abidiff {
          for ( int i=0; i < abi1["action_results"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["action_results"].size(); j++ ) {
-               if (abi1["action_results"].at(i)["name"] == abi2["action_results"].at(j)["name"]) {
-                  // .at(j), not .at(i): j is the entry whose name just matched. Comparing
-                  // against .at(i) reported reordered-but-equivalent results as changed, and
-                  // threw outright when abi2 held fewer entries than abi1.
-                  if (abi1["action_results"].at(i)["result_type"] != abi2["action_results"].at(j)["result_type"])
-                     break;
-                  found = true;
-               }
+               if (abi1["action_results"].at(i)["name"] != abi2["action_results"].at(j)["name"])
+                  continue;
+               if (field_or_null(abi1["action_results"].at(i), "result_type") != field_or_null(abi2["action_results"].at(j), "result_type"))
+                  break;
+               found = true;
+               break;
 
             }
             if (!found)
@@ -310,6 +327,49 @@ class abidiff {
          find_action_results(abi_2, abi_1, '>');
       }
 
+      void print_enum(const ojson& abi, int index, char direction) {
+         std::cout << direction << " enum\n";
+         std::cout << pretty_print(abi["enums"].at(index)) << "\n";
+      }
+
+      // enums and protobuf_types were compared by nothing at all, so a contract could change
+      // an enum's values or an entire protobuf descriptor and cdt-abidiff reported no
+      // difference. Both are optional sections -- absent in most ABIs -- so both sides are
+      // read through field_or_null.
+      void find_enums(const ojson& abi1, const ojson& abi2, char direction) {
+         const ojson& e1 = field_or_null(abi1, "enums");
+         const ojson& e2 = field_or_null(abi2, "enums");
+         for ( size_t i=0; i < e1.size(); i++ ) {
+            bool found = false;
+            for ( size_t j=0; j < e2.size(); j++ ) {
+               if (e1.at(i)["name"] != e2.at(j)["name"])
+                  continue;
+               found = field_or_null(e1.at(i), "type")   == field_or_null(e2.at(j), "type")
+                    && arrays_equal(field_or_null(e1.at(i), "values"), field_or_null(e2.at(j), "values"));
+               break;
+            }
+            if (!found)
+               print_enum(abi1, static_cast<int>(i), direction);
+         }
+      }
+
+      void diff_enums() {
+         find_enums(abi_1, abi_2, '<');
+         find_enums(abi_2, abi_1, '>');
+      }
+
+      // protobuf_types is a whole serialized FileDescriptorSet, not a list keyed by name, so
+      // it is compared as one value rather than element-wise. A difference anywhere in it
+      // changes the wire encoding of every protobuf action.
+      void diff_protobuf_types() {
+         const ojson& p1 = field_or_null(abi_1, "protobuf_types");
+         const ojson& p2 = field_or_null(abi_2, "protobuf_types");
+         if (p1 != p2) {
+            std::cout << "< protobuf_types\n" << pretty_print(p1) << "\n";
+            std::cout << "> protobuf_types\n" << pretty_print(p2) << "\n";
+         }
+      }
+
       void diff() {
          diff_version();
          diff_structs();
@@ -317,6 +377,8 @@ class abidiff {
          diff_actions();
          diff_tables();
          diff_clauses();
+         diff_enums();
+         diff_protobuf_types();
          const auto [v1_major, v1_minor] = get_version(abi_1, "file1");
          const auto [v2_major, v2_minor] = get_version(abi_2, "file2");
          if ( abi_version::supports_variants(v1_major, v1_minor) &&

@@ -19,7 +19,6 @@
 # destination, but that never applies here: both destinations are REMOVE_RECURSE'd
 # below before either is repopulated.)
 #
-# Inputs (via -D):
 # EVERY tree staged into <build>/include is handled here. The four vendored ones -- libc,
 # libcxx, boost/preprocessor and bluegrass -- were left as configure-time copies in an
 # earlier revision, which meant deleting a header from the cdt-musl or cdt-libcxx submodule
