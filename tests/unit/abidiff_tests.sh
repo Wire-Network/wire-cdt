@@ -397,6 +397,43 @@ expect_reports "a changed protobuf descriptor is reported" \
 expect_quiet "an identical protobuf descriptor reports no difference" \
     "${WORK}/pb_a.abi" "${WORK}/pb_a.abi" "protobuf_types"
 
+# A stock Antelope 1.0/1.1 ABI omits `variants` and `action_results` entirely, and any absent
+# top-level section used to abort the tool with "Key 'x' not found" (exit 255) -- including on
+# two byte-identical files. capture() fails a case whose process exits non-zero, so these
+# assert the comparison runs at all.
+cat > "${WORK}/upstream.abi" <<'EOF'
+{
+  "version": "eosio::abi/1.0",
+  "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": []
+}
+EOF
+expect_quiet "an ABI missing whole sections diffs cleanly against itself" \
+    "${WORK}/upstream.abi" "${WORK}/upstream.abi" "."
+
+cat > "${WORK}/upstream2.abi" <<'EOF'
+{
+  "version": "eosio::abi/1.0",
+  "types": [], "structs": [], "tables": [], "ricardian_clauses": [],
+  "actions": [ { "name": "act", "type": "act", "ricardian_contract": "" } ]
+}
+EOF
+expect_reports "an ABI missing whole sections still reports a real difference" \
+    "${WORK}/upstream2.abi" "${WORK}/upstream.abi" "action"
+
+# An upstream ABI omits an empty `base` rather than writing ""; absent and "" mean the same
+# thing, so that must not read as a difference.
+cat > "${WORK}/s_blank_a.abi" <<'EOF'
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "structs": [ { "name": "s", "fields": [ {"name":"a","type":"uint64"} ] } ]
+}
+EOF
+sed 's/"name": "s",/"name": "s", "base": "",/' "${WORK}/s_blank_a.abi" > "${WORK}/s_blank_b.abi"
+expect_quiet "an omitted base and an empty base are the same struct" \
+    "${WORK}/s_blank_a.abi" "${WORK}/s_blank_b.abi" "struct"
+
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

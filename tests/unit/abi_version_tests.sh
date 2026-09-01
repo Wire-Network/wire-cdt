@@ -345,6 +345,50 @@ else
     sed 's/^/    /' <<< "$(head -3 "${promo_dir}/v.abi")"
 fi
 
+# --- merger: tables ------------------------------------------------------------------
+#
+# The merger's table path had NO coverage at all -- every merge fixture above uses
+# "tables":[] -- so a regression there was invisible to ctest.
+#
+# The case that matters is a multi-file contract. abigen writes `secondary_indexes` only when
+# non-empty and `key_names` only when the indexed instantiation is visible, so a translation
+# unit that sees a table's [[sysio::table]] but not its `kv::index` instantiation emits a
+# descriptor with those keys absent or empty. That must merge with the richer one, in either
+# order, and keep the richer metadata. It must NOT depend on which .desc sorts first.
+TBL_COMMON='"types":[],"actions":[],"ricardian_clauses":[],"variants":[],"abi_extensions":[],"pb_types":[],"wasm_actions":[],"wasm_entries":[],"wasm_notifies":[],"action_results":[],"structs":[]'
+
+cat > "${WORK}/t_rich.desc" <<EOF
+{"version":"sysio::abi/1.2",${TBL_COMMON},"tables":[{"name":"mytbl","type":"row","index_type":"i64","key_names":["id"],"key_types":["uint64"],"table_id":25830,"secondary_indexes":[{"name":"byowner","type":"name","table_id":37799}]}]}
+EOF
+# key_names/key_types empty AND secondary_indexes absent entirely -- an absent key reads as
+# jsoncons null, whose .empty() is false, so this is the shape that regressed.
+cat > "${WORK}/t_poor.desc" <<EOF
+{"version":"sysio::abi/1.2",${TBL_COMMON},"tables":[{"name":"mytbl","type":"row","index_type":"i64","key_names":[],"key_types":[],"table_id":25830}]}
+EOF
+
+merge_table_case() {   # $1=label $2=firstdesc $3=seconddesc
+    local label="$1" dir="${WORK}/${1// /_}"
+    mkdir -p "$dir"
+    cp "$2" "${dir}/a_first.desc"; cp "$3" "${dir}/b_second.desc"
+    if "$CDT_CODEGEN" --finalize --contract mix --output-dir "$dir" \
+          --abi-output "${dir}/mix.abi" \
+          --desc-file "${dir}/a_first.desc" --desc-file "${dir}/b_second.desc" \
+          > "${dir}/mix.log" 2>&1; then
+        check "${label}: keeps key_names"          "${dir}/mix.abi" '"id"'
+        check "${label}: keeps secondary_indexes"  "${dir}/mix.abi" '"byowner"'
+    else
+        fail "${label}: descriptors merge"
+        sed 's/^/    /' "${dir}/mix.log"
+    fi
+}
+merge_table_case "partial table desc, rich first" "${WORK}/t_rich.desc" "${WORK}/t_poor.desc"
+merge_table_case "partial table desc, poor first" "${WORK}/t_poor.desc" "${WORK}/t_rich.desc"
+
+# A genuinely different table_id is a different table, not a merge -- in both orders.
+sed 's/25830/40000/' "${WORK}/t_rich.desc" > "${WORK}/t_otherid.desc"
+merge_refuses_both_orders "tables with different table_ids conflict" \
+    "${WORK}/t_rich.desc" "${WORK}/t_otherid.desc"
+
 mkdesc_variant "${WORK}/v_short.desc" '["uint64"]'
 mkdesc_variant "${WORK}/v_long.desc"  '["uint64","string"]'
 merge_refuses_both_orders "variants of differing length conflict" \

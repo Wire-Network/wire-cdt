@@ -87,13 +87,21 @@ class abidiff {
       
       void print_struct(const ojson& abi, int index, char direction) {
          std::cout << direction << " struct\n";
-         std::cout << pretty_print(abi["structs"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "structs").at(index)) << "\n";
       }
       
       // An absent key read through the CONST operator[] throws, and ABIs legitimately omit
       // keys: table_id, index_type and secondary_indexes are Wire extensions, so a stock
       // Antelope ABI carries none of them. Every optional field is read through this, so
       // absent compares equal to absent and never equal to present.
+      // A whole section may be absent -- a stock Antelope 1.0/1.1 ABI omits `variants` and
+      // `action_results` -- so every top-level section is read through this. Absent reads as
+      // an empty array, which is what "this ABI declares none" means.
+      static const ojson& section_or_empty(const ojson& o, const char* key) {
+         static const ojson none = ojson::array();
+         return o.count(key) ? o.at(key) : none;
+      }
+
       static const ojson& field_or_null(const ojson& o, const char* key) {
          static const ojson absent = ojson::null();
          return o.count(key) ? o.at(key) : absent;
@@ -101,6 +109,15 @@ class abidiff {
 
       // Element-wise equality over a JSON array. Used for the ABI's list-valued fields, where
       // both length and order are significant -- order is serialization order.
+      // Absent and empty mean the same thing for these scalars, so an ABI that omits an
+      // empty `base` or `index_type` is not reported as differing from one that writes "".
+      static bool scalars_equal(const ojson& a, const ojson& b) {
+         const auto blank = [](const ojson& v) {
+            return v.is_null() || (v.is_string() && v.as<std::string>().empty());
+         };
+         return a == b || (blank(a) && blank(b));
+      }
+
       static bool arrays_equal(const ojson& a, const ojson& b) {
          if (a.size() != b.size())
             return false;
@@ -119,7 +136,7 @@ class abidiff {
       // field but the first left the flag set from the previous iteration and the changed
       // struct was reported as unchanged.
       static bool structs_match(const ojson& a, const ojson& b) {
-         if (field_or_null(a, "base") != field_or_null(b, "base"))
+         if (!scalars_equal(field_or_null(a, "base"), field_or_null(b, "base")))
             return false;
          const auto& fa = field_or_null(a, "fields");
          const auto& fb = field_or_null(b, "fields");
@@ -132,12 +149,12 @@ class abidiff {
       }
 
       void find_structs(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["structs"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "structs").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["structs"].size(); j++ ) {
-               if (abi1["structs"].at(i)["name"] != abi2["structs"].at(j)["name"])
+            for ( int j=0; j < section_or_empty(abi2, "structs").size(); j++ ) {
+               if (section_or_empty(abi1, "structs").at(i)["name"] != section_or_empty(abi2, "structs").at(j)["name"])
                   continue;
-               found = structs_match(abi1["structs"].at(i), abi2["structs"].at(j));
+               found = structs_match(section_or_empty(abi1, "structs").at(i), section_or_empty(abi2, "structs").at(j));
                break;      // the name matched; that entry alone decides
             }
             if (!found)
@@ -147,16 +164,16 @@ class abidiff {
 
       void print_type(const ojson& abi, int index, char direction) {
          std::cout << direction << " type\n";
-         std::cout << pretty_print(abi["types"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "types").at(index)) << "\n";
       }
 
       void find_types(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["types"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "types").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["types"].size(); j++ ) {
-               if (abi1["types"].at(i)["new_type_name"] != abi2["types"].at(j)["new_type_name"])
+            for ( int j=0; j < section_or_empty(abi2, "types").size(); j++ ) {
+               if (section_or_empty(abi1, "types").at(i)["new_type_name"] != section_or_empty(abi2, "types").at(j)["new_type_name"])
                   continue;
-               if (field_or_null(abi1["types"].at(i), "type") != field_or_null(abi2["types"].at(j), "type"))
+               if (field_or_null(section_or_empty(abi1, "types").at(i), "type") != field_or_null(section_or_empty(abi2, "types").at(j), "type"))
                   break;
                found = true;
                break;
@@ -168,18 +185,18 @@ class abidiff {
 
       void print_action(const ojson& abi, int index, char direction) {
          std::cout << direction << " action\n";
-         std::cout << pretty_print(abi["actions"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "actions").at(index)) << "\n";
       }
 
       void find_actions(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["actions"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "actions").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["actions"].size(); j++ ) {
-               if (abi1["actions"].at(i)["name"] != abi2["actions"].at(j)["name"])
+            for ( int j=0; j < section_or_empty(abi2, "actions").size(); j++ ) {
+               if (section_or_empty(abi1, "actions").at(i)["name"] != section_or_empty(abi2, "actions").at(j)["name"])
                   continue;
-               if (field_or_null(abi1["actions"].at(i), "type") != field_or_null(abi2["actions"].at(j), "type"))
+               if (field_or_null(section_or_empty(abi1, "actions").at(i), "type") != field_or_null(section_or_empty(abi2, "actions").at(j), "type"))
                   break;
-               if (field_or_null(abi1["actions"].at(i), "ricardian_contract") != field_or_null(abi2["actions"].at(j), "ricardian_contract"))
+               if (field_or_null(section_or_empty(abi1, "actions").at(i), "ricardian_contract") != field_or_null(section_or_empty(abi2, "actions").at(j), "ricardian_contract"))
                   break;
                found = true;
                break;
@@ -191,7 +208,7 @@ class abidiff {
 
       void print_table(const ojson& abi, int index, char direction) {
          std::cout << direction << " table\n";
-         std::cout << pretty_print(abi["tables"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "tables").at(index)) << "\n";
       }
 
       // Every field a table entry can carry. Comparing only name and type -- as this did --
@@ -204,7 +221,7 @@ class abidiff {
       // compared, not aborted on.
       static bool tables_match(const ojson& a, const ojson& b) {
          for (const char* key : {"type", "index_type", "table_id"})
-            if (field_or_null(a, key) != field_or_null(b, key))
+            if (!scalars_equal(field_or_null(a, key), field_or_null(b, key)))
                return false;
          for (const char* key : {"key_names", "key_types", "secondary_indexes"})
             if (!arrays_equal(field_or_null(a, key), field_or_null(b, key)))
@@ -213,12 +230,12 @@ class abidiff {
       }
 
       void find_tables(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["tables"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "tables").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["tables"].size(); j++ ) {
-               if (abi1["tables"].at(i)["name"] != abi2["tables"].at(j)["name"])
+            for ( int j=0; j < section_or_empty(abi2, "tables").size(); j++ ) {
+               if (section_or_empty(abi1, "tables").at(i)["name"] != section_or_empty(abi2, "tables").at(j)["name"])
                   continue;
-               found = tables_match(abi1["tables"].at(i), abi2["tables"].at(j));
+               found = tables_match(section_or_empty(abi1, "tables").at(i), section_or_empty(abi2, "tables").at(j));
                break;
             }
             if (!found)
@@ -228,16 +245,16 @@ class abidiff {
 
       void print_clause(const ojson& abi, int index, char direction) {
          std::cout << direction << " clause\n";
-         std::cout << pretty_print(abi["ricardian_clauses"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "ricardian_clauses").at(index)) << "\n";
       }
 
       void find_clauses(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["ricardian_clauses"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "ricardian_clauses").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["ricardian_clauses"].size(); j++ ) {
-               if (abi1["ricardian_clauses"].at(i)["id"] != abi2["ricardian_clauses"].at(j)["id"])
+            for ( int j=0; j < section_or_empty(abi2, "ricardian_clauses").size(); j++ ) {
+               if (section_or_empty(abi1, "ricardian_clauses").at(i)["id"] != section_or_empty(abi2, "ricardian_clauses").at(j)["id"])
                   continue;
-               if (field_or_null(abi1["ricardian_clauses"].at(i), "body") != field_or_null(abi2["ricardian_clauses"].at(j), "body"))
+               if (field_or_null(section_or_empty(abi1, "ricardian_clauses").at(i), "body") != field_or_null(section_or_empty(abi2, "ricardian_clauses").at(j), "body"))
                   break;
                found = true;
                break;
@@ -249,21 +266,21 @@ class abidiff {
 
       void print_variant(const ojson& abi, int index, char direction) {
          std::cout << direction << " variant\n";
-         std::cout << pretty_print(abi["variants"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "variants").at(index)) << "\n";
       }
 
       void find_variants(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["variants"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "variants").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["variants"].size(); j++ ) {
-               if (abi1["variants"].at(i)["name"] != abi2["variants"].at(j)["name"])
+            for ( int j=0; j < section_or_empty(abi2, "variants").size(); j++ ) {
+               if (section_or_empty(abi1, "variants").at(i)["name"] != section_or_empty(abi2, "variants").at(j)["name"])
                   continue;
                // The whole type list, length and order. The original broke out of the element
                // loop on a mismatch and then set found unconditionally, so a same-named variant
                // counted as unchanged however its types differed; with no length check, at(k)
                // also threw on a shorter right-hand side.
-               found = arrays_equal(field_or_null(abi1["variants"].at(i), "types"),
-                                    field_or_null(abi2["variants"].at(j), "types"));
+               found = arrays_equal(field_or_null(section_or_empty(abi1, "variants").at(i), "types"),
+                                    field_or_null(section_or_empty(abi2, "variants").at(j), "types"));
                break;
             }
             if (!found)
@@ -273,16 +290,16 @@ class abidiff {
 
       void print_action_results(const ojson& abi, int index, char direction) {
          std::cout << direction << " action_result\n";
-         std::cout << pretty_print(abi["action_results"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "action_results").at(index)) << "\n";
       }
 
       void find_action_results(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["action_results"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "action_results").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["action_results"].size(); j++ ) {
-               if (abi1["action_results"].at(i)["name"] != abi2["action_results"].at(j)["name"])
+            for ( int j=0; j < section_or_empty(abi2, "action_results").size(); j++ ) {
+               if (section_or_empty(abi1, "action_results").at(i)["name"] != section_or_empty(abi2, "action_results").at(j)["name"])
                   continue;
-               if (field_or_null(abi1["action_results"].at(i), "result_type") != field_or_null(abi2["action_results"].at(j), "result_type"))
+               if (field_or_null(section_or_empty(abi1, "action_results").at(i), "result_type") != field_or_null(section_or_empty(abi2, "action_results").at(j), "result_type"))
                   break;
                found = true;
                break;

@@ -193,10 +193,18 @@ class ABIMerger {
             static const ojson absent = ojson::null();
             return o.has_key(k) ? o[k] : absent;
          };
+         // "Unspecified" is either an ABSENT key or an empty array, and the two are not
+         // interchangeable in jsoncons: an absent key reads as null, and null.empty() is
+         // FALSE while array.empty() is true, so testing empty() alone never fired for a
+         // missing key. abigen writes secondary_indexes only when non-empty, so a
+         // translation unit that sees a table's [[sysio::table]] but not its indexed
+         // instantiation omits the key entirely -- and that TU's descriptor then failed to
+         // merge with the one that has it, breaking multi-file contracts that master builds.
+         const auto unspecified = [](const ojson& v) { return v.is_null() || v.empty(); };
          const auto compatible = [&](const char* k) {
             const ojson x = field(a, k);
             const ojson y = field(b, k);
-            return x == y || x.empty() || y.empty();
+            return x == y || unspecified(x) || unspecified(y);
          };
          return a["name"] == b["name"] &&
                 a["type"] == b["type"] &&
@@ -269,9 +277,18 @@ class ABIMerger {
                   if (!is_same_func(ret[i], obj_b)) {
                      throw std::runtime_error(std::string("Error, ABI structs malformed : ")+ret[i][id].as<std::string>()+" already defined");
                   }
-                  // Prefer the entry with richer key metadata (non-empty key_names)
-                  if (ret[i].count("key_names") && obj_b.count("key_names") &&
-                      ret[i]["key_names"].empty() && !obj_b["key_names"].empty()) {
+                  // Prefer the richer entry. Checking only key_names left the outcome
+                  // order-dependent whenever two descriptors agreed on key_names but
+                  // differed in whether they carried secondary_indexes: rich-then-poor kept
+                  // the indexes, poor-then-rich dropped them, decided by sorted .desc
+                  // filename. Every optional list decides, not just the first one.
+                  const auto richer_in = [&](const char* k) {
+                     const bool have_a = ret[i].count(k) && !ret[i][k].empty();
+                     const bool have_b = obj_b.count(k) && !obj_b[k].empty();
+                     return !have_a && have_b;
+                  };
+                  if (richer_in("key_names") || richer_in("key_types") ||
+                      richer_in("secondary_indexes")) {
                      ret[i] = obj_b;
                   }
                   should_skip = true;
