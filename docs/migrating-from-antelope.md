@@ -178,8 +178,17 @@ issuer appears in that generation's `nodeowners`:
 
 ```bash
 clio get table sysio.roa roastate                          # network_gen
-clio get table sysio.roa nodeowners -S <gen> --limit 100    # issuer must be listed here
+clio get table sysio.roa nodeowners --limit 100            # issuer must be listed here
 ```
+
+`nodeowners` is a scoped table keyed by generation, but **do not pass `-S <gen>`**. CDT declares
+every scoped table's scope as a `name`, and the chain honours that: it tries `name(scope)` first
+and only falls back to a plain integer when that throws. `1`-`5` are valid `name` characters, so
+`-S 1` is read as the name `"1"` — 576460752303423488 — and the query returns `{"rows":[]}`, which
+reads as "your issuer is not a node owner" when it means "you asked for the wrong scope".
+Generations containing a `0` or a `6`-`9` happen to work, because `name()` rejects those
+characters and the integer fallback runs. Omitting `-S` iterates every scope; read `network_gen`
+off each row.
 
 Keep the JSON on one line: a `\` used to wrap it would fall *inside* the single quotes and be
 passed through as a literal backslash rather than continuing the command.
@@ -228,8 +237,9 @@ find each one for you.
 A first pass that gets nearly all of it:
 
 ```bash
-# GNU sed. On macOS use `sed -i ''` (or `gsed -i` from coreutils) -- BSD sed reads the next
-# argument as a backup suffix and would consume the first -e.
+# GNU sed only. On macOS: `brew install gnu-sed` and use `gsed`. `sed -i ''` alone is not
+# enough -- BSD sed has neither `\b` nor `\|`, so `\beosio\b` matches a literal "beosiob"
+# (renaming nothing, silently) and the `\(assert\|...\)` group is a syntax error.
 grep -rl 'eosio\|EOSIO\|EOSLIB' src include \
   | xargs sed -i -e 's/\beosio\b/sysio/g' \
                  -e 's/\beosio_\(assert\|assert_message\|assert_code\|exit\)\b/sysio_\1/g' \
@@ -285,7 +295,10 @@ jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /t
 
 The `db_store_i64` / `db_find_i64` / `db_idx64_*` / `db_idx128_*` / `db_idx256_*` /
 `db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire. The chain exports none
-of them, so a contract declaring one links but fails at deploy. `<sysio/db.h>` is a stub that
+of them. Today a contract declaring one still *links*, because CDT's `imports/cdt.imports.in` is
+handed to `wasm-ld` as `--allow-undefined-file` and still lists them, and the failure surfaces at
+deploy; once [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) removes
+them from that list it becomes a link error instead. `<sysio/db.h>` is a stub that
 forwards to `<sysio/kv.h>`; the last stale declarations are removed from CDT's import list by
 [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112). Contract state lives in a
 key-value store addressed by a compile-time `table_id`.
@@ -325,7 +338,9 @@ secondary mapping, and the bounds take only `uint64_t`:
   silently overwriting the row.
 - **`lower_bound` / `upper_bound` accept a `name`** as well as a `uint64_t`, so a table keyed on
   `name` reads as it does upstream. (Taking the bare address of either — `&table_type::lower_bound`
-  — does not compile, there or upstream, because both are overload sets.)
+  — does not compile here, because they are an overload set, and does not compile upstream
+  either, because upstream's are member templates whose parameter cannot be deduced. A named
+  `static_cast<const_iterator (table_type::*)(uint64_t) const>(...)` resolves one on Wire.)
 
 #113 also makes `emplace`, `modify` and `erase` abort when the handle's code is not the receiving
 account, again matching upstream. If your port constructs a table handle on another contract's
@@ -347,8 +362,15 @@ What changed underneath, and where it shows:
 |---|---|---|
 | Primary row key | `(code, scope, table, primary_key)` | `table_id` + 16 bytes: `[scope:8B BE][pk:8B BE]` |
 | Table identity | `name` embedded in the key | `table_id` (uint16, DJB2 over the 8 big-endian bytes of the table name's raw `uint64`) |
-| Bytes per row | 32-byte key (four 8-byte fields) | 18 bytes: 2-byte `table_id` + 16-byte key |
-| RAM billing | per-row + per-index overhead | different constants — see [kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md) |
+| Per-row RAM | `key_value_object`: 108 + value | `kv_object`: 112 + 16-byte key + value |
+| RAM billing | per-row + per-index overhead, plus one 108-byte `table_id_object` per table | no `table_id_object` — the `table_id` is a `uint16` on the row — but a higher per-row constant |
+
+**Budget more RAM, not less.** The `table_id_object` saving is amortised away as soon as a table
+has more than a handful of rows, and the per-row cost is higher: for a dense table with a 16-byte
+value, wire-sysio's own figures are **124 bytes legacy vs 144 for `sysio::multi_index` (+16%)**,
+or 136 for `kv::table` (+10%). Size a ported contract's RAM policy up, not down. The full
+breakdown is in
+[kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md).
 | `get_table_rows` response | bare value objects | `{key, value}` objects |
 
 The response-shape change is the one that reaches your front end. `index_position` becomes
@@ -373,7 +395,9 @@ identical key bytes, less overhead. The full comparison and a step-by-step conve
 [KV Storage Guide](kv-storage-guide.md).
 
 Table names are also no longer confined to what `sysio::name` can hold — 13 characters of
-`a-z1-5.`. The `_i` literal hashes an identifier of up to 128 characters from `a-zA-Z0-9_`:
+`a-z1-5.`. The `_i` literal hashes the identifier instead, so `a-zA-Z0-9_` and longer names are
+usable. (`hash_id::max_length` is 128, but nothing validates against it or against an alphabet —
+treat both as conventions, not as checks.)
 
 ```cpp
 #include <sysio/hash_id.hpp>
@@ -411,7 +435,7 @@ readable name.
 > | `kv::global<"X"_i, T>` with `[[sysio::table("X")]]` | Result |
 > |---|---|
 > | `app_config` (10 chars) | compiles; ABI carries `app_config` → 38424 **and** a decoded-hash name `idrzzw4ktxljf` → 21489. The row is written under 21489. |
-> | `app_config_table` (16 chars) | **fails to link**: `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322` — the two registrations now compute the same id and trip the collision check. |
+> | `app_config_table` (16 chars) | **fails at link**: `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322` — the two registrations now compute the same id and trip the collision check. (The diagnostic comes from `cdt-codegen`'s link-stage ABI finalize, before `wasm-ld`; `cdt-cpp -c` on the same file succeeds.) |
 >
 > Use `_n` for a global whose name fits `.12345a-z` within 13 characters, which covers most config
 > singletons. `tests/unit/test_contracts/hash_id_tests.cpp` and `examples/hash_id_example` both

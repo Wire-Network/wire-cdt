@@ -13,9 +13,14 @@
 
 `sysio::multi_index` is a source-compatible shim for the EOSIO `multi_index` — the same API over a
 different store, not the same implementation. Nearly all contract code carries over unchanged; the
-one known divergence is that the postfix iterator operators `it++` / `it--` are deleted, because
-copying a KV iterator duplicates a host-side handle. Rewrite those to `++it` / `--it`; the compiler
-finds every one. Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*` intrinsics.
+the known divergences are:
+
+- the postfix iterator operators `it++` / `it--` are deleted, because copying a KV iterator
+  duplicates a host-side handle. Rewrite those to `++it` / `--it`; the compiler finds every one;
+- the primary `lower_bound` / `upper_bound` are overloads on `uint64_t` and `name` rather than
+  upstream's member template, so the bare `&table_type::lower_bound` does not compile (a named
+  `static_cast` still resolves one);
+- the mutation guards below arrive with #113 and are absent from earlier toolchains. Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*` intrinsics.
 
 Each table gets a `table_id` (uint16) computed via `compute_table_id(name::raw)` from the template parameter.
 
@@ -38,7 +43,10 @@ The table name is conveyed by `table_id`, not embedded in the key.
 - `payer` parameter honored for RAM billing
 - `rbegin/rend`, `cbegin/cend` support
 - Upstream's mutation guards: `emplace` rejects a duplicate primary key, and `emplace` / `modify` /
-  `erase` reject a handle whose code is not the receiving account
+  `erase` reject a handle whose code is not the receiving account — **these arrive with
+  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from any CDT
+  built before it.** On an older toolchain a duplicate `emplace` silently overwrites the row and
+  strands its secondary mapping.
 
 ## Singleton
 

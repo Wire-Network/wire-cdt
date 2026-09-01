@@ -16,7 +16,7 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 
 | Type | Use Case | Header |
 |------|----------|--------|
-| [`multi_index`](kv-multi-index.md) | Drop-in EOSIO replacement (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
+| [`multi_index`](kv-multi-index.md) | Source-compatible EOSIO shim (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
 | `singleton` | Scoped single value | `<sysio/singleton.hpp>` |
 
 ## Decision Matrix
