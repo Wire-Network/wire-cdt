@@ -153,6 +153,9 @@ void install_intrinsics() {
       [serve](uint32_t, uint32_t off, void* d, uint32_t ds, uint32_t* as) -> int32_t {
          return serve(store().it_key, off, d, ds, as);
       });
+   // Reached: emplace's closing find() constructs an iterator, whose load_current() reads the
+   // key and then the value. Serving from the store rather than stubbing means a row that
+   // landed under the wrong key cannot be read back as if it were correct.
    intrinsics::set_intrinsic<intrinsics::kv_it_value>(
       [serve](uint32_t, uint32_t off, void* d, uint32_t ds, uint32_t* as) -> int32_t {
          auto it = store().rows.find(mock_kv::row_key{store().receiver, records_tid,
@@ -214,10 +217,14 @@ SYSIO_TEST_BEGIN(foreign_code_handle_cannot_mutate)
       CHECK_ASSERT( "cannot erase objects in table of another contract",
                     ([&]() { foreign.erase(r); }) )
 
-      // The whole point: the receiver's row was never touched.
+      // The whole point: the receiver's row was never touched. Its VALUE is what carries
+      // that -- a misdirected emplace overwrites the row under the same key, so a count()
+      // of 1 would hold either way and prove nothing.
       CHECK_EQUAL( store().sets, 0u )
-      CHECK_EQUAL( store().rows.count(mock_kv::row_key{"alice"_n.value, records_tid,
-                                                       pk_key("alice"_n.value, 1)}), 1u )
+      const auto seeded = mock_kv::row_key{"alice"_n.value, records_tid,
+                                           pk_key("alice"_n.value, 1)};
+      CHECK_EQUAL( store().rows.count(seeded), 1u )
+      CHECK_EQUAL( store().rows.at(seeded), std::string("row") )
    }
 SYSIO_TEST_END
 
@@ -230,10 +237,20 @@ SYSIO_TEST_BEGIN(own_table_handle_passes_the_guard)
       // pk=2 is absent, so neither the receiver guard nor the duplicate probe fires and the
       // write goes through. Without a case that SUCCEEDS, a guard that rejected every
       // mutation would satisfy the entire suite.
+      //
+      // The write lands under store().receiver, which the mock deliberately makes the decoy
+      // account on the global-path iteration -- that is the asymmetry under test, and it is
+      // also why emplace's closing find() returns end() there: it probes _code, which the
+      // decoy is not. Nothing here depends on the returned iterator.
       t.emplace("alice"_n, [](auto& o) { o.id = 2; o.sec = 7; });
       CHECK_EQUAL( store().sets, 1u )
-      CHECK_EQUAL( store().rows.count(mock_kv::row_key{store().receiver, records_tid,
-                                                       pk_key("alice"_n.value, 2)}), 1u )
+      const auto written = mock_kv::row_key{store().receiver, records_tid,
+                                            pk_key("alice"_n.value, 2)};
+      CHECK_EQUAL( store().rows.count(written), 1u )
+      // Not merely present: the row must be the one this emplace serialized, so a write
+      // that landed with the wrong key or wrong contents is not mistaken for success.
+      CHECK_EQUAL( store().rows.at(written).empty(), false )
+      CHECK_EQUAL( store().rows.at(written) == std::string("row"), false )
    }
 SYSIO_TEST_END
 
