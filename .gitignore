@@ -72,9 +72,10 @@ tmp/
 # prequel local review state (operational artifacts, never committed)
 .prequel/
 
-# Core dumps (a deliberate-crash test run leaves these in the working directory).
-# Root-scoped: an unanchored core.* would also match tracked headers such as
-# libraries/boost/include/boost/hana/core.hpp.
+# Core dumps. Restricted to the shapes the kernel actually writes here -- core_pattern is
+# core.%e.%p -- and root-anchored, so neither a tracked header such as
+# libraries/boost/include/boost/hana/core.hpp nor a future core.cpp/core.hpp is hidden.
 /core
-/core.*
-/vgcore.*
+/core.[0-9]*
+/core.*.[0-9]*
+/vgcore.[0-9]*
