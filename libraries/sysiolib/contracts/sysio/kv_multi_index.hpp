@@ -608,6 +608,18 @@ public:
       return *obj;
    }
 
+   /// Matches the two-overload shape find/require_find/get already use above: a one-line
+   /// `name` form delegating to the `uint64_t` one. Overloads rather than a template or a
+   /// converting-proxy parameter -- both were tried and both changed the argument's meaning.
+   /// A template cannot deduce `lower_bound({42})`; a proxy accepts `lower_bound({w})` for a
+   /// `w` converting to a narrower type, which a real `uint64_t` parameter rejects as
+   /// narrowing. Two overloads keep every conversion the base performed, unchanged.
+   ///
+   /// Like its three siblings, this makes `&table::lower_bound` an overload set, so the bare
+   /// address can no longer be taken -- as has always been true of `&table::find`,
+   /// `&table::get` and `&table::require_find`. Named overloads still resolve:
+   /// `static_cast<const_iterator (table::*)(uint64_t) const>(&table::lower_bound)`.
+   const_iterator lower_bound(name primary) const { return lower_bound(primary.value); }
    const_iterator lower_bound(uint64_t primary) const {
       auto key = make_pk(primary);
       auto prefix = make_prefix();
@@ -616,6 +628,7 @@ public:
       return const_iterator(this, handle, status == 0);
    }
 
+   const_iterator upper_bound(name primary) const { return upper_bound(primary.value); }
    const_iterator upper_bound(uint64_t primary) const {
       if (primary == std::numeric_limits<uint64_t>::max()) return end();
       return lower_bound(primary + 1);

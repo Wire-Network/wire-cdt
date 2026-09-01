@@ -392,15 +392,19 @@ namespace _test_multi_index
         table.emplace(payer, [&](auto& r) { r.owner = "bob"_n;     r.sec = 20; });
         table.emplace(payer, [&](auto& r) { r.owner = "charlie"_n; r.sec = 30; });
 
-        // The bounds take a uint64_t, as they always have; a name primary key is passed
-        // through .value, exactly as before this change.
-        auto lb = table.lower_bound("bob"_n.value);
+        // A name goes straight to the bounds, as it already did to find/get/require_find.
+        auto lb = table.lower_bound("bob"_n);
         sysio::check(lb != table.end() && lb->owner == "bob"_n,
-                     "name_pk_secondaries - lower_bound did not land on bob");
+                     "name_pk_secondaries - lower_bound(name) did not land on bob");
 
-        auto ub = table.upper_bound("bob"_n.value);
+        auto ub = table.upper_bound("bob"_n);
         sysio::check(ub != table.end() && ub->owner == "charlie"_n,
-                     "name_pk_secondaries - upper_bound did not land on charlie");
+                     "name_pk_secondaries - upper_bound(name) did not land on charlie");
+
+        // The uint64_t form is unchanged, and must agree with the name form.
+        auto lb_raw = table.lower_bound("bob"_n.value);
+        sysio::check(lb_raw != table.end() && lb_raw->owner == "bob"_n,
+                     "name_pk_secondaries - lower_bound(uint64_t) regressed");
 
         // The secondary index must resolve back to the name-keyed row: this is the path
         // to_pk_uint64 fixed. modify() rewrites the mapping, erase() removes it.

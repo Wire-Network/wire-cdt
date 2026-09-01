@@ -29,6 +29,8 @@
 #include <sysio/kv_constants.hpp>
 
 #include <map>
+#include <type_traits>
+#include <utility>
 #include <string>
 #include <tuple>
 
@@ -53,6 +55,13 @@ struct record {
 };
 
 using table_t = sysio::multi_index<"records"_n, record>;
+
+/// A caller's key wrapper. find/get/require_find take uint64_t and so accept one of these
+/// through a single user-defined conversion; the bounds must not be narrower than they are.
+struct wrapped_key {
+   uint64_t v;
+   constexpr operator uint64_t() const { return v; }   // NOLINT(google-explicit-constructor)
+};
 
 constexpr uint32_t records_tid = sysio::kv::compute_table_id("records"_n.value);
 
@@ -156,10 +165,43 @@ SYSIO_TEST_BEGIN(own_table_handle_passes_the_guard)
    }
 SYSIO_TEST_END
 
+// The primary bounds take a `name` as well as a uint64_t, matching the two-overload shape
+// find/require_find/get have always used. Compile-time only -- nothing here is evaluated.
+SYSIO_TEST_BEGIN(primary_bounds_accept_uint64_and_name)
+   using itr_t = table_t::const_iterator;
+
+   // Pin BOTH overloads by exact signature. A named static_cast resolves an overload set, so
+   // these fail to compile if either parameter type changes -- which is what would happen if
+   // the uint64_t parameter were ever swapped for a converting proxy again. That also
+   // demonstrates the documented escape hatch for taking a member pointer.
+   constexpr auto lb_u64  = static_cast<itr_t (table_t::*)(uint64_t) const>(&table_t::lower_bound);
+   constexpr auto lb_name = static_cast<itr_t (table_t::*)(name) const>(&table_t::lower_bound);
+   constexpr auto ub_u64  = static_cast<itr_t (table_t::*)(uint64_t) const>(&table_t::upper_bound);
+   constexpr auto ub_name = static_cast<itr_t (table_t::*)(name) const>(&table_t::upper_bound);
+   static_assert(lb_u64 && lb_name && ub_u64 && ub_name, "both bound overloads must exist");
+
+   // A real uint64_t parameter, so every conversion the base performed is unchanged. The
+   // braced forms in particular must stay unambiguous: name's uint64_t constructor is
+   // explicit, so name is never viable for a braced integer.
+   // declval, not a dereferenced null: these appear only in unevaluated operands, and the
+   // test body itself must stay well-defined at run time.
+#define LB(expr) decltype(std::declval<const table_t&>().lower_bound expr)
+#define UB(expr) decltype(std::declval<const table_t&>().upper_bound expr)
+   static_assert(std::is_same_v<LB((uint64_t{42})),    itr_t>, "uint64_t");
+   static_assert(std::is_same_v<LB(("alice"_n)),       itr_t>, "a name");
+   static_assert(std::is_same_v<LB(({42})),            itr_t>, "braced literal");
+   static_assert(std::is_same_v<LB(({})),              itr_t>, "empty brace, key zero");
+   static_assert(std::is_same_v<LB((wrapped_key{7})),  itr_t>, "uint64-convertible wrapper");
+   static_assert(std::is_same_v<UB(("alice"_n)),       itr_t>, "a name");
+#undef LB
+#undef UB
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    bool verbose = false;
    SYSIO_TEST(duplicate_primary_key_rejected)
    SYSIO_TEST(foreign_code_handle_cannot_mutate)
    SYSIO_TEST(own_table_handle_passes_the_guard)
+   SYSIO_TEST(primary_bounds_accept_uint64_and_name)
    return has_failed();
 }
