@@ -562,10 +562,14 @@ however deep the tree goes.
   permanent state on *your* account. A contract expecting a million rows needs a policy sized for a
   million rows. This is where a port's costs actually live.
 - **Failed transactions cost the payer nothing objectively** — `add_transaction_usage` is reached
-  only on the success path. They are not free, though: a failing transaction still accrues
-  *subjective* CPU against its first authorizer on the node that ran it, which is what the
-  throttling above measures. Budget objective headroom for peaks; budget failures out of your
-  retry logic.
+  only on the success path. They are not free, but the cost does not land on your contract:
+  a failure accrues *subjective* CPU against the transaction's **first authorizer** on the node
+  that ran it, and a stock node ships with `disable-subjective-payer-billing` **on**
+  (`producer_plugin.cpp`), so `subjective_bill_failure` skips the payer entirely and bills only
+  the authorizer. Under contract-pays those are different accounts — the payer is your contract,
+  the first authorizer is the caller — so a caller's failures are throttled against the caller,
+  which is the whole point of that default. Budget objective headroom for peaks; failures belong
+  in the caller's retry logic, not your policy.
 
 ### What you do not need to change
 
