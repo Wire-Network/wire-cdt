@@ -613,12 +613,20 @@ public:
    /// converting-proxy parameter -- both were tried and both changed the argument's meaning.
    /// A template cannot deduce `lower_bound({42})`; a proxy accepts `lower_bound({w})` for a
    /// `w` converting to a narrower type, which a real `uint64_t` parameter rejects as
-   /// narrowing. Two overloads keep every conversion the base performed, unchanged.
+   /// narrowing. Here the parameter is still a `uint64_t`, so that conversion is the base's.
    ///
-   /// Like its three siblings, this makes `&table::lower_bound` an overload set, so the bare
-   /// address can no longer be taken -- as has always been true of `&table::find`,
-   /// `&table::get` and `&table::require_find`. Named overloads still resolve:
-   /// `static_cast<const_iterator (table::*)(uint64_t) const>(&table::lower_bound)`.
+   /// This adopts the sibling shape INCLUDING its two costs, neither of which is new to the
+   /// class but both of which are new to the bounds:
+   ///
+   ///   - `&table::lower_bound` is now an overload set, so the bare address cannot be taken,
+   ///     exactly as for `&table::find`, `&table::get` and `&table::require_find`. A named
+   ///     cast still resolves either one:
+   ///     `static_cast<const_iterator (table::*)(uint64_t) const>(&table::lower_bound)`.
+   ///   - a wrapper convertible to BOTH `uint64_t` and `name` becomes ambiguous, where
+   ///     against the single `uint64_t` parameter it selected the `uint64_t` conversion.
+   ///     `find`/`get`/`require_find` have always been ambiguous for such a type, so this
+   ///     makes the bounds consistent rather than introducing a new rule; it is called out
+   ///     because it is a source break, and it is pinned by test.
    const_iterator lower_bound(name primary) const { return lower_bound(primary.value); }
    const_iterator lower_bound(uint64_t primary) const {
       auto key = make_pk(primary);
@@ -669,8 +677,8 @@ public:
       // this the row is silently overwritten AND store_secondaries -- an unconditional
       // kv_idx_store -- leaves the old (sec_key -> pri_key) mapping behind, pointing at a
       // row whose secondary value has changed. kv::table::emplace checks the same way.
-      sysio::check(!::kv_contains(_table_id, _code.value, key.data, key_size),
-                   "object with the same primary key already exists");
+      check(!::kv_contains(_table_id, _code.value, key.data, key_size),
+            "object with the same primary key already exists");
 
       ::kv_set(_table_id, payer.value, key.data, key_size, value.data(), value.size());
       store_secondaries(payer.value, obj);

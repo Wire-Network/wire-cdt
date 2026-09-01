@@ -31,6 +31,7 @@
 #include <map>
 #include <type_traits>
 #include <utility>
+#include <cstring>
 #include <string>
 #include <tuple>
 
@@ -63,6 +64,21 @@ struct wrapped_key {
    constexpr operator uint64_t() const { return v; }   // NOLINT(google-explicit-constructor)
 };
 
+/// Convertible to BOTH parameter types. Against a single uint64_t parameter this selected the
+/// uint64_t conversion; against the overload pair it is ambiguous. Pinned so the documented
+/// cost stays a documented cost rather than being rediscovered as a surprise.
+struct dual_key {
+   constexpr operator uint64_t() const { return 3; }   // NOLINT(google-explicit-constructor)
+   operator name() const { return "alice"_n; }         // NOLINT(google-explicit-constructor)
+};
+
+/// Is `t.lower_bound(A)` well-formed?
+template<typename A, typename = void>
+struct callable_with : std::false_type {};
+template<typename A>
+struct callable_with<A, std::void_t<decltype(std::declval<const table_t&>().lower_bound(std::declval<A>()))>>
+   : std::true_type {};
+
 constexpr uint32_t records_tid = sysio::kv::compute_table_id("records"_n.value);
 
 // Mirrors the asymmetry under test: kv_contains honours `code`, writes have no such
@@ -71,9 +87,10 @@ struct mock_kv {
    using row_key = std::tuple<uint64_t, uint32_t, std::string>;   // code, table_id, key
    std::map<row_key, std::string> rows;
    uint64_t receiver = 0;
-   uint32_t sets = 0;                 // must stay 0: a rejected mutation writes nothing
+   uint32_t sets = 0;                 // 0 unless a case expects the write to be allowed
+   std::string it_key;                // key the one live iterator was positioned at
 
-   void reset(uint64_t who) { rows.clear(); receiver = who; sets = 0; }
+   void reset(uint64_t who) { rows.clear(); receiver = who; sets = 0; it_key.clear(); }
 };
 
 mock_kv& store() { static mock_kv inst; return inst; }
@@ -96,23 +113,75 @@ void install_intrinsics() {
          return store().rows.count(mock_kv::row_key{code, table_id, k}) ? 1 : 0;
       });
 
-   // No code parameter: a write always lands on the receiver. Counted, never expected.
+   // No code parameter: a write always lands on the receiver, never on the handle's code.
+   // Recorded under store().receiver so a misdirected write is observable as a row under the
+   // wrong account, not merely as a count.
    intrinsics::set_intrinsic<intrinsics::kv_set>(
-      [](uint32_t, uint64_t, const void*, uint32_t, const void*, uint32_t) -> int64_t {
+      [](uint32_t table_id, uint64_t, const void* key, uint32_t key_size,
+         const void* val, uint32_t val_size) -> int64_t {
          ++store().sets;
+         store().rows[mock_kv::row_key{store().receiver, table_id,
+                                       std::string(static_cast<const char*>(key), key_size)}] =
+            std::string(static_cast<const char*>(val), val_size);
          return 0;
+      });
+
+   // emplace() returns find(pk), so a write that is allowed through walks the iterator path.
+   // Exactly one iterator is ever live in these cases, so remembering the key it was
+   // positioned at is enough to serve a real key/value pair rather than a stub -- the
+   // returned iterator is genuinely valid, not merely non-crashing.
+   intrinsics::set_intrinsic<intrinsics::kv_it_create>(
+      [](uint32_t, capi_name, const void*, uint32_t) -> uint32_t { return 1; });
+   intrinsics::set_intrinsic<intrinsics::kv_it_destroy>([](uint32_t) {});
+   intrinsics::set_intrinsic<intrinsics::kv_it_status>([](uint32_t) -> int32_t { return 0; });
+   intrinsics::set_intrinsic<intrinsics::kv_it_lower_bound>(
+      [](uint32_t, const void* key, uint32_t key_size) -> int32_t {
+         store().it_key.assign(static_cast<const char*>(key), key_size);
+         return 0;
+      });
+
+   // Serve from the store, so a key or value the contract never wrote cannot be read back.
+   auto serve = [](const std::string& src, uint32_t offset, void* dest, uint32_t dest_size,
+                   uint32_t* actual_size) -> int32_t {
+      if (offset > src.size()) return -1;
+      *actual_size = static_cast<uint32_t>(src.size() - offset);
+      const uint32_t n = *actual_size < dest_size ? *actual_size : dest_size;
+      std::memcpy(dest, src.data() + offset, n);
+      return 0;
+   };
+   intrinsics::set_intrinsic<intrinsics::kv_it_key>(
+      [serve](uint32_t, uint32_t off, void* d, uint32_t ds, uint32_t* as) -> int32_t {
+         return serve(store().it_key, off, d, ds, as);
+      });
+   intrinsics::set_intrinsic<intrinsics::kv_it_value>(
+      [serve](uint32_t, uint32_t off, void* d, uint32_t ds, uint32_t* as) -> int32_t {
+         auto it = store().rows.find(mock_kv::row_key{store().receiver, records_tid,
+                                                      store().it_key});
+         if (it == store().rows.end()) return -1;
+         return serve(it->second, off, d, ds, as);
       });
 }
 
-/// Seed the receiver's own table with pk, and install the mocks.
+/// The account whose table is under test is never this one. When the dispatcher-global path
+/// is being exercised, the current_receiver intrinsic is pointed here instead, so the two
+/// branches of receiving_account() cannot return the same answer.
+constexpr uint64_t decoy_receiver = "carol"_n.value;
+
+/// Seed `owner`'s table with pk, and install the mocks.
+///
 /// @param dispatcher_sets_name mirrors the generated dispatcher recording the receiver in
-///        the sysio_contract_name global; false leaves it 0, as SYSIO_DISPATCH and the
-///        native dispatch do, exercising the current_receiver() fallback instead.
-void arrange(uint64_t receiver, uint64_t scope, uint64_t pk, bool dispatcher_sets_name) {
-   store().reset(receiver);
-   store().rows[mock_kv::row_key{receiver, records_tid, pk_key(scope, pk)}] = "row";
+///        the sysio_contract_name global. When true, the mocked current_receiver
+///        deliberately returns decoy_receiver rather than `owner`: a guard that consulted
+///        the intrinsic instead of the global would then get the wrong account and the case
+///        would fail. Pointing both at `owner` -- as this did originally -- makes the two
+///        branches indistinguishable, and deleting the global fast path leaves the suite
+///        green. When false the global is 0, as SYSIO_DISPATCH and the native dispatch leave
+///        it, and the intrinsic is the only source.
+void arrange(uint64_t owner, uint64_t scope, uint64_t pk, bool dispatcher_sets_name) {
+   store().reset(dispatcher_sets_name ? decoy_receiver : owner);
+   store().rows[mock_kv::row_key{owner, records_tid, pk_key(scope, pk)}] = "row";
    install_intrinsics();
-   sysio_set_contract_name(dispatcher_sets_name ? receiver : 0);
+   sysio_set_contract_name(dispatcher_sets_name ? owner : 0);
 }
 
 } // namespace
@@ -158,10 +227,13 @@ SYSIO_TEST_BEGIN(own_table_handle_passes_the_guard)
       arrange("alice"_n.value, "alice"_n.value, 1, via_global);
       table_t t("alice"_n, "alice"_n.value);
 
-      // pk=2 is absent, so the guard and the duplicate probe both pass and the message,
-      // if any, is not one of the three rejections.
-      CHECK_ASSERT( "object with the same primary key already exists",
-                    ([&]() { t.emplace("alice"_n, [](auto& o) { o.id = 1; o.sec = 7; }); }) )
+      // pk=2 is absent, so neither the receiver guard nor the duplicate probe fires and the
+      // write goes through. Without a case that SUCCEEDS, a guard that rejected every
+      // mutation would satisfy the entire suite.
+      t.emplace("alice"_n, [](auto& o) { o.id = 2; o.sec = 7; });
+      CHECK_EQUAL( store().sets, 1u )
+      CHECK_EQUAL( store().rows.count(mock_kv::row_key{store().receiver, records_tid,
+                                                       pk_key("alice"_n.value, 2)}), 1u )
    }
 SYSIO_TEST_END
 
@@ -189,10 +261,23 @@ SYSIO_TEST_BEGIN(primary_bounds_accept_uint64_and_name)
 #define UB(expr) decltype(std::declval<const table_t&>().upper_bound expr)
    static_assert(std::is_same_v<LB((uint64_t{42})),    itr_t>, "uint64_t");
    static_assert(std::is_same_v<LB(("alice"_n)),       itr_t>, "a name");
+   // The braced-literal case is the point of the assertion, so the diagnostic it provokes is
+   // suppressed rather than avoided.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wbraced-scalar-init"
    static_assert(std::is_same_v<LB(({42})),            itr_t>, "braced literal");
+#pragma clang diagnostic pop
    static_assert(std::is_same_v<LB(({})),              itr_t>, "empty brace, key zero");
    static_assert(std::is_same_v<LB((wrapped_key{7})),  itr_t>, "uint64-convertible wrapper");
    static_assert(std::is_same_v<UB(("alice"_n)),       itr_t>, "a name");
+
+   // The documented costs. A dual-convertible wrapper is ambiguous here, as it already was
+   // for find/get/require_find -- consistent with the siblings, but a source break against
+   // the single uint64_t parameter, so it is pinned rather than left to be rediscovered.
+   static_assert(callable_with<uint64_t>::value && callable_with<name>::value &&
+                 callable_with<wrapped_key>::value, "the accepted domain must stay callable");
+   static_assert(!callable_with<dual_key>::value,
+                 "a uint64_t-and-name-convertible wrapper is ambiguous, as it is for find()");
 #undef LB
 #undef UB
 SYSIO_TEST_END
