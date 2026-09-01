@@ -19,6 +19,21 @@ PASS=0
 FAIL=0
 
 pass() { echo "  PASS: $1"; PASS=$((PASS + 1)); }
+
+# Valid input: cdt-abidiff must exit 0 whether or not it reports differences. A non-zero
+# status is a crash or a rejection, never "found a difference", so it propagates to the
+# caller instead of being folded into the output text with `|| true`.
+run_abidiff() { "$ABIDIFF" "$@" 2>&1; }
+
+# Capture output, failing the named case outright if the process did not exit 0.
+# Sets `out`; returns non-zero when the case has already been failed.
+capture() {
+    local desc="$1"; shift
+    out="$(run_abidiff "$@")" && return 0
+    fail "${desc} (cdt-abidiff exited non-zero)"
+    sed 's/^/      /' <<< "$out"
+    return 1
+}
 fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
 
 WORK="$(mktemp -d)"
@@ -49,9 +64,16 @@ EOF
 check_reports_diff() {
     local version="$1" desc="$2"
     write_pair "$version"
-    # cdt-abidiff exits non-zero when it finds differences, so tolerate that.
-    local out
-    out="$("$ABIDIFF" "${WORK}/a.abi" "${WORK}/b.abi" 2>&1 || true)"
+    # cdt-abidiff exits 0 after reporting ordinary differences, so a non-zero status here is
+    # a real failure -- a crash or a bad-input rejection -- and must not be swallowed. Only
+    # the unsupported-version case below expects non-zero.
+    local out rc
+    out="$("$ABIDIFF" "${WORK}/a.abi" "${WORK}/b.abi" 2>&1)"; rc=$?
+    if [ "$rc" -ne 0 ]; then
+        fail "$desc (cdt-abidiff exited $rc)"
+        sed 's/^/      /' <<< "$out"
+        return
+    fi
     if grep -qE "geta|getb" <<< "$out"; then
         pass "$desc"
     else
@@ -78,8 +100,8 @@ EOF
 cat > "${WORK}/v2.abi" <<'EOF'
 { "version": "sysio::abi/1.10", "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [], "action_results": [] }
 EOF
-out="$("$ABIDIFF" "${WORK}/v1.abi" "${WORK}/v2.abi" 2>&1 || true)"
-if grep -q "version" <<< "$out"; then
+if capture "1.2 vs 1.10 reports a version difference" "${WORK}/v1.abi" "${WORK}/v2.abi" &&
+   grep -q "version" <<< "$out"; then
     pass "1.2 vs 1.10 reports a version difference"
 else
     fail "1.2 vs 1.10 reports a version difference"
@@ -87,8 +109,9 @@ else
 fi
 
 # Identical inputs must stay quiet.
-out="$("$ABIDIFF" "${WORK}/v1.abi" "${WORK}/v1.abi" 2>&1 || true)"
-if grep -qE "version|action_results" <<< "$out"; then
+if ! capture "identical ABIs report no difference" "${WORK}/v1.abi" "${WORK}/v1.abi"; then
+    :
+elif grep -qE "version|action_results" <<< "$out"; then
     fail "identical ABIs report no difference"
     sed 's/^/      /' <<< "$out"
 else
@@ -143,8 +166,8 @@ EOF
 
 mkvariant "${WORK}/va.abi" '["uint64"]'
 mkvariant "${WORK}/vb.abi" '["string"]'
-out="$("$ABIDIFF" "${WORK}/va.abi" "${WORK}/vb.abi" 2>&1 || true)"
-if grep -q "variant" <<< "$out"; then
+if capture "1.10 variants differing by type report a difference" "${WORK}/va.abi" "${WORK}/vb.abi" &&
+   grep -q "variant" <<< "$out"; then
     pass "1.10 variants differing by type report a difference"
 else
     fail "1.10 variants differing by type report a difference"
@@ -153,10 +176,9 @@ fi
 
 mkvariant "${WORK}/vlong.abi"  '["uint64", "string"]'
 mkvariant "${WORK}/vshort.abi" '["uint64"]'
-out="$("$ABIDIFF" "${WORK}/vlong.abi" "${WORK}/vshort.abi" 2>&1 || true)"
-if grep -qiE "invalid array subscript|terminate|Aborted" <<< "$out"; then
-    fail "1.10 variants of differing length are compared without throwing"
-    sed 's/^/      /' <<< "$out"
+if ! capture "1.10 variants of differing length report a difference" \
+        "${WORK}/vlong.abi" "${WORK}/vshort.abi"; then
+    :
 elif grep -q "variant" <<< "$out"; then
     pass "1.10 variants of differing length report a difference"
 else
@@ -166,8 +188,9 @@ fi
 
 mkvariant "${WORK}/vsame1.abi" '["uint64", "string"]'
 mkvariant "${WORK}/vsame2.abi" '["uint64", "string"]'
-out="$("$ABIDIFF" "${WORK}/vsame1.abi" "${WORK}/vsame2.abi" 2>&1 || true)"
-if grep -q "variant" <<< "$out"; then
+if ! capture "identical 1.10 variants report no difference" "${WORK}/vsame1.abi" "${WORK}/vsame2.abi"; then
+    :
+elif grep -q "variant" <<< "$out"; then
     fail "identical 1.10 variants report no difference"
     sed 's/^/      /' <<< "$out"
 else

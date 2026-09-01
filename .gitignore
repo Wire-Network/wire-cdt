@@ -71,3 +71,7 @@ tmp/
 
 # prequel local review state (operational artifacts, never committed)
 .prequel/
+
+# Core dumps (deliberate-crash test runs leave these behind)
+core.*
+vgcore.*

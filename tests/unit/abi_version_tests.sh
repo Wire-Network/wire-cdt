@@ -229,13 +229,19 @@ EOF
 # Both merge orders. cdt-codegen sorts the descriptor paths, so the filenames -- not the
 # --desc-file argument order -- decide which document becomes the accumulator. Naming them
 # a_/b_ makes each case explicit instead of accidental.
+# The seed version matters as much as the order. Without --abi-version the accumulator starts
+# at the 1.2 default and the constructor gives it an empty action_results, so the only absent
+# key is ever on the right -- a one-sided fallback would pass. Seeding older-first at 1.1
+# makes the first merge emit an intermediate with no action_results at all, so the second
+# merge meets the missing section on the LEFT, which is the case that actually regressed.
 merge_case() {
-    local label="$1" first="$2" second="$3"
+    local label="$1" first="$2" second="$3" seed="$4"
     local dir="${WORK}/${label}"
     mkdir -p "$dir"
     cp "${WORK}/${first}.desc"  "${dir}/a_first.desc"
     cp "${WORK}/${second}.desc" "${dir}/b_second.desc"
     if "$CDT_CODEGEN" --finalize --contract mix --output-dir "$dir" \
+          --abi-version "$seed" \
           --abi-output "${dir}/mix.abi" \
           --desc-file "${dir}/a_first.desc" --desc-file "${dir}/b_second.desc" \
           > "${dir}/mix.log" 2>&1; then
@@ -249,8 +255,8 @@ merge_case() {
     fi
 }
 
-merge_case "older-first" old new
-merge_case "newer-first" new old
+merge_case "older-first" old new 1.1
+merge_case "newer-first" new old 1.1
 
 # A descriptor missing a REQUIRED section is truncated, not merely older, and must be
 # rejected rather than merged as empty -- otherwise contract interface content is dropped

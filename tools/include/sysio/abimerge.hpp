@@ -6,6 +6,7 @@
 #include <jsoncons/json.hpp>
 #include "abi.hpp"
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -71,13 +72,15 @@ class ABIMerger {
    private:
       /// The (major, minor) a document declares.
       ///
-      /// A document with no `version` at all legitimately inherits this merger's version --
-      /// that is how an empty accumulator is seeded. A document whose `version` is present
-      /// but unparsable is malformed, and is rejected rather than quietly treated as the
-      /// default: every capability gate below keys off this value.
+      /// Every document reaching here carries a version: the constructor seeds an empty
+      /// accumulator with one, merge() always stamps ret["version"], and abigen emits it in
+      /// every descriptor. So a missing key is a malformed external document rather than the
+      /// accumulator case, and defaulting it silently stamped the emission default onto input
+      /// the base implementation rejected. An unparsable version is malformed for the same
+      /// reason -- every capability gate below keys off this value.
       std::pair<int, int> version_of(const ojson& doc) const {
          if (!doc.has_key("version"))
-            return {major, minor};
+            throw std::runtime_error("Error, ABI is missing its version");
 
          const auto text = doc["version"].as<std::string>();
          int major_v = 0;
@@ -168,31 +171,42 @@ class ABIMerger {
                 a["values"] == b["values"];
       }
 
-      /// Whether a descriptor may legitimately omit a section.
+      /// The version at which a section entered the format, or nullopt for one that is never
+      /// mandatory.
       ///
-      /// Only sections that entered the format at a version are optional -- a valid 1.1
-      /// document has no `action_results`, a 1.0 one has no `variants`. The baseline arrays
-      /// are always emitted by abigen, so a descriptor missing one is truncated or corrupt
-      /// and must not be quietly merged as empty: that would drop contract interface content
-      /// silently. An earlier revision made every section optional and did exactly that.
-      enum class section_kind { required, version_gated };
+      /// Absence is only legitimate below that version: abigen emits `variants` in every
+      /// document and `action_results` in every document whose version supports it, so a 1.10
+      /// descriptor missing either is truncated, not merely old. Treating them as optional at
+      /// every version -- as an earlier revision did -- silently dropped contract interface
+      /// content. `enums` is emitted only when non-empty, so it is genuinely optional
+      /// everywhere and carries no threshold.
+      using section_since = std::optional<std::pair<int, int>>;
 
-      static const ojson& section(const ojson& doc, const std::string& type, section_kind kind) {
+      static constexpr std::pair<int, int> baseline_section{0, 0};
+      static const section_since variants_since;
+      static const section_since action_results_since;
+      static const section_since never_mandatory;
+
+      static const ojson& section(const ojson& doc, const std::string& type,
+                                  const section_since& since, std::pair<int, int> doc_version) {
          static const ojson empty = ojson::array();
          if (doc.has_key(type))
             return doc[type];
-         if (kind == section_kind::version_gated)
+         if (!since || doc_version < *since)
             return empty;
-         throw std::runtime_error("Error, ABI is missing required section : " + type);
+         throw std::runtime_error("Error, ABI at " +
+                                  abi_version::version_string(doc_version.first, doc_version.second) +
+                                  " is missing section : " + type);
       }
 
       template <typename F>
       void add_object_to_array(ojson& ret, ojson a, ojson b, std::string type, std::string id,
-                               F&& is_same_func, section_kind kind = section_kind::required) {
-         for (auto obj_a : section(a, type, kind).array_range()) {
+                               F&& is_same_func,
+                               const section_since& since = section_since{baseline_section}) {
+         for (auto obj_a : section(a, type, since, version_of(a)).array_range()) {
             ret.push_back(obj_a);
          }
-         for (auto obj_b : section(b, type, kind).array_range()) {
+         for (auto obj_b : section(b, type, since, version_of(b)).array_range()) {
             bool should_skip = false;
             for (size_t i = 0; i < ret.size(); ++i) {
                if (ret[i][id] == obj_b[id]) {
@@ -248,7 +262,7 @@ class ABIMerger {
 
       ojson merge_variants(ojson b) {
          ojson vars = ojson::array();
-         add_object_to_array(vars, abi, b, "variants", "name", variant_is_same, section_kind::version_gated);
+         add_object_to_array(vars, abi, b, "variants", "name", variant_is_same, variants_since);
          return vars;
       }
 
@@ -272,7 +286,7 @@ class ABIMerger {
 
       ojson merge_action_results(ojson b) {
          ojson res = ojson::array();
-         add_object_to_array(res, abi, b, "action_results", "name", action_result_is_same, section_kind::version_gated);
+         add_object_to_array(res, abi, b, "action_results", "name", action_result_is_same, action_results_since);
          return res;
       }
 
@@ -281,7 +295,7 @@ class ABIMerger {
          if (abi.has_key("enums") || b.has_key("enums")) {
             if (!abi.has_key("enums")) abi["enums"] = ojson::array();
             if (!b.has_key("enums")) b["enums"] = ojson::array();
-            add_object_to_array(enums, abi, b, "enums", "name", enum_is_same, section_kind::version_gated);
+            add_object_to_array(enums, abi, b, "enums", "name", enum_is_same, never_mandatory);
          }
          return enums;
       }
@@ -290,4 +304,11 @@ class ABIMerger {
       int   major = abi_version::default_major;   ///< version this merger was constructed for
       int   minor = abi_version::default_minor;
 };
+
+inline const ABIMerger::section_since ABIMerger::variants_since{
+   std::pair<int, int>{abi_version::default_major, abi_version::variants_minor}};
+inline const ABIMerger::section_since ABIMerger::action_results_since{
+   std::pair<int, int>{abi_version::default_major, abi_version::action_results_minor}};
+inline const ABIMerger::section_since ABIMerger::never_mandatory{};
+
 #pragma GCC diagnostic pop
