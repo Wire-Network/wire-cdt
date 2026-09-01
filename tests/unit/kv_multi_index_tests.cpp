@@ -54,6 +54,13 @@ struct record {
 
 using table_t = sysio::multi_index<"records"_n, record>;
 
+/// A caller-supplied key wrapper. find/get/require_find take uint64_t directly and so accept
+/// one of these through a single user-defined conversion; the bounds must not be narrower.
+struct wrapped_key {
+   uint64_t v;
+   constexpr operator uint64_t() const { return v; }   // NOLINT(google-explicit-constructor)
+};
+
 constexpr uint32_t records_tid = sysio::kv::compute_table_id("records"_n.value);
 
 // Mirrors the asymmetry under test: kv_contains honours `code`, writes have no such
@@ -169,12 +176,22 @@ SYSIO_TEST_BEGIN(primary_bounds_accept_every_call_shape)
    constexpr auto ub = &table_t::upper_bound;
    static_assert(lb != nullptr && ub != nullptr, "primary bounds must be bare-addressable");
 
-   using by_u64   = decltype(std::declval<const table_t&>().lower_bound(uint64_t{42}));
-   using braced   = decltype(std::declval<const table_t&>().lower_bound({42}));
-   using by_name  = decltype(std::declval<const table_t&>().lower_bound("alice"_n));
-   static_assert(std::is_same_v<by_u64,  itr_t>, "lower_bound must accept a uint64_t");
-   static_assert(std::is_same_v<braced,  itr_t>, "lower_bound must accept a braced initializer");
-   static_assert(std::is_same_v<by_name, itr_t>, "lower_bound must accept a name");
+   using by_u64    = decltype(std::declval<const table_t&>().lower_bound(uint64_t{42}));
+   using braced    = decltype(std::declval<const table_t&>().lower_bound({42}));
+   using by_name   = decltype(std::declval<const table_t&>().lower_bound("alice"_n));
+   using empty_br  = decltype(std::declval<const table_t&>().lower_bound({}));
+   using wrapped   = decltype(std::declval<const table_t&>().lower_bound(wrapped_key{7}));
+   static_assert(std::is_same_v<by_u64,   itr_t>, "lower_bound must accept a uint64_t");
+   static_assert(std::is_same_v<braced,   itr_t>, "lower_bound must accept a braced initializer");
+   static_assert(std::is_same_v<by_name,  itr_t>, "lower_bound must accept a name");
+   // {} meant key zero when the parameter was a plain uint64_t, and must still.
+   static_assert(std::is_same_v<empty_br, itr_t>, "lower_bound must accept an empty brace");
+   // find/get/require_find accept this through one user-defined conversion; a proxy with a
+   // fixed uint64_t parameter would need two and reject it, narrowing the bounds below its
+   // own siblings.
+   static_assert(std::is_same_v<wrapped,  itr_t>, "lower_bound must accept a uint64-convertible type");
+   static_assert(table_t::primary_key_arg{}.value == 0u, "an empty brace must mean key zero");
+   static_assert(table_t::primary_key_arg{wrapped_key{7}}.value == 7u, "conversion must preserve the key");
 SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {

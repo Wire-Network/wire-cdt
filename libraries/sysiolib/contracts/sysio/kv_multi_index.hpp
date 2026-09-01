@@ -618,10 +618,28 @@ public:
    /// the types to_pk_uint64 accepts.
    ///
    /// Implicit by design: callers never name this type, they pass a uint64_t or a name.
+   ///
+   /// The converting constructor is a CONSTRAINED TEMPLATE, not a fixed `uint64_t` parameter.
+   /// A fixed one would need `wrapper -> uint64_t -> primary_key_arg` for a user type with
+   /// `operator uint64_t()`, which is two user-defined conversions and therefore ill-formed --
+   /// narrowing the argument domain below `find`, `get` and `require_find`, which take
+   /// `uint64_t` directly and accept such a type today. Taking `T` by value keeps it to one
+   /// user-defined conversion. The constraint stops it swallowing `name` (which has no
+   /// implicit `uint64_t` conversion, so the dedicated overload wins) or unrelated types,
+   /// and leaves copy construction alone.
+   ///
+   /// Default-constructible so `lower_bound({})` still means key zero, as it did when the
+   /// parameter was a plain `uint64_t`.
    struct primary_key_arg {
-      uint64_t value;
-      constexpr primary_key_arg(uint64_t v) : value(v) {}          // NOLINT(google-explicit-constructor)
-      constexpr primary_key_arg(name n)     : value(n.value) {}    // NOLINT(google-explicit-constructor)
+      uint64_t value = 0;
+
+      constexpr primary_key_arg() = default;
+      constexpr primary_key_arg(name n) : value(n.value) {}        // NOLINT(google-explicit-constructor)
+
+      // PK, not T: T is the row type of the enclosing kv_multi_index.
+      template<typename PK, typename = std::enable_if_t<std::is_convertible_v<PK, uint64_t>>>
+      constexpr primary_key_arg(PK v)                              // NOLINT(google-explicit-constructor)
+         : value(static_cast<uint64_t>(v)) {}
    };
 
    const_iterator lower_bound(primary_key_arg primary) const {
