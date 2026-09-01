@@ -142,7 +142,11 @@ namespace _kv_multi_index_detail {
 } // namespace _kv_multi_index_detail
 
 // Uses sysio::indexed_by and sysio::const_mem_fun from the standard CDT headers.
-// This class is a drop-in replacement: just change multi_index -> kv_multi_index.
+//
+// Source-compatible with the EOSIO multi_index, not identical to it. The known divergences,
+// all documented in docs/kv-multi-index.md: the postfix iterator operators are deleted (a copy
+// duplicates a host-side handle), the primary bounds are uint64_t/name overloads rather than a
+// member template, and a secondary key must be trivially copyable.
 
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {
