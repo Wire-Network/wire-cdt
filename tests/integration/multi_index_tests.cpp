@@ -35,7 +35,7 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    };
 
    push_action( "testapi"_n, "s1g"_n,  "testapi"_n, {} );        // idx64_general
-   push_action( "testapi"_n, "s1namepk"_n, "testapi"_n, {} );    // name_pk_bounds
+   push_action( "testapi"_n, "s1namepk"_n, "testapi"_n, {} );    // name_pk_secondaries
 
    // A foreign-code handle cannot mutate: reads honour the handle's code but writes land on
    // the receiver, so without the guard this silently wrote the receiver's own row.

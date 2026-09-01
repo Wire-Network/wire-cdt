@@ -365,9 +365,9 @@ namespace _test_multi_index
         table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = "bbb"_n.value; });
     }
 
-    // A `name` primary key exercises the templated lower_bound/upper_bound. These took a
-    // bare uint64_t, so this did not compile, while upstream multi_index accepts it via
-    // to_raw_key.
+    // A `name` primary key alongside a secondary index. store/remove/update_secondaries feed
+    // primary_key() straight to pk_to_bytes(uint64_t), so before to_pk_uint64 was applied
+    // there this combination did not compile at all.
     struct record_name_pk
     {
         sysio::name owner;
@@ -380,7 +380,7 @@ namespace _test_multi_index
     };
 
     template <uint64_t TableName>
-    void name_pk_bounds(sysio::name receiver)
+    void name_pk_secondaries(sysio::name receiver)
     {
         typedef record_name_pk record;
         sysio::kv_multi_index<sysio::name{TableName}, record,
@@ -392,19 +392,35 @@ namespace _test_multi_index
         table.emplace(payer, [&](auto& r) { r.owner = "bob"_n;     r.sec = 20; });
         table.emplace(payer, [&](auto& r) { r.owner = "charlie"_n; r.sec = 30; });
 
-        // Passing a name, not a uint64_t.
-        auto lb = table.lower_bound("bob"_n);
+        // The bounds take a uint64_t, as they always have; a name primary key is passed
+        // through .value, exactly as before this change.
+        auto lb = table.lower_bound("bob"_n.value);
         sysio::check(lb != table.end() && lb->owner == "bob"_n,
-                     "name_pk_bounds - lower_bound(name) did not land on bob");
+                     "name_pk_secondaries - lower_bound did not land on bob");
 
-        auto ub = table.upper_bound("bob"_n);
+        auto ub = table.upper_bound("bob"_n.value);
         sysio::check(ub != table.end() && ub->owner == "charlie"_n,
-                     "name_pk_bounds - upper_bound(name) did not land on charlie");
+                     "name_pk_secondaries - upper_bound did not land on charlie");
 
-        // The uint64_t form must keep working unchanged.
-        auto lb_raw = table.lower_bound("bob"_n.value);
-        sysio::check(lb_raw != table.end() && lb_raw->owner == "bob"_n,
-                     "name_pk_bounds - lower_bound(uint64_t) regressed");
+        // The secondary index must resolve back to the name-keyed row: this is the path
+        // to_pk_uint64 fixed. modify() rewrites the mapping, erase() removes it.
+        auto sec = table.template get_index<"bysecondary"_n>();
+        auto sitr = sec.find(20);
+        sysio::check(sitr != sec.end() && sitr->owner == "bob"_n,
+                     "name_pk_secondaries - secondary lookup did not resolve to bob");
+
+        table.modify(*sitr, payer, [&](auto& r) { r.sec = 25; });
+        sysio::check(sec.find(20) == sec.end(),
+                     "name_pk_secondaries - modify left the old secondary mapping behind");
+        auto moved = sec.find(25);
+        sysio::check(moved != sec.end() && moved->owner == "bob"_n,
+                     "name_pk_secondaries - modify did not install the new secondary mapping");
+
+        table.erase(*moved);
+        sysio::check(sec.find(25) == sec.end(),
+                     "name_pk_secondaries - erase left the secondary mapping behind");
+        sysio::check(table.find("bob"_n.value) == table.end(),
+                     "name_pk_secondaries - erase did not remove the primary row");
     }
 
     // Mutating through a handle opened on another account must abort. Reads honour the
@@ -438,8 +454,8 @@ public:
         _test_multi_index::foreign_code_mutation<"foreigntbl"_n.value>(get_self());
     }
 
-    [[sysio::action("s1namepk")]] void name_pk_bounds() {
-        _test_multi_index::name_pk_bounds<"namepktable"_n.value>(get_self());
+    [[sysio::action("s1namepk")]] void name_pk_secondaries() {
+        _test_multi_index::name_pk_secondaries<"namepktable"_n.value>(get_self());
     }
 
     [[sysio::action("s1dupidx")]] void idx64_duplicate_emplace() {

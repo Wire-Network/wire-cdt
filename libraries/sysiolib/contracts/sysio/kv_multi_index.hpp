@@ -608,85 +608,17 @@ public:
       return *obj;
    }
 
-   /// A single non-template parameter that accepts every primary key type.
-   ///
-   /// Three call shapes have to keep working and they pull in different directions. A member
-   /// TEMPLATE (as upstream uses) breaks `lower_bound({42})`, since a braced list cannot be
-   /// deduced, and `&table_type::lower_bound`, since no pointer can be formed to an undeduced
-   /// template. Two concrete OVERLOADS fix the braced case but still break the bare
-   /// member-pointer, which becomes an overload set. One non-template function taking an
-   /// implicitly-constructible parameter satisfies all three at once, and it reaches exactly
-   /// the types to_pk_uint64 accepts.
-   ///
-   /// Implicit by design: callers never name this type, they pass a uint64_t or a name.
-   ///
-   /// The converting constructor is a CONSTRAINED TEMPLATE, not a fixed `uint64_t` parameter.
-   /// A fixed one would need `wrapper -> uint64_t -> primary_key_arg` for a user type with
-   /// `operator uint64_t()`, which is two user-defined conversions and therefore ill-formed --
-   /// narrowing the argument domain below `find`, `get` and `require_find`, which take
-   /// `uint64_t` directly and accept such a type today. Taking `T` by value keeps it to one
-   /// user-defined conversion. The constraint stops it swallowing `name` (which has no
-   /// implicit `uint64_t` conversion, so the dedicated overload wins) or unrelated types,
-   /// and leaves copy construction alone.
-   ///
-   /// Default-constructible so `lower_bound({})` still means key zero, as it did when the
-   /// parameter was a plain `uint64_t`.
-   struct primary_key_arg {
-      uint64_t value = 0;
-
-      constexpr primary_key_arg() = default;
-
-      /// Arithmetic and enum arguments arrive through a real `uint64_t` parameter, so
-      /// list-initialization narrowing still applies: `lower_bound({-1})` and `({1.5})` stay
-      /// ill-formed exactly as they were against a plain `uint64_t` parameter. Routing them
-      /// through the template below would have converted them silently.
-      constexpr primary_key_arg(uint64_t v) : value(v) {}          // NOLINT(google-explicit-constructor)
-
-      constexpr primary_key_arg(name n) : value(n.value) {}        // NOLINT(google-explicit-constructor)
-
-      /// Any other implicitly-uint64-convertible type -- the key wrappers that `find`, `get`
-      /// and `require_find` already accept.
-      ///
-      /// The original expression is forwarded and converted IMPLICITLY, not `static_cast`.
-      /// A cast would prefer an exact explicit `operator uint64_t()` over an implicit
-      /// `operator unsigned()`, so a wrapper offering both would seek a different row here
-      /// than in find(). Copy-initialising the member reproduces the conversion the plain
-      /// `uint64_t` parameter would have chosen.
-      ///
-      /// PK&& rather than by value: taking it by value copied lvalues, rejecting the
-      /// noncopyable wrappers the base accepted, and tested a different value category in
-      /// the constraint than the body then used. PK, not T -- T is the enclosing row type.
-      template<typename PK,
-               typename D = std::decay_t<PK>,
-               typename = std::enable_if_t<!std::is_arithmetic_v<D> &&
-                                           !std::is_enum_v<D> &&
-                                           !std::is_same_v<D, name> &&
-                                           !std::is_same_v<D, primary_key_arg> &&
-                                           std::is_convertible_v<PK, uint64_t>>>
-      constexpr primary_key_arg(PK&& v)                            // NOLINT(google-explicit-constructor)
-         : value(as_key(std::forward<PK>(v))) {}
-
-   private:
-      /// Copy-initialises a uint64_t parameter, which is exactly what the plain `uint64_t`
-      /// parameter used to do. A member initialiser -- `value(x)` -- is DIRECT-initialisation
-      /// and would consider `explicit operator uint64_t()`, picking a different conversion
-      /// than find() for a wrapper offering both.
-      static constexpr uint64_t as_key(uint64_t v) { return v; }
-
-   public:
-   };
-
-   const_iterator lower_bound(primary_key_arg primary) const {
-      auto key = make_pk(primary.value);
+   const_iterator lower_bound(uint64_t primary) const {
+      auto key = make_pk(primary);
       auto prefix = make_prefix();
       uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
       int32_t status = ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, status == 0);
    }
 
-   const_iterator upper_bound(primary_key_arg primary) const {
-      if (primary.value == std::numeric_limits<uint64_t>::max()) return end();
-      return lower_bound(primary.value + 1);
+   const_iterator upper_bound(uint64_t primary) const {
+      if (primary == std::numeric_limits<uint64_t>::max()) return end();
+      return lower_bound(primary + 1);
    }
 
    const_iterator iterator_to(const T& obj) const {
