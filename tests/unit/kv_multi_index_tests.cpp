@@ -61,6 +61,32 @@ struct wrapped_key {
    constexpr operator uint64_t() const { return v; }   // NOLINT(google-explicit-constructor)
 };
 
+/// Offers both an implicit and an explicit conversion, disagreeing on the key. A plain
+/// uint64_t parameter picks the IMPLICIT one; a static_cast picks the explicit exact match.
+/// If the bounds disagreed with find() here, they would seek a different row.
+struct dual_conversion_key {
+   constexpr operator unsigned() const { return 1; }            // NOLINT(google-explicit-constructor)
+   constexpr explicit operator uint64_t() const { return 2; }
+};
+
+/// Noncopyable, as a caller's handle type may be. A by-value template parameter copied the
+/// argument and rejected this; the base, taking uint64_t, never copied the wrapper.
+struct move_only_key {
+   move_only_key() = default;
+   move_only_key(const move_only_key&) = delete;
+   move_only_key(move_only_key&&) = default;
+   constexpr operator uint64_t() const { return 5; }            // NOLINT(google-explicit-constructor)
+};
+
+/// Is `primary_key_arg{A}` well-formed? Used to assert that list-initialization narrowing
+/// still rejects arithmetic arguments that cannot be represented, as it did when the
+/// parameter was a plain uint64_t.
+template<typename A, typename = void>
+struct braces_from : std::false_type {};
+template<typename A>
+struct braces_from<A, std::void_t<decltype(table_t::primary_key_arg{std::declval<A>()})>>
+   : std::true_type {};
+
 constexpr uint32_t records_tid = sysio::kv::compute_table_id("records"_n.value);
 
 // Mirrors the asymmetry under test: kv_contains honours `code`, writes have no such
@@ -192,6 +218,23 @@ SYSIO_TEST_BEGIN(primary_bounds_accept_every_call_shape)
    static_assert(std::is_same_v<wrapped,  itr_t>, "lower_bound must accept a uint64-convertible type");
    static_assert(table_t::primary_key_arg{}.value == 0u, "an empty brace must mean key zero");
    static_assert(table_t::primary_key_arg{wrapped_key{7}}.value == 7u, "conversion must preserve the key");
+
+   // The conversion chosen must be the one a plain uint64_t parameter would choose: the
+   // implicit operator, not the explicit exact match a static_cast would prefer.
+   static_assert(table_t::primary_key_arg{dual_conversion_key{}}.value == 1u,
+                 "an implicit conversion must win over an explicit one, as it does for find()");
+
+   // Narrowing survives. A non-constant int and a double cannot be represented in a uint64_t
+   // without narrowing, so brace-initialisation must reject them -- routing arithmetic through
+   // the template would have silently converted both.
+   static_assert(braces_from<uint64_t>::value, "uint64_t must brace-initialise");
+   static_assert(!braces_from<int>::value,     "a non-constant int must be rejected as narrowing");
+   static_assert(!braces_from<double>::value,  "a double must be rejected as narrowing");
+
+   // A noncopyable wrapper passed as an lvalue: forwarded, never copied.
+   move_only_key mo;
+   using by_move_only = decltype(std::declval<const table_t&>().lower_bound(mo));
+   static_assert(std::is_same_v<by_move_only, itr_t>, "a noncopyable wrapper must be accepted");
 SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {
