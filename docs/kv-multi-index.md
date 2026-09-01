@@ -12,15 +12,26 @@
 ## Overview
 
 `sysio::multi_index` is a source-compatible shim for the EOSIO `multi_index` — the same API over a
-different store, not the same implementation. Nearly all contract code carries over unchanged; the
-the known divergences are:
+different store, not the same implementation. Nearly all contract code carries over unchanged; the known
+divergences are:
 
 - the postfix iterator operators `it++` / `it--` are deleted, because copying a KV iterator
   duplicates a host-side handle. Rewrite those to `++it` / `--it`; the compiler finds every one;
-- the primary `lower_bound` / `upper_bound` are overloads on `uint64_t` and `name` rather than
-  upstream's member template, so the bare `&table_type::lower_bound` does not compile (a named
-  `static_cast` still resolves one);
-- the mutation guards below arrive with #113 and are absent from earlier toolchains. Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*` intrinsics.
+- the primary `lower_bound` / `upper_bound` take a `name` as well as a `uint64_t`, where
+  upstream uses a member template — so the bare `&table_type::lower_bound` does not compile on
+  either (here because it is an overload set, upstream because `PK` cannot be deduced); a named
+  `static_cast<const_iterator (table_type::*)(uint64_t) const>(...)` resolves one on Wire.
+  **The `name` overload arrives with
+  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; before it the bounds took
+  `uint64_t` only, and a `name` primary key needed `.value` at the call;
+- secondary key types must be `std::is_trivially_copyable`, not merely serializable — a
+  `static_assert` enforces it, where upstream accepts any serializable type;
+- the mutation guards below arrive with
+  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from earlier
+  toolchains.
+
+Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*`
+intrinsics.
 
 Each table gets a `table_id` (uint16) computed via `compute_table_id(name::raw)` from the template parameter.
 

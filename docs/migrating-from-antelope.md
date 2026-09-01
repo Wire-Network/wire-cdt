@@ -238,8 +238,10 @@ A first pass that gets nearly all of it:
 
 ```bash
 # GNU sed only. On macOS: `brew install gnu-sed` and use `gsed`. `sed -i ''` alone is not
-# enough -- BSD sed has neither `\b` nor `\|`, so `\beosio\b` matches a literal "beosiob"
-# (renaming nothing, silently) and the `\(assert\|...\)` group is a syntax error.
+# enough -- macOS sed supports neither `\b` nor `\|` without REG_ENHANCED, and treats each as
+# the escaped character taken literally. So `\beosio\b` matches "beosiob" and the
+# `\(assert\|...\)` group matches the literal text "assert|assert_message|...". Neither
+# errors; both simply rename nothing, which is why this is worth stating.
 grep -rl 'eosio\|EOSIO\|EOSLIB' src include \
   | xargs sed -i -e 's/\beosio\b/sysio/g' \
                  -e 's/\beosio_\(assert\|assert_message\|assert_code\|exit\)\b/sysio_\1/g' \
@@ -296,12 +298,11 @@ jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /t
 The `db_store_i64` / `db_find_i64` / `db_idx64_*` / `db_idx128_*` / `db_idx256_*` /
 `db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire. The chain exports none
 of them. Today a contract declaring one still *links*, because CDT's `imports/cdt.imports.in` is
-handed to `wasm-ld` as `--allow-undefined-file` and still lists them, and the failure surfaces at
-deploy; once [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) removes
-them from that list it becomes a link error instead. `<sysio/db.h>` is a stub that
-forwards to `<sysio/kv.h>`; the last stale declarations are removed from CDT's import list by
-[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112). Contract state lives in a
-key-value store addressed by a compile-time `table_id`.
+handed to `wasm-ld` as `--allow-undefined-file` and still lists them, so the failure surfaces at
+deploy; once [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) removes them from
+that list it becomes a link error instead. `<sysio/db.h>` is a stub that forwards to
+`<sysio/kv.h>`. Contract state lives in a key-value store addressed by a compile-time
+`table_id`.
 
 Code that called those intrinsics directly must be rewritten. Code that used `multi_index` — which
 is nearly all of it — carries over with one mechanical exception, below.
@@ -363,15 +364,25 @@ What changed underneath, and where it shows:
 | Primary row key | `(code, scope, table, primary_key)` | `table_id` + 16 bytes: `[scope:8B BE][pk:8B BE]` |
 | Table identity | `name` embedded in the key | `table_id` (uint16, DJB2 over the 8 big-endian bytes of the table name's raw `uint64`) |
 | Per-row RAM | `key_value_object`: 108 + value | `kv_object`: 112 + 16-byte key + value |
-| RAM billing | per-row + per-index overhead, plus one 108-byte `table_id_object` per table | no `table_id_object` — the `table_id` is a `uint16` on the row — but a higher per-row constant |
-
-**Budget more RAM, not less.** The `table_id_object` saving is amortised away as soon as a table
-has more than a handful of rows, and the per-row cost is higher: for a dense table with a 16-byte
-value, wire-sysio's own figures are **124 bytes legacy vs 144 for `sysio::multi_index` (+16%)**,
-or 136 for `kv::table` (+10%). Size a ported contract's RAM policy up, not down. The full
-breakdown is in
-[kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md).
+| RAM billing | per-row + per-index overhead, plus one 108-byte `table_id_object` per `(code, scope, table)` | no `table_id_object` — the `table_id` is a `uint16` on the row — but a higher per-row constant |
 | `get_table_rows` response | bare value objects | `{key, value}` objects |
+
+**Which direction RAM moves depends on your rows-per-scope ratio**, so re-size the policy from
+your own tables rather than assuming either way. The `table_id_object` is billed per
+`(code, scope, table)`, so a table with one row per scope — a token balance, a per-user
+settings row, the most common Antelope shape — sheds a whole 108-byte object per scope and
+comes out well ahead. A table with many rows in few scopes amortises that away and pays the
+higher per-row constant instead. wire-sysio's own figures, for a 16-byte value:
+
+| Shape | Antelope | `sysio::multi_index` | `kv::table` |
+|---|---|---|---|
+| One row per scope (token balance) | 232 | 144 (**−38%**) | 136 (**−41%**) |
+| One row per scope + 1 index | 360 | 280 (−22%) | 264 (−27%) |
+| Dense table, few scopes | 124 | 144 (**+16%**) | 136 (+10%) |
+| Dense table + 1 index | 252 | 280 (+11%) | 264 (+5%) |
+
+Measured across EOS mainnet contracts the net effect is a 2–6% saving. The full breakdown is in
+[kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md).
 
 The response-shape change is the one that reaches your front end. `index_position` becomes
 `index_name` (which accepts names *or* the old numbers), and `key_type`, `encode_type` and
@@ -671,7 +682,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
   identical scope semantics and byte-identical primary keys, without the object-cache overhead.
 - **[`kv::table`](kv-table.md) and [`kv::global`](kv-global.md)** — user-defined key structs and
   single-value config, with zero-copy serialization for trivially-copyable POD values.
-- **Long table names** via the `_i` literal (up to 128 chars of `a-zA-Z0-9_`).
+- **Long table names** via the `_i` literal (`a-zA-Z0-9_`, no enforced length).
 - **[Protocol Buffers](protocol-buffers.md)** — protobuf-encoded action data via `sysio::pb<T>`, with
   the `FileDescriptorSet` embedded in the ABI so clients can decode it. Useful when you need schema
   evolution or a language-neutral wire format.
