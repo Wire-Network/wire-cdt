@@ -2,6 +2,7 @@
 
 #include "check.hpp"
 #include <cstddef>
+#include <utility>
 
 namespace sysio {
     /**
