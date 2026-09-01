@@ -16,10 +16,10 @@ using jsoncons::ojson;
 
 class ABIMerger {
    public:
-      ABIMerger(ojson a, int version_major, int version_minor)
-         : abi(a)
-         , major(version_major)
-         , minor(version_minor) {
+      /// version_major/version_minor seed an empty accumulator and are not retained: every
+      /// document that reaches version_of() declares its own version, and one that does not
+      /// is rejected rather than falling back to the merger's.
+      ABIMerger(ojson a, int version_major, int version_minor) : abi(a) {
          if (abi.empty()) {
             abi["version"] = abi_version::version_string(version_major, version_minor);
             abi["types"] = ojson::array();
@@ -301,8 +301,6 @@ class ABIMerger {
       }
 
       ojson abi;
-      int   major = abi_version::default_major;   ///< version this merger was constructed for
-      int   minor = abi_version::default_minor;
 };
 
 inline const ABIMerger::section_since ABIMerger::variants_since{

@@ -260,7 +260,9 @@ merge_case "newer-first" new old 1.1
 
 # A descriptor missing a REQUIRED section is truncated, not merely older, and must be
 # rejected rather than merged as empty -- otherwise contract interface content is dropped
-# silently. Only version-gated sections (action_results, variants, enums) may be absent.
+# silently. Baseline sections are required at every version; `variants` and `action_results`
+# are required from the version that introduced them (1.1 and 1.2) and may be absent only
+# below it; `enums` alone is optional everywhere, being emitted only when non-empty.
 cat > "${WORK}/truncated.desc" <<EOF
 {"version":"sysio::abi/1.2","structs":[],"types":[],"tables":[],"ricardian_clauses":[],"variants":[],"abi_extensions":[],"pb_types":[],"wasm_actions":[],"wasm_entries":[],"wasm_notifies":[],"action_results":[]}
 EOF
@@ -271,6 +273,52 @@ if "$CDT_CODEGEN" --finalize --contract trunc --output-dir "$WORK" \
 else
     pass "a descriptor missing a required section is rejected"
 fi
+
+# Each validation rule needs its own case: without these, reverting either the versionless
+# rejection or the per-version thresholds leaves the suite green.
+#
+# $1 label, $2 expected outcome (accept|reject), $3 seed version, $4 descriptor JSON,
+# $5 expected diagnostic fragment when rejecting.
+validation_case() {
+    local label="$1" expect="$2" seed="$3" body="$4" diag="${5:-}"
+    local dir="${WORK}/v_${label// /_}"
+    mkdir -p "$dir"
+    printf '%s\n' "$body" > "${dir}/d.desc"
+    if "$CDT_CODEGEN" --finalize --contract vcase --output-dir "$dir" \
+          --abi-version "$seed" --abi-output "${dir}/out.abi" \
+          --desc-file "${dir}/d.desc" > "${dir}/log" 2>&1; then
+        if [ "$expect" = "accept" ]; then pass "$label"; else fail "$label (accepted)"; fi
+    else
+        if [ "$expect" = "reject" ]; then
+            if [ -z "$diag" ] || grep -q "$diag" "${dir}/log"; then
+                pass "$label"
+            else
+                fail "$label (rejected, but not with the expected diagnostic)"
+                sed 's/^/    /' "${dir}/log"
+            fi
+        else
+            fail "$label (rejected)"
+            sed 's/^/    /' "${dir}/log"
+        fi
+    fi
+}
+
+BASE='"structs":[],"types":[],"actions":[],"tables":[],"ricardian_clauses":[],"abi_extensions":[],"pb_types":[],"wasm_actions":[],"wasm_entries":[],"wasm_notifies":[]'
+
+validation_case "a versionless descriptor is rejected" reject 1.2 \
+    "{${BASE},\"variants\":[],\"action_results\":[]}" "missing its version"
+
+validation_case "1.0 may omit variants and action_results" accept 1.0 \
+    "{\"version\":\"sysio::abi/1.0\",${BASE}}"
+
+validation_case "1.1 requires variants" reject 1.1 \
+    "{\"version\":\"sysio::abi/1.1\",${BASE},\"action_results\":[]}" "missing section : variants"
+
+validation_case "1.1 may omit action_results" accept 1.1 \
+    "{\"version\":\"sysio::abi/1.1\",${BASE},\"variants\":[]}"
+
+validation_case "1.2 requires action_results" reject 1.2 \
+    "{\"version\":\"sysio::abi/1.2\",${BASE},\"variants\":[]}" "missing section : action_results"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

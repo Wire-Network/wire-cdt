@@ -72,6 +72,9 @@ tmp/
 # prequel local review state (operational artifacts, never committed)
 .prequel/
 
-# Core dumps (deliberate-crash test runs leave these behind)
-core.*
-vgcore.*
+# Core dumps (a deliberate-crash test run leaves these in the working directory).
+# Root-scoped: an unanchored core.* would also match tracked headers such as
+# libraries/boost/include/boost/hana/core.hpp.
+/core
+/core.*
+/vgcore.*

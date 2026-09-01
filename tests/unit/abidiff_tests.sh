@@ -64,16 +64,9 @@ EOF
 check_reports_diff() {
     local version="$1" desc="$2"
     write_pair "$version"
-    # cdt-abidiff exits 0 after reporting ordinary differences, so a non-zero status here is
-    # a real failure -- a crash or a bad-input rejection -- and must not be swallowed. Only
-    # the unsupported-version case below expects non-zero.
-    local out rc
-    out="$("$ABIDIFF" "${WORK}/a.abi" "${WORK}/b.abi" 2>&1)"; rc=$?
-    if [ "$rc" -ne 0 ]; then
-        fail "$desc (cdt-abidiff exited $rc)"
-        sed 's/^/      /' <<< "$out"
-        return
-    fi
+    # Via capture(), not a manual rc=$? -- under `set -e` a failing command substitution in an
+    # assignment aborts the script before $? can be read, so that branch was unreachable.
+    capture "$desc" "${WORK}/a.abi" "${WORK}/b.abi" || return
     if grep -qE "geta|getb" <<< "$out"; then
         pass "$desc"
     else
@@ -130,8 +123,10 @@ cat > "${WORK}/r2.abi" <<'EOF'
 { "version": "sysio::abi/1.10", "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [],
   "action_results": [ { "name": "getb", "result_type": "uint32" }, { "name": "geta", "result_type": "uint64" } ] }
 EOF
-out="$("$ABIDIFF" "${WORK}/r1.abi" "${WORK}/r2.abi" 2>&1 || true)"
-if grep -qE "geta|getb" <<< "$out"; then
+if ! capture "reordered equivalent action_results report no difference" \
+        "${WORK}/r1.abi" "${WORK}/r2.abi"; then
+    :
+elif grep -qE "geta|getb" <<< "$out"; then
     fail "reordered equivalent action_results report no difference"
     sed 's/^/      /' <<< "$out"
 else
