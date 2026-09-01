@@ -717,10 +717,23 @@ int main(int argc, const char** argv) {
 
                // The promotion itself happened before gen_actions ran (see above), so the
                // plugin already gated its sections on this version. All that is left is to
-               // stamp the merged document, whose version came from the descriptors.
-               assert(abi_version_minor >= abi_version::protobuf_minor ||
-                      abi_version_major != abi_version::default_major);
-               abi["version"] = abi_version::version_string(abi_version_major, abi_version_minor);
+               // stamp the merged document.
+               //
+               // Take the NEWER of the CLI version and the version the descriptors merged to.
+               // Stamping the CLI version unconditionally downgraded a document whose
+               // descriptors declared something newer -- reachable through the fallback scan
+               // that picks up .desc files from earlier compiles, which may have run with a
+               // different -abi-version. The previous assert() here was tautological (parse()
+               // bounds the major to exactly max_supported_major, so its second disjunct was
+               // unreachable) and compiled away under the default Release TOOLS_BUILD_TYPE.
+               int merged_major = 0;
+               int merged_minor = 0;
+               std::pair<int, int> stamped{abi_version_major, abi_version_minor};
+               if (abi.count("version") &&
+                   abi_version::parse_version_string(abi["version"].as<std::string>(), merged_major, merged_minor)) {
+                  stamped = std::max(stamped, std::pair<int, int>{merged_major, merged_minor});
+               }
+               abi["version"] = abi_version::version_string(stamped.first, stamped.second);
             } else if (referenced_pb_types.size()) {
                std::cerr << "protobuf types are used but no protobuf files are specified for contract " << contract_name
                          << ", please use `contract_use_protobuf()` cmake function to specify the protobuf files it depends on\n";

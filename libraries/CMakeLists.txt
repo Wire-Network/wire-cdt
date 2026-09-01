@@ -41,11 +41,26 @@ if (ENABLE_NATIVE_COMPILER)
 endif()
 
 # Anything compiled against the staged tree must see the pruned copy, not a leftover.
-foreach(staged_consumer sysio native native_sysio)
-   if(TARGET ${staged_consumer})
-      add_dependencies(${staged_consumer} stage_cdt_tree)
-   endif()
-endforeach()
+#
+# Enumerated, not listed by hand. The staging step REMOVE_RECURSE's its destinations and every
+# compile in this tree carries -I<build>/include/... baked in by the driver, so a target that
+# is not ordered after it can race the deletion. A three-name allowlist covered `sysio`,
+# `native` and `native_sysio` and silently missed sysio_malloc, sysio_dsm, sysio_cmem, c, c++,
+# rt, sf and the native_* variants -- and would miss the next one added.
+function(cdt_order_after_staging dir)
+   get_property(dir_targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
+   foreach(tgt IN LISTS dir_targets)
+      if(NOT tgt STREQUAL "stage_cdt_tree")
+         get_target_property(tgt_type ${tgt} TYPE)
+         if(NOT tgt_type STREQUAL "INTERFACE_LIBRARY")
+            add_dependencies(${tgt} stage_cdt_tree)
+         endif()
+      endif()
+   endforeach()
+   get_property(subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+   foreach(subdir IN LISTS subdirs)
+      cdt_order_after_staging("${subdir}")
+   endforeach()
+endfunction()
+cdt_order_after_staging("${CMAKE_CURRENT_SOURCE_DIR}")
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/boost/include/boost/preprocessor DESTINATION ${BASE_BINARY_DIR}/include/boost)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/meta_refl/include/bluegrass DESTINATION ${BASE_BINARY_DIR}/include)

@@ -215,7 +215,7 @@ $BUILD_DIR/tests/unit/kv_cached_tests
 
 Adding a unit test needs **two** registrations: `add_cdt_unit_test(<name>)` in `tests/unit/CMakeLists.txt` (builds it) and `add_unit_test(<name>)` in `tests/CMakeLists.txt` (registers it with ctest). Miss the second and the test still compiles but `ctest` never executes it — a silent gap, not a failure. `basic_name_tests` sat that way until it was registered; when adding a test, check both lists match.
 
-A few unit tests are shell scripts registered directly in `tests/CMakeLists.txt`: `version_tests`, `abi_version_tests`, `multidir_contract_tests`, `postpass_tests`.
+A few unit tests are shell scripts registered directly in `tests/CMakeLists.txt`: `version_tests`, `abi_version_tests`, `abidiff_tests`, `multidir_contract_tests`, `postpass_tests`, `staged_headers_tests`.
 
 ### Toolchain tests
 

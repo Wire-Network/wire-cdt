@@ -104,7 +104,7 @@ fi
 # Identical inputs must stay quiet.
 if ! capture "identical ABIs report no difference" "${WORK}/v1.abi" "${WORK}/v1.abi"; then
     :
-elif grep -qE "version|action_results" <<< "$out"; then
+elif grep -qE "^[<>] (version|struct|type|action|table|clause|variant|action_result)" <<< "$out"; then
     fail "identical ABIs report no difference"
     sed 's/^/      /' <<< "$out"
 else
@@ -191,6 +191,85 @@ elif grep -q "variant" <<< "$out"; then
 else
     pass "identical 1.10 variants report no difference"
 fi
+
+# --- struct matching -------------------------------------------------------------------
+#
+# find_structs kept a success flag across its field loop and broke out of it on a mismatch
+# without clearing it, so only a difference in the FIRST field was ever detected. It also
+# seeded the flag false and set it only inside that loop, so two identical zero-field
+# structs -- which every parameterless action generates -- compared as different.
+
+mkstruct() {   # $1=path  $2=fields JSON
+    cat > "$1" <<EOF
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "actions": [], "tables": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "structs": [ { "name": "s", "base": "", "fields": $2 } ]
+}
+EOF
+}
+
+expect_reports()  { # $1=desc $2=a $3=b $4=needle
+    if ! capture "$1" "$2" "$3"; then :
+    elif grep -q "$4" <<< "$out"; then pass "$1"
+    else fail "$1"; sed 's/^/      /' <<< "$out"; fi
+}
+expect_quiet()    { # $1=desc $2=a $3=b $4=needle
+    if ! capture "$1" "$2" "$3"; then :
+    elif grep -q "$4" <<< "$out"; then fail "$1"; sed 's/^/      /' <<< "$out"
+    else pass "$1"; fi
+}
+
+mkstruct "${WORK}/s_ab_int.abi"  '[{"name":"a","type":"uint64"},{"name":"b","type":"uint64"}]'
+mkstruct "${WORK}/s_ab_str.abi"  '[{"name":"a","type":"uint64"},{"name":"b","type":"string"}]'
+expect_reports "a change in a non-first struct field is reported" \
+    "${WORK}/s_ab_int.abi" "${WORK}/s_ab_str.abi" "struct"
+
+mkstruct "${WORK}/s_first.abi"   '[{"name":"z","type":"uint64"},{"name":"b","type":"uint64"}]'
+expect_reports "a change in the first struct field is still reported" \
+    "${WORK}/s_ab_int.abi" "${WORK}/s_first.abi" "struct"
+
+expect_quiet "an identical multi-field struct reports no difference" \
+    "${WORK}/s_ab_int.abi" "${WORK}/s_ab_int.abi" "struct"
+
+mkstruct "${WORK}/s_empty1.abi" '[]'
+mkstruct "${WORK}/s_empty2.abi" '[]'
+expect_quiet "an identical zero-field struct reports no difference" \
+    "${WORK}/s_empty1.abi" "${WORK}/s_empty2.abi" "struct"
+
+mkstruct "${WORK}/s_reorder.abi" '[{"name":"b","type":"uint64"},{"name":"a","type":"uint64"}]'
+expect_reports "reordered struct fields are reported (order is serialization order)" \
+    "${WORK}/s_ab_int.abi" "${WORK}/s_reorder.abi" "struct"
+
+# --- table matching --------------------------------------------------------------------
+#
+# find_tables compared only name and type, so index_type, key_names, key_types and table_id
+# could all change with no difference reported -- the metadata a contract upgrade turns on.
+
+mktable() {   # $1=path  $2=index_type  $3=key_names  $4=key_types  $5=table_id
+    cat > "$1" <<EOF
+{
+  "version": "sysio::abi/1.2",
+  "types": [], "structs": [], "actions": [], "ricardian_clauses": [], "variants": [],
+  "action_results": [],
+  "tables": [ { "name": "t", "type": "row", "index_type": "$2",
+                "key_names": $3, "key_types": $4, "table_id": $5 } ]
+}
+EOF
+}
+
+mktable "${WORK}/t_base.abi"  i64  '["id"]'          '["uint64"]'         100
+mktable "${WORK}/t_idx.abi"   kv64 '["id"]'          '["uint64"]'         100
+mktable "${WORK}/t_names.abi" i64  '["owner","id"]'  '["name","uint64"]'  100
+mktable "${WORK}/t_types.abi" i64  '["id"]'          '["name"]'           100
+mktable "${WORK}/t_id.abi"    i64  '["id"]'          '["uint64"]'         200
+
+expect_reports "a changed table index_type is reported" "${WORK}/t_base.abi" "${WORK}/t_idx.abi"   "table"
+expect_reports "changed table key_names are reported"   "${WORK}/t_base.abi" "${WORK}/t_names.abi" "table"
+expect_reports "changed table key_types are reported"   "${WORK}/t_base.abi" "${WORK}/t_types.abi" "table"
+expect_reports "a changed table_id is reported"         "${WORK}/t_base.abi" "${WORK}/t_id.abi"    "table"
+expect_quiet   "an identical table reports no difference" "${WORK}/t_base.abi" "${WORK}/t_base.abi" "table"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

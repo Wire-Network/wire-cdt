@@ -14,9 +14,17 @@
 # from one ordered script is what makes that safe -- two independent steps would race
 # to delete each other's output.
 #
-# `file(COPY)` preserves source timestamps and skips files already current at the
-# destination, so re-running every build neither churns mtimes nor triggers
-# downstream rebuilds.
+# `file(COPY)` preserves source timestamps, so re-running every build neither churns
+# mtimes nor triggers downstream rebuilds. (It also skips files already current at the
+# destination, but that never applies here: both destinations are REMOVE_RECURSE'd
+# below before either is repopulated.)
+#
+# Inputs (via -D):
+# EVERY tree staged into <build>/include is handled here. The four vendored ones -- libc,
+# libcxx, boost/preprocessor and bluegrass -- were left as configure-time copies in an
+# earlier revision, which meant deleting a header from the cdt-musl or cdt-libcxx submodule
+# left the staged copy shipping forever, exactly the bug this script exists to fix. They are
+# pruned and recopied on the same schedule now.
 #
 # Inputs (via -D):
 #   STAGE_SOURCE_DIR - the repo's libraries/ directory
@@ -39,6 +47,10 @@ set(header_patterns FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 # to vanish with its parent; include/sysio/native has no such parent.)
 file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/sysiolib")
 file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/sysio/native")
+file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/libc")
+file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/libcxx")
+file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/boost/preprocessor")
+file(REMOVE_RECURSE "${STAGE_BINARY_DIR}/include/bluegrass")
 
 # sysiolib -> include/sysiolib
 file(COPY "${STAGE_SOURCE_DIR}/sysiolib"
@@ -68,3 +80,15 @@ if(STAGE_NATIVE)
         DESTINATION "${STAGE_BINARY_DIR}/include/sysiolib"
         ${header_patterns} PATTERN "softfloat" EXCLUDE)
 endif()
+
+# The vendored trees. libc and libcxx copy whole directories rather than header-matching,
+# because musl and libc++ both ship extensionless headers (<cstdint>, <vector>, ...) that a
+# "*.h;*.hpp" filter would drop.
+file(COPY "${STAGE_SOURCE_DIR}/libc/cdt-musl/include/"       DESTINATION "${STAGE_BINARY_DIR}/include/libc/")
+file(COPY "${STAGE_SOURCE_DIR}/libc/cdt-musl/src/internal/"  DESTINATION "${STAGE_BINARY_DIR}/include/libc/")
+file(COPY "${STAGE_SOURCE_DIR}/libc/cdt-musl/arch/eos/"      DESTINATION "${STAGE_BINARY_DIR}/include/libc/")
+file(COPY "${STAGE_SOURCE_DIR}/libc++/cdt-libcxx/include/"   DESTINATION "${STAGE_BINARY_DIR}/include/libcxx")
+file(COPY "${STAGE_SOURCE_DIR}/boost/include/boost/preprocessor"
+     DESTINATION "${STAGE_BINARY_DIR}/include/boost")
+file(COPY "${STAGE_SOURCE_DIR}/meta_refl/include/bluegrass"
+     DESTINATION "${STAGE_BINARY_DIR}/include")

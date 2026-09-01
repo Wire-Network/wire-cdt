@@ -6,7 +6,9 @@
 #include <jsoncons/json.hpp>
 #include "abi.hpp"
 
+#include <algorithm>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -56,9 +58,14 @@ class ABIMerger {
          ret["actions"]  = merge_actions(other);
          ret["tables"]   = merge_tables(other);
          ret["ricardian_clauses"]  = merge_clauses(other);
-         ret["variants"] = merge_variants(other);
-         // Compare parsed components: deriving them from the string's last three
-         // characters mis-read any two-digit minor ("sysio::abi/1.10" -> ".10").
+         // Both version-gated sections consult the MERGED version, and both are compared as
+         // parsed components: deriving them from the string's last three characters mis-read
+         // any two-digit minor ("sysio::abi/1.10" -> ".10"). variants was previously emitted
+         // unconditionally, so a 1.0 document merged at 1.0 produced a 1.0 ABI carrying a
+         // variants array -- contradicting the variants_since rule declared below.
+         if (abi_version::supports_variants(merged_version.first, merged_version.second)) {
+            ret["variants"] = merge_variants(other);
+         }
          if (abi_version::supports_action_results(merged_version.first, merged_version.second)) {
             ret["action_results"] = merge_action_results(other);
          }
@@ -95,20 +102,21 @@ class ABIMerger {
                                                 : abi["version"].as<std::string>();
       }
 
+      // Field order is significant: it is the serialization order, so {x,y} and {y,x} are
+      // different wire layouts. The previous form matched by set membership plus size, so two
+      // descriptors declaring the same struct with reordered fields merged as identical and
+      // whichever .desc sorted first silently won -- a determinism hazard keyed on filename.
       static bool struct_is_same(ojson a, ojson b) {
-         bool same_fields = a["fields"].size() == b["fields"].size();
-         for (auto a_field : a["fields"].array_range()) {
-            bool found_field = false;
-            for (auto b_field : b["fields"].array_range()) {
-               if (a_field["name"] == b_field["name"] &&
-                   a_field["type"] == b_field["type"])
-                  found_field = true;
-            }
-            if (!found_field)
+         if (a["name"] != b["name"] || a["base"] != b["base"])
+            return false;
+         const auto& fa = a["fields"];
+         const auto& fb = b["fields"];
+         if (fa.size() != fb.size())
+            return false;
+         for (size_t i = 0; i < fa.size(); ++i)
+            if (fa[i]["name"] != fb[i]["name"] || fa[i]["type"] != fb[i]["type"])
                return false;
-         }
-         return a["name"] == b["name"] &&
-                a["base"] == b["base"] && same_fields;
+         return true;
       }
 
       static bool type_is_same(ojson a, ojson b) {
@@ -122,37 +130,38 @@ class ABIMerger {
                 a["ricardian_contract"] == b["ricardian_contract"];
       }
 
-      template <typename T>
-      static bool action_is_almost_same(ojson a, ojson b, T& rc) {
-         if (a["ricardian_contract"].empty())
-            rc = b["ricardian_contract"];
-         return a["name"] == b["name"] &&
-                a["type"] == b["type"];
-      }
 
-
+      // Length and order, like struct_is_same and like cdt-abidiff's find_variants. The
+      // previous form asked only whether every type in `a` appeared somewhere in `b`, so
+      // ["uint64"] and ["uint64","string"] compared equal: merging them kept the accumulator's
+      // shorter list and dropped the `string` alternative outright, or -- with the descriptors
+      // in the other order -- failed the build with "v already defined". Which of the two you
+      // got was decided by sorted .desc filename order.
       static bool variant_is_same(ojson a, ojson b) {
-         for (auto tya : a["types"].array_range()) {
-            bool found_ty = false;
-            for (auto tyb : b["types"].array_range()) {
-               if (tyb == tya)
-                  found_ty = true;
-            }
-            if (!found_ty)
+         if (a["name"] != b["name"])
+            return false;
+         const auto& ta = a["types"];
+         const auto& tb = b["types"];
+         if (ta.size() != tb.size())
+            return false;
+         for (size_t i = 0; i < ta.size(); ++i)
+            if (ta[i] != tb[i])
                return false;
-         }
-         return a["name"] == b["name"];
+         return true;
       }
 
       static bool table_is_same(ojson a, ojson b) {
          // key_names/key_types may differ: template-detected tables have them
          // populated while attribute-only tables have empty arrays. Both are
          // valid representations of the same table — treat as compatible.
+         const auto compatible = [](const ojson& x, const ojson& y) {
+            return x == y || x.empty() || y.empty();
+         };
          return a["name"] == b["name"] &&
                 a["type"] == b["type"] &&
                 a["index_type"] == b["index_type"] &&
-                (a["key_names"] == b["key_names"] ||
-                 a["key_names"].empty() || b["key_names"].empty());
+                compatible(a["key_names"], b["key_names"]) &&
+                compatible(a["key_types"], b["key_types"]);
       }
 
       static bool clause_is_same(ojson a, ojson b) {
@@ -303,10 +312,14 @@ class ABIMerger {
       ojson abi;
 };
 
+// max_supported_major, not default_major: these say which version of the FORMAT introduced the
+// section, which is a property of the format, not of what this toolchain happens to emit by
+// default. The two are equal today, so bumping the emission default would silently move every
+// threshold with it.
 inline const ABIMerger::section_since ABIMerger::variants_since{
-   std::pair<int, int>{abi_version::default_major, abi_version::variants_minor}};
+   std::pair<int, int>{abi_version::max_supported_major, abi_version::variants_minor}};
 inline const ABIMerger::section_since ABIMerger::action_results_since{
-   std::pair<int, int>{abi_version::default_major, abi_version::action_results_minor}};
+   std::pair<int, int>{abi_version::max_supported_major, abi_version::action_results_minor}};
 inline const ABIMerger::section_since ABIMerger::never_mandatory{};
 
 #pragma GCC diagnostic pop

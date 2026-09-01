@@ -70,7 +70,6 @@ send_inline
 set_action_return_value
 set_blockchain_parameters_packed
 set_finalizers
-set_kv_parameters_packed
 set_privileged
 set_proposed_producers
 set_proposed_producers_ex

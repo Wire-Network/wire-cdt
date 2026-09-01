@@ -90,32 +90,46 @@ class abidiff {
          std::cout << pretty_print(abi["structs"].at(index)) << "\n";
       }
       
-      ojson get_base_type(const ojson& abi, const ojson& type) {
-         for (int i=0; i < abi["types"].size(); i++) {
-            if (abi["types"].at(i)["new_type_name"] == type)
-               return abi["types"].at(i)["new_type_name"];
-         } 
-         return type;
+      // Element-wise equality over a JSON array. Used for the ABI's list-valued fields, where
+      // both length and order are significant -- order is serialization order.
+      static bool arrays_equal(const ojson& a, const ojson& b) {
+         if (a.size() != b.size())
+            return false;
+         for (size_t k = 0; k < a.size(); ++k)
+            if (a.at(k) != b.at(k))
+               return false;
+         return true;
       }
+
+      // Same base, same fields, in the same order.
+      //
+      // The previous form had two defects, both reproduced against real ABIs. It seeded a flag
+      // false and set it only INSIDE the field loop, so two byte-identical zero-field structs
+      // -- which every parameterless action generates -- compared as different. And on a field
+      // mismatch it broke out of the loop WITHOUT clearing the flag, so a difference in any
+      // field but the first left the flag set from the previous iteration and the changed
+      // struct was reported as unchanged.
+      static bool structs_match(const ojson& a, const ojson& b) {
+         if (a["base"] != b["base"])
+            return false;
+         const auto& fa = a["fields"];
+         const auto& fb = b["fields"];
+         if (fa.size() != fb.size())
+            return false;
+         for (size_t k = 0; k < fa.size(); ++k)
+            if (fa.at(k)["name"] != fb.at(k)["name"] || fa.at(k)["type"] != fb.at(k)["type"])
+               return false;
+         return true;
+      }
+
       void find_structs(const ojson& abi1, const ojson& abi2, char direction) {
          for ( int i=0; i < abi1["structs"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["structs"].size(); j++ ) {
-               if (abi1["structs"].at(i)["name"] == abi2["structs"].at(j)["name"]) {
-                  if (abi1["structs"].at(i)["fields"].size() != abi2["structs"].at(j)["fields"].size())
-                     break;
-                  if (abi1["structs"].at(i)["base"] != abi2["structs"].at(j)["base"])
-                     break;
-                  
-                  bool _found = false;
-                  for (int k=0; k < abi1["structs"].at(i)["fields"].size(); k++) {
-                     if (abi1["structs"].at(i)["fields"].at(k)["name"] != abi2["structs"].at(j)["fields"].at(k)["name"] ||
-                         abi1["structs"].at(i)["fields"].at(k)["type"] != abi2["structs"].at(j)["fields"].at(k)["type"])
-                        break;
-                     _found = true;
-                  }
-                  found = _found;
-               }
+               if (abi1["structs"].at(i)["name"] != abi2["structs"].at(j)["name"])
+                  continue;
+               found = structs_match(abi1["structs"].at(i), abi2["structs"].at(j));
+               break;      // the name matched; that entry alone decides
             }
             if (!found)
                print_struct(abi1, i, direction);
@@ -169,15 +183,26 @@ class abidiff {
          std::cout << pretty_print(abi["tables"].at(index)) << "\n";
       }
 
+      // Every field a table entry carries. Comparing only name and type -- as this did -- made
+      // the tool silent about the metadata it exists to check: index_type, key_names,
+      // key_types and table_id could all change and it reported no difference. table_id in
+      // particular is where the row physically lives, so a change there is a migration.
+      static bool tables_match(const ojson& a, const ojson& b) {
+         return a["type"]       == b["type"]
+             && a["index_type"] == b["index_type"]
+             && a["table_id"]   == b["table_id"]
+             && arrays_equal(a["key_names"], b["key_names"])
+             && arrays_equal(a["key_types"], b["key_types"]);
+      }
+
       void find_tables(const ojson& abi1, const ojson& abi2, char direction) {
          for ( int i=0; i < abi1["tables"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["tables"].size(); j++ ) {
-               if (abi1["tables"].at(i)["name"] == abi2["tables"].at(j)["name"]) {
-                  if (abi1["tables"].at(i)["type"] != abi2["tables"].at(j)["type"])
-                     break;
-                  found = true;
-               }
+               if (abi1["tables"].at(i)["name"] != abi2["tables"].at(j)["name"])
+                  continue;
+               found = tables_match(abi1["tables"].at(i), abi2["tables"].at(j));
+               break;
             }
             if (!found)
                print_table(abi1, i, direction);
@@ -213,24 +238,14 @@ class abidiff {
          for ( int i=0; i < abi1["variants"].size(); i++ ) {
             bool found = false;
             for ( int j=0; j < abi2["variants"].size(); j++ ) {
-               if (abi1["variants"].at(i)["name"] == abi2["variants"].at(j)["name"]) {
-                  // Compare the whole type list, length first. The previous form broke out of
-                  // the element loop on a mismatch and then set found unconditionally, so a
-                  // same-named variant always counted as unchanged however its types differed;
-                  // and with no length check, at(k) threw on a shorter right-hand side.
-                  const auto& t1 = abi1["variants"].at(i)["types"];
-                  const auto& t2 = abi2["variants"].at(j)["types"];
-                  if (t1.size() != t2.size())
-                     break;
-                  bool same_types = true;
-                  for (size_t k = 0; k < t1.size(); ++k) {
-                     if (t1.at(k) != t2.at(k)) { same_types = false; break; }
-                  }
-                  if (!same_types)
-                     break;
-                  found = true;
-               }
-
+               if (abi1["variants"].at(i)["name"] != abi2["variants"].at(j)["name"])
+                  continue;
+               // The whole type list, length and order. The original broke out of the element
+               // loop on a mismatch and then set found unconditionally, so a same-named variant
+               // counted as unchanged however its types differed; with no length check, at(k)
+               // also threw on a shorter right-hand side.
+               found = arrays_equal(abi1["variants"].at(i)["types"], abi2["variants"].at(j)["types"]);
+               break;
             }
             if (!found)
                print_variant(abi1, i, direction);

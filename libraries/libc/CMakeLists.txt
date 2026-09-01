@@ -92,6 +92,3 @@ if (ENABLE_NATIVE_COMPILER)
    add_custom_command( TARGET native_c POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native_c> ${BASE_BINARY_DIR}/lib )
 endif()
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cdt-musl/include/ DESTINATION ${BASE_BINARY_DIR}/include/libc/)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cdt-musl/src/internal/ DESTINATION ${BASE_BINARY_DIR}/include/libc/)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cdt-musl/arch/eos/ DESTINATION ${BASE_BINARY_DIR}/include/libc/)

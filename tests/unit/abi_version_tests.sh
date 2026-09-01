@@ -258,6 +258,66 @@ merge_case() {
 merge_case "older-first" old new 1.1
 merge_case "newer-first" new old 1.1
 
+# --- matcher identity ---------------------------------------------------------------
+#
+# variant_is_same asked only whether every type in one variant appeared somewhere in the
+# other, with no length check, so ["uint64"] and ["uint64","string"] compared equal. Merging
+# them kept the accumulator's shorter list and dropped the `string` alternative outright --
+# or, with the descriptors in the other order, failed the build with "v already defined".
+# Which of the two you got was decided by sorted .desc filename order.
+#
+# struct_is_same matched fields by set membership plus size, so the same struct declared with
+# reordered fields merged as identical and the alphabetically-first .desc silently won. ABI
+# field order is serialization order, so that is a wire-layout change decided by a filename.
+VAR_COMMON='"types":[],"tables":[],"ricardian_clauses":[],"abi_extensions":[],"pb_types":[],"wasm_actions":[],"wasm_entries":[],"wasm_notifies":[],"action_results":[]'
+
+mkdesc_variant() { # $1=path $2=types-json
+    cat > "$1" <<EOF
+{"version":"sysio::abi/1.2","structs":[],"actions":[],"variants":[{"name":"v","types":$2}],${VAR_COMMON}}
+EOF
+}
+mkdesc_struct() {  # $1=path $2=fields-json
+    cat > "$1" <<EOF
+{"version":"sysio::abi/1.2","structs":[{"name":"s","base":"","fields":$2}],"actions":[],"variants":[],${VAR_COMMON}}
+EOF
+}
+
+# Two descriptors declaring the SAME name with DIFFERENT content are a genuine conflict, and
+# the merge must refuse. What matters as much as the refusal is that it happens in BOTH
+# orders: the defect was that one order refused and the other silently kept the accumulator's
+# version, so the outcome of a build depended on sorted .desc filename order.
+# $1=label $2=descA $3=descB
+merge_refuses_both_orders() {
+    local label="$1" a="$2" b="$3" order dir
+    for order in ab ba; do
+        dir="${WORK}/${label// /_}_${order}"; mkdir -p "$dir"
+        if [ "$order" = ab ]; then
+            cp "$a" "${dir}/a_first.desc"; cp "$b" "${dir}/b_second.desc"
+        else
+            cp "$b" "${dir}/a_first.desc"; cp "$a" "${dir}/b_second.desc"
+        fi
+        if "$CDT_CODEGEN" --finalize --contract mix --output-dir "$dir" \
+              --abi-output "${dir}/mix.abi" \
+              --desc-file "${dir}/a_first.desc" --desc-file "${dir}/b_second.desc" \
+              > "${dir}/mix.log" 2>&1; then
+            fail "${label} (${order} order merged instead of refusing)"
+            sed 's/^/    /' "${dir}/mix.abi"
+        else
+            pass "${label} (${order} order)"
+        fi
+    done
+}
+
+mkdesc_variant "${WORK}/v_short.desc" '["uint64"]'
+mkdesc_variant "${WORK}/v_long.desc"  '["uint64","string"]'
+merge_refuses_both_orders "variants of differing length conflict" \
+    "${WORK}/v_short.desc" "${WORK}/v_long.desc"
+
+mkdesc_struct "${WORK}/s_ab.desc" '[{"name":"a","type":"uint64"},{"name":"b","type":"string"}]'
+mkdesc_struct "${WORK}/s_ba.desc" '[{"name":"b","type":"string"},{"name":"a","type":"uint64"}]'
+merge_refuses_both_orders "reordered struct fields conflict" \
+    "${WORK}/s_ab.desc" "${WORK}/s_ba.desc"
+
 # A descriptor missing a REQUIRED section is truncated, not merely older, and must be
 # rejected rather than merged as empty -- otherwise contract interface content is dropped
 # silently. Baseline sections are required at every version; `variants` and `action_results`
