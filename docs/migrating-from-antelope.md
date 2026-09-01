@@ -163,8 +163,8 @@ clio create account sysio mycontract <OwnerKey> <ActiveKey>
 
 **A new account holds zero CPU and zero NET.** For a user account that does not matter — see
 [Step 3](#step-3--resources-the-contract-pays). For the account that will *hold your contract* it is
-fatal, because on Wire the contract is the payer. Before anyone can call it, a node owner must
-issue it a policy:
+fatal, because on Wire the contract is the payer. Before an ordinary caller can reach it, a node
+owner must issue it a policy:
 
 ```bash
 clio push action sysio.roa addpolicy '{"owner":"mycontract","issuer":"<nodeowner>","net_weight":"0.1000 SYS","cpu_weight":"0.1000 SYS","ram_weight":"1.0000 SYS","time_block":0,"network_gen":<gen>}' -p <nodeowner>@active
@@ -177,8 +177,8 @@ generation's allocation. Read the current generation from the `roastate` singlet
 issuer appears in that generation's `nodeowners`:
 
 ```bash
-clio get table sysio.roa sysio.roa roastate               # network_gen
-clio get table sysio.roa <gen> nodeowners --limit 100     # issuer must be listed here
+clio get table sysio.roa roastate                          # network_gen
+clio get table sysio.roa nodeowners -S <gen> --limit 100    # issuer must be listed here
 ```
 
 Keep the JSON on one line: a `\` used to wrap it would fall *inside* the single quotes and be
@@ -228,6 +228,8 @@ find each one for you.
 A first pass that gets nearly all of it:
 
 ```bash
+# GNU sed. On macOS use `sed -i ''` (or `gsed -i` from coreutils) -- BSD sed reads the next
+# argument as a backup suffix and would consume the first -e.
 grep -rl 'eosio\|EOSIO\|EOSLIB' src include \
   | xargs sed -i -e 's/\beosio\b/sysio/g' \
                  -e 's/\beosio_\(assert\|assert_message\|assert_code\|exit\)\b/sysio_\1/g' \
@@ -282,8 +284,10 @@ jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /t
 ### The legacy database is gone
 
 The `db_store_i64` / `db_find_i64` / `db_idx64_*` / `db_idx128_*` / `db_idx256_*` /
-`db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire — not in CDT, and not in
-the chain. `<sysio/db.h>` is a stub that forwards to `<sysio/kv.h>`. Contract state lives in a
+`db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire. The chain exports none
+of them, so a contract declaring one links but fails at deploy. `<sysio/db.h>` is a stub that
+forwards to `<sysio/kv.h>`; the last stale declarations are removed from CDT's import list by
+[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112). Contract state lives in a
 key-value store addressed by a compile-time `table_id`.
 
 Code that called those intrinsics directly must be rewritten. Code that used `multi_index` — which
@@ -306,17 +310,26 @@ for (auto it = idx.begin(); it != idx.end(); it++)   // error: call to deleted o
 for (auto it = idx.begin(); it != idx.end(); ++it)   // rewrite to this
 ```
 
-A postfix increment has to copy the iterator, and a KV iterator owns a host-side handle. The sweep
+A postfix increment has to copy the iterator, and copying a KV iterator means duplicating a
+host-side handle — affordable to do deliberately, not to do once per loop step, which is why the
+postfix forms are deleted rather than merely discouraged. The sweep
 is mechanical — `it++` → `++it`, `it--` → `--it` — and the compiler finds every one.
 
-Two behaviours that a port depends on match upstream, and are worth knowing were checked rather than
-assumed:
+Two behaviours that a port depends on match upstream. **Both arrive with
+[wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are not present in a CDT built
+before it** — on an older toolchain a duplicate `emplace` silently overwrites the row and strands its
+secondary mapping, and the bounds take only `uint64_t`:
 
 - **A duplicate primary key aborts.** `emplace` rejects a key that already exists, as `db_store_i64`
   did on Antelope, so a contract that relied on that failure keeps failing loudly instead of
   silently overwriting the row.
-- **`lower_bound` / `upper_bound` accept the primary key type**, not only `uint64_t`, so a table
-  keyed on `name` compiles as it does upstream.
+- **`lower_bound` / `upper_bound` accept a `name`** as well as a `uint64_t`, so a table keyed on
+  `name` reads as it does upstream. (Taking the bare address of either — `&table_type::lower_bound`
+  — does not compile, there or upstream, because both are overload sets.)
+
+#113 also makes `emplace`, `modify` and `erase` abort when the handle's code is not the receiving
+account, again matching upstream. If your port constructs a table handle on another contract's
+account, it must be read-only.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
 `checksum256`. Iteration order is `memcmp` order over a big-endian encoding, so the fixed-width
@@ -333,8 +346,8 @@ What changed underneath, and where it shows:
 | | Antelope | Wire |
 |---|---|---|
 | Primary row key | `(code, scope, table, primary_key)` | `table_id` + 16 bytes: `[scope:8B BE][pk:8B BE]` |
-| Table identity | `name` embedded in the key | `table_id` (uint16, DJB2 hash of the table name) |
-| Bytes per row | 24-byte key | 16-byte key — 8 bytes cheaper |
+| Table identity | `name` embedded in the key | `table_id` (uint16, DJB2 over the 8 big-endian bytes of the table name's raw `uint64`) |
+| Bytes per row | 32-byte key (four 8-byte fields) | 18 bytes: 2-byte `table_id` + 16-byte key |
 | RAM billing | per-row + per-index overhead | different constants — see [kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md) |
 | `get_table_rows` response | bare value objects | `{key, value}` objects |
 
@@ -364,6 +377,7 @@ Table names are also no longer confined to what `sysio::name` can hold — 13 ch
 
 ```cpp
 #include <sysio/hash_id.hpp>
+#include <sysio/kv_table.hpp>
 
 kv::table<"user_balance_history"_i, my_key, my_val> users(get_self());
 ```
@@ -389,6 +403,20 @@ readable name.
 > the alphabet. `_n` is the fix only for short names that are already valid Antelope names. A short
 > identifier that is not — anything with `_`, a digit outside `1-5`, or an uppercase letter — has to
 > be renamed, or lengthened past 13 characters, until abigen is fixed.
+
+> **`kv::global` + `_i` is broken at every length — avoid the combination.** The rule above holds
+> for `kv::table`, where the annotated name and the `_i` literal resolve to one ABI entry. A
+> `kv::global` produces **two**, and neither length is usable:
+>
+> | `kv::global<"X"_i, T>` with `[[sysio::table("X")]]` | Result |
+> |---|---|
+> | `app_config` (10 chars) | compiles; ABI carries `app_config` → 38424 **and** a decoded-hash name `idrzzw4ktxljf` → 21489. The row is written under 21489. |
+> | `app_config_table` (16 chars) | **fails to link**: `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322` — the two registrations now compute the same id and trip the collision check. |
+>
+> Use `_n` for a global whose name fits `.12345a-z` within 13 characters, which covers most config
+> singletons. `tests/unit/test_contracts/hash_id_tests.cpp` and `examples/hash_id_example` both
+> still use the short `_i` form and are affected; they are left as-is here because renaming them
+> hits the second row of that table.
 
 ---
 
@@ -534,7 +562,10 @@ however deep the tree goes.
   permanent state on *your* account. A contract expecting a million rows needs a policy sized for a
   million rows. This is where a port's costs actually live.
 - **Failed transactions cost the payer nothing objectively** — `add_transaction_usage` is reached
-  only on the success path. Budget headroom for peaks, not for failures.
+  only on the success path. They are not free, though: a failing transaction still accrues
+  *subjective* CPU against its first authorizer on the node that ran it, which is what the
+  throttling above measures. Budget objective headroom for peaks; budget failures out of your
+  retry logic.
 
 ### What you do not need to change
 

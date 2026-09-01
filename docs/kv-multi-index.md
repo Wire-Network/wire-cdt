@@ -11,7 +11,11 @@
 
 ## Overview
 
-`sysio::multi_index` is a drop-in replacement for the EOSIO `multi_index`. Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*` intrinsics.
+`sysio::multi_index` is a source-compatible shim for the EOSIO `multi_index` — the same API over a
+different store, not the same implementation. Nearly all contract code carries over unchanged; the
+one known divergence is that the postfix iterator operators `it++` / `it--` are deleted, because
+copying a KV iterator duplicates a host-side handle. Rewrite those to `++it` / `--it`; the compiler
+finds every one. Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*` intrinsics.
 
 Each table gets a `table_id` (uint16) computed via `compute_table_id(name::raw)` from the template parameter.
 
@@ -33,6 +37,8 @@ The table name is conveyed by `table_id`, not embedded in the key.
 - Object caching for repeated access
 - `payer` parameter honored for RAM billing
 - `rbegin/rend`, `cbegin/cend` support
+- Upstream's mutation guards: `emplace` rejects a duplicate primary key, and `emplace` / `modify` /
+  `erase` reject a handle whose code is not the receiving account
 
 ## Singleton
 
