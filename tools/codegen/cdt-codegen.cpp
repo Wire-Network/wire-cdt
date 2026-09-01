@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstdint>
 #include <sysio/abi.hpp>
 #include <sysio/abimerge.hpp>

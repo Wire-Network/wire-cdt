@@ -66,13 +66,15 @@ class ABIMerger {
          ret["ricardian_clauses"]  = merge_clauses(other);
 
          // A section belongs to the emitted document if it has content, and the emitted
-         // VERSION is then raised to one that admits it. Gating the other way -- dropping a
-         // populated section because the requested version predates it -- emits a document
-         // that references a type it does not define: abigen writes `variants`
-         // unconditionally, so a contract with a std::variant parameter built at
-         // -abi-version 1.0 had its struct field still typed `variant_uint64_string` while
-         // the variants array itself was silently discarded. Promoting is what the protobuf
-         // path already does when it moves a document to 1.3.
+         // VERSION is then raised to one that admits it.
+         //
+         // Master emitted `variants` unconditionally, so a contract with a std::variant
+         // parameter built at -abi-version 1.0 got a document stamped 1.0 that nonetheless
+         // carried a section the format introduced at 1.1 -- self-inconsistent, though not
+         // lossy. Simply gating the section on the requested version would have made it
+         // lossy: the struct field stays typed `variant_uint64_string` while the array
+         // defining it disappears. Promoting the stamp keeps the document complete AND
+         // consistent, and is what the protobuf path already does when it moves to 1.3.
          // Promote FIRST, from every gated section, then emit -- so the outcome does not
          // depend on the order the sections are considered in. (Emitting as we go meant a
          // populated action_results could raise the version to 1.2 after an empty variants
@@ -277,19 +279,22 @@ class ABIMerger {
                   if (!is_same_func(ret[i], obj_b)) {
                      throw std::runtime_error(std::string("Error, ABI structs malformed : ")+ret[i][id].as<std::string>()+" already defined");
                   }
-                  // Prefer the richer entry. Checking only key_names left the outcome
-                  // order-dependent whenever two descriptors agreed on key_names but
-                  // differed in whether they carried secondary_indexes: rich-then-poor kept
-                  // the indexes, poor-then-rich dropped them, decided by sorted .desc
-                  // filename. Every optional list decides, not just the first one.
-                  const auto richer_in = [&](const char* k) {
+                  // Take the richer value for EACH optional list independently, rather than
+                  // replacing the whole entry. Two earlier forms were both order-dependent:
+                  // checking only key_names dropped a secondary_indexes the other side
+                  // carried, and replacing wholesale on any of the three discarded whichever
+                  // list the accumulator was richer in -- so two descriptors each rich in a
+                  // different key produced a different result depending on which .desc
+                  // sorted first. Per-key, the union is the same either way.
+                  //
+                  // is_same_func has already established these describe the same entity, so
+                  // there is no conflict to resolve here: a populated list only ever fills
+                  // in for an absent or empty one.
+                  for (const char* k : {"key_names", "key_types", "secondary_indexes"}) {
                      const bool have_a = ret[i].count(k) && !ret[i][k].empty();
                      const bool have_b = obj_b.count(k) && !obj_b[k].empty();
-                     return !have_a && have_b;
-                  };
-                  if (richer_in("key_names") || richer_in("key_types") ||
-                      richer_in("secondary_indexes")) {
-                     ret[i] = obj_b;
+                     if (!have_a && have_b)
+                        ret[i][k] = obj_b[k];
                   }
                   should_skip = true;
                }

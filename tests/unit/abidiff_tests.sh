@@ -401,9 +401,12 @@ expect_quiet "an identical protobuf descriptor reports no difference" \
 # top-level section used to abort the tool with "Key 'x' not found" (exit 255) -- including on
 # two byte-identical files. capture() fails a case whose process exits non-zero, so these
 # assert the comparison runs at all.
+# Version 1.2, deliberately: at 1.0 the version gates diff_variants/diff_action_results off, so
+# an ABI omitting those sections is never read and the fixture cannot fail. At 1.2 both are
+# read, so this pins section_or_empty rather than merely exercising the happy path.
 cat > "${WORK}/upstream.abi" <<'EOF'
 {
-  "version": "eosio::abi/1.0",
+  "version": "eosio::abi/1.2",
   "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": []
 }
 EOF
@@ -412,7 +415,7 @@ expect_quiet "an ABI missing whole sections diffs cleanly against itself" \
 
 cat > "${WORK}/upstream2.abi" <<'EOF'
 {
-  "version": "eosio::abi/1.0",
+  "version": "eosio::abi/1.2",
   "types": [], "structs": [], "tables": [], "ricardian_clauses": [],
   "actions": [ { "name": "act", "type": "act", "ricardian_contract": "" } ]
 }

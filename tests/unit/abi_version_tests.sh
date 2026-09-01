@@ -308,11 +308,13 @@ merge_refuses_both_orders() {
     done
 }
 
-# A populated gated section PROMOTES the emitted version rather than being dropped. abigen
-# writes `variants` at every version, so gating the merge output on the requested version
-# discarded the array while the struct field still referenced `variant_uint64_string` -- an
-# ABI naming a type it does not define. Promotion is what the protobuf path already does.
-# Asserted end to end, since the interesting part is abigen and the merger agreeing.
+# A populated gated section PROMOTES the emitted version rather than being dropped. Master
+# emitted `variants` unconditionally, so a 1.0 build produced a document stamped 1.0 that
+# carried a section the format introduced at 1.1 -- inconsistent, not lossy. Gating the section
+# on the requested version would have made it lossy instead, since the struct field keeps
+# referencing `variant_uint64_string` after the array defining it is dropped. Promoting the
+# stamp is the only option that is neither. Asserted end to end, because the interesting part
+# is abigen and the merger agreeing.
 promo_dir="${WORK}/promote_1_0"; mkdir -p "$promo_dir"
 cat > "${promo_dir}/v.cpp" <<'EOF'
 #include <sysio/sysio.hpp>
@@ -383,6 +385,19 @@ merge_table_case() {   # $1=label $2=firstdesc $3=seconddesc
 }
 merge_table_case "partial table desc, rich first" "${WORK}/t_rich.desc" "${WORK}/t_poor.desc"
 merge_table_case "partial table desc, poor first" "${WORK}/t_poor.desc" "${WORK}/t_rich.desc"
+
+# Split richness: each descriptor carries one optional list the other lacks. Replacing the
+# accumulator wholesale -- as an earlier revision did on any of the three keys -- discarded
+# whichever list the accumulator was richer in, so the result depended on which .desc sorted
+# first. Merging per key gives the union either way.
+cat > "${WORK}/t_keys_only.desc" <<EOF
+{"version":"sysio::abi/1.2",${TBL_COMMON},"tables":[{"name":"mytbl","type":"row","index_type":"i64","key_names":["id"],"key_types":["uint64"],"table_id":25830}]}
+EOF
+cat > "${WORK}/t_idx_only.desc" <<EOF
+{"version":"sysio::abi/1.2",${TBL_COMMON},"tables":[{"name":"mytbl","type":"row","index_type":"i64","key_names":[],"key_types":[],"table_id":25830,"secondary_indexes":[{"name":"byowner","type":"name","table_id":37799}]}]}
+EOF
+merge_table_case "split richness, keys first" "${WORK}/t_keys_only.desc" "${WORK}/t_idx_only.desc"
+merge_table_case "split richness, indexes first" "${WORK}/t_idx_only.desc" "${WORK}/t_keys_only.desc"
 
 # A genuinely different table_id is a different table, not a merge -- in both orders.
 sed 's/25830/40000/' "${WORK}/t_rich.desc" > "${WORK}/t_otherid.desc"
