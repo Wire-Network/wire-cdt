@@ -143,10 +143,14 @@ namespace _kv_multi_index_detail {
 
 // Uses sysio::indexed_by and sysio::const_mem_fun from the standard CDT headers.
 //
-// Source-compatible with the EOSIO multi_index, not identical to it. The known divergences,
-// all documented in docs/kv-multi-index.md: the postfix iterator operators are deleted (a copy
-// duplicates a host-side handle), the primary bounds are uint64_t/name overloads rather than a
-// member template, and a secondary key must be trivially copyable.
+// Source-compatible with the EOSIO multi_index, not identical to it. The known divergences:
+// the postfix iterator operators are deleted (a copy duplicates a host-side handle), the
+// primary bounds are uint64_t/name overloads rather than a member template, a secondary key
+// must be trivially copyable, and -- as of this change -- emplace rejects a duplicate primary
+// key while emplace/modify/erase reject a handle opened on another account.
+//
+// sysio::multi_index and sysio::singleton are both aliases of this template, so every one of
+// those applies to them too.
 
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {

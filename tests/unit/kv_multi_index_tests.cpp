@@ -217,9 +217,10 @@ SYSIO_TEST_BEGIN(foreign_code_handle_cannot_mutate)
       CHECK_ASSERT( "cannot erase objects in table of another contract",
                     ([&]() { foreign.erase(r); }) )
 
-      // The whole point: the receiver's row was never touched. Its VALUE is what carries
-      // that -- a misdirected emplace overwrites the row under the same key, so a count()
-      // of 1 would hold either way and prove nothing.
+      // The whole point: the receiver's row was never touched. The VALUE comparison is what
+      // carries that -- a misdirected emplace overwrites the row under the same key, so the
+      // count() below cannot fall to 0 and proves nothing on its own (the mock installs no
+      // kv_erase, and kv_set only assigns). It is kept as a precondition for the .at().
       CHECK_EQUAL( store().sets, 0u )
       const auto seeded = mock_kv::row_key{"alice"_n.value, records_tid,
                                            pk_key("alice"_n.value, 1)};
