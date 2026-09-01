@@ -159,15 +159,21 @@ SYSIO_TEST_END
 // The primary bounds stay callable as concrete overloads. A member template would break both
 // of these: a braced list cannot be deduced, and a pointer cannot be formed to an undeduced
 // template. Compile-time only -- neither expression is evaluated.
-SYSIO_TEST_BEGIN(primary_bounds_remain_addressable_overloads)
+SYSIO_TEST_BEGIN(primary_bounds_accept_every_call_shape)
    using itr_t = table_t::const_iterator;
-   constexpr auto lb = static_cast<itr_t (table_t::*)(uint64_t) const>(&table_t::lower_bound);
-   constexpr auto ub = static_cast<itr_t (table_t::*)(uint64_t) const>(&table_t::upper_bound);
-   static_assert(lb != nullptr && ub != nullptr, "primary bounds must be addressable overloads");
 
+   // Bare address-taking, with NO cast. This is the case a cast would hide: an explicit
+   // static_cast selects from an overload set and so passes even when the bare form does
+   // not compile, which is exactly how the earlier two-overload revision looked correct.
+   constexpr auto lb = &table_t::lower_bound;
+   constexpr auto ub = &table_t::upper_bound;
+   static_assert(lb != nullptr && ub != nullptr, "primary bounds must be bare-addressable");
+
+   using by_u64   = decltype(std::declval<const table_t&>().lower_bound(uint64_t{42}));
    using braced   = decltype(std::declval<const table_t&>().lower_bound({42}));
    using by_name  = decltype(std::declval<const table_t&>().lower_bound("alice"_n));
-   static_assert(std::is_same_v<braced, itr_t>,  "lower_bound must accept a braced initializer");
+   static_assert(std::is_same_v<by_u64,  itr_t>, "lower_bound must accept a uint64_t");
+   static_assert(std::is_same_v<braced,  itr_t>, "lower_bound must accept a braced initializer");
    static_assert(std::is_same_v<by_name, itr_t>, "lower_bound must accept a name");
 SYSIO_TEST_END
 
@@ -176,6 +182,6 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(duplicate_primary_key_rejected)
    SYSIO_TEST(foreign_code_handle_cannot_mutate)
    SYSIO_TEST(own_table_handle_passes_the_guard)
-   SYSIO_TEST(primary_bounds_remain_addressable_overloads)
+   SYSIO_TEST(primary_bounds_accept_every_call_shape)
    return has_failed();
 }

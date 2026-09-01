@@ -607,29 +607,35 @@ public:
       return *obj;
    }
 
-   /// Overloads rather than a template on the primary key type.
+   /// A single non-template parameter that accepts every primary key type.
    ///
-   /// Upstream templates these and routes through to_raw_key, but a member template is not a
-   /// drop-in for a concrete overload: `lower_bound({42})` cannot deduce from a braced list,
-   /// and `&table_type::lower_bound` cannot form a pointer to an undeduced template. Both
-   /// compile against a plain uint64_t parameter. Two overloads cover exactly the types
-   /// to_pk_uint64 accepts, which is the same reach the template had, without the break.
-   const_iterator lower_bound(uint64_t primary) const {
-      auto key = make_pk(primary);
+   /// Three call shapes have to keep working and they pull in different directions. A member
+   /// TEMPLATE (as upstream uses) breaks `lower_bound({42})`, since a braced list cannot be
+   /// deduced, and `&table_type::lower_bound`, since no pointer can be formed to an undeduced
+   /// template. Two concrete OVERLOADS fix the braced case but still break the bare
+   /// member-pointer, which becomes an overload set. One non-template function taking an
+   /// implicitly-constructible parameter satisfies all three at once, and it reaches exactly
+   /// the types to_pk_uint64 accepts.
+   ///
+   /// Implicit by design: callers never name this type, they pass a uint64_t or a name.
+   struct primary_key_arg {
+      uint64_t value;
+      constexpr primary_key_arg(uint64_t v) : value(v) {}          // NOLINT(google-explicit-constructor)
+      constexpr primary_key_arg(name n)     : value(n.value) {}    // NOLINT(google-explicit-constructor)
+   };
+
+   const_iterator lower_bound(primary_key_arg primary) const {
+      auto key = make_pk(primary.value);
       auto prefix = make_prefix();
       uint32_t handle = ::kv_it_create(_table_id, _code.value, prefix.data, prefix_size);
       int32_t status = ::kv_it_lower_bound(handle, key.data, key_size);
       return const_iterator(this, handle, status == 0);
    }
 
-   const_iterator lower_bound(name primary) const { return lower_bound(to_pk_uint64(primary)); }
-
-   const_iterator upper_bound(uint64_t primary) const {
-      if (primary == std::numeric_limits<uint64_t>::max()) return end();
-      return lower_bound(primary + 1);
+   const_iterator upper_bound(primary_key_arg primary) const {
+      if (primary.value == std::numeric_limits<uint64_t>::max()) return end();
+      return lower_bound(primary.value + 1);
    }
-
-   const_iterator upper_bound(name primary) const { return upper_bound(to_pk_uint64(primary)); }
 
    const_iterator iterator_to(const T& obj) const {
       uint64_t pk = to_pk_uint64(obj.primary_key());
