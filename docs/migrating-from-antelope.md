@@ -428,19 +428,28 @@ readable name.
 > identifier that is not — anything with `_`, a digit outside `1-5`, or an uppercase letter — has to
 > be renamed, or lengthened past 13 characters, until abigen is fixed.
 
-> **`kv::global` + `_i` is broken at every length — avoid the combination.** The rule above holds
-> for `kv::table`, where the annotated name and the `_i` literal resolve to one ABI entry. A
-> `kv::global` produces **two**, and neither length is usable:
+> **For `kv::global`, lengthening the name is not the remedy.** The mismatch above applies to a
+> `_i`-named `kv::global` too, but with a different shape and a different escape.
 >
-> | `kv::global<"X"_i, T>` with `[[sysio::table("X")]]` | Result |
-> |---|---|
-> | `app_config` (10 chars) | compiles; ABI carries `app_config` → 38424 **and** a decoded-hash name `idrzzw4ktxljf` → 21489. The row is written under 21489. |
-> | `app_config_table` (16 chars) | **fails at link**: `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322` — the two registrations now compute the same id and trip the collision check. (The diagnostic comes from `cdt-codegen`'s link-stage ABI finalize, before `wasm-ld`; `cdt-cpp -c` on the same file succeeds.) |
+> **Reads and writes are correct either way** — the contract and the host both use the
+> compile-time `table_id`, so the row is stored and fetched consistently. Only the ABI metadata
+> disagrees, and only for lookups *by name*.
 >
-> Use `_n` for a global whose name fits `.12345a-z` within 13 characters, which covers most config
-> singletons. `tests/unit/test_contracts/hash_id_tests.cpp` and `examples/hash_id_example` both
-> still use the short `_i` form and are affected; they are left as-is here because renaming them
-> hits the second row of that table.
+> With `[[sysio::table("app_config")]]` over `kv::global<"app_config"_i, T>`, the ABI carries
+> **two** table entries rather than one: `app_config` → 38424 (the `string_to_name` id, which is
+> not where the row lives) and a decoded-hash name `idrzzw4ktxljf` → 21489 (the real one). A
+> `get_table_rows` by the readable name therefore finds nothing.
+>
+> Renaming past 13 characters fixes this for `kv::table`, but for a `kv::global` it turns the
+> mismatch into a build failure: both entries then compute the same id under different names and
+> trip the duplicate check —
+> `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322`. (From
+> `cdt-codegen`'s link-stage ABI finalize; `cdt-cpp -c` on the same file succeeds.)
+>
+> So for a config singleton prefer `_n`, whose name fits `.12345a-z` in 13 characters in almost
+> every case, and which produces a single correct entry. `tests/unit/test_contracts/hash_id_tests.cpp`
+> and `examples/hash_id_example` both use the short `_i` form; they work, and their integration
+> tests pass, but their ABIs carry the extra entry.
 
 ---
 
