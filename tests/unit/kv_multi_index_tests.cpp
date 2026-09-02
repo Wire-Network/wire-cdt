@@ -19,9 +19,14 @@
  *       on the receiver. table_id derives from the table NAME alone, so a foreign-code
  *       mutation probes their table and writes the receiver's row of the same name.
  *
- *  The cases below never reach a write: each aborts first, so the mocked store is seeded
- *  directly rather than through emplace, and no iterator or secondary-index intrinsics are
- *  needed.
+ *  The cases come in two kinds. The REJECTING ones abort before any write, so their store is
+ *  seeded directly rather than through emplace. The ALLOWING ones -- an owned handle doing
+ *  emplace, modify and erase -- run the mutation through, so the mock also serves kv_set,
+ *  kv_erase and the iterator reads that emplace's closing find() performs. Both kinds matter:
+ *  without the allowing ones, a guard that rejected everything would satisfy the suite.
+ *
+ *  No secondary-index intrinsic is needed: the table under test declares no indices, so
+ *  store/remove/update_secondaries fold to nothing.
  */
 
 #include <sysio/tester.hpp>
@@ -81,8 +86,9 @@ struct callable_with<A, std::void_t<decltype(std::declval<const table_t&>().lowe
 
 constexpr uint32_t records_tid = sysio::kv::compute_table_id("records"_n.value);
 
-// Mirrors the asymmetry under test: kv_contains honours `code`, writes have no such
-// parameter. Only the read side is needed -- every case here aborts before writing.
+// Mirrors the asymmetry under test: kv_contains and kv_get honour `code`, while kv_set and
+// kv_erase have no such parameter and always land on store().receiver. Rows are therefore
+// keyed by the account that holds them, which is how a misdirected write is made visible.
 struct mock_kv {
    using row_key = std::tuple<uint64_t, uint32_t, std::string>;   // code, table_id, key
    std::map<row_key, std::string> rows;
@@ -229,8 +235,8 @@ SYSIO_TEST_BEGIN(foreign_code_handle_cannot_mutate)
 
       // The whole point: the receiver's row was never touched. The VALUE comparison is what
       // carries that -- a misdirected emplace overwrites the row under the same key, so the
-      // count() below cannot fall to 0 and proves nothing on its own (the mock installs no
-      // kv_erase, and kv_set only assigns). It is kept as a precondition for the .at().
+      // count() below would still be 1 and proves nothing on its own here, where nothing
+      // erases. It is kept as a precondition for the .at().
       CHECK_EQUAL( store().sets, 0u )
       const auto seeded = mock_kv::row_key{"alice"_n.value, records_tid,
                                            pk_key("alice"_n.value, 1)};

@@ -59,33 +59,38 @@ else
     grep -n "sysio_set_contract_name" "$DISPATCH" | sed 's/^/      got: /' || echo "      (no call at all)"
 fi
 
-# It must run before anything is dispatched, or a guard could read a stale value.
+# It must be the FIRST executable statement in apply(), not merely the first textually.
 #
-# Match the names the generator actually emits -- `pre_dispatch(`, `__sysio_action_*(` and
-# `__sysio_notify_*(`. An earlier version of this test grepped for names that appear nowhere in
-# the output, so the "first dispatch" line came back empty and the comparison was skipped as a
-# pass: moving the setter below every handler would have satisfied it. The search deliberately
-# does NOT start from the setter's line, which would make any match tautologically later.
+# Lexical ordering alone is not enough. An apply() shaped as
+#
+#     void apply(uint64_t r, uint64_t c, uint64_t a) {
+#       if (c == r) { sysio_set_contract_name(r); __sysio_action_...(r, c); }
+#       else        { __sysio_notify_...(r, c); }
+#     }
+#
+# has exactly one setter, passes the exact-`r` check, and puts the setter before the first
+# textual handler -- while every NOTIFICATION runs with the global still 0. The only assertion
+# that rules that out is structural: the setter must sit at the top of the function body,
+# before `pre_dispatch` and before the `if (c == r)` split, so it dominates both branches.
 apply_line="$(grep -nE '^\s*(__attribute__.*)?void apply\(' "$DISPATCH" | head -1 | cut -d: -f1 || true)"
-first_dispatch="$(awk -v a="${apply_line:-0}" \
-    'NR > a && /(pre_dispatch\(|__sysio_(action|notify)_[A-Za-z0-9_]*\()/ { print NR; exit }' "$DISPATCH")"
-setter_lines="$(grep -nE 'sysio_set_contract_name\(' "$DISPATCH" | awk -F: -v a="${apply_line:-0}" '$1 > a {print $1}')"
-setter_count="$(printf '%s\n' "$setter_lines" | grep -c . || true)"
+setter_count="$(grep -cE 'sysio_set_contract_name\(' "$DISPATCH" || true)"
+# The first non-blank, non-comment line after the function's opening brace.
+first_stmt="$(awk -v a="${apply_line:-0}" \
+    'NR > a && $0 !~ /^[[:space:]]*$/ && $0 !~ /^[[:space:]]*\/\// { print; exit }' "$DISPATCH" \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
 
 if [ -z "$apply_line" ]; then
     fail "apply() is defined in the generated dispatch"
-elif [ -z "$first_dispatch" ]; then
-    fail "the generated apply() dispatches to a handler"
-    echo "    no pre_dispatch/__sysio_action_*/__sysio_notify_* call found after line ${apply_line}"
-    sed 's/^/      /' "$DISPATCH"
-elif [ "$setter_count" -ne 1 ]; then
-    fail "apply() records the receiver exactly once"
-    echo "    found ${setter_count} call(s) inside apply(), expected 1"
-elif [ "$setter_lines" -lt "$first_dispatch" ]; then
-    pass "the receiver is recorded before anything is dispatched"
+elif [ "$setter_count" -ne 2 ]; then
+    # one declaration in the extern "C" block, one call inside apply()
+    fail "the dispatch declares and calls the setter exactly once each"
+    echo "    found ${setter_count} occurrence(s), expected 2"
+    grep -n "sysio_set_contract_name" "$DISPATCH" | sed 's/^/      /'
+elif [ "$first_stmt" = "sysio_set_contract_name(r);" ]; then
+    pass "the receiver is recorded as apply()'s first statement, before any branch"
 else
-    fail "the receiver is recorded before anything is dispatched"
-    echo "    setter at line ${setter_lines}, first dispatch at line ${first_dispatch}"
+    fail "the receiver is recorded as apply()'s first statement, before any branch"
+    echo "    first statement after apply() is: ${first_stmt}"
     sed 's/^/      /' "$DISPATCH"
 fi
 

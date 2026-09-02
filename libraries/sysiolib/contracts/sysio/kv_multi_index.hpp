@@ -2,8 +2,9 @@
 /**
  * KV-backed multi_index emulation layer.
  *
- * Drop-in replacement for sysio::multi_index that uses KV intrinsics instead
- * of legacy db_*_i64 intrinsics. Same template API, different backend.
+ * A shim for sysio::multi_index that uses KV intrinsics instead of the legacy db_*_i64
+ * ones. The template API is the same in almost every respect; the places it is not are
+ * listed above the class.
  *
  * Key encoding: [scope: 8B BE][primary_key: 8B BE] = 16 bytes.
  * Table name is encoded in table_id (DJB2 hash of raw template parameter),
@@ -159,10 +160,10 @@ namespace _kv_multi_index_detail {
 // account, matching upstream. Each guard is documented where it stands.
 //
 // sysio::multi_index is a direct alias of this template. sysio::singleton is not: it aliases
-// kv_singleton, which holds a kv_multi_index as a PRIVATE member and exposes only
-// get/set/remove/get_or_create, so it is bound by the mutators' guards -- a singleton handle
-// on another account is read-only -- but not by the divergences above, which its API does not
-// reach.
+// kv_singleton, which holds a kv_multi_index as a PRIVATE member. Its surface is single-row
+// accessors and mutators -- not the table's iterators, bounds or secondary-index API -- so it
+// is bound by the mutators' guards, and a singleton handle on another account is read-only,
+// but none of the divergences above are reachable through it.
 
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {
