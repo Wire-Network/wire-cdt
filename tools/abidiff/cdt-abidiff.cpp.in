@@ -394,22 +394,37 @@ class abidiff {
       // protobuf_types is a may_not_exist<string> holding a FileDescriptorSet as JSON, and the
       // chain's custom from_variant accepts either spelling: a JSON object, or a string
       // containing that object's JSON. Absent and an empty string are likewise the same empty
-      // value. Comparing the raw node reported all three pairs as differences the runtime does
+      // value. Comparing the raw node reported all of those as differences the runtime does
       // not see, so each side is reduced to one logical value first.
+      //
+      // This is JSON-level canonicalisation, not protobuf-level: two spellings that decode to
+      // the same FileDescriptorSet but differ as JSON -- an enum written numerically in one
+      // and symbolically in the other, say -- are still reported as different. Collapsing
+      // those would mean parsing both through FileDescriptorSet with the chain's options,
+      // which this tool does not link protobuf to do. It errs toward reporting a difference
+      // that is not one, never toward hiding one.
       static ojson canonical_protobuf(const ojson& o) {
          if (!o.count("protobuf_types"))
             return ojson::null();
          const ojson& v = o.at("protobuf_types");
          if (!v.is_string())
-            return v;                       // already an object
+            return v;                       // already an object (or something else; as-is)
          const std::string text = v.as<std::string>();
          if (text.empty())
-            return ojson::null();           // empty string == absent
+            return ojson::null();           // empty string == absent, per to_variant
          try {
-            return ojson::parse(text);      // string encoding of the same object
+            ojson parsed = ojson::parse(text);
+            // ONLY an object root. JsonStringToMessage requires a message, so a string
+            // holding "null" or "[1,2]" is content the chain rejects -- treating it as the
+            // value it decodes to would have equated it with absence, or with a raw array
+            // that the chain reads quite differently. Anything else stays the string it is,
+            // and therefore differs from both.
+            if (parsed.is_object())
+               return parsed;
          } catch (const std::exception&) {
-            return v;                       // not valid JSON: compare as the string it is
+            // not valid JSON at all
          }
+         return v;
       }
 
       void diff_protobuf_types() {

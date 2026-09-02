@@ -531,6 +531,18 @@ expect_quiet   "an omitted protobuf_types equals an empty string" \
 expect_reports "a present protobuf_types differs from an absent one" \
     "${WORK}/pb_obj.abi" "${WORK}/pb_absent.abi" "protobuf_types"
 
+# Invalid roots. JsonStringToMessage requires a message, so a string holding "null" or an
+# array is content the chain REJECTS -- decoding it and comparing the result would equate it
+# with absence, or with a raw array the chain reads quite differently. Only an object root is
+# adopted; everything else stays the string it is.
+printf '{%s,"protobuf_types":"null"}\n'  "$PB_BASE" > "${WORK}/pb_strnull.abi"
+printf '{%s,"protobuf_types":[1,2]}\n'   "$PB_BASE" > "${WORK}/pb_rawarr.abi"
+printf '{%s,"protobuf_types":"[1,2]"}\n' "$PB_BASE" > "${WORK}/pb_strarr.abi"
+expect_reports "a protobuf_types string of \"null\" differs from an absent one" \
+    "${WORK}/pb_absent.abi" "${WORK}/pb_strnull.abi" "protobuf_types"
+expect_reports "a raw array differs from a string containing that array" \
+    "${WORK}/pb_rawarr.abi" "${WORK}/pb_strarr.abi" "protobuf_types"
+
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

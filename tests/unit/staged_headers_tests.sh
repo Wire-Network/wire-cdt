@@ -174,15 +174,19 @@ fi
 if [ "$NATIVE_ENABLED" = "1" ]; then
     # BOTH destinations: staging owns include/sysio/native and include/sysiolib/native, and
     # checking only the first left the second free to disappear with the suite still green.
+    # A nonzero file count, not merely the directory. A staging-pattern regression that
+    # created the destinations and copied nothing would ship a package with no native API
+    # while a directory-existence check stayed green.
     missing_native=()
     for d in "${INCLUDE_DIR}/sysio/native" "${INCLUDE_DIR}/sysiolib/native"; do
-        [ -d "$d" ] || missing_native+=("$d")
+        n="$(find "$d" -type f 2>/dev/null | wc -l)"
+        [ "$n" -gt 0 ] || missing_native+=("$d ($n files)")
     done
     if [ "${#missing_native[@]}" -eq 0 ]; then
-        pass "both native header trees are staged (native enabled)"
+        pass "both native header trees are staged and non-empty (native enabled)"
     else
-        fail "both native header trees are staged (native enabled)"
-        for d in "${missing_native[@]}"; do echo "      absent: $d"; done
+        fail "both native header trees are staged and non-empty (native enabled)"
+        for d in "${missing_native[@]}"; do echo "      empty or absent: $d"; done
     fi
 else
     leftovers=()
@@ -233,6 +237,10 @@ elif [ ! -f "${BUILD_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake" ]; then
     echo "  SKIP: no staged CDT toolchain file to configure against"
 else
     OFFDIR="$(mktemp -d)"
+    # out/lib must exist before the build: the archives are staged by POST_BUILD
+    # `cmake -E copy <archive> <BASE_BINARY_DIR>/lib`, which writes a FILE named lib when the
+    # directory is absent. The real build tree always has it; an isolated probe must make it.
+    mkdir -p "${OFFDIR}/out/lib"
     if ! cmake -S "${SOURCE_DIR}/libraries" -B "${OFFDIR}" -G Ninja \
                -DCMAKE_BUILD_TYPE=Release \
                -DCMAKE_TOOLCHAIN_FILE="${BUILD_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake" \
@@ -244,21 +252,53 @@ else
         sed 's/^/      /' "${OFFDIR}/cfg.log"
     else
         pass "the libraries project configures with ENABLE_NATIVE_COMPILER=OFF"
-        targets="$(ninja -C "${OFFDIR}" -t targets all 2>/dev/null || true)"
-        # sf is WebAssembly -- cdt-ld links -lsf for --use-rt and the --fquery modes -- so it
-        # must be built in every configuration, not only when the native tester is enabled.
-        if grep -q "libsf\.a" <<< "$targets"; then
-            pass "an OFF configuration still builds libsf.a"
+
+        # BUILD it, do not merely list the targets. `ninja -t targets` shows a declared target
+        # even when it is EXCLUDE_FROM_ALL, and listing never runs the POST_BUILD copy into
+        # lib/ -- so either change would leave a listing check green while a default OFF
+        # package still shipped no softfloat archive. Building the default graph proves the
+        # target is reachable from `all` AND that the archive is staged. It costs a few
+        # seconds: these objects are already in the compiler cache from the main build.
+        if ! ninja -C "${OFFDIR}" > "${OFFDIR}/build.log" 2>&1; then
+            fail "the libraries project builds with ENABLE_NATIVE_COMPILER=OFF"
+            tail -20 "${OFFDIR}/build.log" | sed 's/^/      /'
         else
-            fail "an OFF configuration still builds libsf.a"
-            echo "      no libsf.a target in the generated graph"
-        fi
-        # ...while the native-host archives are correctly absent.
-        if grep -qE "libnative[a-z_]*\.a" <<< "$targets"; then
-            fail "an OFF configuration builds no libnative* archive"
-            grep -oE "libnative[a-z_]*\.a" <<< "$targets" | sort -u | sed 's/^/      still built: /'
-        else
-            pass "an OFF configuration builds no libnative* archive"
+            pass "the libraries project builds with ENABLE_NATIVE_COMPILER=OFF"
+
+            if [ -f "${OFFDIR}/out/lib/libsf.a" ]; then
+                pass "an OFF build stages libsf.a"
+                # ...and it is WebAssembly, not a host archive. cdt-ld links it with -lsf for
+                # --use-rt and the --fquery modes, so a host-built one would be useless.
+                probe_dir="${OFFDIR}/probe"; mkdir -p "$probe_dir"
+                ( cd "$probe_dir" && "${BUILD_DIR}/bin/llvm-ar" x "${OFFDIR}/out/lib/libsf.a" ) \
+                    > /dev/null 2>&1 || true
+                # -print -quit, not `| head -1`: head closes the pipe after one line, find
+                # takes SIGPIPE, and under `set -o pipefail` the assignment fails with 141 --
+                # which `set -e` turns into a silent early exit mid-suite. Also parenthesised,
+                # so the -o binds to the two -name tests rather than to -print.
+                first_obj="$(find "$probe_dir" \( -name '*.obj' -o -name '*.o' \) -print -quit 2>/dev/null)"
+                if [ -n "$first_obj" ] && file -b "$first_obj" | grep -qi "webassembly"; then
+                    pass "the staged libsf.a contains WebAssembly objects"
+                else
+                    fail "the staged libsf.a contains WebAssembly objects"
+                    echo "      got: $(file -b "${first_obj:-<no object extracted>}" 2>/dev/null)"
+                fi
+            else
+                fail "an OFF build stages libsf.a"
+                echo "      cdt-ld links -lsf for --use-rt and the --fquery modes"
+                ls "${OFFDIR}/out/lib" 2>/dev/null | sed 's/^/      staged: /'
+            fi
+
+            # ...while no native-HOST archive is produced. [^[:space:]]* rather than [a-z_]*:
+            # the real targets include libnative_c++.a, whose plus signs a
+            # letters-and-underscores class silently excludes.
+            stray_native="$(ls "${OFFDIR}/out/lib" 2>/dev/null | grep -E "^libnative[^[:space:]]*\.a$" || true)"
+            if [ -z "$stray_native" ]; then
+                pass "an OFF build stages no libnative* archive"
+            else
+                fail "an OFF build stages no libnative* archive"
+                sed 's/^/      staged: /' <<< "$stray_native"
+            fi
         fi
     fi
     rm -rf "${OFFDIR}"
