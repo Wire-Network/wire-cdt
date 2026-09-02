@@ -74,10 +74,17 @@ fi
 # before `pre_dispatch` and before the `if (c == r)` split, so it dominates both branches.
 apply_line="$(grep -nE '^\s*(__attribute__.*)?void apply\(' "$DISPATCH" | head -1 | cut -d: -f1 || true)"
 setter_count="$(grep -cE 'sysio_set_contract_name\(' "$DISPATCH" || true)"
-# The first non-blank, non-comment line after the function's opening brace.
-first_stmt="$(awk -v a="${apply_line:-0}" \
-    'NR > a && $0 !~ /^[[:space:]]*$/ && $0 !~ /^[[:space:]]*\/\// { print; exit }' "$DISPATCH" \
-    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+# The function body, starting immediately after the opening brace -- INCLUDING any text that
+# follows it on the signature line. Reading from the next line down would miss
+# `void apply(...) { if (c == r) {`, which puts a branch ahead of the setter while leaving the
+# setter as the first thing on its own line.
+body="$(awk -v a="${apply_line:-0}" '
+    NR <  a { next }
+    NR == a { sub(/^[^{]*\{/, "") }
+    { print }
+' "$DISPATCH" | sed 's://.*::' | tr '\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g; s/^ //')"
+# The first statement is everything up to and including the first semicolon.
+first_stmt="${body%%;*};"
 
 if [ -z "$apply_line" ]; then
     fail "apply() is defined in the generated dispatch"
