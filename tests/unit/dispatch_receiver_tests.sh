@@ -21,6 +21,7 @@ set -euo pipefail
 
 BUILD_DIR="$1"
 CDT_CPP="${BUILD_DIR}/bin/cdt-cpp"
+CLANGXX="${BUILD_DIR}/bin/clang++"
 PASS=0
 FAIL=0
 pass() { echo "  PASS: $1"; PASS=$((PASS + 1)); }
@@ -29,42 +30,23 @@ fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-# Normalise the source the way the front end does, in the same order: phase 2 splices
-# backslash-newline pairs, then phase 3 replaces comments with a space. Doing either on
-# physical lines lets a second call hide -- `name/**/(c)` behind a comment, or
-# `sysio_set_contract_\<newline>name(c)` behind a splice, both of which compile as an ordinary
-# call. This is not a full preprocessor: it does not expand macros or paste tokens, which the
-# generated dispatch does not use.
+# Normalise with the REAL preprocessor rather than a hand-rolled lexer.
+#
+# Four hand-written revisions of this were each defeated by a different lexical form -- a
+# comment between the identifier and its paren, a backslash-newline splice, a backslash
+# followed by spaces then a newline, and a raw string whose contents look like a comment. Every
+# fix was another narrow normalisation, which leaves the same class of false accepts. Clang
+# already implements phases 1-4 exactly as the compiler that builds the contract does, so it
+# decides what a token is.
+#
+# #include lines are dropped first: the dispatch defines no macros, so nothing it contains
+# depends on them, and this keeps the check from needing the whole header tree resolved.
 normalise_source() {
-    python3 - "$1" <<'PYEOF'
-import re, sys
-src = open(sys.argv[1]).read()
-src = src.replace('\\\n', '')        # phase 2: line splicing, before anything else
-out, i, n = [], 0, len(src)
-while i < n:
-    c = src[i]
-    if c == '"' or c == "'":                       # string / char literal: copy verbatim
-        q = c; out.append(c); i += 1
-        while i < n:
-            out.append(src[i])
-            if src[i] == '\\': 
-                i += 2
-                if i <= n: out.append(src[i-1])
-                continue
-            if src[i] == q: i += 1; break
-            i += 1
-        continue
-    if src.startswith('//', i):
-        while i < n and src[i] != '\n': i += 1
-        continue
-    if src.startswith('/*', i):
-        j = src.find('*/', i + 2)
-        out.append(' ')                            # a comment is whitespace, not nothing
-        i = (j + 2) if j != -1 else n
-        continue
-    out.append(c); i += 1
-print(''.join(out))
-PYEOF
+    sed '/^[[:space:]]*#[[:space:]]*include/d' "$1" > "${1}.noinc" 2>/dev/null || return 1
+    "$CLANGXX" -std=c++17 -E -P -nostdinc -nostdinc++ -x c++ "${1}.noinc" 2>/dev/null
+    local rc=$?
+    rm -f "${1}.noinc"
+    return $rc
 }
 
 # Decide whether one dispatch file satisfies the contract. Echoes OK, or a reason.
@@ -163,6 +145,7 @@ fi
 # counterexample ever exercised that escape even though the header claimed one did.
 mkbad() {   # $1=name  $2=apply-body (leading newline optional)
     cat > "${WORK}/bad_$1.cpp" <<EOF
+#include <cstdint>
 extern "C" {
   void sysio_set_contract_name(uint64_t n);
   void __sysio_action_go_x(uint64_t r, uint64_t c);
@@ -199,13 +182,32 @@ mkbad spliced_call      '
     sysio_set_contract_name(r); sysio_set_contract_\
 name(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# A backslash followed by horizontal whitespace before the newline. Clang splices it (with a
+# warning), so this is a second call; a normaliser matching only an adjacent backslash-newline
+# does not see it.
+mkbad spliced_ws        '
+    sysio_set_contract_name(r); sysio_set_contract_\   
+name(c);
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# A raw string whose contents look like a comment. A hand-rolled lexer treats the opening quote
+# as an ordinary string and the // inside it as a comment, erasing the real call after it.
+mkbad raw_string_comment '
+    sysio_set_contract_name(r);
+    const char* s = R"d(" // )d"; sysio_set_contract_name(c); (void)s;
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad missing_entirely  '
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
     sysio_set_contract_name(r);'
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
-           spliced_call missing_entirely after_dispatch; do
+           spliced_call spliced_ws raw_string_comment missing_entirely after_dispatch; do
+    if ! "$CLANGXX" -std=c++17 -fsyntax-only -Wno-comment "${WORK}/bad_${bad}.cpp" \
+            > "${WORK}/bad_${bad}.log" 2>&1; then
+        fail "counterexample compiles: ${bad}"
+        sed 's/^/      /' "${WORK}/bad_${bad}.log"
+        continue
+    fi
     verdict="$(check_dispatch "${WORK}/bad_${bad}.cpp" || true)"
     if [ "$verdict" = OK ]; then
         fail "the checker rejects: ${bad}"
@@ -220,6 +222,9 @@ done
 mkbad spaced_ok '
     sysio_set_contract_name (r);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+if ! "$CLANGXX" -std=c++17 -fsyntax-only "${WORK}/bad_spaced_ok.cpp" > /dev/null 2>&1; then
+    fail "the positive control compiles"
+fi
 verdict="$(check_dispatch "${WORK}/bad_spaced_ok.cpp" || true)"
 if [ "$verdict" = OK ]; then
     pass "the checker accepts: a space before the paren"
