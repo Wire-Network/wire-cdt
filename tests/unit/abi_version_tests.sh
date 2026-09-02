@@ -376,7 +376,11 @@ merge_table_case() {   # $1=label $2=firstdesc $3=seconddesc
           --abi-output "${dir}/mix.abi" \
           --desc-file "${dir}/a_first.desc" --desc-file "${dir}/b_second.desc" \
           > "${dir}/mix.log" 2>&1; then
+        # Each of the three lists is copied independently, so each needs its own assertion.
+        # Checking only key_names and secondary_indexes left key_types pinned by nothing:
+        # dropping it from the merge loop kept every case green while "uint64" vanished.
         check "${label}: keeps key_names"          "${dir}/mix.abi" '"id"'
+        check "${label}: keeps key_types"          "${dir}/mix.abi" '"uint64"'
         check "${label}: keeps secondary_indexes"  "${dir}/mix.abi" '"byowner"'
     else
         fail "${label}: descriptors merge"

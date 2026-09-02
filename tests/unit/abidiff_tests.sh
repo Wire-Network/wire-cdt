@@ -437,6 +437,61 @@ sed 's/"name": "s",/"name": "s", "base": "",/' "${WORK}/s_blank_a.abi" > "${WORK
 expect_quiet "an omitted base and an empty base are the same struct" \
     "${WORK}/s_blank_a.abi" "${WORK}/s_blank_b.abi" "struct"
 
+# --- legacy versions ---------------------------------------------------------------------
+#
+# The variant and action-result diffs were gated on the declared version, which suppressed
+# real content: abigen emits `variants` at every version, so two 1.0 documents whose variant
+# changed reported nothing. A version stamp says which sections a document must CARRY, not
+# which it may contain.
+mk_legacy() {   # $1=path  $2=version  $3=extra-json
+    cat > "$1" <<EOF
+{
+  "version": "$2",
+  "types": [], "structs": [], "actions": [], "tables": [], "ricardian_clauses": [],
+  $3
+}
+EOF
+}
+mk_legacy "${WORK}/l_v1.abi" "sysio::abi/1.0" '"variants": [ { "name": "v", "types": ["uint64"] } ]'
+mk_legacy "${WORK}/l_v2.abi" "sysio::abi/1.0" '"variants": [ { "name": "v", "types": ["string"] } ]'
+expect_reports "a 1.0 variant difference is reported despite the version" \
+    "${WORK}/l_v1.abi" "${WORK}/l_v2.abi" "variant"
+
+mk_legacy "${WORK}/l_r1.abi" "sysio::abi/1.1" '"action_results": [ { "name": "geta", "result_type": "uint64" } ]'
+mk_legacy "${WORK}/l_r2.abi" "sysio::abi/1.1" '"action_results": [ { "name": "geta", "result_type": "string" } ]'
+expect_reports "a 1.1 action_result difference is reported despite the version" \
+    "${WORK}/l_r1.abi" "${WORK}/l_r2.abi" "action_result"
+
+# --- truncated documents -----------------------------------------------------------------
+#
+# Reading REQUIRED sections through the absent-is-empty fallback made a truncated ABI compare
+# equal to a complete one whose section is empty. Those keys are validated instead.
+python3 - "${WORK}/upstream.abi" "${WORK}/no_actions.abi" <<'PYEOF'
+import json, sys
+a = json.load(open(sys.argv[1])); a.pop("actions", None)
+json.dump(a, open(sys.argv[2], "w"))
+PYEOF
+if out="$(run_abidiff "${WORK}/no_actions.abi" "${WORK}/upstream.abi" 2>&1)"; then
+    fail "an ABI missing a required section is refused"
+    sed 's/^/      /' <<< "$out"
+elif grep -q "missing the required ABI section" <<< "$out"; then
+    pass "an ABI missing a required section is refused"
+else
+    fail "an ABI missing a required section is refused"
+    sed 's/^/      /' <<< "$out"
+fi
+
+# --- remaining payload sections ------------------------------------------------------------
+mk_legacy "${WORK}/em1.abi" "sysio::abi/1.2" '"error_messages": []'
+mk_legacy "${WORK}/em2.abi" "sysio::abi/1.2" '"error_messages": [ { "error_code": 1, "error_msg": "boom" } ]'
+expect_reports "a changed error_messages is reported" "${WORK}/em1.abi" "${WORK}/em2.abi" "error_messages"
+expect_quiet   "an identical error_messages reports no difference" \
+    "${WORK}/em1.abi" "${WORK}/em1.abi" "error_messages"
+
+mk_legacy "${WORK}/ax1.abi" "sysio::abi/1.2" '"abi_extensions": []'
+mk_legacy "${WORK}/ax2.abi" "sysio::abi/1.2" '"abi_extensions": [ [ 1, "00" ] ]'
+expect_reports "a changed abi_extensions is reported" "${WORK}/ax1.abi" "${WORK}/ax2.abi" "abi_extensions"
+
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

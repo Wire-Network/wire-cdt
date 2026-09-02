@@ -40,15 +40,22 @@ namespace abi_version {
    /// does not stays at the baseline.
    inline constexpr int protobuf_minor = 3;
 
-   /// The minor from which `variants` is part of the format.
+   /// The version at which `variants` entered the format. A FIXED point in the format's
+   /// history, unrelated to max_supported_major, which is only the highest major this
+   /// toolchain accepts. Deriving one from the other made raising the accepted maximum move
+   /// every introduction with it -- supports_variants(1, 10) would become false while parse()
+   /// still accepted major 1, letting valid 1.x documents omit sections they require.
+   inline constexpr int variants_major = 1;
    inline constexpr int variants_minor = 1;
 
-   /// The minor from which `action_results` is part of the format.
+   /// The version at which `action_results` entered the format.
+   inline constexpr int action_results_major = 1;
    inline constexpr int action_results_minor = 2;
 
    /// Does a version carry the `variants` section?
    inline constexpr bool supports_variants(int major_v, int minor_v) {
-      return major_v == max_supported_major && minor_v >= variants_minor;
+      return major_v > variants_major ||
+             (major_v == variants_major && minor_v >= variants_minor);
    }
 
    /// Does a version carry the `action_results` section?
@@ -58,7 +65,8 @@ namespace abi_version {
    /// whether to diff it. Three separate spellings of this rule is how a contract
    /// ends up with a version stamp that promises a section its ABI does not carry.
    inline constexpr bool supports_action_results(int major_v, int minor_v) {
-      return major_v == max_supported_major && minor_v >= action_results_minor;
+      return major_v > action_results_major ||
+             (major_v == action_results_major && minor_v >= action_results_minor);
    }
 
    /// The full "sysio::abi/<major>.<minor>" string stamped into a contract's ABI.

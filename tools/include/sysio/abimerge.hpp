@@ -381,14 +381,14 @@ class ABIMerger {
       ojson abi;
 };
 
-// max_supported_major, not default_major: these say which version of the FORMAT introduced the
-// section, which is a property of the format, not of what this toolchain happens to emit by
-// default. The two are equal today, so bumping the emission default would silently move every
-// threshold with it.
+// The fixed versions at which each section entered the format -- not default_major (what this
+// toolchain emits by default) and not max_supported_major (the highest major it accepts).
+// Deriving them from either makes a change to that unrelated knob silently move every
+// threshold.
 inline const ABIMerger::section_since ABIMerger::variants_since{
-   std::pair<int, int>{abi_version::max_supported_major, abi_version::variants_minor}};
+   std::pair<int, int>{abi_version::variants_major, abi_version::variants_minor}};
 inline const ABIMerger::section_since ABIMerger::action_results_since{
-   std::pair<int, int>{abi_version::max_supported_major, abi_version::action_results_minor}};
+   std::pair<int, int>{abi_version::action_results_major, abi_version::action_results_minor}};
 inline const ABIMerger::section_since ABIMerger::never_mandatory{};
 
 #pragma GCC diagnostic pop

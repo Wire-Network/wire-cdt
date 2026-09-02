@@ -94,12 +94,26 @@ class abidiff {
       // keys: table_id, index_type and secondary_indexes are Wire extensions, so a stock
       // Antelope ABI carries none of them. Every optional field is read through this, so
       // absent compares equal to absent and never equal to present.
-      // A whole section may be absent -- a stock Antelope 1.0/1.1 ABI omits `variants` and
-      // `action_results` -- so every top-level section is read through this. Absent reads as
-      // an empty array, which is what "this ABI declares none" means.
+      // A whole section may be legitimately absent -- a stock Antelope 1.0/1.1 ABI omits
+      // `variants` and `action_results` -- so those are read through this. Absent reads as an
+      // empty array, which is what "this ABI declares none" means.
       static const ojson& section_or_empty(const ojson& o, const char* key) {
          static const ojson none = ojson::array();
          return o.count(key) ? o.at(key) : none;
+      }
+
+      // The sections the ABI schema requires. Reading these through section_or_empty too
+      // would make a TRUNCATED document compare equal to a complete one whose section is
+      // empty -- so a missing `actions` key would diff clean against `"actions": []`. Master
+      // threw on the missing key; this reports it and exits non-zero instead.
+      static void require_sections(const ojson& abi, const char* which) {
+         for (const char* key : {"types", "structs", "actions", "tables", "ricardian_clauses"}) {
+            if (!abi.count(key)) {
+               std::cerr << "Error: " << which << " is missing the required ABI section '"
+                         << key << "'\n";
+               exit(1);
+            }
+         }
       }
 
       static const ojson& field_or_null(const ojson& o, const char* key) {
@@ -387,7 +401,21 @@ class abidiff {
          }
       }
 
+      // error_messages and abi_extensions are the remaining abi_def payload sections. CDT
+      // does not emit either, but an ABI produced elsewhere can carry them, and a change
+      // there is a real interface change. Compared whole, like protobuf_types.
+      void diff_opaque_section(const char* key) {
+         const ojson& a = field_or_null(abi_1, key);
+         const ojson& b = field_or_null(abi_2, key);
+         if (a != b) {
+            std::cout << "< " << key << "\n" << pretty_print(a) << "\n";
+            std::cout << "> " << key << "\n" << pretty_print(b) << "\n";
+         }
+      }
+
       void diff() {
+         require_sections(abi_1, "file1");
+         require_sections(abi_2, "file2");
          diff_version();
          diff_structs();
          diff_types();
@@ -396,14 +424,17 @@ class abidiff {
          diff_clauses();
          diff_enums();
          diff_protobuf_types();
-         const auto [v1_major, v1_minor] = get_version(abi_1, "file1");
-         const auto [v2_major, v2_minor] = get_version(abi_2, "file2");
-         if ( abi_version::supports_variants(v1_major, v1_minor) &&
-              abi_version::supports_variants(v2_major, v2_minor) )
-            diff_variants();
-         if ( abi_version::supports_action_results(v1_major, v1_minor) &&
-              abi_version::supports_action_results(v2_major, v2_minor) )
-            diff_action_results();
+         // Unconditional. These were version-gated, which suppressed real differences: two
+         // 1.0 documents whose same-named variant changed from ["uint64"] to ["string"]
+         // reported nothing, and populated action_results below 1.2 likewise. A version
+         // stamp says which sections a document is REQUIRED to carry, not which ones it may
+         // contain -- abigen emits `variants` at every version -- so the gate answered the
+         // wrong question. Both sections are read through section_or_empty, so an input that
+         // genuinely omits them compares as empty rather than throwing.
+         diff_variants();
+         diff_action_results();
+         diff_opaque_section("error_messages");
+         diff_opaque_section("abi_extensions");
       }
 };
 

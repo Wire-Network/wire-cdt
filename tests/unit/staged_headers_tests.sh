@@ -98,6 +98,19 @@ else
     pass "found ${staged_count} staged CDT headers"
 fi
 
+# Per destination, not just in aggregate. A single total cannot show that every tree was
+# staged: dropping the bluegrass copy from stage_cdt_tree.cmake leaves the count nonzero on
+# the strength of the other five, and the test stays green.
+for dest in sysiolib libc libcxx boost/preprocessor bluegrass; do
+    n="$(find "${INCLUDE_DIR}/${dest}" -type f 2>/dev/null | wc -l)"
+    if [ "$n" -gt 0 ]; then
+        pass "${dest} is staged (${n} files)"
+    else
+        fail "${dest} is staged"
+        echo "    nothing under ${INCLUDE_DIR}/${dest}"
+    fi
+done
+
 if [ "${#stale[@]}" -eq 0 ]; then
     pass "every staged header has a source counterpart"
 else
@@ -105,6 +118,51 @@ else
     echo "    ${#stale[@]} staged header(s) no longer exist in libraries/:"
     for f in "${stale[@]}"; do echo "      include/${f}"; done
     echo "    stage_cdt_tree should have pruned these; see cmake/stage_cdt_tree.cmake"
+fi
+
+# Pruning, per destination -- in an ISOLATED tree. An earlier version planted sentinels in the
+# live ${INCLUDE_DIR} and re-ran the staging script there, which wipes and repopulates the very
+# headers other tests are compiling against; under `ctest -j` that raced toolchain_tests and
+# abi_version_tests. Staging into a scratch destination proves the same property and touches
+# nothing shared.
+if ! command -v cmake > /dev/null 2>&1; then
+    echo "  SKIP: cmake not on PATH (per-tree prune)"
+else
+    PRUNE_SCRATCH="$(mktemp -d)"
+    if ! cmake -DSTAGE_SOURCE_DIR="${SOURCE_DIR}/libraries" \
+               -DSTAGE_BINARY_DIR="${PRUNE_SCRATCH}" \
+               -DSTAGE_NATIVE="${NATIVE_ENABLED}" \
+               -P "${SOURCE_DIR}/cmake/stage_cdt_tree.cmake" > "${PRUNE_SCRATCH}/stage.log" 2>&1; then
+        fail "the staging script populates a fresh tree"
+        sed 's/^/      /' "${PRUNE_SCRATCH}/stage.log"
+    else
+        planted=0
+        for dest in sysiolib libc libcxx boost/preprocessor bluegrass; do
+            if [ -d "${PRUNE_SCRATCH}/include/${dest}" ]; then
+                : > "${PRUNE_SCRATCH}/include/${dest}/zz_stale_probe.hpp" && planted=$((planted + 1))
+            else
+                fail "fresh staging created ${dest}"
+            fi
+        done
+        if [ "$planted" -ne 5 ]; then
+            fail "planted a stale sentinel in each staged tree (planted ${planted}, expected 5)"
+        elif ! cmake -DSTAGE_SOURCE_DIR="${SOURCE_DIR}/libraries" \
+                     -DSTAGE_BINARY_DIR="${PRUNE_SCRATCH}" \
+                     -DSTAGE_NATIVE="${NATIVE_ENABLED}" \
+                     -P "${SOURCE_DIR}/cmake/stage_cdt_tree.cmake" > /dev/null 2>&1; then
+            fail "the staging script re-runs cleanly"
+        else
+            survivors="$(find "${PRUNE_SCRATCH}/include" -name 'zz_stale_probe.hpp' 2>/dev/null | wc -l)"
+            if [ "$survivors" -eq 0 ]; then
+                pass "a stale file is pruned from every staged tree"
+            else
+                fail "a stale file is pruned from every staged tree"
+                find "${PRUNE_SCRATCH}/include" -name 'zz_stale_probe.hpp' \
+                    | sed "s|${PRUNE_SCRATCH}/include/|      |"
+            fi
+        fi
+    fi
+    rm -rf "$PRUNE_SCRATCH"
 fi
 
 # With native mode off, the native headers must not be staged at all. They are pruned
@@ -161,7 +219,7 @@ else
              -DSTAGE_NATIVE=0 -P "${SOURCE_DIR}/cmake/stage_cdt_tree.cmake" \
              > "${SCRATCH}/stage.log" 2>&1; then
         leftovers=()
-        for f in "${SCRATCH}/lib/libnative.a" "${SCRATCH}/lib/libnative_sysio.a" "${SCRATCH}/lib/libsf.a" \
+        for f in "${SCRATCH}/lib/libnative.a" "${SCRATCH}/lib/libnative_sysio.a" \
                  "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"; do
             [ -e "$f" ] && leftovers+=("$f")
         done
@@ -170,6 +228,16 @@ else
         else
             fail "STAGE_NATIVE=0 prunes stale native archives and header trees"
             for f in "${leftovers[@]}"; do echo "      survived: $f"; done
+        fi
+
+        # libsf.a must SURVIVE. It is the WebAssembly softfloat archive cdt-ld links with
+        # -lsf for --use-rt and the --fquery modes, not a native-host archive -- it is only
+        # declared under libraries/native/, which is why an OFF configure never rebuilds it.
+        # Pruning it would leave an OFF package unable to link those modes.
+        if [ -e "${SCRATCH}/lib/libsf.a" ]; then
+            pass "STAGE_NATIVE=0 keeps libsf.a (a wasm archive, not a native one)"
+        else
+            fail "STAGE_NATIVE=0 keeps libsf.a (a wasm archive, not a native one)"
         fi
 
         # An unrelated archive must be left alone -- the prune is targeted, not a wipe.
