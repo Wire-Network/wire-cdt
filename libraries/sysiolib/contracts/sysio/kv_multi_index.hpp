@@ -144,12 +144,10 @@ namespace _kv_multi_index_detail {
 // Uses sysio::indexed_by and sysio::const_mem_fun from the standard CDT headers.
 //
 // A shim for the EOSIO multi_index over a different store. Nearly all contract code carries
-// over, but two distinct things are worth keeping apart.
+// over; these are the places it does not, each a source break against upstream code:
 //
-// WHERE THIS DIVERGES FROM UPSTREAM -- permanent, and each is a source break against upstream
-// code:
 //   - the postfix iterator operators are deleted, because copying a KV iterator duplicates a
-//     host-side handle. Note rbegin()/rend() hand back a std::reverse_iterator, whose postfix
+//     host-side handle. rbegin()/rend() hand back a std::reverse_iterator, whose postfix
 //     operators are the adaptor's and are NOT deleted, so reverse loops compile silently;
 //   - the primary bounds are uint64_t/name overloads rather than upstream's member template,
 //     so &table::lower_bound cannot be taken bare and a wrapper convertible to both is
@@ -157,17 +155,14 @@ namespace _kv_multi_index_detail {
 //   - a secondary key must be trivially copyable, enforced by a static_assert in
 //     secondary_index_view -- so it fires at get_index<...>(), not at declaration.
 //
-// WHERE THIS CHANGED TO MATCH UPSTREAM -- as of this commit, and a behaviour change only
-// against EARLIER WIRE CDT, not against upstream:
-//   - emplace rejects a duplicate primary key;
-//   - emplace/modify/erase reject a handle whose code is not the receiving account.
+// The mutators reject a duplicate primary key and a handle whose code is not the receiving
+// account, matching upstream. Each guard is documented where it stands.
 //
-// sysio::multi_index is a direct alias of this template, so all of the above applies to it.
-// sysio::singleton is NOT: it aliases kv_singleton, which holds a kv_multi_index as a PRIVATE
-// member and exposes only get/set/remove/get_or_create. Its mutators funnel through the ones
-// above, so it inherits the two behaviour changes -- a singleton handle constructed on another
-// account is now read-only -- but none of the divergences, which are not reachable through its
-// API.
+// sysio::multi_index is a direct alias of this template. sysio::singleton is not: it aliases
+// kv_singleton, which holds a kv_multi_index as a PRIVATE member and exposes only
+// get/set/remove/get_or_create, so it is bound by the mutators' guards -- a singleton handle
+// on another account is read-only -- but not by the divergences above, which its API does not
+// reach.
 
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {
@@ -633,25 +628,23 @@ public:
       return *obj;
    }
 
-   /// Matches the two-overload shape find/require_find/get already use above: a one-line
-   /// `name` form delegating to the `uint64_t` one. Overloads rather than a template or a
-   /// converting-proxy parameter -- both were tried and both changed the argument's meaning.
-   /// A template cannot deduce `lower_bound({42})`; a proxy accepts `lower_bound({w})` for a
-   /// `w` converting to a narrower type, which a real `uint64_t` parameter rejects as
-   /// narrowing. Here the parameter is still a `uint64_t`, so that conversion is the base's.
+   /// Two concrete overloads, the same shape find/require_find/get use above: a one-line
+   /// `name` form delegating to the `uint64_t` one.
    ///
-   /// This adopts the sibling shape INCLUDING its two costs, neither of which is new to the
-   /// class but both of which are new to the bounds:
+   /// Concrete overloads rather than a template or a converting-proxy parameter, because both
+   /// of those change what the argument means. A template cannot deduce `lower_bound({42})`;
+   /// a proxy accepts `lower_bound({w})` for a `w` converting to a narrower type, which a real
+   /// `uint64_t` parameter rejects as narrowing. The parameter here is a `uint64_t`, so every
+   /// conversion is the one a `uint64_t` parameter performs.
    ///
-   ///   - `&table::lower_bound` is now an overload set, so the bare address cannot be taken,
-   ///     exactly as for `&table::find`, `&table::get` and `&table::require_find`. A named
-   ///     cast still resolves either one:
+   /// Two consequences of the overload pair, both shared with the three siblings above:
+   ///
+   ///   - `&table::lower_bound` is an overload set, so the bare address cannot be taken. A
+   ///     named cast resolves either one:
    ///     `static_cast<const_iterator (table::*)(uint64_t) const>(&table::lower_bound)`.
-   ///   - a wrapper convertible to BOTH `uint64_t` and `name` becomes ambiguous, where
-   ///     against the single `uint64_t` parameter it selected the `uint64_t` conversion.
-   ///     `find`/`get`/`require_find` have always been ambiguous for such a type, so this
-   ///     makes the bounds consistent rather than introducing a new rule; it is called out
-   ///     because it is a source break, and it is pinned by test.
+   ///   - a wrapper convertible to BOTH `uint64_t` and `name` is ambiguous.
+   ///
+   /// Both are pinned by test.
    const_iterator lower_bound(name primary) const { return lower_bound(primary.value); }
    const_iterator lower_bound(uint64_t primary) const {
       auto key = make_pk(primary);
@@ -697,11 +690,12 @@ public:
       auto key = make_pk(pk);
       auto value = serialize_row(obj);
 
-      // Reject a duplicate primary key, as db_store_i64 did on Antelope. That guard lived
-      // at the chain layer and was lost with the legacy DB: kv_set is an upsert, so without
-      // this the row is silently overwritten AND store_secondaries -- an unconditional
-      // kv_idx_store -- leaves the old (sec_key -> pri_key) mapping behind, pointing at a
-      // row whose secondary value has changed. kv::table::emplace checks the same way.
+      // Reject a duplicate primary key. Nothing below this point will: kv_set is an upsert,
+      // so the row would be silently overwritten, and store_secondaries is an unconditional
+      // kv_idx_store, so the old (sec_key -> pri_key) mapping would survive and point at a
+      // row whose secondary value has changed. On Antelope db_store_i64 rejected duplicates
+      // at the chain layer; the KV intrinsics do not, so the wrapper must.
+      // kv::table::emplace checks the same way.
       check(!::kv_contains(_table_id, _code.value, key.data, key_size),
             "object with the same primary key already exists");
 

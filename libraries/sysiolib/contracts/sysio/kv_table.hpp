@@ -442,10 +442,11 @@ private:
    // and, because store_secondaries is an unconditional kv_idx_store, either strands the old
    // (sec_key -> pri_key) mapping (when the secondary value changed) or trips the host's
    // ordered_unique constraint on (code, table_id, sec_key, pri_key). emplace() pays one
-   // kv_contains so no PUBLIC path reaches an unguarded insert. This seals do_insert only:
-   // store_secondaries/remove_secondaries/update_secondaries and do_erase below stay public,
-   // and calling store_secondaries directly still strands a mapping the same way. Sealing
-   // those is a wider change than this fix.
+   // kv_contains so no PUBLIC path reaches an unguarded insert.
+   //
+   // Only do_insert is sealed. store_secondaries, remove_secondaries, update_secondaries and
+   // do_erase below are public, and calling store_secondaries directly strands a mapping the
+   // same way -- treat them as internal.
    void do_insert(uint64_t payer, const be_key_stream& k, const K& key, const V& value) {
       if constexpr (is_fixed_serializable_v<V>) {
          char vbuf[sizeof(V)];
