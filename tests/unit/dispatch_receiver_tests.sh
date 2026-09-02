@@ -73,7 +73,11 @@ fi
 # that rules that out is structural: the setter must sit at the top of the function body,
 # before `pre_dispatch` and before the `if (c == r)` split, so it dominates both branches.
 apply_line="$(grep -nE '^\s*(__attribute__.*)?void apply\(' "$DISPATCH" | head -1 | cut -d: -f1 || true)"
-setter_count="$(grep -cE 'sysio_set_contract_name\(' "$DISPATCH" || true)"
+# -o | wc -l counts OCCURRENCES. `grep -c` counts matching LINES, which let
+# `sysio_set_contract_name(r); sysio_set_contract_name(c);` on one line read as a single
+# call: the count came to the expected 2, the first statement was still the `r` call, and the
+# second call silently overwrote the global before either branch ran.
+setter_count="$(grep -oE 'sysio_set_contract_name[[:space:]]*\(' "$DISPATCH" | wc -l)"
 # The function body, starting immediately after the opening brace -- INCLUDING any text that
 # follows it on the signature line. Reading from the next line down would miss
 # `void apply(...) { if (c == r) {`, which puts a branch ahead of the setter while leaving the
