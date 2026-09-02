@@ -30,23 +30,18 @@ fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-# Normalise with the REAL preprocessor rather than a hand-rolled lexer.
+# Normalise through the CDT DRIVER, so the tokens counted are the ones that will ship.
 #
-# Four hand-written revisions of this were each defeated by a different lexical form -- a
-# comment between the identifier and its paren, a backslash-newline splice, a backslash
-# followed by spaces then a newline, and a raw string whose contents look like a comment. Every
-# fix was another narrow normalisation, which leaves the same class of false accepts. Clang
-# already implements phases 1-4 exactly as the compiler that builds the contract does, so it
-# decides what a token is.
+# Earlier revisions used the bundled clang++ with the host target and deleted #include lines
+# first. Both choices changed the translation unit: the host target evaluates `#ifdef __wasm__`
+# the wrong way, so a second setter call guarded on it was invisible while cdt-cpp compiled it
+# happily; and dropping includes erases any macro that expands to one. cdt-cpp applies the
+# wasm32 target, the CDT include graph and the same predefined macros as the real compile.
 #
-# #include lines are dropped first: the dispatch defines no macros, so nothing it contains
-# depends on them, and this keeps the check from needing the whole header tree resolved.
+# -E emits line markers (no -P: the driver rejects it), so those are dropped afterwards. They
+# begin with '#', and after preprocessing no real directive remains.
 normalise_source() {
-    sed '/^[[:space:]]*#[[:space:]]*include/d' "$1" > "${1}.noinc" 2>/dev/null || return 1
-    "$CLANGXX" -std=c++17 -E -P -nostdinc -nostdinc++ -x c++ "${1}.noinc" 2>/dev/null
-    local rc=$?
-    rm -f "${1}.noinc"
-    return $rc
+    "$CDT_CPP" -E "$1" 2>/dev/null | sed '/^[[:space:]]*#/d'
 }
 
 # Decide whether one dispatch file satisfies the contract. Echoes OK, or a reason.
@@ -195,18 +190,38 @@ mkbad raw_string_comment '
     sysio_set_contract_name(r);
     const char* s = R"d(" // )d"; sysio_set_contract_name(c); (void)s;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# Guarded on the target. The host branch is well-formed, so a checker preprocessing for the
+# host counts two occurrences and accepts -- while cdt-cpp compiles the wasm branch, where the
+# receiver is immediately overwritten with the code.
+mkbad target_conditional '
+#ifdef __wasm__
+    sysio_set_contract_name(r); sysio_set_contract_name(c);
+#else
+    sysio_set_contract_name(r);
+#endif
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# The second call arrives from a macro defined in an INCLUDED header -- the shape that a
+# checker deleting #include lines cannot see, however well it expands what remains.
+cat > "${WORK}/record_again.hpp" <<'EOF'
+#pragma once
+#define RECORD_AGAIN sysio_set_contract_name(c)
+EOF
+mkbad macro_expanded '
+#include "record_again.hpp"
+    sysio_set_contract_name(r); RECORD_AGAIN;
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad missing_entirely  '
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
     sysio_set_contract_name(r);'
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
-           spliced_call spliced_ws raw_string_comment missing_entirely after_dispatch; do
-    # -nostdinc/-nostdinc++: the bundled clang++ targets WebAssembly and carries no host
-    # standard library, so any #include would resolve only by accident of the platform's
-    # search path. The fixtures are self-contained; this makes that a requirement, not luck.
-    if ! "$CLANGXX" -std=c++17 -fsyntax-only -nostdinc -nostdinc++ -Wno-comment \
-            "${WORK}/bad_${bad}.cpp" \
+           spliced_call spliced_ws raw_string_comment target_conditional macro_expanded \
+           missing_entirely after_dispatch; do
+    # Compiled by the DRIVER, not a host clang: a counterexample must be legal in the
+    # translation unit that actually ships, and the driver supplies the wasm32 target and the
+    # CDT include graph. (`-c` to an object we discard; the driver has no -fsyntax-only.)
+    if ! ( cd "$WORK" && "$CDT_CPP" -c "bad_${bad}.cpp" -o "bad_${bad}.o" ) \
             > "${WORK}/bad_${bad}.log" 2>&1; then
         fail "counterexample compiles: ${bad}"
         sed 's/^/      /' "${WORK}/bad_${bad}.log"
@@ -226,8 +241,7 @@ done
 mkbad spaced_ok '
     sysio_set_contract_name (r);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-if ! "$CLANGXX" -std=c++17 -fsyntax-only -nostdinc -nostdinc++ \
-        "${WORK}/bad_spaced_ok.cpp" > /dev/null 2>&1; then
+if ! ( cd "$WORK" && "$CDT_CPP" -c bad_spaced_ok.cpp -o bad_spaced_ok.o ) > /dev/null 2>&1; then
     fail "the positive control compiles"
 fi
 verdict="$(check_dispatch "${WORK}/bad_spaced_ok.cpp" || true)"
