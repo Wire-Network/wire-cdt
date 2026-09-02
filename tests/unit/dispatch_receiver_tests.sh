@@ -145,7 +145,7 @@ fi
 # counterexample ever exercised that escape even though the header claimed one did.
 mkbad() {   # $1=name  $2=apply-body (leading newline optional)
     cat > "${WORK}/bad_$1.cpp" <<EOF
-#include <cstdint>
+typedef unsigned long long uint64_t;   // not <cstdint>: see the -nostdinc note below
 extern "C" {
   void sysio_set_contract_name(uint64_t n);
   void __sysio_action_go_x(uint64_t r, uint64_t c);
@@ -202,7 +202,11 @@ mkbad after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { _
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
            spliced_call spliced_ws raw_string_comment missing_entirely after_dispatch; do
-    if ! "$CLANGXX" -std=c++17 -fsyntax-only -Wno-comment "${WORK}/bad_${bad}.cpp" \
+    # -nostdinc/-nostdinc++: the bundled clang++ targets WebAssembly and carries no host
+    # standard library, so any #include would resolve only by accident of the platform's
+    # search path. The fixtures are self-contained; this makes that a requirement, not luck.
+    if ! "$CLANGXX" -std=c++17 -fsyntax-only -nostdinc -nostdinc++ -Wno-comment \
+            "${WORK}/bad_${bad}.cpp" \
             > "${WORK}/bad_${bad}.log" 2>&1; then
         fail "counterexample compiles: ${bad}"
         sed 's/^/      /' "${WORK}/bad_${bad}.log"
@@ -222,7 +226,8 @@ done
 mkbad spaced_ok '
     sysio_set_contract_name (r);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-if ! "$CLANGXX" -std=c++17 -fsyntax-only "${WORK}/bad_spaced_ok.cpp" > /dev/null 2>&1; then
+if ! "$CLANGXX" -std=c++17 -fsyntax-only -nostdinc -nostdinc++ \
+        "${WORK}/bad_spaced_ok.cpp" > /dev/null 2>&1; then
     fail "the positive control compiles"
 fi
 verdict="$(check_dispatch "${WORK}/bad_spaced_ok.cpp" || true)"
