@@ -59,16 +59,34 @@ else
     grep -n "sysio_set_contract_name" "$DISPATCH" | sed 's/^/      got: /' || echo "      (no call at all)"
 fi
 
-# It must run before any action is dispatched, or a guard could read a stale value.
-line_set="$(grep -n 'sysio_set_contract_name(' "$DISPATCH" | tail -1 | cut -d: -f1 || true)"
-line_apply="$(grep -n 'void apply' "$DISPATCH" | head -1 | cut -d: -f1 || true)"
-line_first_action="$(grep -nE 'sysio_wasm_action|executed|action_wrapper|::go' "$DISPATCH" | awk -F: -v s="${line_set:-0}" '$1 > s {print $1; exit}' || true)"
-if [ -n "$line_set" ] && [ -n "$line_apply" ] && [ "$line_set" -gt "$line_apply" ] \
-   && { [ -z "$line_first_action" ] || [ "$line_set" -lt "$line_first_action" ]; }; then
-    pass "the receiver is recorded before any action runs"
+# It must run before anything is dispatched, or a guard could read a stale value.
+#
+# Match the names the generator actually emits -- `pre_dispatch(`, `__sysio_action_*(` and
+# `__sysio_notify_*(`. An earlier version of this test grepped for names that appear nowhere in
+# the output, so the "first dispatch" line came back empty and the comparison was skipped as a
+# pass: moving the setter below every handler would have satisfied it. The search deliberately
+# does NOT start from the setter's line, which would make any match tautologically later.
+apply_line="$(grep -nE '^\s*(__attribute__.*)?void apply\(' "$DISPATCH" | head -1 | cut -d: -f1 || true)"
+first_dispatch="$(awk -v a="${apply_line:-0}" \
+    'NR > a && /(pre_dispatch\(|__sysio_(action|notify)_[A-Za-z0-9_]*\()/ { print NR; exit }' "$DISPATCH")"
+setter_lines="$(grep -nE 'sysio_set_contract_name\(' "$DISPATCH" | awk -F: -v a="${apply_line:-0}" '$1 > a {print $1}')"
+setter_count="$(printf '%s\n' "$setter_lines" | grep -c . || true)"
+
+if [ -z "$apply_line" ]; then
+    fail "apply() is defined in the generated dispatch"
+elif [ -z "$first_dispatch" ]; then
+    fail "the generated apply() dispatches to a handler"
+    echo "    no pre_dispatch/__sysio_action_*/__sysio_notify_* call found after line ${apply_line}"
+    sed 's/^/      /' "$DISPATCH"
+elif [ "$setter_count" -ne 1 ]; then
+    fail "apply() records the receiver exactly once"
+    echo "    found ${setter_count} call(s) inside apply(), expected 1"
+elif [ "$setter_lines" -lt "$first_dispatch" ]; then
+    pass "the receiver is recorded before anything is dispatched"
 else
-    fail "the receiver is recorded before any action runs"
-    echo "    apply at ${line_apply:-?}, set at ${line_set:-?}, first action at ${line_first_action:-none}"
+    fail "the receiver is recorded before anything is dispatched"
+    echo "    setter at line ${setter_lines}, first dispatch at line ${first_dispatch}"
+    sed 's/^/      /' "$DISPATCH"
 fi
 
 echo ""

@@ -143,14 +143,31 @@ namespace _kv_multi_index_detail {
 
 // Uses sysio::indexed_by and sysio::const_mem_fun from the standard CDT headers.
 //
-// Source-compatible with the EOSIO multi_index, not identical to it. The known divergences:
-// the postfix iterator operators are deleted (a copy duplicates a host-side handle), the
-// primary bounds are uint64_t/name overloads rather than a member template, a secondary key
-// must be trivially copyable, and -- as of this change -- emplace rejects a duplicate primary
-// key while emplace/modify/erase reject a handle opened on another account.
+// A shim for the EOSIO multi_index over a different store. Nearly all contract code carries
+// over, but two distinct things are worth keeping apart.
 //
-// sysio::multi_index and sysio::singleton are both aliases of this template, so every one of
-// those applies to them too.
+// WHERE THIS DIVERGES FROM UPSTREAM -- permanent, and each is a source break against upstream
+// code:
+//   - the postfix iterator operators are deleted, because copying a KV iterator duplicates a
+//     host-side handle. Note rbegin()/rend() hand back a std::reverse_iterator, whose postfix
+//     operators are the adaptor's and are NOT deleted, so reverse loops compile silently;
+//   - the primary bounds are uint64_t/name overloads rather than upstream's member template,
+//     so &table::lower_bound cannot be taken bare and a wrapper convertible to both is
+//     ambiguous (see the note at the bounds themselves);
+//   - a secondary key must be trivially copyable, enforced by a static_assert in
+//     secondary_index_view -- so it fires at get_index<...>(), not at declaration.
+//
+// WHERE THIS CHANGED TO MATCH UPSTREAM -- as of this commit, and a behaviour change only
+// against EARLIER WIRE CDT, not against upstream:
+//   - emplace rejects a duplicate primary key;
+//   - emplace/modify/erase reject a handle whose code is not the receiving account.
+//
+// sysio::multi_index is a direct alias of this template, so all of the above applies to it.
+// sysio::singleton is NOT: it aliases kv_singleton, which holds a kv_multi_index as a PRIVATE
+// member and exposes only get/set/remove/get_or_create. Its mutators funnel through the ones
+// above, so it inherits the two behaviour changes -- a singleton handle constructed on another
+// account is now read-only -- but none of the divergences, which are not reachable through its
+// API.
 
 template<name::raw TableName, typename T, typename... Indices>
 class kv_multi_index {

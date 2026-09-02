@@ -89,8 +89,9 @@ struct mock_kv {
    uint64_t receiver = 0;
    uint32_t sets = 0;                 // 0 unless a case expects the write to be allowed
    std::string it_key;                // key the one live iterator was positioned at
+   uint32_t erases = 0;
 
-   void reset(uint64_t who) { rows.clear(); receiver = who; sets = 0; it_key.clear(); }
+   void reset(uint64_t who) { rows.clear(); receiver = who; sets = 0; erases = 0; it_key.clear(); }
 };
 
 mock_kv& store() { static mock_kv inst; return inst; }
@@ -123,6 +124,15 @@ void install_intrinsics() {
          store().rows[mock_kv::row_key{store().receiver, table_id,
                                        std::string(static_cast<const char*>(key), key_size)}] =
             std::string(static_cast<const char*>(val), val_size);
+         return 0;
+      });
+
+   // No code parameter here either: an erase always lands on the receiver.
+   intrinsics::set_intrinsic<intrinsics::kv_erase>(
+      [](uint32_t table_id, const void* key, uint32_t key_size) -> int64_t {
+         ++store().erases;
+         store().rows.erase(mock_kv::row_key{store().receiver, table_id,
+                                             std::string(static_cast<const char*>(key), key_size)});
          return 0;
       });
 
@@ -255,6 +265,38 @@ SYSIO_TEST_BEGIN(own_table_handle_passes_the_guard)
    }
 SYSIO_TEST_END
 
+// modify and erase must also SUCCEED on an owned handle. Without these, an inverted or
+// unconditional guard on either would satisfy every required test: the foreign-code case proves
+// only that they reject, and their allowed paths ran solely in the opt-in integration suite.
+SYSIO_TEST_BEGIN(own_table_handle_can_modify_and_erase)
+   for (bool via_global : {true, false}) {
+      arrange("alice"_n.value, "alice"_n.value, 1, via_global);
+      table_t t("alice"_n, "alice"_n.value);
+
+      // The mock seeds the row under the table's OWNER; writes land under the receiver, which
+      // on the global-path iteration is the decoy. Address each by the account that holds it.
+      const auto owned   = mock_kv::row_key{"alice"_n.value, records_tid, pk_key("alice"_n.value, 1)};
+      const auto written = mock_kv::row_key{store().receiver, records_tid, pk_key("alice"_n.value, 1)};
+
+      record r{1, 7};
+      t.modify(r, "alice"_n, [](auto& o) { o.sec = 9; });
+      CHECK_EQUAL( store().sets, 1u )
+      // Serialized, not the seeded placeholder -- so a modify that wrote nothing, or wrote the
+      // wrong key, is not read as success.
+      CHECK_EQUAL( store().rows.count(written), 1u )
+      CHECK_EQUAL( store().rows.at(written) == std::string("row"), false )
+
+      // erase() removes the row it addresses. It is keyed the same way kv_set is, so it lands
+      // on the receiver too.
+      t.erase(r);
+      CHECK_EQUAL( store().erases, 1u )
+      CHECK_EQUAL( store().rows.count(written), 0u )
+      // The owner's seeded row is untouched on the decoy iteration, gone on the fallback one
+      // where receiver == owner -- either way the erase hit exactly the namespace it wrote to.
+      CHECK_EQUAL( store().rows.count(owned), via_global ? 1u : 0u )
+   }
+SYSIO_TEST_END
+
 // The primary bounds take a `name` as well as a uint64_t, matching the two-overload shape
 // find/require_find/get have always used. Compile-time only -- nothing here is evaluated.
 SYSIO_TEST_BEGIN(primary_bounds_accept_uint64_and_name)
@@ -305,6 +347,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(duplicate_primary_key_rejected)
    SYSIO_TEST(foreign_code_handle_cannot_mutate)
    SYSIO_TEST(own_table_handle_passes_the_guard)
+   SYSIO_TEST(own_table_handle_can_modify_and_erase)
    SYSIO_TEST(primary_bounds_accept_uint64_and_name)
    return has_failed();
 }
