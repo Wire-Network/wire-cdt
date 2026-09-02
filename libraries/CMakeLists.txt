@@ -36,9 +36,12 @@ add_subdirectory(libc++)
 add_subdirectory(sysiolib)
 add_subdirectory(rt)
 
-if (ENABLE_NATIVE_COMPILER)
-   add_subdirectory(native)
-endif()
+# Added unconditionally. The directory defines the WebAssembly softfloat archive `sf`, which
+# cdt-ld links with -lsf for --use-rt and every --fquery mode, alongside the native-host
+# targets -- and only the latter depend on ENABLE_NATIVE_COMPILER. Skipping the whole
+# directory meant a clean OFF build produced no libsf.a at all, so an OFF package could not
+# link those Wasm modes. The native-host targets are gated inside the file instead.
+add_subdirectory(native)
 
 # Anything compiled against the staged tree must see the pruned copy, not a leftover.
 #

@@ -462,31 +462,48 @@ mk_legacy "${WORK}/l_r2.abi" "sysio::abi/1.1" '"action_results": [ { "name": "ge
 expect_reports "a 1.1 action_result difference is reported despite the version" \
     "${WORK}/l_r1.abi" "${WORK}/l_r2.abi" "action_result"
 
-# --- truncated documents -----------------------------------------------------------------
+# --- omitted vs empty sections --------------------------------------------------------------
 #
-# Reading REQUIRED sections through the absent-is-empty fallback made a truncated ABI compare
-# equal to a complete one whose section is empty. Those keys are validated instead.
+# Every list member of abi_def is a vector<> that default-constructs empty, so the chain reads
+# an omitted key and an explicit empty array identically. A diff tool that reported them as
+# different would be describing a difference the runtime does not see. An earlier revision
+# required five sections to be present, which rejected schema-valid minimal documents.
 python3 - "${WORK}/upstream.abi" "${WORK}/no_actions.abi" <<'PYEOF'
 import json, sys
 a = json.load(open(sys.argv[1])); a.pop("actions", None)
 json.dump(a, open(sys.argv[2], "w"))
 PYEOF
-if out="$(run_abidiff "${WORK}/no_actions.abi" "${WORK}/upstream.abi" 2>&1)"; then
-    fail "an ABI missing a required section is refused"
-    sed 's/^/      /' <<< "$out"
-elif grep -q "missing the required ABI section" <<< "$out"; then
-    pass "an ABI missing a required section is refused"
-else
-    fail "an ABI missing a required section is refused"
-    sed 's/^/      /' <<< "$out"
-fi
+expect_quiet "an omitted section equals an explicit empty one" \
+    "${WORK}/no_actions.abi" "${WORK}/upstream.abi" "action"
+
+cat > "${WORK}/minimal_ok.abi" <<'EOF'
+{ "version": "sysio::abi/1.2", "structs": [], "actions": [] }
+EOF
+expect_quiet "a minimal schema-valid document diffs cleanly against itself" \
+    "${WORK}/minimal_ok.abi" "${WORK}/minimal_ok.abi" "."
+
+# The namespace prefix is deployment-relevant: the runtime accepts only "sysio::abi/1.".
+cat > "${WORK}/minimal_eos.abi" <<'EOF'
+{ "version": "eosio::abi/1.2", "structs": [], "actions": [] }
+EOF
+expect_reports "a differing ABI namespace is reported" \
+    "${WORK}/minimal_ok.abi" "${WORK}/minimal_eos.abi" "version"
 
 # --- remaining payload sections ------------------------------------------------------------
 mk_legacy "${WORK}/em1.abi" "sysio::abi/1.2" '"error_messages": []'
 mk_legacy "${WORK}/em2.abi" "sysio::abi/1.2" '"error_messages": [ { "error_code": 1, "error_msg": "boom" } ]'
-expect_reports "a changed error_messages is reported" "${WORK}/em1.abi" "${WORK}/em2.abi" "error_messages"
+expect_reports "a changed error_messages is reported" "${WORK}/em1.abi" "${WORK}/em2.abi" "error_message"
 expect_quiet   "an identical error_messages reports no difference" \
-    "${WORK}/em1.abi" "${WORK}/em1.abi" "error_messages"
+    "${WORK}/em1.abi" "${WORK}/em1.abi" "error_message"
+
+# Consumed into a map keyed by error_code, so order is not significant and omission equals [].
+mk_legacy "${WORK}/em_ab.abi" "sysio::abi/1.2" '"error_messages": [ { "error_code": 1, "error_msg": "a" }, { "error_code": 2, "error_msg": "b" } ]'
+mk_legacy "${WORK}/em_ba.abi" "sysio::abi/1.2" '"error_messages": [ { "error_code": 2, "error_msg": "b" }, { "error_code": 1, "error_msg": "a" } ]'
+expect_quiet "reordered error_messages report no difference" \
+    "${WORK}/em_ab.abi" "${WORK}/em_ba.abi" "error_message"
+mk_legacy "${WORK}/em_absent.abi" "sysio::abi/1.2" '"types": []'
+expect_quiet "an omitted error_messages equals an empty one" \
+    "${WORK}/em_absent.abi" "${WORK}/em1.abi" "error_message"
 
 mk_legacy "${WORK}/ax1.abi" "sysio::abi/1.2" '"abi_extensions": []'
 mk_legacy "${WORK}/ax2.abi" "sysio::abi/1.2" '"abi_extensions": [ [ 1, "00" ] ]'

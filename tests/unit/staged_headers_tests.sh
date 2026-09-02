@@ -182,10 +182,14 @@ else
     for d in "${INCLUDE_DIR}/sysio/native" "${INCLUDE_DIR}/sysiolib/native"; do
         [ -d "$d" ] && leftovers+=("$d")
     done
-    # The native archives are copied into lib/ by POST_BUILD commands that only exist while
-    # native mode is on. They survive a reconfigure to OFF, and InstallCDT installs lib/
+    # The native-HOST archives are copied into lib/ by POST_BUILD commands that only exist
+    # while native mode is on. They survive a reconfigure to OFF, and InstallCDT installs lib/
     # wholesale, so a stale one gets packaged carrying the previous build's symbols.
-    for f in "${BUILD_DIR}"/lib/libnative* "${BUILD_DIR}/lib/libsf.a"; do
+    #
+    # libnative* only. libsf.a is WebAssembly and is built in every configuration, so it is
+    # required below rather than forbidden here -- listing it as a leftover contradicted the
+    # isolated probe, which requires the same file to survive.
+    for f in "${BUILD_DIR}"/lib/libnative*; do
         [ -e "$f" ] && leftovers+=("$f")
     done
     if [ "${#leftovers[@]}" -eq 0 ]; then
@@ -193,6 +197,14 @@ else
     else
         fail "native headers and archives are absent (native disabled)"
         for d in "${leftovers[@]}"; do echo "      still staged: $d"; done
+    fi
+
+    # ...and the wasm softfloat archive must be PRESENT, in this mode as in any other.
+    if [ -e "${BUILD_DIR}/lib/libsf.a" ]; then
+        pass "libsf.a is present (native disabled)"
+    else
+        fail "libsf.a is present (native disabled)"
+        echo "      cdt-ld links -lsf for --use-rt and the --fquery modes"
     fi
 fi
 
@@ -218,6 +230,8 @@ else
     if cmake -DSTAGE_SOURCE_DIR="${SOURCE_DIR}/libraries" -DSTAGE_BINARY_DIR="${SCRATCH}" \
              -DSTAGE_NATIVE=0 -P "${SOURCE_DIR}/cmake/stage_cdt_tree.cmake" \
              > "${SCRATCH}/stage.log" 2>&1; then
+        # libnative* and the native header trees only. libsf.a is asserted separately, and
+        # positively: it is a WebAssembly archive built in every configuration.
         leftovers=()
         for f in "${SCRATCH}/lib/libnative.a" "${SCRATCH}/lib/libnative_sysio.a" \
                  "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"; do

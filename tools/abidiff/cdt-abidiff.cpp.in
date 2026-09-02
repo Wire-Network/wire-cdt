@@ -76,8 +76,15 @@ class abidiff {
          return {major_v, minor_v};
       }
 
+      // The FULL string, not just the parsed components. parse_version_string ignores
+      // everything through the last '/', which is right for deciding capability and wrong
+      // here: Wire's abi_serializer accepts only a "sysio::abi/1." prefix, so an otherwise
+      // identical eosio::abi/1.2 is a deployment-relevant difference. The numeric parse still
+      // runs, to reject an unsupported version.
       void diff_version() {
-         if (get_version(abi_1, "file1") != get_version(abi_2, "file2")) {
+         (void)get_version(abi_1, "file1");
+         (void)get_version(abi_2, "file2");
+         if (field_or_null(abi_1, "version") != field_or_null(abi_2, "version")) {
             std::cout << "< version\n\t";
             std::cout << abi_1["version"] << "\n";
             std::cout << "> version\n\t";
@@ -102,19 +109,11 @@ class abidiff {
          return o.count(key) ? o.at(key) : none;
       }
 
-      // The sections the ABI schema requires. Reading these through section_or_empty too
-      // would make a TRUNCATED document compare equal to a complete one whose section is
-      // empty -- so a missing `actions` key would diff clean against `"actions": []`. Master
-      // threw on the missing key; this reports it and exits non-zero instead.
-      static void require_sections(const ojson& abi, const char* which) {
-         for (const char* key : {"types", "structs", "actions", "tables", "ricardian_clauses"}) {
-            if (!abi.count(key)) {
-               std::cerr << "Error: " << which << " is missing the required ABI section '"
-                         << key << "'\n";
-               exit(1);
-            }
-         }
-      }
+      // No section is required. Every list member of abi_def is a vector<> that
+      // default-constructs empty, so the chain reads an absent key and an explicit empty array
+      // identically -- reporting them as different would describe a difference the runtime does
+      // not see. `version` is the exception, and get_version diagnoses a missing or unparsable
+      // one.
 
       static const ojson& field_or_null(const ojson& o, const char* key) {
          static const ojson absent = ojson::null();
@@ -404,18 +403,42 @@ class abidiff {
       // error_messages and abi_extensions are the remaining abi_def payload sections. CDT
       // does not emit either, but an ABI produced elsewhere can carry them, and a change
       // there is a real interface change. Compared whole, like protobuf_types.
+      // Read through section_or_empty, not field_or_null: an omitted optional section printed
+      // as `null` against an explicit `[]`, a difference the chain does not see.
       void diff_opaque_section(const char* key) {
-         const ojson& a = field_or_null(abi_1, key);
-         const ojson& b = field_or_null(abi_2, key);
+         const ojson& a = section_or_empty(abi_1, key);
+         const ojson& b = section_or_empty(abi_2, key);
          if (a != b) {
             std::cout << "< " << key << "\n" << pretty_print(a) << "\n";
             std::cout << "> " << key << "\n" << pretty_print(b) << "\n";
          }
       }
 
+      // error_messages is consumed into a map keyed by error_code, so the same codes listed in
+      // a different order are the same ABI. Matched by key, like every other named section.
+      void find_error_messages(const ojson& abi1, const ojson& abi2, char direction) {
+         const ojson& e1 = section_or_empty(abi1, "error_messages");
+         const ojson& e2 = section_or_empty(abi2, "error_messages");
+         for ( size_t i = 0; i < e1.size(); i++ ) {
+            bool found = false;
+            for ( size_t j = 0; j < e2.size(); j++ ) {
+               if (field_or_null(e1.at(i), "error_code") != field_or_null(e2.at(j), "error_code"))
+                  continue;
+               found = field_or_null(e1.at(i), "error_msg") == field_or_null(e2.at(j), "error_msg");
+               break;
+            }
+            if (!found) {
+               std::cout << direction << " error_message\n" << pretty_print(e1.at(i)) << "\n";
+            }
+         }
+      }
+
+      void diff_error_messages() {
+         find_error_messages(abi_1, abi_2, '<');
+         find_error_messages(abi_2, abi_1, '>');
+      }
+
       void diff() {
-         require_sections(abi_1, "file1");
-         require_sections(abi_2, "file2");
          diff_version();
          diff_structs();
          diff_types();
@@ -433,7 +456,7 @@ class abidiff {
          // genuinely omits them compares as empty rather than throwing.
          diff_variants();
          diff_action_results();
-         diff_opaque_section("error_messages");
+         diff_error_messages();
          diff_opaque_section("abi_extensions");
       }
 };

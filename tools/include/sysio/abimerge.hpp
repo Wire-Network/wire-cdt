@@ -132,9 +132,16 @@ class ABIMerger {
          return {major_v, minor_v};
       }
 
+      /// The newer of the two versions, canonicalised to this toolchain's namespace.
+      ///
+      /// Returning the winning document's raw string emitted whatever prefix it carried: a
+      /// descriptor declaring "eosio::abi/1.10" produced a merged ABI stamped the same way,
+      /// which Wire's abi_serializer rejects outright -- it requires "sysio::abi/1.". Version
+      /// ORDERING ignores the prefix by design, so a foreign descriptor can still be ingested;
+      /// what it must not do is leave the output undeployable.
       std::string merge_version(ojson b) {
-         return version_of(abi) < version_of(b) ? b["version"].as<std::string>()
-                                                : abi["version"].as<std::string>();
+         const auto winner = std::max(version_of(abi), version_of(b));
+         return abi_version::version_string(winner.first, winner.second);
       }
 
       // Field order is significant: it is the serialization order, so {x,y} and {y,x} are
