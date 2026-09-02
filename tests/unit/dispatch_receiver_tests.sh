@@ -38,10 +38,12 @@ trap 'rm -rf "$WORK"' EXIT
 # happily; and dropping includes erases any macro that expands to one. cdt-cpp applies the
 # wasm32 target, the CDT include graph and the same predefined macros as the real compile.
 #
-# -E emits line markers (no -P: the driver rejects it), so those are dropped afterwards. They
-# begin with '#', and after preprocessing no real directive remains.
+# -E emits line markers (no -P: the driver rejects it), so those are dropped afterwards --
+# NUMERIC ones specifically, `# <line> "<file>"`. Dropping every line that starts with '#'
+# also deletes a multiline raw string whose closing delimiter sits at column 1 after a '#',
+# taking the executable code that follows it on that line with it.
 normalise_source() {
-    "$CDT_CPP" -E "$1" 2>/dev/null | sed '/^[[:space:]]*#/d'
+    "$CDT_CPP" -E "$1" 2>/dev/null | sed '/^[[:space:]]*#[[:space:]]*[0-9]/d'
 }
 
 # Decide whether one dispatch file satisfies the contract. Echoes OK, or a reason.
@@ -210,14 +212,23 @@ mkbad macro_expanded '
 #include "record_again.hpp"
     sysio_set_contract_name(r); RECORD_AGAIN;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# A multiline raw string closing at column 1 after a '#', with the second call on that same
+# line. cdt-cpp compiles it and -E emits both calls; a filter that drops every '#'-prefixed
+# line deletes the closing delimiter and the call with it.
+mkbad raw_string_hash '
+    sysio_set_contract_name(r);
+    const char* s = R"d(
+#)d"; sysio_set_contract_name(c);
+    (void)s;
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad missing_entirely  '
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
     sysio_set_contract_name(r);'
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
-           spliced_call spliced_ws raw_string_comment target_conditional macro_expanded \
-           missing_entirely after_dispatch; do
+           spliced_call spliced_ws raw_string_comment raw_string_hash \
+           target_conditional macro_expanded missing_entirely after_dispatch; do
     # Compiled by the DRIVER, not a host clang: a counterexample must be legal in the
     # translation unit that actually ships, and the driver supplies the wasm32 target and the
     # CDT include graph. (`-c` to an object we discard; the driver has no -fsyntax-only.)

@@ -145,16 +145,27 @@ namespace _kv_multi_index_detail {
 // Uses sysio::indexed_by and sysio::const_mem_fun from the standard CDT headers.
 //
 // A shim for the EOSIO multi_index over a different store. Nearly all contract code carries
-// over; these are the places it does not, each a source break against upstream code:
+// over. Two things do not, and they are worth keeping apart.
+//
+// SOURCE BREAKS AGAINST UPSTREAM -- code that compiles there and not here:
 //
 //   - the postfix iterator operators are deleted, because copying a KV iterator duplicates a
-//     host-side handle. rbegin()/rend() hand back a std::reverse_iterator, whose postfix
-//     operators are the adaptor's and are NOT deleted, so reverse loops compile silently;
-//   - the primary bounds are uint64_t/name overloads rather than upstream's member template,
-//     so &table::lower_bound cannot be taken bare and a wrapper convertible to both is
-//     ambiguous (see the note at the bounds themselves);
-//   - a secondary key must be trivially copyable, enforced by a static_assert in
-//     secondary_index_view -- so it fires at get_index<...>(), not at declaration.
+//     host-side handle. Note rbegin()/rend() hand back a std::reverse_iterator, whose postfix
+//     operators are the adaptor's and are NOT deleted, so reverse loops compile silently and
+//     the sweep does not find them;
+//   - the primary bounds are uint64_t/name overloads where upstream has a member template, so
+//     an explicit call -- `t.template lower_bound<uint64_t>(k)`, likewise upper_bound -- is
+//     rejected with "does not refer to a template". A wrapper convertible to BOTH uint64_t and
+//     name is also ambiguous here (see the note at the bounds).
+//
+// RESTRICTIONS SHARED WITH UPSTREAM, which are not breaks even though they bite:
+//
+//   - taking the bare address of a primary bound, `&table::lower_bound`, does not compile --
+//     here because the name is an overload set, upstream because a member template's parameter
+//     cannot be deduced. A named static_cast resolves one on Wire;
+//   - a secondary key must be trivially copyable. Upstream's supported secondary types are all
+//     trivially copyable too; what differs is only where it is diagnosed. The static_assert
+//     lives in secondary_index_view, so it fires at get_index<...>(), not at declaration.
 //
 // The mutators reject a duplicate primary key and a handle whose code is not the receiving
 // account, matching upstream. Each guard is documented where it stands.
