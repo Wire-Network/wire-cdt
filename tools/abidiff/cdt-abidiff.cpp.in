@@ -391,9 +391,30 @@ class abidiff {
       // protobuf_types is a whole serialized FileDescriptorSet, not a list keyed by name, so
       // it is compared as one value rather than element-wise. A difference anywhere in it
       // changes the wire encoding of every protobuf action.
+      // protobuf_types is a may_not_exist<string> holding a FileDescriptorSet as JSON, and the
+      // chain's custom from_variant accepts either spelling: a JSON object, or a string
+      // containing that object's JSON. Absent and an empty string are likewise the same empty
+      // value. Comparing the raw node reported all three pairs as differences the runtime does
+      // not see, so each side is reduced to one logical value first.
+      static ojson canonical_protobuf(const ojson& o) {
+         if (!o.count("protobuf_types"))
+            return ojson::null();
+         const ojson& v = o.at("protobuf_types");
+         if (!v.is_string())
+            return v;                       // already an object
+         const std::string text = v.as<std::string>();
+         if (text.empty())
+            return ojson::null();           // empty string == absent
+         try {
+            return ojson::parse(text);      // string encoding of the same object
+         } catch (const std::exception&) {
+            return v;                       // not valid JSON: compare as the string it is
+         }
+      }
+
       void diff_protobuf_types() {
-         const ojson& p1 = field_or_null(abi_1, "protobuf_types");
-         const ojson& p2 = field_or_null(abi_2, "protobuf_types");
+         const ojson p1 = canonical_protobuf(abi_1);
+         const ojson p2 = canonical_protobuf(abi_2);
          if (p1 != p2) {
             std::cout << "< protobuf_types\n" << pretty_print(p1) << "\n";
             std::cout << "> protobuf_types\n" << pretty_print(p2) << "\n";

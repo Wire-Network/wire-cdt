@@ -408,6 +408,29 @@ sed 's/25830/40000/' "${WORK}/t_rich.desc" > "${WORK}/t_otherid.desc"
 merge_refuses_both_orders "tables with different table_ids conflict" \
     "${WORK}/t_rich.desc" "${WORK}/t_otherid.desc"
 
+# A descriptor declaring a foreign ABI namespace must not produce one. Ordering ignores the
+# prefix by design, so an eosio:: descriptor can be ingested -- but merge_version returned the
+# winning document's RAW string, so the merged ABI was stamped eosio::abi/1.10, which the
+# runtime's abi_serializer rejects outright. Nothing reached ABIMerger with a foreign prefix
+# before this: the eosio:: fixture in abidiff_tests exercises only the differ.
+printf '{"version":"sysio::abi/1.2",%s,"tables":[]}\n' "$TBL_COMMON" > "${WORK}/ns_local.desc"
+printf '{"version":"eosio::abi/1.10",%s,"tables":[]}\n' "$TBL_COMMON" > "${WORK}/ns_foreign.desc"
+ns_dir="${WORK}/ns"; mkdir -p "$ns_dir"
+cp "${WORK}/ns_local.desc" "${ns_dir}/a_first.desc"
+cp "${WORK}/ns_foreign.desc" "${ns_dir}/b_second.desc"
+if "$CDT_CODEGEN" --finalize --contract ns --output-dir "$ns_dir" \
+      --abi-output "${ns_dir}/ns.abi" \
+      --desc-file "${ns_dir}/a_first.desc" --desc-file "${ns_dir}/b_second.desc" \
+      > "${ns_dir}/ns.log" 2>&1; then
+    check "a foreign ABI namespace is canonicalised on merge" \
+        "${ns_dir}/ns.abi" '"version": "sysio::abi/1.10"'
+    check_absent "the merged ABI carries no foreign namespace" \
+        "${ns_dir}/ns.abi" 'eosio::abi'
+else
+    fail "a descriptor with a foreign namespace merges"
+    sed 's/^/    /' "${ns_dir}/ns.log"
+fi
+
 mkdesc_variant "${WORK}/v_short.desc" '["uint64"]'
 mkdesc_variant "${WORK}/v_long.desc"  '["uint64","string"]'
 merge_refuses_both_orders "variants of differing length conflict" \

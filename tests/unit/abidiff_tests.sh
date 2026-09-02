@@ -508,6 +508,28 @@ expect_quiet "an omitted error_messages equals an empty one" \
 mk_legacy "${WORK}/ax1.abi" "sysio::abi/1.2" '"abi_extensions": []'
 mk_legacy "${WORK}/ax2.abi" "sysio::abi/1.2" '"abi_extensions": [ [ 1, "00" ] ]'
 expect_reports "a changed abi_extensions is reported" "${WORK}/ax1.abi" "${WORK}/ax2.abi" "abi_extensions"
+# Omitted equals empty. Without this, reverting diff_opaque_section from section_or_empty back
+# to field_or_null leaves every other case green while `null` is printed against `[]`.
+mk_legacy "${WORK}/ax_absent.abi" "sysio::abi/1.2" '"types": []'
+expect_quiet "an omitted abi_extensions equals an empty one" \
+    "${WORK}/ax_absent.abi" "${WORK}/ax1.abi" "abi_extensions"
+
+# --- protobuf_types spellings ---------------------------------------------------------------
+#
+# may_not_exist<string> holding a FileDescriptorSet as JSON. The chain's from_variant accepts
+# either a JSON object or a string containing that object, and absent equals an empty string --
+# so all three pairs below are the same ABI and a raw node comparison reported each as changed.
+PB_BASE='"version":"sysio::abi/1.3","structs":[],"actions":[]'
+printf '{%s,"protobuf_types":{"file":[{"name":"a.proto","package":"t"}]}}\n' "$PB_BASE" > "${WORK}/pb_obj.abi"
+printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"a.proto\\",\\"package\\":\\"t\\"}]}"}\n' "$PB_BASE" > "${WORK}/pb_str.abi"
+printf '{%s,"protobuf_types":""}\n' "$PB_BASE" > "${WORK}/pb_empty.abi"
+printf '{%s}\n' "$PB_BASE" > "${WORK}/pb_absent.abi"
+expect_quiet   "an object and its JSON-string encoding are the same protobuf_types" \
+    "${WORK}/pb_obj.abi" "${WORK}/pb_str.abi" "protobuf_types"
+expect_quiet   "an omitted protobuf_types equals an empty string" \
+    "${WORK}/pb_absent.abi" "${WORK}/pb_empty.abi" "protobuf_types"
+expect_reports "a present protobuf_types differs from an absent one" \
+    "${WORK}/pb_obj.abi" "${WORK}/pb_absent.abi" "protobuf_types"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

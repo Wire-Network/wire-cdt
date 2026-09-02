@@ -172,10 +172,17 @@ fi
 # an API it was configured not to build. The counterpart check above cannot catch that:
 # those files still have source counterparts, they simply should not be there.
 if [ "$NATIVE_ENABLED" = "1" ]; then
-    if [ -d "${INCLUDE_DIR}/sysio/native" ]; then
-        pass "native headers are staged (native enabled)"
+    # BOTH destinations: staging owns include/sysio/native and include/sysiolib/native, and
+    # checking only the first left the second free to disappear with the suite still green.
+    missing_native=()
+    for d in "${INCLUDE_DIR}/sysio/native" "${INCLUDE_DIR}/sysiolib/native"; do
+        [ -d "$d" ] || missing_native+=("$d")
+    done
+    if [ "${#missing_native[@]}" -eq 0 ]; then
+        pass "both native header trees are staged (native enabled)"
     else
-        fail "native headers are staged (native enabled)"
+        fail "both native header trees are staged (native enabled)"
+        for d in "${missing_native[@]}"; do echo "      absent: $d"; done
     fi
 else
     leftovers=()
@@ -206,6 +213,55 @@ else
         fail "libsf.a is present (native disabled)"
         echo "      cdt-ld links -lsf for --use-rt and the --fquery modes"
     fi
+fi
+
+# --- native-disabled configuration, always run ------------------------------------------
+#
+# Both workflows leave ENABLE_NATIVE_COMPILER at its ON default, so every OFF assertion above
+# is dead in CI -- and the scratch prune probe seeds a fake libsf.a rather than building one,
+# so it proves only that pruning spares the file. Re-gating add_subdirectory(native), or the sf
+# target inside it, would leave all of that green while a clean OFF package again shipped no
+# softfloat archive.
+#
+# Configuring is enough to catch that and costs seconds: the generated build graph either
+# contains the `sf` target or it does not. Building it is left to the OFF matrix leg.
+echo "-- native-disabled configuration --"
+
+if ! command -v cmake > /dev/null 2>&1; then
+    echo "  SKIP: cmake not on PATH"
+elif [ ! -f "${BUILD_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake" ]; then
+    echo "  SKIP: no staged CDT toolchain file to configure against"
+else
+    OFFDIR="$(mktemp -d)"
+    if ! cmake -S "${SOURCE_DIR}/libraries" -B "${OFFDIR}" -G Ninja \
+               -DCMAKE_BUILD_TYPE=Release \
+               -DCMAKE_TOOLCHAIN_FILE="${BUILD_DIR}/lib/cmake/cdt/CDTWasmToolchain.cmake" \
+               -DCDT_BIN="${BUILD_DIR}/lib/cmake/cdt/" \
+               -DBASE_BINARY_DIR="${OFFDIR}/out" \
+               -D__APPLE=FALSE \
+               -DENABLE_NATIVE_COMPILER=OFF > "${OFFDIR}/cfg.log" 2>&1; then
+        fail "the libraries project configures with ENABLE_NATIVE_COMPILER=OFF"
+        sed 's/^/      /' "${OFFDIR}/cfg.log"
+    else
+        pass "the libraries project configures with ENABLE_NATIVE_COMPILER=OFF"
+        targets="$(ninja -C "${OFFDIR}" -t targets all 2>/dev/null || true)"
+        # sf is WebAssembly -- cdt-ld links -lsf for --use-rt and the --fquery modes -- so it
+        # must be built in every configuration, not only when the native tester is enabled.
+        if grep -q "libsf\.a" <<< "$targets"; then
+            pass "an OFF configuration still builds libsf.a"
+        else
+            fail "an OFF configuration still builds libsf.a"
+            echo "      no libsf.a target in the generated graph"
+        fi
+        # ...while the native-host archives are correctly absent.
+        if grep -qE "libnative[a-z_]*\.a" <<< "$targets"; then
+            fail "an OFF configuration builds no libnative* archive"
+            grep -oE "libnative[a-z_]*\.a" <<< "$targets" | sort -u | sed 's/^/      still built: /'
+        else
+            pass "an OFF configuration builds no libnative* archive"
+        fi
+    fi
+    rm -rf "${OFFDIR}"
 fi
 
 # --- ON -> OFF prune, in an isolated tree ------------------------------------------
