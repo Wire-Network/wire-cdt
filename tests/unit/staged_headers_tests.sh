@@ -101,8 +101,13 @@ fi
 # Per destination, not just in aggregate. A single total cannot show that every tree was
 # staged: dropping the bluegrass copy from stage_cdt_tree.cmake leaves the count nonzero on
 # the strength of the other five, and the test stays green.
+# count_files: 0 for a missing directory rather than a non-zero find. Under `set -euo
+# pipefail` an unguarded `find` on an absent path aborts the suite mid-run -- the failure this
+# check exists to report is exactly when the path is absent, so it would never be printed.
+count_files() { [ -d "$1" ] || { echo 0; return 0; }; find "$1" -type f 2>/dev/null | wc -l; }
+
 for dest in sysiolib libc libcxx boost/preprocessor bluegrass; do
-    n="$(find "${INCLUDE_DIR}/${dest}" -type f 2>/dev/null | wc -l)"
+    n="$(count_files "${INCLUDE_DIR}/${dest}")"
     if [ "$n" -gt 0 ]; then
         pass "${dest} is staged (${n} files)"
     else
@@ -179,7 +184,7 @@ if [ "$NATIVE_ENABLED" = "1" ]; then
     # while a directory-existence check stayed green.
     missing_native=()
     for d in "${INCLUDE_DIR}/sysio/native" "${INCLUDE_DIR}/sysiolib/native"; do
-        n="$(find "$d" -type f 2>/dev/null | wc -l)"
+        n="$(count_files "$d")"
         [ "$n" -gt 0 ] || missing_native+=("$d ($n files)")
     done
     if [ "${#missing_native[@]}" -eq 0 ]; then
@@ -287,6 +292,22 @@ else
                 fail "an OFF build stages libsf.a"
                 echo "      cdt-ld links -lsf for --use-rt and the --fquery modes"
                 ls "${OFFDIR}/out/lib" 2>/dev/null | sed 's/^/      staged: /'
+            fi
+
+            # ...and no native HEADER tree is staged. Checking lib/ alone does not pin the
+            # CMake-to-staging wiring: forcing STAGE_NATIVE=1 in libraries/CMakeLists.txt
+            # leaves these populated in an OFF build, and InstallCDT installs the whole
+            # include tree, so they would ship.
+            stray_hdrs=()
+            for d in "${OFFDIR}/out/include/sysio/native" "${OFFDIR}/out/include/sysiolib/native"; do
+                n="$(count_files "$d")"
+                [ "$n" -eq 0 ] || stray_hdrs+=("$d ($n files)")
+            done
+            if [ "${#stray_hdrs[@]}" -eq 0 ]; then
+                pass "an OFF build stages no native header tree"
+            else
+                fail "an OFF build stages no native header tree"
+                for d in "${stray_hdrs[@]}"; do echo "      staged: $d"; done
             fi
 
             # ...while no native-HOST archive is produced. [^[:space:]]* rather than [a-z_]*:

@@ -501,7 +501,7 @@ mk_legacy "${WORK}/em_ab.abi" "sysio::abi/1.2" '"error_messages": [ { "error_cod
 mk_legacy "${WORK}/em_ba.abi" "sysio::abi/1.2" '"error_messages": [ { "error_code": 2, "error_msg": "b" }, { "error_code": 1, "error_msg": "a" } ]'
 expect_quiet "reordered error_messages report no difference" \
     "${WORK}/em_ab.abi" "${WORK}/em_ba.abi" "error_message"
-mk_legacy "${WORK}/em_absent.abi" "sysio::abi/1.2" '"types": []'
+mk_legacy "${WORK}/em_absent.abi" "sysio::abi/1.2" '"variants": []'
 expect_quiet "an omitted error_messages equals an empty one" \
     "${WORK}/em_absent.abi" "${WORK}/em1.abi" "error_message"
 
@@ -510,7 +510,7 @@ mk_legacy "${WORK}/ax2.abi" "sysio::abi/1.2" '"abi_extensions": [ [ 1, "00" ] ]'
 expect_reports "a changed abi_extensions is reported" "${WORK}/ax1.abi" "${WORK}/ax2.abi" "abi_extensions"
 # Omitted equals empty. Without this, reverting diff_opaque_section from section_or_empty back
 # to field_or_null leaves every other case green while `null` is printed against `[]`.
-mk_legacy "${WORK}/ax_absent.abi" "sysio::abi/1.2" '"types": []'
+mk_legacy "${WORK}/ax_absent.abi" "sysio::abi/1.2" '"variants": []'
 expect_quiet "an omitted abi_extensions equals an empty one" \
     "${WORK}/ax_absent.abi" "${WORK}/ax1.abi" "abi_extensions"
 
@@ -542,6 +542,23 @@ expect_reports "a protobuf_types string of \"null\" differs from an absent one" 
     "${WORK}/pb_absent.abi" "${WORK}/pb_strnull.abi" "protobuf_types"
 expect_reports "a raw array differs from a string containing that array" \
     "${WORK}/pb_rawarr.abi" "${WORK}/pb_strarr.abi" "protobuf_types"
+
+# Duplicate object members. jsoncons keeps only the last, so this document would compare equal
+# to one carrying just the second -- while fc preserves both and protobuf merges duplicate
+# repeated fields, making it [a,b] on chain and [b] here. Refused rather than mis-compared.
+printf '{%s,"protobuf_types":{"file":[{"name":"a.proto"}],"file":[{"name":"b.proto"}]}}\n' \
+    "$PB_BASE" > "${WORK}/pb_dup.abi"
+printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"b.proto\\"}]}"}\n' \
+    "$PB_BASE" > "${WORK}/pb_onlyb.abi"
+if out="$(run_abidiff "${WORK}/pb_dup.abi" "${WORK}/pb_onlyb.abi" 2>&1)"; then
+    fail "a document with duplicate object members is refused"
+    sed 's/^/      /' <<< "$out"
+elif grep -q "duplicate object member" <<< "$out"; then
+    pass "a document with duplicate object members is refused"
+else
+    fail "a document with duplicate object members is refused"
+    sed 's/^/      /' <<< "$out"
+fi
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

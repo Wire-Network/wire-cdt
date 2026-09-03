@@ -4,6 +4,7 @@
 #include <exception>
 #include <iostream>
 #include <fstream>
+#include <set>
 #include <sstream>
 #include <utility>
 
@@ -22,26 +23,99 @@ struct abidiff_exception : public std::exception {
 } abidiff_ex;
 
 
+// Rejects a document containing duplicate object members.
+//
+// jsoncons keeps only the last of a repeated key, so a duplicate is gone before any comparison
+// sees it -- and it is gone for EVERY section, not only protobuf_types. The runtime does not
+// agree: fc preserves both members and protobuf merges duplicate repeated fields, so a
+// descriptor set written with two `file` members is [a,b] on chain and [b] here. Comparing such
+// a document would silently answer about a value the chain never sees, so it is refused
+// instead. The vendored jsoncons has no option to reject duplicates at parse time; this walks
+// the same text through its SAX reader and tracks the keys of each open object.
+class duplicate_member_detector final : public jsoncons::json_content_handler
+{
+public:
+   bool found() const { return found_; }
+   const std::string& duplicate() const { return dup_; }
+
+private:
+   std::vector<std::set<std::string>> stack_;
+   std::string dup_;
+   bool found_ = false;
+
+   void do_begin_document() override {}
+   void do_end_document() override {}
+   void do_begin_object(const jsoncons::serializing_context&) override { stack_.emplace_back(); }
+   void do_end_object(const jsoncons::serializing_context&) override { if (!stack_.empty()) stack_.pop_back(); }
+   void do_begin_array(const jsoncons::serializing_context&) override {}
+   void do_end_array(const jsoncons::serializing_context&) override {}
+   void do_name(const string_view_type& name, const jsoncons::serializing_context&) override {
+      if (stack_.empty())
+         return;
+      const std::string key(name.data(), name.size());
+      if (!stack_.back().insert(key).second && !found_) {
+         found_ = true;
+         dup_   = key;
+      }
+   }
+   void do_null_value(const jsoncons::serializing_context&) override {}
+   void do_string_value(const string_view_type&, const jsoncons::serializing_context&) override {}
+   void do_byte_string_value(const uint8_t*, size_t, const jsoncons::serializing_context&) override {}
+   void do_bignum_value(int, const uint8_t*, size_t, const jsoncons::serializing_context&) override {}
+   void do_double_value(double, const jsoncons::floating_point_options&, const jsoncons::serializing_context&) override {}
+   void do_integer_value(int64_t, const jsoncons::serializing_context&) override {}
+   void do_uinteger_value(uint64_t, const jsoncons::serializing_context&) override {}
+   void do_bool_value(bool, const jsoncons::serializing_context&) override {}
+};
+
+/// @return the duplicated key, or empty when the text has none.
+inline std::string first_duplicate_member(const std::string& text) {
+   duplicate_member_detector det;
+   try {
+      std::istringstream is(text);
+      jsoncons::json_reader reader(is, det);
+      reader.read();
+   } catch (const std::exception&) {
+      return {};      // malformed input is diagnosed by the ordinary parse
+   }
+   return det.found() ? det.duplicate() : std::string{};
+}
+
 class abidiff {
    private:
       ojson abi_1, abi_2;
       std::string fn_1, fn_2;
+
+      // Read a document, refusing one whose comparison would be unfaithful.
+      static ojson load_checked(const std::string& path, const char* which) {
+         std::ifstream in(path);
+         std::stringstream buf;
+         buf << in.rdbuf();
+         const std::string text = buf.str();
+         const std::string dup = first_duplicate_member(text);
+         if (!dup.empty()) {
+            std::cerr << "Error: " << which << " has a duplicate object member '" << dup
+                      << "'. jsoncons keeps only the last, while the chain preserves both and\n"
+                         "protobuf merges duplicate repeated fields -- so any comparison here\n"
+                         "would describe a value the runtime never sees.\n";
+            exit(1);
+         }
+         return ojson::parse(text);
+      }
    public:
       abidiff( const std::string& fn1, const std::string& fn2) {
          llvm::SmallString<128> _fn1, _fn2;
          if (!llvm::sys::fs::real_path(fn1, _fn1, true)) {
-            std::ifstream in(_fn1.str().str());
             fn_1 = _fn1.str().str();
-            abi_1 = ojson::parse(in);
+            abi_1 = load_checked(fn_1, "file1");
          } else {
             std::cerr << "Error, invalid filepath { " << _fn1.str().str() << " }\n";
             throw abidiff_ex;
          }
 
          if (!llvm::sys::fs::real_path(fn2, _fn2, true)) {
-            std::ifstream in(_fn2.str().str());
             fn_2 = _fn2.str().str();
-            abi_2 = ojson::parse(in);
+            abi_2 = load_checked(fn_2, "file2");
          } else {
             std::cerr << "Error, invalid filepath { " << _fn2.str().str() << " }\n";
             throw abidiff_ex;
@@ -401,8 +475,12 @@ class abidiff {
       // the same FileDescriptorSet but differ as JSON -- an enum written numerically in one
       // and symbolically in the other, say -- are still reported as different. Collapsing
       // those would mean parsing both through FileDescriptorSet with the chain's options,
-      // which this tool does not link protobuf to do. It errs toward reporting a difference
-      // that is not one, never toward hiding one.
+      // which this tool does not link protobuf to do.
+      //
+      // So it over-reports rather than under-reports, with ONE exception it cannot resolve
+      // here: jsoncons keeps only the last of a duplicate object member, which would hide a
+      // real difference. Such a document is refused at load (see load_checked) rather than
+      // compared.
       static ojson canonical_protobuf(const ojson& o) {
          if (!o.count("protobuf_types"))
             return ojson::null();
