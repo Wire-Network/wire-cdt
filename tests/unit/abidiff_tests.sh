@@ -582,10 +582,16 @@ printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"a.proto\\"}],\\"file\\
 expect_refused "a duplicate member inside a protobuf_types string is refused" \
     "${WORK}/pb_dup_str.abi" "${WORK}/pb_onlyb.abi"
 
-# ...and refusing the string form must not come from refusing every string: the well-formed
-# string spelling above still compares, and equal to its object counterpart.
-expect_quiet "a duplicate-free protobuf_types string still compares" \
-    "${WORK}/pb_str.abi" "${WORK}/pb_obj.abi" "protobuf_types"
+# ...but only for the spelling canonical_protobuf ADOPTS. A string whose JSON root is not an
+# object is compared verbatim, as the string it is -- the assertion above pins that -- so
+# jsoncons drops nothing from the compared value and this refusal's reason does not hold.
+# Refusing it would be stricter than the object spelling rather than equal to it, and would
+# take away a document that diffs faithfully. (The chain rejects such content either way,
+# JsonStringToMessage needing a message root, which is exactly why it stays a verbatim string.)
+printf '{%s,"protobuf_types":"[{\\"a\\":1,\\"a\\":2}]"}\n' "$PB_BASE" > "${WORK}/pb_arrdup.abi"
+printf '{%s,"protobuf_types":"[{\\"a\\":9}]"}\n'              "$PB_BASE" > "${WORK}/pb_arrother.abi"
+expect_reports "a duplicate in a non-object-root protobuf_types string still compares" \
+    "${WORK}/pb_arrdup.abi" "${WORK}/pb_arrother.abi" "protobuf_types"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

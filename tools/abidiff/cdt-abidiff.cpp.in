@@ -126,9 +126,16 @@ class abidiff {
          // descriptors: the same false negative the outer check exists to prevent, in the one
          // place the outer check cannot see. Refused here rather than at the comparison, so a
          // document is rejected on the same terms whichever spelling it uses.
+         //
+         // ONLY for the spelling canonical_protobuf actually ADOPTS. A string whose JSON root
+         // is not an object is compared verbatim, as the string it is, so nothing is dropped
+         // from the compared value and this refusal's own reason would not hold -- refusing it
+         // would be stricter than the object spelling rather than equal to it, and would take
+         // away a document that diffs faithfully today. The adoption rule is asked for rather
+         // than restated, so the two cannot drift apart.
          if (parsed.is_object() && parsed.count(protobuf_types_key)) {
             const ojson& pb = parsed.at(protobuf_types_key);
-            if (pb.is_string()) {
+            if (pb.is_string() && canonical_protobuf(parsed).is_object()) {
                const std::string nested = first_duplicate_member(pb.as<std::string>());
                if (!nested.empty())
                   refuse_duplicate(which, nested, " inside protobuf_types");
