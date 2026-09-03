@@ -8,53 +8,89 @@
 # stays green if that is broken -- the divergence appears only under notification, on chain.
 # This pins it at the source: the emitted dispatch text, which no other test inspects.
 #
-# The checker is a function over a dispatch FILE, and it is exercised twice: against the real
-# generated dispatch, and against a table of crafted counterexamples that must each be
-# rejected. Earlier revisions of this test were defeated four times in review -- by handler
-# names it did not match, by a branch on the signature line, by two calls on one line, and by a
-# comment between the identifier and its paren -- because each fix pattern-matched the last
-# evasion. Checking the checker is what stops that: a new evasion is one row below, not a round
-# trip.
+# The checker is a function over a dispatch FILE, and it is exercised three ways: against the
+# real generated dispatch, against a table of crafted counterexamples that must each be
+# rejected, and against positive controls that must NOT be rejected. Earlier revisions of this
+# test were defeated six times in review -- by handler names it did not match, by a branch on
+# the signature line, by two calls on one line, by a comment between the identifier and its
+# paren, by a raw string closing at column 1, and by a line marker whose filename contained an
+# escaped quote -- because each fix pattern-matched the last evasion. Checking the checker is
+# what stops that: a new evasion is one row below, not a round trip.
+#
+# The checker reports three outcomes, not two, and callers distinguish all three: accepted,
+# rejected, and INFRA_ERROR -- the check could not be performed. Collapsing the third into
+# either verdict is how a broken toolchain reads as a green run.
 #
 # Usage: dispatch_receiver_tests.sh <build_dir>
 set -euo pipefail
 
 BUILD_DIR="$1"
 CDT_CPP="${BUILD_DIR}/bin/cdt-cpp"
-CLANGXX="${BUILD_DIR}/bin/clang++"
 PASS=0
 FAIL=0
 pass() { echo "  PASS: $1"; PASS=$((PASS + 1)); }
 fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
 
+# check_dispatch's exit statuses. 0 is acceptance; these two are not interchangeable.
+readonly REJECTED=1      # the dispatch was read, and it breaks the contract
+readonly INFRA_ERROR=2   # the dispatch could not be read at all -- no verdict was reached
+
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-# Normalise through the CDT DRIVER, so the tokens counted are the ones that will ship.
+# The COMPLETE preprocessor line-marker grammar, anchored at BOTH ends:
 #
-# Earlier revisions used the bundled clang++ with the host target and deleted #include lines
-# first. Both choices changed the translation unit: the host target evaluates `#ifdef __wasm__`
-# the wrong way, so a second setter call guarded on it was invisible while cdt-cpp compiled it
+#     # <line> "<file>" [<flag>...]
+#
+# with the filename modelled as clang emits it -- any character except an unescaped quote or
+# backslash, or a backslash followed by anything. Every part of that is load-bearing, and each
+# was added after a shape that a narrower filter got wrong:
+#
+#   * dropping every '#'-prefixed line deleted `#)d"; <call>` -- a raw string closing at
+#     column 1 -- and the executable code on that line with it;
+#   * dropping `#` followed by a digit deleted `#1)d"; <call>` the same way;
+#   * `[^"]*` for the filename does not match `# 7 "a\"b.cpp"`, which is what cdt-cpp -E emits
+#     for `#line 7 "a\"b.cpp"`. The marker then survives into the normalised source and is
+#     read as the start of apply()'s first statement, rejecting a CORRECT dispatch;
+#   * without the trailing `$`, `# 1 "fake")d"; <call>` matches on its marker-shaped prefix
+#     and the line -- call included -- is deleted.
+#
+# Matching the whole grammar leaves any line that is not literally a marker intact.
+readonly LINE_MARKER_RE='^# [0-9]+ "([^"\\]|\\.)*"([[:space:]]+[0-9]+)*$'
+
+# Preprocess $1 into $2, with the driver's diagnostics captured in $3, and strip line markers.
+#
+# Normalise through the CDT DRIVER, so the tokens counted are the ones that will ship. Earlier
+# revisions used the bundled clang++ with the host target and deleted #include lines first.
+# Both choices changed the translation unit: the host target evaluates `#ifdef __wasm__` the
+# wrong way, so a second setter call guarded on it was invisible while cdt-cpp compiled it
 # happily; and dropping includes erases any macro that expands to one. cdt-cpp applies the
 # wasm32 target, the CDT include graph and the same predefined macros as the real compile.
 #
-# -E emits line markers (no -P: the driver rejects it), so those are dropped afterwards --
-# matching the COMPLETE marker grammar, `# <line> "<file>"` with optional trailing flags,
-# anchored at both ends.
-#
-# Two narrower filters were each defeated by a raw string whose closing delimiter sits at
-# column 1: dropping every '#'-prefixed line deleted `#)d"; ...`, and dropping `#` followed by
-# a digit deleted `#1)d"; ...`. Both took the executable code on that line with them. Anchoring
-# the whole grammar leaves any line that is not literally a marker intact.
+# -E emits line markers and the driver rejects -P, so they are stripped afterwards. `pipefail`
+# is set, so the pipeline reports the driver's status and the caller can tell a preprocessing
+# failure from a verdict.
 normalise_source() {
-    "$CDT_CPP" -E "$1" 2>/dev/null | sed -E '/^# [0-9]+ "[^"]*"([[:space:]]+[0-9]+)*$/d'
+    "$CDT_CPP" -E "$1" 2>"$3" | sed -E "/${LINE_MARKER_RE}/d" > "$2"
 }
 
 # Decide whether one dispatch file satisfies the contract. Echoes OK, or a reason.
+# Returns 0 (accepted), $REJECTED, or $INFRA_ERROR.
 check_dispatch() {
-    local file="$1" clean
-    clean="$(mktemp)"
-    normalise_source "$file" > "$clean"
+    local file="$1" clean pp_log pp_status=0
+    clean="$(mktemp "${WORK}/clean.XXXXXX")"
+    pp_log="$(mktemp "${WORK}/pplog.XXXXXX")"
+
+    # An explicit status check, because every call site runs this function on the left of a
+    # `||` -- which disables errexit for its whole body. Without this, a driver that failed
+    # after printing something plausible was analysed anyway: acceptable-looking output read
+    # as OK, and truncated output read as a rejection, which in the counterexample loop below
+    # is indistinguishable from a PASS.
+    normalise_source "$file" "$clean" "$pp_log" || pp_status=$?
+    if [ "$pp_status" -ne 0 ]; then
+        echo "preprocessing ${file} exited ${pp_status}: $(tr '\n' ' ' < "$pp_log")"
+        return "$INFRA_ERROR"
+    fi
 
     # Every occurrence of the identifier, however spelled. Two are expected: the declaration
     # in the extern "C" block and the single call inside apply(). Counting matching LINES, or
@@ -63,14 +99,14 @@ check_dispatch() {
     occurrences="$(grep -owE 'sysio_set_contract_name' "$clean" | wc -l)"
     if [ "$occurrences" -ne 2 ]; then
         echo "expected 2 occurrences of sysio_set_contract_name (1 declaration + 1 call), found ${occurrences}"
-        rm -f "$clean"; return 1
+        return "$REJECTED"
     fi
 
     local apply_line
     apply_line="$(grep -nE '^[[:space:]]*(__attribute__.*)?void apply\(' "$clean" | head -1 | cut -d: -f1 || true)"
     if [ -z "$apply_line" ]; then
         echo "no apply() definition found"
-        rm -f "$clean"; return 1
+        return "$REJECTED"
     fi
 
     # The body from immediately after the opening brace, INCLUDING any suffix on the signature
@@ -83,16 +119,27 @@ check_dispatch() {
         { print }
     ' "$clean" | tr '\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g; s/^ //')"
     first_stmt="${body%%;*};"
-    rm -f "$clean"
 
     # Normalise spacing so `set (r)` and `set(r)` compare alike.
     local normalised
     normalised="$(printf '%s' "$first_stmt" | tr -d ' ')"
     if [ "$normalised" != "sysio_set_contract_name(r);" ]; then
         echo "first statement of apply() is: ${first_stmt}"
-        return 1
+        return "$REJECTED"
     fi
     echo OK
+}
+
+# Run check_dispatch on $1, setting VERDICT to its reason and VERDICT_STATUS to its status.
+#
+# The `||` is what keeps a non-zero status from aborting the script under errexit -- turning a
+# reported failure into a truncated run -- while still recording which status it was. Reading
+# only the text cannot tell a rejection from an infrastructure error.
+VERDICT=""
+VERDICT_STATUS=0
+run_check() {
+    VERDICT_STATUS=0
+    VERDICT="$(check_dispatch "$1")" || VERDICT_STATUS=$?
 }
 
 echo "=== Dispatch Receiver Tests ==="
@@ -125,27 +172,26 @@ if [ -z "$DISPATCH" ]; then
 fi
 pass "a dispatch.cpp was generated"
 
-# `|| true`: check_dispatch returns non-zero on rejection, and under `set -e` the assignment
-# would take that status and abort the script -- turning a real failure into a truncated run
-# instead of a reported one.
-verdict="$(check_dispatch "$DISPATCH" || true)"
-if [ "$verdict" = OK ]; then
+run_check "$DISPATCH"
+if [ "$VERDICT_STATUS" -eq 0 ]; then
     pass "the generated apply() records the receiver once, before any dispatch"
 else
     fail "the generated apply() records the receiver once, before any dispatch"
-    echo "    ${verdict}"
+    echo "    ${VERDICT}"
     sed 's/^/      /' "$DISPATCH"
 fi
 
 # --- 2. the checker itself -----------------------------------------------------------------
 #
-# Each of these compiles and each breaks the contract. Every one defeated some earlier
-# revision of this test, so they are kept as regressions on the CHECKER.
+# Each fixture compiles. The ones in the negative table each break the contract and every one
+# defeated some earlier revision of this test, so they are kept as regressions on the CHECKER;
+# the ones in the positive table are correct dispatches that merely look unusual, and pin the
+# other direction -- a filter tightened until it rejects real output.
 # $2 is appended directly after the opening brace, so a fixture can put text on the SIGNATURE
-# line by starting without a newline. mkbad used to emit one unconditionally, which meant no
+# line by starting without a newline. This used to emit one unconditionally, which meant no
 # counterexample ever exercised that escape even though the header claimed one did.
-mkbad() {   # $1=name  $2=apply-body (leading newline optional)
-    cat > "${WORK}/bad_$1.cpp" <<EOF
+mkfixture() {   # $1=name  $2=apply-body (leading newline optional)
+    cat > "${WORK}/fixture_$1.cpp" <<EOF
 typedef unsigned long long uint64_t;   // not <cstdint>: see the -nostdinc note below
 extern "C" {
   void sysio_set_contract_name(uint64_t n);
@@ -157,16 +203,16 @@ extern "C" {
 EOF
 }
 
-mkbad code_not_receiver '
+mkfixture code_not_receiver '
     sysio_set_contract_name(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-mkbad inside_branch     '
+mkfixture inside_branch     '
     if (c == r) { sysio_set_contract_name(r); __sysio_action_go_x(r, c); }
     else { __sysio_notify_on_x(r, c); }'
-mkbad double_call       '
+mkfixture double_call       '
     sysio_set_contract_name(r); sysio_set_contract_name(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-mkbad comment_split     '
+mkfixture comment_split     '
     sysio_set_contract_name(r); sysio_set_contract_name/**/(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 # A branch opened on the SIGNATURE line, with the setter first on the line below. This is the
@@ -174,32 +220,32 @@ mkbad comment_split     '
 # `if (c == r) {`, so it is rejected; read it from the next line down -- as an earlier revision
 # did -- and the setter looks like the first statement and it is accepted. A fixture whose
 # signature line also closes its branch is rejected either way and pins nothing.
-mkbad signature_line    ' if (c == r) {
+mkfixture signature_line    ' if (c == r) {
     sysio_set_contract_name(r);
     __sysio_action_go_x(r, c);
   } else { __sysio_notify_on_x(r, c); }'
 # Split across a phase-2 line splice, which compiles as one identifier.
-mkbad spliced_call      '
+mkfixture spliced_call      '
     sysio_set_contract_name(r); sysio_set_contract_\
 name(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 # A backslash followed by horizontal whitespace before the newline. Clang splices it (with a
 # warning), so this is a second call; a normaliser matching only an adjacent backslash-newline
 # does not see it.
-mkbad spliced_ws        '
+mkfixture spliced_ws        '
     sysio_set_contract_name(r); sysio_set_contract_\   
 name(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 # A raw string whose contents look like a comment. A hand-rolled lexer treats the opening quote
 # as an ordinary string and the // inside it as a comment, erasing the real call after it.
-mkbad raw_string_comment '
+mkfixture raw_string_comment '
     sysio_set_contract_name(r);
     const char* s = R"d(" // )d"; sysio_set_contract_name(c); (void)s;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 # Guarded on the target. The host branch is well-formed, so a checker preprocessing for the
 # host counts two occurrences and accepts -- while cdt-cpp compiles the wasm branch, where the
 # receiver is immediately overwritten with the code.
-mkbad target_conditional '
+mkfixture target_conditional '
 #ifdef __wasm__
     sysio_set_contract_name(r); sysio_set_contract_name(c);
 #else
@@ -212,14 +258,14 @@ cat > "${WORK}/record_again.hpp" <<'EOF'
 #pragma once
 #define RECORD_AGAIN sysio_set_contract_name(c)
 EOF
-mkbad macro_expanded '
+mkfixture macro_expanded '
 #include "record_again.hpp"
     sysio_set_contract_name(r); RECORD_AGAIN;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 # A multiline raw string closing at column 1 after a '#', with the second call on that same
 # line. cdt-cpp compiles it and -E emits both calls; a filter that drops every '#'-prefixed
 # line deletes the closing delimiter and the call with it.
-mkbad raw_string_hash '
+mkfixture raw_string_hash '
     sysio_set_contract_name(r);
     const char* s = R"d(
 #)d"; sysio_set_contract_name(c);
@@ -227,53 +273,153 @@ mkbad raw_string_hash '
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 # The same raw-string escape, with a digit after the '#'. A filter matching `#` plus a numeric
 # prefix deletes this closing line and the call on it.
-mkbad raw_string_hash_num '
+mkfixture raw_string_hash_num '
     sysio_set_contract_name(r);
     const char* s = R"d(
 #1)d"; sysio_set_contract_name(c);
     (void)s;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-mkbad missing_entirely  '
+# The same escape again, but closing on a line whose PREFIX is a complete, well-formed line
+# marker. This is what pins the trailing `$`: a filter anchored only at the start matches the
+# `# 1 "fake"` prefix, deletes the line, and takes the second call with it -- so the run stays
+# green with the anchor removed unless this row is here. The two rows above do not cover it;
+# they only pin that the old '#'-prefix filters were too broad.
+mkfixture raw_string_marker '
+    sysio_set_contract_name(r);
+    const char* s = R"d(
+# 1 "fake")d"; sysio_set_contract_name(c);
+    (void)s;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-mkbad after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
+mkfixture missing_entirely  '
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+mkfixture after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
     sysio_set_contract_name(r);'
+
+# The positive controls: correct dispatches whose text is awkward.
+mkfixture spaced_ok '
+    sysio_set_contract_name (r);
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# A #line directive whose filename carries an ESCAPED QUOTE, immediately before the setter.
+# cdt-cpp -E re-emits it as the legal marker `# 7 "a\"b.cpp"`; a filter modelling the filename
+# as `[^"]*` cannot match that, leaves the marker in the normalised source, and then reads it
+# as the start of apply()'s first statement -- rejecting a dispatch that is correct.
+mkfixture marker_escaped_ok '
+#line 7 "a\"b.cpp"
+    sysio_set_contract_name(r);
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+
+# Compiled by the DRIVER, not a host clang: a fixture must be legal in the translation unit
+# that actually ships, and the driver supplies the wasm32 target and the CDT include graph.
+# (`-c` to an object we discard; the driver has no -fsyntax-only.) Echoes non-zero if the
+# fixture did not compile, having already reported the failure.
+compile_fixture() {
+    if ( cd "$WORK" && "$CDT_CPP" -c "fixture_$1.cpp" -o "fixture_$1.o" ) \
+            > "${WORK}/fixture_$1.log" 2>&1; then
+        return 0
+    fi
+    fail "fixture compiles: $1"
+    sed 's/^/      /' "${WORK}/fixture_$1.log"
+    return 1
+}
+
+# Decide whether one counterexample was CAUGHT, which is the outcome the table requires:
+# rejected, having been read. Returns 0 for that, and non-zero -- echoing why -- for either
+# other outcome. Acceptance is the obvious failure; an infrastructure error is the quiet one,
+# and folding it in with `-ne 0` would report a full green sweep on a machine where the driver
+# cannot run at all. Section 3 pins that this distinction is made HERE, at the call site, and
+# not only inside check_dispatch.
+classify_counterexample() {   # $1=fixture file
+    run_check "$1"
+    if [ "$VERDICT_STATUS" -eq "$REJECTED" ]; then
+        return 0
+    fi
+    if [ "$VERDICT_STATUS" -eq 0 ]; then
+        echo "accepted a dispatch that breaks the contract:"
+        sed 's/^/  /' "$1"
+    else
+        echo "no verdict was reached: ${VERDICT}"
+    fi
+    return 1
+}
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
            spliced_call spliced_ws raw_string_comment raw_string_hash raw_string_hash_num \
-           target_conditional macro_expanded missing_entirely after_dispatch; do
-    # Compiled by the DRIVER, not a host clang: a counterexample must be legal in the
-    # translation unit that actually ships, and the driver supplies the wasm32 target and the
-    # CDT include graph. (`-c` to an object we discard; the driver has no -fsyntax-only.)
-    if ! ( cd "$WORK" && "$CDT_CPP" -c "bad_${bad}.cpp" -o "bad_${bad}.o" ) \
-            > "${WORK}/bad_${bad}.log" 2>&1; then
-        fail "counterexample compiles: ${bad}"
-        sed 's/^/      /' "${WORK}/bad_${bad}.log"
-        continue
-    fi
-    verdict="$(check_dispatch "${WORK}/bad_${bad}.cpp" || true)"
-    if [ "$verdict" = OK ]; then
-        fail "the checker rejects: ${bad}"
-        echo "    accepted a dispatch that breaks the contract"
-        sed 's/^/      /' "${WORK}/bad_${bad}.cpp"
-    else
+           raw_string_marker target_conditional macro_expanded missing_entirely \
+           after_dispatch; do
+    compile_fixture "$bad" || continue
+    reason=""; caught=0
+    reason="$(classify_counterexample "${WORK}/fixture_${bad}.cpp")" || caught=$?
+    if [ "$caught" -eq 0 ]; then
         pass "the checker rejects: ${bad}"
+    else
+        fail "the checker rejects: ${bad}"
+        printf '%s\n' "$reason" | sed 's/^/    /'
     fi
 done
 
 # ...and must not reject a well-formed one that merely looks unusual.
-mkbad spaced_ok '
-    sysio_set_contract_name (r);
-    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
-if ! ( cd "$WORK" && "$CDT_CPP" -c bad_spaced_ok.cpp -o bad_spaced_ok.o ) > /dev/null 2>&1; then
-    fail "the positive control compiles"
-fi
-verdict="$(check_dispatch "${WORK}/bad_spaced_ok.cpp" || true)"
-if [ "$verdict" = OK ]; then
-    pass "the checker accepts: a space before the paren"
-else
-    fail "the checker accepts: a space before the paren"
-    echo "    ${verdict}"
-fi
+for good in spaced_ok marker_escaped_ok; do
+    compile_fixture "$good" || continue
+    run_check "${WORK}/fixture_${good}.cpp"
+    if [ "$VERDICT_STATUS" -eq 0 ]; then
+        pass "the checker accepts: ${good}"
+    else
+        fail "the checker accepts: ${good}"
+        echo "    ${VERDICT}"
+    fi
+done
+
+# --- 3. a failing preprocessor is an infrastructure error, not a verdict --------------------
+#
+# Stand in for the driver with something that prints, then fails. Both shapes below used to be
+# reported as verdicts, because check_dispatch never looked at the status: plausible output
+# read as acceptance, and truncated output read as a rejection -- which, in the loop above,
+# reads as a PASS on a machine where the toolchain is broken.
+cat > "${WORK}/fake_cdt_cpp" <<'EOF'
+#!/bin/bash
+# Prints a canned payload and exits with a canned status, both read from files beside it, so
+# one stand-in covers every shape of preprocessor failure.
+cat "$(dirname "$0")/fake_pp_out"
+exit "$(cat "$(dirname "$0")/fake_pp_status")"
+EOF
+chmod +x "${WORK}/fake_cdt_cpp"
+printf '73\n' > "${WORK}/fake_pp_status"
+
+# Output that WOULD be accepted, so only the status can distinguish it.
+cat > "${WORK}/fake_pp_out" <<'EOF'
+extern "C" {
+  void sysio_set_contract_name(unsigned long long n);
+  void apply(unsigned long long r, unsigned long long c, unsigned long long a) {
+    sysio_set_contract_name(r);
+  }
+}
+EOF
+
+real_cdt_cpp="$CDT_CPP"
+CDT_CPP="${WORK}/fake_cdt_cpp"
+for shape in acceptable_output truncated_output; do
+    [ "$shape" = truncated_output ] && : > "${WORK}/fake_pp_out"
+    run_check "${WORK}/c.cpp"
+    if [ "$VERDICT_STATUS" -eq "$INFRA_ERROR" ]; then
+        pass "a failing preprocessor reaches no verdict: ${shape}"
+    else
+        fail "a failing preprocessor reaches no verdict: ${shape}"
+        echo "    status ${VERDICT_STATUS}: ${VERDICT}"
+    fi
+
+    # ...and the counterexample table must not read that as a catch. This is the half that a
+    # status alone does not buy: every row above reports a PASS for any non-zero status unless
+    # the call site separates the two, so a driver that cannot run would sweep the table green.
+    reason=""; caught=0
+    reason="$(classify_counterexample "${WORK}/fixture_code_not_receiver.cpp")" || caught=$?
+    if [ "$caught" -ne 0 ]; then
+        pass "a counterexample is not counted as caught: ${shape}"
+    else
+        fail "a counterexample is not counted as caught: ${shape}"
+        echo "    the table reported a catch though no verdict was reached"
+    fi
+done
+CDT_CPP="$real_cdt_cpp"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
