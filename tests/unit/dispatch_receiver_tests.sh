@@ -39,11 +39,15 @@ trap 'rm -rf "$WORK"' EXIT
 # wasm32 target, the CDT include graph and the same predefined macros as the real compile.
 #
 # -E emits line markers (no -P: the driver rejects it), so those are dropped afterwards --
-# NUMERIC ones specifically, `# <line> "<file>"`. Dropping every line that starts with '#'
-# also deletes a multiline raw string whose closing delimiter sits at column 1 after a '#',
-# taking the executable code that follows it on that line with it.
+# matching the COMPLETE marker grammar, `# <line> "<file>"` with optional trailing flags,
+# anchored at both ends.
+#
+# Two narrower filters were each defeated by a raw string whose closing delimiter sits at
+# column 1: dropping every '#'-prefixed line deleted `#)d"; ...`, and dropping `#` followed by
+# a digit deleted `#1)d"; ...`. Both took the executable code on that line with them. Anchoring
+# the whole grammar leaves any line that is not literally a marker intact.
 normalise_source() {
-    "$CDT_CPP" -E "$1" 2>/dev/null | sed '/^[[:space:]]*#[[:space:]]*[0-9]/d'
+    "$CDT_CPP" -E "$1" 2>/dev/null | sed -E '/^# [0-9]+ "[^"]*"([[:space:]]+[0-9]+)*$/d'
 }
 
 # Decide whether one dispatch file satisfies the contract. Echoes OK, or a reason.
@@ -221,13 +225,21 @@ mkbad raw_string_hash '
 #)d"; sysio_set_contract_name(c);
     (void)s;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# The same raw-string escape, with a digit after the '#'. A filter matching `#` plus a numeric
+# prefix deletes this closing line and the call on it.
+mkbad raw_string_hash_num '
+    sysio_set_contract_name(r);
+    const char* s = R"d(
+#1)d"; sysio_set_contract_name(c);
+    (void)s;
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad missing_entirely  '
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkbad after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
     sysio_set_contract_name(r);'
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
-           spliced_call spliced_ws raw_string_comment raw_string_hash \
+           spliced_call spliced_ws raw_string_comment raw_string_hash raw_string_hash_num \
            target_conditional macro_expanded missing_entirely after_dispatch; do
     # Compiled by the DRIVER, not a host clang: a counterexample must be legal in the
     # translation unit that actually ships, and the driver supplies the wasm32 target and the
