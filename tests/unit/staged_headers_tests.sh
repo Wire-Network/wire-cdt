@@ -106,15 +106,38 @@ fi
 # check exists to report is exactly when the path is absent, so it would never be printed.
 count_files() { [ -d "$1" ] || { echo 0; return 0; }; find "$1" -type f 2>/dev/null | wc -l; }
 
-for dest in sysiolib libc libcxx boost/preprocessor bluegrass; do
-    n="$(count_files "${INCLUDE_DIR}/${dest}")"
-    if [ "$n" -gt 0 ]; then
-        pass "${dest} is staged (${n} files)"
-    else
-        fail "${dest} is staged"
-        echo "    nothing under ${INCLUDE_DIR}/${dest}"
-    fi
-done
+# Every destination stage_cdt_tree.cmake populates in EVERY configuration. Named once because
+# three checks walk it -- this build tree, a fresh scratch staging, and the isolated OFF build
+# below -- and a tree added to the script but missed in one of them is a gap the others cannot
+# report.
+readonly NON_NATIVE_DESTS=(sysiolib libc libcxx boost/preprocessor bluegrass)
+
+# Every native-host archive a native-enabled build stages into lib/, from the POST_BUILD copies
+# in libraries/{native,sysiolib,libc,libc++,rt}/CMakeLists.txt. The ON -> OFF prune must remove
+# ALL of them: seeding only a couple left `file(GLOB ... libnative*)` free to narrow to those
+# names while the rest survived a reconfigure to OFF and were packaged, still carrying the
+# previous build's symbols. libnative_c++.a is the one that matters most -- its plus signs are
+# what a hand-written character class drops.
+readonly NATIVE_ARCHIVES=(libnative.a libnative_sysio.a libnative_c.a libnative_c++.a libnative_rt.a)
+
+# Require each of those to be present AND non-empty under the include root $1, suffixing each
+# result with $2. The file count, not the directory: a staging regression that created the
+# destinations and copied nothing would ship a package with no public headers at all while a
+# directory-existence check stayed green.
+require_non_native_dests() {   # $1=include root  $2=label suffix
+    local root="$1" label="$2" dest n
+    for dest in "${NON_NATIVE_DESTS[@]}"; do
+        n="$(count_files "${root}/${dest}")"
+        if [ "$n" -gt 0 ]; then
+            pass "${dest} is staged${label} (${n} files)"
+        else
+            fail "${dest} is staged${label}"
+            echo "    nothing under ${root}/${dest}"
+        fi
+    done
+}
+
+require_non_native_dests "$INCLUDE_DIR" ""
 
 if [ "${#stale[@]}" -eq 0 ]; then
     pass "every staged header has a source counterpart"
@@ -142,15 +165,15 @@ else
         sed 's/^/      /' "${PRUNE_SCRATCH}/stage.log"
     else
         planted=0
-        for dest in sysiolib libc libcxx boost/preprocessor bluegrass; do
+        for dest in "${NON_NATIVE_DESTS[@]}"; do
             if [ -d "${PRUNE_SCRATCH}/include/${dest}" ]; then
                 : > "${PRUNE_SCRATCH}/include/${dest}/zz_stale_probe.hpp" && planted=$((planted + 1))
             else
                 fail "fresh staging created ${dest}"
             fi
         done
-        if [ "$planted" -ne 5 ]; then
-            fail "planted a stale sentinel in each staged tree (planted ${planted}, expected 5)"
+        if [ "$planted" -ne "${#NON_NATIVE_DESTS[@]}" ]; then
+            fail "planted a stale sentinel in each staged tree (planted ${planted}, expected ${#NON_NATIVE_DESTS[@]})"
         elif ! cmake -DSTAGE_SOURCE_DIR="${SOURCE_DIR}/libraries" \
                      -DSTAGE_BINARY_DIR="${PRUNE_SCRATCH}" \
                      -DSTAGE_NATIVE="${NATIVE_ENABLED}" \
@@ -294,6 +317,14 @@ else
                 ls "${OFFDIR}/out/lib" 2>/dev/null | sed 's/^/      staged: /'
             fi
 
+            # The required header trees ARE staged. Everything else this probe asserts is
+            # negative -- what an OFF build must not produce -- so removing the OFF sysiolib,
+            # libc, libcxx, boost/preprocessor and bluegrass outputs altogether left every
+            # assertion green while the package shipped no public headers. The live tree above
+            # cannot cover this: it is configured ON, so a regression gated on the OFF branch
+            # stages them there and is invisible.
+            require_non_native_dests "${OFFDIR}/out/include" " (native disabled)"
+
             # ...and no native HEADER tree is staged. Checking lib/ alone does not pin the
             # CMake-to-staging wiring: forcing STAGE_NATIVE=1 in libraries/CMakeLists.txt
             # leaves these populated in an OFF build, and InstallCDT installs the whole
@@ -340,7 +371,7 @@ else
     SCRATCH="$(mktemp -d)"
     trap 'rm -rf "$SCRATCH"' EXIT
     mkdir -p "${SCRATCH}/lib" "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"
-    for f in libnative.a libnative_sysio.a libsf.a libc.a; do echo stale > "${SCRATCH}/lib/${f}"; done
+    for f in "${NATIVE_ARCHIVES[@]}" libsf.a libc.a; do echo stale > "${SCRATCH}/lib/${f}"; done
     : > "${SCRATCH}/include/sysio/native/sentinel.hpp"
     : > "${SCRATCH}/include/sysiolib/native/sentinel.hpp"
 
@@ -350,8 +381,10 @@ else
         # libnative* and the native header trees only. libsf.a is asserted separately, and
         # positively: it is a WebAssembly archive built in every configuration.
         leftovers=()
-        for f in "${SCRATCH}/lib/libnative.a" "${SCRATCH}/lib/libnative_sysio.a" \
-                 "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"; do
+        for f in "${NATIVE_ARCHIVES[@]}"; do
+            [ -e "${SCRATCH}/lib/${f}" ] && leftovers+=("${SCRATCH}/lib/${f}")
+        done
+        for f in "${SCRATCH}/include/sysio/native" "${SCRATCH}/include/sysiolib/native"; do
             [ -e "$f" ] && leftovers+=("$f")
         done
         if [ "${#leftovers[@]}" -eq 0 ]; then

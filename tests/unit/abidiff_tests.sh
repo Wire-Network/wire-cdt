@@ -215,6 +215,24 @@ expect_reports()  { # $1=desc $2=a $3=b $4=needle
     elif grep -q "$4" <<< "$out"; then pass "$1"
     else fail "$1"; sed 's/^/      /' <<< "$out"; fi
 }
+# A document whose comparison would be unfaithful must be REFUSED -- non-zero exit and a
+# diagnostic naming the repeated member -- not compared. Shared, because both spellings of
+# protobuf_types reach it and an inline copy per spelling is how one of them stops being
+# checked at all.
+expect_refused()  { # $1=desc $2=a $3=b
+    local out
+    if out="$(run_abidiff "$2" "$3" 2>&1)"; then
+        fail "$1"
+        echo "      compared cleanly instead of refusing"
+        sed 's/^/      /' <<< "$out"
+    elif grep -q "duplicate object member" <<< "$out"; then
+        pass "$1"
+    else
+        fail "$1"
+        sed 's/^/      /' <<< "$out"
+    fi
+}
+
 expect_quiet()    { # $1=desc $2=a $3=b $4=needle
     if ! capture "$1" "$2" "$3"; then :
     elif grep -q "$4" <<< "$out"; then fail "$1"; sed 's/^/      /' <<< "$out"
@@ -550,15 +568,24 @@ printf '{%s,"protobuf_types":{"file":[{"name":"a.proto"}],"file":[{"name":"b.pro
     "$PB_BASE" > "${WORK}/pb_dup.abi"
 printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"b.proto\\"}]}"}\n' \
     "$PB_BASE" > "${WORK}/pb_onlyb.abi"
-if out="$(run_abidiff "${WORK}/pb_dup.abi" "${WORK}/pb_onlyb.abi" 2>&1)"; then
-    fail "a document with duplicate object members is refused"
-    sed 's/^/      /' <<< "$out"
-elif grep -q "duplicate object member" <<< "$out"; then
-    pass "a document with duplicate object members is refused"
-else
-    fail "a document with duplicate object members is refused"
-    sed 's/^/      /' <<< "$out"
-fi
+expect_refused "a document with duplicate object members is refused" \
+    "${WORK}/pb_dup.abi" "${WORK}/pb_onlyb.abi"
+
+# The same duplicate one level down, inside the STRING spelling -- where the outer walk sees
+# only an opaque string value. This passed the check, was then parsed by jsoncons (which keeps
+# the last member), and compared EQUAL to a string carrying just b.proto: no output, exit 0.
+# JsonStringToMessage reads the original as BOTH descriptors, so that is exactly the runtime-
+# visible false negative the detector exists to prevent, and it survived until the check was
+# run on the string's own text.
+printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"a.proto\\"}],\\"file\\":[{\\"name\\":\\"b.proto\\"}]}"}\n' \
+    "$PB_BASE" > "${WORK}/pb_dup_str.abi"
+expect_refused "a duplicate member inside a protobuf_types string is refused" \
+    "${WORK}/pb_dup_str.abi" "${WORK}/pb_onlyb.abi"
+
+# ...and refusing the string form must not come from refusing every string: the well-formed
+# string spelling above still compares, and equal to its object counterpart.
+expect_quiet "a duplicate-free protobuf_types string still compares" \
+    "${WORK}/pb_str.abi" "${WORK}/pb_obj.abi" "protobuf_types"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
