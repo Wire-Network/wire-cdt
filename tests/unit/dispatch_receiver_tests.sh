@@ -17,6 +17,12 @@
 # escaped quote -- because each fix pattern-matched the last evasion. Checking the checker is
 # what stops that: a new evasion is one row below, not a round trip.
 #
+# The marker filter is pinned from BOTH sides. Too narrow and it leaves a marker in the
+# normalised source, which is read as apply()'s first statement and rejects a correct dispatch;
+# too broad and it deletes a line of real code, taking a second setter call with it. Each of
+# the four parts of that pattern -- the `^`, the filename grammar, the trailing flags and the
+# `$` -- has a row that fails when it alone is weakened.
+#
 # The checker reports three outcomes, not two, and callers distinguish all three: accepted,
 # rejected, and INFRA_ERROR -- the check could not be performed. Collapsing the third into
 # either verdict is how a broken toolchain reads as a green run.
@@ -192,7 +198,8 @@ fi
 # counterexample ever exercised that escape even though the header claimed one did.
 mkfixture() {   # $1=name  $2=apply-body (leading newline optional)
     cat > "${WORK}/fixture_$1.cpp" <<EOF
-typedef unsigned long long uint64_t;   // not <cstdint>: see the -nostdinc note below
+typedef unsigned long long uint64_t;   // not <cstdint>: keeps the preprocessed fixture small
+                                       // enough to read when a failure dumps it
 extern "C" {
   void sysio_set_contract_name(uint64_t n);
   void __sysio_action_go_x(uint64_t r, uint64_t c);
@@ -290,6 +297,29 @@ mkfixture raw_string_marker '
 # 1 "fake")d"; sysio_set_contract_name(c);
     (void)s;
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# A marker-shaped SUFFIX: a raw string OPENING on the same line as the second call, whose
+# remainder is a well-formed marker. This pins the leading `^`. Without it the line matches on
+# its tail, sed deletes the whole line, and the second call goes with it -- 3 occurrences drop
+# to 2 and the checker accepts. Every other raw-string row closes at column 1, so none of them
+# can pin the start anchor.
+mkfixture marker_tail '
+    sysio_set_contract_name(r);
+    sysio_set_contract_name(c); const char* s = R"z(# 1 "a"
+)z";
+    (void)s;
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# The filename model from ABOVE, where marker_escaped_ok only pins it from below. A closing
+# delimiter, the second call, and a later quoted string all on one line: model the filename as
+# `.*` and the greedy match runs from the first quote to the last, swallowing the call. The
+# real grammar stops at the unescaped quote that ends the filename, so the line is not a marker
+# and survives intact.
+mkfixture marker_greedy '
+    sysio_set_contract_name(r);
+    const char* s = R"d(
+# 1 "x)d"; sysio_set_contract_name(c); const char* t = "y"
+    ;
+    (void)s; (void)t;
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkfixture missing_entirely  '
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkfixture after_dispatch    '    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }
@@ -310,8 +340,8 @@ mkfixture marker_escaped_ok '
 
 # Compiled by the DRIVER, not a host clang: a fixture must be legal in the translation unit
 # that actually ships, and the driver supplies the wasm32 target and the CDT include graph.
-# (`-c` to an object we discard; the driver has no -fsyntax-only.) Echoes non-zero if the
-# fixture did not compile, having already reported the failure.
+# (`-c` to an object we discard; the driver has no -fsyntax-only.) Returns non-zero if the
+# fixture did not compile, having already reported the failure itself.
 compile_fixture() {
     if ( cd "$WORK" && "$CDT_CPP" -c "fixture_$1.cpp" -o "fixture_$1.o" ) \
             > "${WORK}/fixture_$1.log" 2>&1; then
@@ -344,8 +374,8 @@ classify_counterexample() {   # $1=fixture file
 
 for bad in code_not_receiver inside_branch signature_line double_call comment_split \
            spliced_call spliced_ws raw_string_comment raw_string_hash raw_string_hash_num \
-           raw_string_marker target_conditional macro_expanded missing_entirely \
-           after_dispatch; do
+           raw_string_marker marker_tail marker_greedy target_conditional macro_expanded \
+           missing_entirely after_dispatch; do
     compile_fixture "$bad" || continue
     reason=""; caught=0
     reason="$(classify_counterexample "${WORK}/fixture_${bad}.cpp")" || caught=$?
