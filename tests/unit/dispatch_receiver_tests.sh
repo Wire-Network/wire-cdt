@@ -189,12 +189,33 @@ check_dispatch_symbols() {   # $1=object file
     # exiting non-zero as acceptance, a truncated one as a rejection, which in a reject row
     # reads as a PASS.
     log="$(mktemp "${WORK}/objdump.XXXXXX")"
+    #
+    # Lines are classified by SHAPE first. llvm-objdump indents a relocation record with tabs
+    # and an instruction with spaces:
+    #
+    #     "      18: 10 80 ...    \tcall\t0"                        <- instruction
+    #     "\t\t\t00000019:  R_WASM_FUNCTION_INDEX_LEB\tsym+0"        <- relocation
+    #
+    # and the opcode is compared as the mnemonic FIELD, never as text anywhere on the line.
+    # Searching the whole line for `call_indirect` reads a relocation to a legal action named
+    # `call_indirect` -- `__sysio_action_call_indirect_dispatchrcv`, which a contract may
+    # declare -- as an indirect call, and rejects a correct dispatch. The generated contract in
+    # section 1 declares exactly that action, so the positive control covers it.
     records="$("$LLVM_OBJDUMP" -dr "$1" 2>"$log" | awk '
         /^[0-9a-f]+ <.*>:$/ { in_apply = ($0 ~ /<apply>:$/); next }
         !in_apply { next }
-        /call_indirect/ { print "INDIRECT"; next }
-        /R_WASM_FUNCTION_INDEX_LEB/ {
-            sym = $NF; sub(/\+[-0-9]+$/, "", sym); print "CALL " sym
+        /^\t/ {
+            if ($0 ~ /R_WASM_FUNCTION_INDEX_LEB/) {
+                sym = $NF; sub(/\+[-0-9]+$/, "", sym); print "CALL " sym
+            }
+            next
+        }
+        {
+            if (split($0, field, "\t") >= 2) {
+                mnemonic = field[2]
+                gsub(/^[ \t]+|[ \t]+$/, "", mnemonic)
+                if (mnemonic == "call_indirect") print "INDIRECT"
+            }
         }')" || status=$?
     if [ "$status" -ne 0 ]; then
         echo "llvm-objdump on $(basename "$1") exited ${status}: $(tr '\n' ' ' < "$log")"
@@ -245,6 +266,10 @@ class [[sysio::contract("dispatchrcv")]] dispatchrcv : public sysio::contract {
 public:
    using contract::contract;
    [[sysio::action]] void go() {}
+   // A legal action whose generated wrapper is __sysio_action_call_indirect_dispatchrcv. The
+   // symbol check must read the OPCODE field, not the line, or this relocation reads as an
+   // indirect call and a correct dispatch is rejected.
+   [[sysio::action("callindirect")]] void call_indirect() {}
    [[sysio::on_notify("sysio.token::transfer")]] void onxfer(sysio::name from, sysio::name to) {}
 };
 EOF
