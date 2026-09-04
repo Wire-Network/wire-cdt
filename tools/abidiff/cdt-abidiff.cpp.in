@@ -251,13 +251,10 @@ class abidiff {
          std::cout << pretty_print(section_or_empty(abi, "structs").at(index)) << "\n";
       }
       
-      // An absent key read through the CONST operator[] throws, and ABIs legitimately omit
-      // keys: table_id, index_type and secondary_indexes are Wire extensions, so a stock
-      // Antelope ABI carries none of them. Every optional field is read through this, so
-      // absent compares equal to absent and never equal to present.
-      // A whole section may be legitimately absent -- a stock Antelope 1.0/1.1 ABI omits
-      // `variants` and `action_results` -- so those are read through this. Absent reads as an
-      // empty array, which is what "this ABI declares none" means.
+      // An absent key read through the CONST operator[] throws, and a whole SECTION may be
+      // legitimately absent -- a stock Antelope 1.0/1.1 ABI omits `variants` and
+      // `action_results` -- so every section is read through this. Absent reads as an empty
+      // array, which is what "this ABI declares none" means.
       static const ojson& section_or_empty(const ojson& o, const char* key) {
          static const ojson none = ojson::array();
          return o.count(key) ? o.at(key) : none;
@@ -268,6 +265,12 @@ class abidiff {
       // identically -- reporting them as different would describe a difference the runtime does
       // not see. `version` is the exception, and get_version diagnoses a missing or unparsable
       // one.
+      //
+      // Individual FIELDS are optional too. `table_id` and `secondary_indexes` are Wire's
+      // additions to `table_def`, so a stock Antelope ABI omits them -- while `index_type`,
+      // `key_names` and `key_types` are standard and present there, as the t_antelope fixture
+      // in abidiff_tests.sh carries. Every optional field is read through this, so absent
+      // compares equal to absent and never equal to present.
 
       static const ojson& field_or_null(const ojson& o, const char* key) {
          static const ojson absent = ojson::null();

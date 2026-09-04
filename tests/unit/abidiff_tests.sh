@@ -323,11 +323,13 @@ expect_quiet "an identical table with secondary indexes reports no difference" \
 
 # --- optional keys ---------------------------------------------------------------------
 #
-# table_id, index_type and secondary_indexes are Wire extensions: a stock Antelope/eosio-cdt
-# ABI carries none of them. Reading an absent key through jsoncons' const operator[] throws,
-# so comparing them naively aborted the tool (exit 255) on every such ABI -- including two
-# byte-identical ones. capture() already fails a case whose process exits non-zero, so these
-# assert the comparison happens at all, not merely that it is quiet.
+# table_id and secondary_indexes are Wire's additions to table_def: a stock Antelope/eosio-cdt
+# ABI omits those two. index_type, key_names and key_types are STANDARD table_def fields and
+# are present there -- the t_antelope fixture below carries all three, which is what makes it
+# a stock ABI rather than an empty one. Reading an absent key through jsoncons' const
+# operator[] throws, so comparing them naively aborted the tool (exit 255) on every such ABI --
+# including two byte-identical ones. capture() already fails a case whose process exits
+# non-zero, so these assert the comparison happens at all, not merely that it is quiet.
 cat > "${WORK}/t_antelope.abi" <<'EOF'
 {
   "version": "sysio::abi/1.2",
