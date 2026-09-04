@@ -64,9 +64,9 @@ file(COPY "${STAGE_SOURCE_DIR}/sysiolib"
 #
 # libnative* ONLY. libsf.a is a WebAssembly archive, not a native-host one: cdt-ld links it
 # with -lsf for --use-rt and every --fquery mode (compiler_options.hpp.in), and the base
-# install ships it. It merely happens to be declared in libraries/native/CMakeLists.txt, which
-# is why an OFF configure does not rebuild it -- so deleting it here would strip a working
-# copy from a reused tree and leave an OFF package unable to link those modes.
+# install ships it. It is declared in libraries/native/CMakeLists.txt but OUTSIDE that file's
+# native-only guard, so every configuration builds and stages it -- deleting it here would
+# strip the copy an OFF package needs to link those modes.
 if(NOT STAGE_NATIVE)
    file(GLOB stale_native "${STAGE_BINARY_DIR}/lib/libnative*")
    if(stale_native)

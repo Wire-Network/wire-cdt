@@ -182,7 +182,7 @@ endmacro()
 #   )
 #
 # The resulting module exports an `apply(uint64_t, uint64_t, uint64_t)`
-# function. Intrinsic symbols (db_store_i64, etc.) are left undefined and
+# function. Intrinsic symbols (kv_set, kv_get, etc.) are left undefined and
 # resolved at dlopen time against symbols exported by the host executable.
 function(add_native_contract)
   cmake_parse_arguments(ARG "" "TARGET;CONTRACT_CLASS;ABI_FILE"

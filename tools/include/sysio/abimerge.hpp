@@ -97,11 +97,12 @@ class ABIMerger {
          emit_section("variants", std::move(variants_section), variants_since);
          emit_section("action_results", std::move(results_section), action_results_since);
 
-         // Corrected in place (keeping its leading position) only if emit_section raised the
+         // Rewritten in place (keeping its leading position) only if emit_section raised the
          // version above what either input declared. When nothing forced a promotion the
-         // newer document's own version STRING stands -- parse ignores the namespace prefix,
-         // so an inherited "eosio::abi/1.2" is valid and rewriting it to "sysio::abi/" would
-         // be a silent change to every merged document.
+         // string merge_version already stamped at the top of merge() stands -- which is
+         // canonical, not inherited: version ORDERING ignores the namespace prefix so a
+         // foreign descriptor can be ingested, but the output always carries "sysio::abi/",
+         // since Wire's abi_serializer accepts nothing else.
          if (merged_version != declared_version)
             ret["version"] = abi_version::version_string(merged_version.first, merged_version.second);
          {

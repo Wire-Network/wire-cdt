@@ -40,8 +40,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/multidir_contract_tests.sh ${CMA
 add_test(NAME multidir_contract_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh "${CMAKE_BINARY_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST multidir_contract_tests PROPERTY LABELS unit_tests)
 
-# cdt-abidiff ABI-version handling — the capability gates must use parsed components,
-# not a fixed-width suffix read that mis-scores a two-digit minor.
+# cdt-abidiff ABI-version handling — the version must be read from parsed components, not a
+# fixed-width suffix read that mis-scores a two-digit minor.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/abidiff_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/abidiff_tests.sh COPYONLY)
 add_test(NAME abidiff_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abidiff_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST abidiff_tests PROPERTY LABELS unit_tests)

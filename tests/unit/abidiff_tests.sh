@@ -2,13 +2,16 @@
 # Regression tests for cdt-abidiff's ABI version handling.
 #
 # get_version used to be `stod(ver.substr(ver.size() - 3)) * 10`, a fixed-width suffix
-# read that returns 1 for "sysio::abi/1.10" (it sees ".10"). Both capability gates in
-# diff() compared that against 11 and 12, so for any two-digit minor the variant and
-# action-result diffs were silently skipped -- a real difference reported as none. The
-# same suffix read also collapsed "eosio::abi/1.2" and "sysio::abi/1.2" to one number.
+# read that returns 1 for "sysio::abi/1.10" (it sees ".10"). Version gates in diff()
+# compared that against 11 and 12, so for any two-digit minor the variant and action-result
+# diffs were silently skipped -- a real difference reported as none. The same suffix read
+# also collapsed "eosio::abi/1.2" and "sysio::abi/1.2" to one number.
 #
-# cdt-abidiff now shares abi_version::parse_version_string and the supports_* predicates
-# with the rest of the toolchain, so the gates compare (major, minor) components.
+# Both halves of that are fixed. The version is now read with the shared
+# abi_version::parse_version_string, and the gates are gone entirely: every section is
+# diffed unconditionally, so a section one document carries and the other does not is
+# reported whatever version either side declares. The parse survives because the version
+# string is itself compared, and because an unreadable one stops the run.
 #
 # Usage: abidiff_tests.sh <bin_dir>
 set -euo pipefail

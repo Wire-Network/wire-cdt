@@ -204,14 +204,16 @@ class abidiff {
       /// The (major, minor) an ABI declares.
       ///
       /// The previous form -- stod over the string's last three characters -- read
-      /// "sysio::abi/1.10" as ".10" -> 1, so both capability gates below silently
-      /// skipped the variant and action-result diffs for a two-digit minor. It also
-      /// collapsed eosio::abi/1.2 and sysio::abi/1.2 to the same number.
-      /// A failed parse is refused, not defaulted. Seeding the outputs with 1.2 and
-      /// ignoring the result meant an unparsable or unsupported version -- including
-      /// `sysio::abi/2.0`, which the shared parser rejects -- silently compared equal to
-      /// a 1.2 document. Every gate below keys off this value, so a version we cannot
-      /// read is a reason to stop rather than to guess.
+      /// "sysio::abi/1.10" as ".10" -> 1. Version-gated diffs then skipped the variant and
+      /// action-result sections for any two-digit minor, reporting a real difference as none.
+      /// Those gates are gone: every section is diffed unconditionally, since a section one
+      /// document carries and the other does not is precisely the difference this tool exists
+      /// to report. The parse remains because the version is itself compared, and because an
+      /// unreadable one is a reason to stop.
+      ///
+      /// A failed parse is refused, not defaulted. Seeding the outputs with 1.2 and ignoring
+      /// the result meant an unparsable or unsupported version -- including `sysio::abi/2.0`,
+      /// which the shared parser rejects -- silently compared equal to a 1.2 document.
       std::pair<int, int> get_version(const ojson& abi, const std::string& which) {
          if (!abi.has_key("version")) {
             std::cerr << "cdt-abidiff: " << which << " has no \"version\" field\n";
@@ -229,7 +231,7 @@ class abidiff {
       }
 
       // The FULL string, not just the parsed components. parse_version_string ignores
-      // everything through the last '/', which is right for deciding capability and wrong
+      // everything through the last '/', which is right for ORDERING two versions and wrong
       // here: Wire's abi_serializer accepts only a "sysio::abi/1." prefix, so an otherwise
       // identical eosio::abi/1.2 is a deployment-relevant difference. The numeric parse still
       // runs, to reject an unsupported version.

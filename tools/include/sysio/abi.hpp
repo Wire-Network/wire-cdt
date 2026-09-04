@@ -53,6 +53,10 @@ namespace abi_version {
    inline constexpr int action_results_minor = 2;
 
    /// Does a version carry the `variants` section?
+   ///
+   /// Provided for symmetry with `supports_action_results`; nothing calls it today, because
+   /// ABIMerger gates on the introduction pair directly and abigen emits `variants`
+   /// unconditionally.
    inline constexpr bool supports_variants(int major_v, int minor_v) {
       return major_v > variants_major ||
              (major_v == variants_major && minor_v >= variants_minor);
@@ -60,10 +64,15 @@ namespace abi_version {
 
    /// Does a version carry the `action_results` section?
    ///
-   /// One predicate for the whole toolchain: the abigen plugin decides with it
-   /// whether to emit the section, ABIMerger whether to merge it, and cdt-abidiff
-   /// whether to diff it. Three separate spellings of this rule is how a contract
-   /// ends up with a version stamp that promises a section its ABI does not carry.
+   /// Used by the abigen plugin to decide whether to emit the section. ABIMerger answers the
+   /// same question from the introduction constants above rather than through this predicate,
+   /// because it needs the (major, minor) pair itself to promote a merged document's version;
+   /// both therefore read the one rule declared here. Two spellings of that rule is how a
+   /// contract ends up with a version stamp promising a section its ABI does not carry.
+   ///
+   /// cdt-abidiff does NOT gate on it -- it diffs every section unconditionally, since a
+   /// section present in one document and absent from the other is exactly the difference it
+   /// exists to report, whatever version either side declares.
    inline constexpr bool supports_action_results(int major_v, int minor_v) {
       return major_v > action_results_major ||
              (major_v == action_results_major && minor_v >= action_results_minor);

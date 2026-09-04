@@ -413,9 +413,10 @@ else
         fi
 
         # libsf.a must SURVIVE. It is the WebAssembly softfloat archive cdt-ld links with
-        # -lsf for --use-rt and the --fquery modes, not a native-host archive -- it is only
-        # declared under libraries/native/, which is why an OFF configure never rebuilds it.
-        # Pruning it would leave an OFF package unable to link those modes.
+        # -lsf for --use-rt and the --fquery modes, not a native-host archive. It is declared
+        # under libraries/native/ but outside that file's native-only guard, so every
+        # configuration builds it -- the clean OFF probe above asserts exactly that. Pruning
+        # it here would leave an OFF package unable to link those modes.
         if [ -e "${SCRATCH}/lib/libsf.a" ]; then
             pass "STAGE_NATIVE=0 keeps libsf.a (a wasm archive, not a native one)"
         else
