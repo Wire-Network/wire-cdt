@@ -120,6 +120,16 @@ readonly NON_NATIVE_DESTS=(sysiolib libc libcxx boost/preprocessor bluegrass)
 # what a hand-written character class drops.
 readonly NATIVE_ARCHIVES=(libnative.a libnative_sysio.a libnative_c.a libnative_c++.a libnative_rt.a)
 
+# Count the files under a NON-NATIVE destination, with the native subtree that nests inside
+# one of them excluded. Staging copies native/native into include/sysiolib/native, so a plain
+# recursive count of include/sysiolib is satisfied by the four native headers alone: gating the
+# main sysiolib copy on `NOT STAGE_NATIVE` dropped all 63 regular headers from a native-ON
+# build and every assertion stayed green.
+count_non_native_files() {
+    [ -d "$1" ] || { echo 0; return 0; }
+    find "$1" -type f -not -path '*/sysiolib/native/*' 2>/dev/null | wc -l
+}
+
 # Require each of those to be present AND non-empty under the include root $1, suffixing each
 # result with $2. The file count, not the directory: a staging regression that created the
 # destinations and copied nothing would ship a package with no public headers at all while a
@@ -127,7 +137,7 @@ readonly NATIVE_ARCHIVES=(libnative.a libnative_sysio.a libnative_c.a libnative_
 require_non_native_dests() {   # $1=include root  $2=label suffix
     local root="$1" label="$2" dest n
     for dest in "${NON_NATIVE_DESTS[@]}"; do
-        n="$(count_files "${root}/${dest}")"
+        n="$(count_non_native_files "${root}/${dest}")"
         if [ "$n" -gt 0 ]; then
             pass "${dest} is staged${label} (${n} files)"
         else
@@ -164,6 +174,14 @@ else
         fail "the staging script populates a fresh tree"
         sed 's/^/      /' "${PRUNE_SCRATCH}/stage.log"
     else
+        # What the script produces IN THIS MODE, before any sentinel is planted. The live tree
+        # checked above is a snapshot of whatever the last build left, so a staging regression
+        # is invisible there until someone rebuilds; this runs the script and looks at its
+        # actual output. Gating the main sysiolib copy on `NOT STAGE_NATIVE` -- which drops all
+        # 63 regular headers from a native-ON build and leaves only the four under
+        # sysiolib/native -- is caught here and nowhere else.
+        require_non_native_dests "${PRUNE_SCRATCH}/include" " (fresh staging)"
+
         planted=0
         for dest in "${NON_NATIVE_DESTS[@]}"; do
             if [ -d "${PRUNE_SCRATCH}/include/${dest}" ]; then

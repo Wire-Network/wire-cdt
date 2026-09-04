@@ -219,13 +219,13 @@ expect_reports()  { # $1=desc $2=a $3=b $4=needle
 # diagnostic naming the repeated member -- not compared. Shared, because both spellings of
 # protobuf_types reach it and an inline copy per spelling is how one of them stops being
 # checked at all.
-expect_refused()  { # $1=desc $2=a $3=b
+expect_refused()  { # $1=desc $2=a $3=b $4=needle
     local out
     if out="$(run_abidiff "$2" "$3" 2>&1)"; then
         fail "$1"
         echo "      compared cleanly instead of refusing"
         sed 's/^/      /' <<< "$out"
-    elif grep -q "duplicate object member" <<< "$out"; then
+    elif grep -q "$4" <<< "$out"; then
         pass "$1"
     else
         fail "$1"
@@ -569,7 +569,7 @@ printf '{%s,"protobuf_types":{"file":[{"name":"a.proto"}],"file":[{"name":"b.pro
 printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"b.proto\\"}]}"}\n' \
     "$PB_BASE" > "${WORK}/pb_onlyb.abi"
 expect_refused "a document with duplicate object members is refused" \
-    "${WORK}/pb_dup.abi" "${WORK}/pb_onlyb.abi"
+    "${WORK}/pb_dup.abi" "${WORK}/pb_onlyb.abi" "duplicate object member"
 
 # The same duplicate one level down, inside the STRING spelling -- where the outer walk sees
 # only an opaque string value. This passed the check, was then parsed by jsoncons (which keeps
@@ -580,7 +580,7 @@ expect_refused "a document with duplicate object members is refused" \
 printf '{%s,"protobuf_types":"{\\"file\\":[{\\"name\\":\\"a.proto\\"}],\\"file\\":[{\\"name\\":\\"b.proto\\"}]}"}\n' \
     "$PB_BASE" > "${WORK}/pb_dup_str.abi"
 expect_refused "a duplicate member inside a protobuf_types string is refused" \
-    "${WORK}/pb_dup_str.abi" "${WORK}/pb_onlyb.abi"
+    "${WORK}/pb_dup_str.abi" "${WORK}/pb_onlyb.abi" "duplicate object member"
 
 # ...but only for the spelling canonical_protobuf ADOPTS. A string whose JSON root is not an
 # object is compared verbatim, as the string it is -- the assertion above pins that -- so
@@ -592,6 +592,32 @@ printf '{%s,"protobuf_types":"[{\\"a\\":1,\\"a\\":2}]"}\n' "$PB_BASE" > "${WORK}
 printf '{%s,"protobuf_types":"[{\\"a\\":9}]"}\n'              "$PB_BASE" > "${WORK}/pb_arrother.abi"
 expect_reports "a duplicate in a non-object-root protobuf_types string still compares" \
     "${WORK}/pb_arrdup.abi" "${WORK}/pb_arrother.abi" "protobuf_types"
+
+# --- strict JSON ----------------------------------------------------------------------------
+#
+# jsoncons's default handler silently accepts and DISCARDS C/C++ comments; fc rejects them, so
+# a commented document is one the chain will not load. Parsing leniently made it compare equal
+# to the uncommented document the chain does load -- the difference gone before anything
+# compared it, exactly like a dropped duplicate member.
+printf '{%s,"protobuf_types":{"file":[]} /* a comment fc rejects */ }\n' "$PB_BASE" \
+    > "${WORK}/commented.abi"
+printf '{%s,"protobuf_types":{"file":[]}}\n' "$PB_BASE" > "${WORK}/uncommented.abi"
+expect_refused "a commented document is refused, not read as equal" \
+    "${WORK}/commented.abi" "${WORK}/uncommented.abi" "not strict JSON"
+
+# ...and inside the string spelling, where the chain'"'"'s verdict flips between the two: protobuf
+# rejects the commented string and accepts the equivalent object, so they are not the same ABI.
+# canonical_protobuf adopts a string only when it parses STRICTLY, so the commented one stays
+# the string it is and differs from the object.
+printf '{%s,"protobuf_types":"{\\"file\\":[]/*c*/}"}\n' "$PB_BASE" > "${WORK}/pb_strcomment.abi"
+printf '{%s,"protobuf_types":{"file":[]}}\n' "$PB_BASE" > "${WORK}/pb_fileobj.abi"
+expect_reports "a commented protobuf_types string differs from the equivalent object" \
+    "${WORK}/pb_strcomment.abi" "${WORK}/pb_fileobj.abi" "protobuf_types"
+
+# ...while the uncommented string and that object remain the same ABI, as before.
+printf '{%s,"protobuf_types":"{\\"file\\":[]}"}\n' "$PB_BASE" > "${WORK}/pb_strplain.abi"
+expect_quiet "an uncommented protobuf_types string still equals the object" \
+    "${WORK}/pb_strplain.abi" "${WORK}/pb_fileobj.abi" "protobuf_types"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

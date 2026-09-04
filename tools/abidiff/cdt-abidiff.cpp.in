@@ -86,6 +86,21 @@ namespace {
    /// written either as an object, or as a string containing that object's JSON.
    constexpr auto protobuf_types_key = "protobuf_types";
 
+   /// Parse JSON the way the runtime does: rejecting what it rejects.
+   ///
+   /// jsoncons's DEFAULT handler silently accepts and discards C/C++ comments -- see
+   /// `default_parse_error_handler`, which swallows `illegal_comment` alone. fc does not, so a
+   /// commented document is one the chain refuses to load, and parsing it leniently made it
+   /// compare EQUAL to the uncommented document the chain accepts. The same class of false
+   /// equality as a dropped duplicate member, and invisible for the same reason: the difference
+   /// is gone before anything compares it.
+   ///
+   /// @throws jsoncons::parse_error on a comment, or on any other malformed input.
+   inline ojson parse_strict(const std::string& text) {
+      jsoncons::strict_parse_error_handler strict;
+      return ojson::parse(text, strict);
+   }
+
    /// Report a document whose comparison would be unfaithful, and exit non-zero.
    ///
    /// @param which  the document as named on the command line -- "file1" or "file2".
@@ -116,7 +131,15 @@ class abidiff {
          if (!dup.empty())
             refuse_duplicate(which, dup, "");
 
-         ojson parsed = ojson::parse(text);
+         ojson parsed;
+         try {
+            parsed = parse_strict(text);
+         } catch (const std::exception& e) {
+            std::cerr << "Error: " << which << " is not strict JSON: " << e.what() << "\n"
+                      << "The chain's parser rejects it, so any comparison here would describe\n"
+                         "a document that cannot be loaded.\n";
+            exit(1);
+         }
 
          // ...and again one level down, inside protobuf_types when it is written as a STRING.
          // The walk above sees that spelling as a single opaque string value, so a descriptor
@@ -533,7 +556,7 @@ class abidiff {
          if (text.empty())
             return ojson::null();           // empty string == absent, per to_variant
          try {
-            ojson parsed = ojson::parse(text);
+            ojson parsed = parse_strict(text);
             // ONLY an object root. JsonStringToMessage requires a message, so a string
             // holding "null" or "[1,2]" is content the chain rejects -- treating it as the
             // value it decodes to would have equated it with absence, or with a raw array
@@ -542,7 +565,9 @@ class abidiff {
             if (parsed.is_object())
                return parsed;
          } catch (const std::exception&) {
-            // not valid JSON at all
+            // Not valid JSON, or not STRICT JSON. A string carrying a comment stays the string
+            // it is, and so differs from the object spelling -- which is what the chain sees,
+            // protobuf's JSON parser rejecting the comment and accepting the object.
          }
          return v;
       }
