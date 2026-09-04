@@ -605,6 +605,19 @@ printf '{%s,"protobuf_types":{"file":[]}}\n' "$PB_BASE" > "${WORK}/uncommented.a
 expect_refused "a commented document is refused, not read as equal" \
     "${WORK}/commented.abi" "${WORK}/uncommented.abi" "not strict JSON"
 
+# A trailing comma is refused too -- and NOT because the chain would refuse it. fc's parser
+# consumes any comma it meets (libfc/src/io/json.cpp: the array loop `if (in.peek() == ',')
+# { in.get(); continue; }`), so it loads one happily. Refusing is this tool's policy, and it
+# predates strict parsing: jsoncons's default handler already propagated `extra_comma`,
+# swallowing `illegal_comment` alone, so a lenient build rejects this identically. Pinned so
+# the policy is on record as a decision rather than surviving as an accident, and so the
+# diagnostic keeps saying whose rule it is.
+printf '{%s,}\n' "$PB_BASE" > "${WORK}/trailing_comma.abi"
+expect_refused "a trailing comma is refused as tool policy" \
+    "${WORK}/trailing_comma.abi" "${WORK}/uncommented.abi" "not strict JSON"
+expect_refused "...and the diagnostic does not claim the chain rejects it" \
+    "${WORK}/trailing_comma.abi" "${WORK}/uncommented.abi" "this tool's policy"
+
 # ...and inside the string spelling, where the chain'"'"'s verdict flips between the two: protobuf
 # rejects the commented string and accepts the equivalent object, so they are not the same ABI.
 # canonical_protobuf adopts a string only when it parses STRICTLY, so the commented one stays

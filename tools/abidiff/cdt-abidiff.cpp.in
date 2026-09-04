@@ -86,16 +86,27 @@ namespace {
    /// written either as an object, or as a string containing that object's JSON.
    constexpr auto protobuf_types_key = "protobuf_types";
 
-   /// Parse JSON the way the runtime does: rejecting what it rejects.
+   /// Parse JSON strictly, refusing anything this tool would otherwise have to normalise.
    ///
-   /// jsoncons's DEFAULT handler silently accepts and discards C/C++ comments -- see
-   /// `default_parse_error_handler`, which swallows `illegal_comment` alone. fc does not, so a
-   /// commented document is one the chain refuses to load, and parsing it leniently made it
-   /// compare EQUAL to the uncommented document the chain accepts. The same class of false
-   /// equality as a dropped duplicate member, and invisible for the same reason: the difference
-   /// is gone before anything compares it.
+   /// The bug this closes is comments. jsoncons's DEFAULT handler silently accepts and DISCARDS
+   /// them -- see `default_parse_error_handler`, which swallows `illegal_comment` and nothing
+   /// else -- while fc rejects them outright. A commented document therefore compared EQUAL to
+   /// the uncommented one the chain accepts: the same class of false equality as a dropped
+   /// duplicate member, invisible for the same reason, the difference gone before anything
+   /// compared it.
    ///
-   /// @throws jsoncons::parse_error on a comment, or on any other malformed input.
+   /// Strictness beyond that is this TOOL'S POLICY and not a claim about the runtime, which is
+   /// laxer in places: fc's parser consumes any comma it meets (libfc/src/io/json.cpp), so it
+   /// loads a trailing one happily. Refusing to compare is the conservative direction -- it
+   /// never answers "equal" about a document it had to rewrite to read -- and it costs nothing
+   /// that was working, since the default handler already propagated every error but the
+   /// comment. Only the comment case changed behaviour here.
+   ///
+   /// There is also no single parser to mirror even if that were wanted: the outer document is
+   /// fc's to read, while a string-valued protobuf_types is JsonStringToMessage's, and their
+   /// leniencies are not the same. One uniform policy is deliberate.
+   ///
+   /// @throws jsoncons::parse_error on a comment, or on any other input strict JSON rejects.
    inline ojson parse_strict(const std::string& text) {
       jsoncons::strict_parse_error_handler strict;
       return ojson::parse(text, strict);
@@ -136,8 +147,11 @@ class abidiff {
             parsed = parse_strict(text);
          } catch (const std::exception& e) {
             std::cerr << "Error: " << which << " is not strict JSON: " << e.what() << "\n"
-                      << "The chain's parser rejects it, so any comparison here would describe\n"
-                         "a document that cannot be loaded.\n";
+                      << "cdt-abidiff refuses what it cannot read strictly, rather than let a\n"
+                         "lenient parse normalise a difference away before anything compares\n"
+                         "it. The runtime's parsers are laxer in places -- fc tolerates a stray\n"
+                         "comma -- so this is this tool's policy, not a verdict on whether the\n"
+                         "chain would load the file.\n";
             exit(1);
          }
 
