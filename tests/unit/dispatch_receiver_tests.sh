@@ -12,16 +12,17 @@
 # `r` and not `c`, and that the call is the first statement. check_dispatch_symbols reads the
 # RELOCATIONS of the emitted object: it is what can see a second call however it was spelled,
 # including one reaching the import through an asm label that never spells the identifier
-# twice. Neither subsumes the other, so both run.
+# twice. Neither subsumes the other, so both run. Where the object cannot answer either -- an
+# indirect call names a type and not a target -- it is refused rather than guessed at.
 #
 # Each is exercised three ways: against the real generated dispatch, against a table of crafted
 # counterexamples that must each be rejected, and against positive controls that must NOT be.
-# Earlier revisions were defeated seven times in review -- by handler names the checker did not
+# Earlier revisions were defeated eight times in review -- by handler names the checker did not
 # match, by a branch on the signature line, by two calls on one line, by a comment between the
 # identifier and its paren, by a raw string closing at column 1, by a marker whose filename
-# carried an escaped quote, and by that asm label -- because each fix pattern-matched the last
-# evasion. Checking the checker is what stops that: a new evasion is one row below, not a round
-# trip.
+# carried an escaped quote, by an asm label, and by that same alias called through a function
+# pointer -- because each fix pattern-matched the last evasion. Checking the checker is what
+# stops that: a new evasion is one row below, not a round trip.
 #
 # The marker filter is pinned from BOTH sides. Too narrow and it leaves a marker in the
 # normalised source, which is read as apply()'s first statement and rejects a correct dispatch;
@@ -30,9 +31,11 @@
 # `$` -- has a row that fails when it alone is weakened, positive rows for the first sense and
 # counterexamples for the second.
 #
-# The checker reports three outcomes, not two, and callers distinguish all three: accepted,
-# rejected, and INFRA_ERROR -- the check could not be performed. Collapsing the third into
-# either verdict is how a broken toolchain reads as a green run.
+# BOTH checkers report three outcomes, not two, and their callers distinguish all three:
+# accepted, rejected, and INFRA_ERROR -- the check could not be performed. Collapsing the third
+# into either verdict is how a broken toolchain reads as a green run, and it is the one that
+# reads as a PASS: a reject row is satisfied by any non-zero status unless the caller separates
+# them. Each analyser has a stand-in that prints, then fails, to pin that.
 #
 # Usage: dispatch_receiver_tests.sh <build_dir>
 set -euo pipefail
@@ -165,24 +168,55 @@ check_dispatch() {
 # so there is no such function to write today, but it is a real limit rather than a covered
 # case.
 #
-# Echoes OK, or a reason. Returns 0 or $REJECTED.
+# INDIRECT calls are refused outright rather than analysed. Relocations name the target of a
+# DIRECT call; a `call_indirect` names only a type, so its target is exactly what this cannot
+# see -- and the address can reach the table without a direct call ever appearing:
+#
+#     setter_fn volatile fp = again;   // R_WASM_TABLE_INDEX_SLEB, not FUNCTION_INDEX_LEB
+#     fp(c);                           // call_indirect
+#
+# leaves one direct setter call, first, and a second call to the same import that a scan of
+# call relocations cannot count. The generated dispatch is a chain of direct calls and has no
+# legitimate indirect one, so the honest answer is to reject rather than to guess.
+#
+# Echoes OK, or a reason. Returns 0, $REJECTED, or $INFRA_ERROR.
 check_dispatch_symbols() {   # $1=object file
-    local relocs count first
-    relocs="$("$LLVM_OBJDUMP" -dr "$1" 2>/dev/null | awk '
+    local records log status=0 calls count first
+
+    # The analyser's own status, for the same reason the preprocessor's is checked: this runs
+    # on the left of a `||`, which disables errexit for the whole body, so a dump that failed
+    # after printing something would otherwise be read as a verdict -- a complete-looking dump
+    # exiting non-zero as acceptance, a truncated one as a rejection, which in a reject row
+    # reads as a PASS.
+    log="$(mktemp "${WORK}/objdump.XXXXXX")"
+    records="$("$LLVM_OBJDUMP" -dr "$1" 2>"$log" | awk '
         /^[0-9a-f]+ <.*>:$/ { in_apply = ($0 ~ /<apply>:$/); next }
-        in_apply && /R_WASM_FUNCTION_INDEX_LEB/ {
-            sym = $NF; sub(/\+[0-9]+$/, "", sym); print sym
-        }')"
-    if [ -z "$relocs" ]; then
+        !in_apply { next }
+        /call_indirect/ { print "INDIRECT"; next }
+        /R_WASM_FUNCTION_INDEX_LEB/ {
+            sym = $NF; sub(/\+[-0-9]+$/, "", sym); print "CALL " sym
+        }')" || status=$?
+    if [ "$status" -ne 0 ]; then
+        echo "llvm-objdump on $(basename "$1") exited ${status}: $(tr '\n' ' ' < "$log")"
+        return "$INFRA_ERROR"
+    fi
+
+    if printf '%s\n' "$records" | grep -qx INDIRECT; then
+        echo "apply() makes an indirect call, whose target this check cannot see"
+        return "$REJECTED"
+    fi
+
+    calls="$(printf '%s\n' "$records" | sed -n 's/^CALL //p')"
+    if [ -z "$calls" ]; then
         echo "no call relocations inside apply() in $(basename "$1")"
         return "$REJECTED"
     fi
-    count="$(printf '%s\n' "$relocs" | grep -cx 'sysio_set_contract_name' || true)"
+    count="$(printf '%s\n' "$calls" | grep -cx 'sysio_set_contract_name' || true)"
     if [ "$count" -ne 1 ]; then
         echo "apply() calls sysio_set_contract_name ${count} time(s), not once"
         return "$REJECTED"
     fi
-    first="$(printf '%s\n' "$relocs" | head -1)"
+    first="$(printf '%s\n' "$calls" | head -1)"
     if [ "$first" != sysio_set_contract_name ]; then
         echo "the first call in apply() is ${first}, not sysio_set_contract_name"
         return "$REJECTED"
@@ -408,6 +442,17 @@ mkfixture asm_label '
     extern void again(uint64_t) __asm__("sysio_set_" "contract_name");
     again(c);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# The same alias, reached through a volatile function pointer. cdt-cpp emits ONE direct setter
+# relocation, then R_WASM_TABLE_INDEX_SLEB for the address and a call_indirect -- so a scan of
+# call relocations counts one call, first, and accepts, while apply() overwrites the receiver
+# with the code. This is the row that pins the indirect ban.
+mkfixture indirect_alias '
+    sysio_set_contract_name(r);
+    extern void again(uint64_t) __asm__("sysio_set_" "contract_name");
+    using setter_fn = void (*)(uint64_t);
+    setter_fn volatile fp = again;
+    fp(c);
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 mkfixture marker_flags_ok '
 #include "empty_header.hpp"
     sysio_set_contract_name(r);
@@ -530,16 +575,34 @@ CDT_CPP="$real_cdt_cpp"
 #
 # Exercised the way the text checker is: against the real generated dispatch, against a
 # positive control, and against the counterexample the text checker cannot see.
+# Does $1 meet expectation $2? Returns 0 when it does, and non-zero -- echoing why -- when it
+# does not. EXACTLY the expected status, not merely non-zero: an analyser that could not run
+# returns INFRA_ERROR, and counting that as the rejection a reject row expects is how a broken
+# llvm-objdump sweeps this section green. The same trap the preprocessor path already avoids,
+# and it is pinned below the same way.
+classify_symbols() {   # $1=object  $2=accept|reject
+    local verdict status=0 want=0
+    if [ "$2" = reject ]; then want="$REJECTED"; fi
+    verdict="$(check_dispatch_symbols "$1")" || status=$?
+    if [ "$status" -eq "$want" ]; then
+        return 0
+    fi
+    if [ "$status" -eq "$INFRA_ERROR" ]; then
+        echo "no verdict was reached: ${verdict}"
+    else
+        echo "${verdict}"
+    fi
+    return 1
+}
+
 run_symbols() {   # $1=label  $2=object  $3=expect: accept|reject
-    local verdict status=0
-    verdict="$(check_dispatch_symbols "$2")" || status=$?
-    if [ "$3" = accept ] && [ "$status" -eq 0 ]; then
-        pass "the symbol check accepts: $1"
-    elif [ "$3" = reject ] && [ "$status" -ne 0 ]; then
-        pass "the symbol check rejects: $1"
+    local reason="" ok=0
+    reason="$(classify_symbols "$2" "$3")" || ok=$?
+    if [ "$ok" -eq 0 ]; then
+        pass "the symbol check ${3}s: $1"
     else
         fail "the symbol check ${3}s: $1"
-        echo "    ${verdict}"
+        echo "    ${reason}"
     fi
 }
 
@@ -561,9 +624,51 @@ run_symbols "the setter after the dispatch" "${WORK}/fixture_after_dispatch.o" r
 
 # A compile failure here must not read as the rejection this row expects, so the check only
 # runs once the object exists.
-if compile_fixture asm_label; then
-    run_symbols "an asm label reaching the same import" "${WORK}/fixture_asm_label.o" reject
-fi
+for indirect in asm_label indirect_alias; do
+    if compile_fixture "$indirect"; then
+        run_symbols "reaching the same import: ${indirect}" "${WORK}/fixture_${indirect}.o" reject
+    fi
+done
+
+# ...and a failing analyser is an infrastructure error here too, not a verdict. Without that,
+# every reject row above passes on a machine where llvm-objdump cannot run: a truncated dump
+# reads as a rejection, which is exactly what those rows are looking for.
+cat > "${WORK}/fake_objdump" <<'EOF'
+#!/bin/bash
+# Prints a canned payload and exits with a canned status, both read from files beside it.
+cat "$(dirname "$0")/fake_od_out"
+exit "$(cat "$(dirname "$0")/fake_od_status")"
+EOF
+chmod +x "${WORK}/fake_objdump"
+printf '73\n' > "${WORK}/fake_od_status"
+# A dump that WOULD be accepted, so only the status can distinguish it.
+"$LLVM_OBJDUMP" -dr "${WORK}/fixture_spaced_ok.o" > "${WORK}/fake_od_out" 2>/dev/null
+
+real_objdump="$LLVM_OBJDUMP"
+LLVM_OBJDUMP="${WORK}/fake_objdump"
+for shape in acceptable_output truncated_output; do
+    [ "$shape" = truncated_output ] && : > "${WORK}/fake_od_out"
+
+    sym_verdict=""; sym_status=0
+    sym_verdict="$(check_dispatch_symbols "${WORK}/fixture_spaced_ok.o")" || sym_status=$?
+    if [ "$sym_status" -eq "$INFRA_ERROR" ]; then
+        pass "a failing analyser reaches no verdict: ${shape}"
+    else
+        fail "a failing analyser reaches no verdict: ${shape}"
+        echo "    status ${sym_status}: ${sym_verdict}"
+    fi
+
+    # ...and a reject row must not be satisfied by it, which is the half a status alone does
+    # not buy.
+    sym_reason=""; sym_ok=0
+    sym_reason="$(classify_symbols "${WORK}/fixture_spaced_ok.o" reject)" || sym_ok=$?
+    if [ "$sym_ok" -ne 0 ]; then
+        pass "a reject row is not satisfied by an analyser failure: ${shape}"
+    else
+        fail "a reject row is not satisfied by an analyser failure: ${shape}"
+    fi
+done
+LLVM_OBJDUMP="$real_objdump"
 
 # ...and the text checker really does miss that one, which is why both run. Reported rather
 # than asserted: a future text checker strong enough to catch it should not fail this suite.
