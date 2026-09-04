@@ -91,11 +91,16 @@ namespace abi_version {
     * expansion falls short in binary -- "1.3" parsed as minor 2 -- which silently
     * desynced the version handed to the plugin from the one handed to ABIMerger.
     *
-    * A zero major is rejected: there is no ABI 0.x, and cdt-cpp reads a zero major
-    * as "the option was never given" (tools/cc/cdt-cpp.cpp.in), so accepting one
-    * would let `cdt-cpp -abi-version 0.1` fall back to the default while
-    * `cdt-codegen --abi-version 0.1` honoured it -- reintroducing exactly the
-    * divergence this namespace exists to remove.
+    * A zero major is rejected: there is no ABI 0.x.
+    *
+    * That rule once carried a second job, worth recording because it is why the driver can
+    * be as simple as it now is. cdt-cpp USED to read a zero major as "the option was never
+    * given", so accepting one would have let `cdt-cpp -abi-version 0.1` fall back to the
+    * default while `cdt-codegen --abi-version 0.1` honoured it -- reintroducing exactly the
+    * divergence this namespace exists to remove. That sentinel is retired: the driver now
+    * records and forwards the parsed version unconditionally
+    * (tools/cc/cdt-cpp.cpp.in), which it can do precisely BECAUSE zero never survives this
+    * parse. Keeping the rejection is what stops the sentinel being needed again.
     *
     * A major above max_supported_major is rejected too. to_json only knows the 1.x
     * shape and gates action_results on major == 1, so a 2.0 or 10.2 request would

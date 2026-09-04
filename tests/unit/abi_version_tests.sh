@@ -147,8 +147,10 @@ check "1.10 keeps action_results (ABIMerger no longer parses the suffix)" \
     "${WORK}/v1.10.abi" \
     '"action_results"'
 
-# There is no ABI 0.x, and cdt-cpp reads a zero major as "option absent" -- accepting
-# one would reopen the driver/codegen divergence. Must be rejected, not coerced.
+# There is no ABI 0.x, so 0.1 must be rejected rather than coerced. cdt-cpp no longer treats
+# a zero major as "option absent" -- it records and forwards the parsed version
+# unconditionally -- and this rejection is what lets it do that, so the case still guards the
+# driver/codegen divergence, now by keeping the sentinel unnecessary rather than by feeding it.
 # 2.0 and 10.2 are rejected rather than accepted: abigen's to_json only serializes
 # action_results when major == 1, so a higher major would be stamped onto an ABI missing
 # the sections that version implies, and the merger would rank it above 1.2 regardless.
