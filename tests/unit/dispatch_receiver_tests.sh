@@ -6,22 +6,29 @@
 # dispatcher stores `r` (the receiver) rather than `c` (the code), exactly once, before any
 # dispatch. Every in-tree action is self-sent, so r == c and the whole unit + integration suite
 # stays green if that is broken -- the divergence appears only under notification, on chain.
-# This pins it at the source: the emitted dispatch text, which no other test inspects.
+# This pins it at the source, which no other test inspects, in two independent ways.
 #
-# The checker is a function over a dispatch FILE, and it is exercised three ways: against the
-# real generated dispatch, against a table of crafted counterexamples that must each be
-# rejected, and against positive controls that must NOT be rejected. Earlier revisions of this
-# test were defeated six times in review -- by handler names it did not match, by a branch on
-# the signature line, by two calls on one line, by a comment between the identifier and its
-# paren, by a raw string closing at column 1, and by a line marker whose filename contained an
-# escaped quote -- because each fix pattern-matched the last evasion. Checking the checker is
-# what stops that: a new evasion is one row below, not a round trip.
+# check_dispatch reads the preprocessed dispatch TEXT: it is what can see that the argument is
+# `r` and not `c`, and that the call is the first statement. check_dispatch_symbols reads the
+# RELOCATIONS of the emitted object: it is what can see a second call however it was spelled,
+# including one reaching the import through an asm label that never spells the identifier
+# twice. Neither subsumes the other, so both run.
+#
+# Each is exercised three ways: against the real generated dispatch, against a table of crafted
+# counterexamples that must each be rejected, and against positive controls that must NOT be.
+# Earlier revisions were defeated seven times in review -- by handler names the checker did not
+# match, by a branch on the signature line, by two calls on one line, by a comment between the
+# identifier and its paren, by a raw string closing at column 1, by a marker whose filename
+# carried an escaped quote, and by that asm label -- because each fix pattern-matched the last
+# evasion. Checking the checker is what stops that: a new evasion is one row below, not a round
+# trip.
 #
 # The marker filter is pinned from BOTH sides. Too narrow and it leaves a marker in the
 # normalised source, which is read as apply()'s first statement and rejects a correct dispatch;
 # too broad and it deletes a line of real code, taking a second setter call with it. Each of
 # the four parts of that pattern -- the `^`, the filename grammar, the trailing flags and the
-# `$` -- has a row that fails when it alone is weakened.
+# `$` -- has a row that fails when it alone is weakened, positive rows for the first sense and
+# counterexamples for the second.
 #
 # The checker reports three outcomes, not two, and callers distinguish all three: accepted,
 # rejected, and INFRA_ERROR -- the check could not be performed. Collapsing the third into
@@ -32,6 +39,7 @@ set -euo pipefail
 
 BUILD_DIR="$1"
 CDT_CPP="${BUILD_DIR}/bin/cdt-cpp"
+LLVM_OBJDUMP="${BUILD_DIR}/bin/llvm-objdump"
 PASS=0
 FAIL=0
 pass() { echo "  PASS: $1"; PASS=$((PASS + 1)); }
@@ -131,6 +139,52 @@ check_dispatch() {
     normalised="$(printf '%s' "$first_stmt" | tr -d ' ')"
     if [ "$normalised" != "sysio_set_contract_name(r);" ]; then
         echo "first statement of apply() is: ${first_stmt}"
+        return "$REJECTED"
+    fi
+    echo OK
+}
+
+# The same requirement at the SYMBOL level, over the object the driver actually emits.
+#
+# The text checker counts SPELLINGS, and a second call can reach the same wasm import without
+# adding one:
+#
+#     extern void again(uint64_t) __asm__("sysio_set_" "contract_name");
+#     again(c);
+#
+# The adjacent string literals are still two tokens after preprocessing -- concatenation is
+# translation phase 6, which -E does not reach -- so the identifier is spelled twice in the
+# file and the text count stays at 2. The object calls the import twice, and the second call
+# overwrites the receiver with the code. Relocations do not care how the symbol was spelled.
+#
+# Ordering comes with it: the first call relocation inside apply() must be this one, which
+# states "before any dispatch" over the emitted code rather than over the source text.
+#
+# Scope is apply() itself, matching the text checker. A setter call made from some OTHER
+# function that apply() calls is out of range of both -- the dispatch TU defines only apply(),
+# so there is no such function to write today, but it is a real limit rather than a covered
+# case.
+#
+# Echoes OK, or a reason. Returns 0 or $REJECTED.
+check_dispatch_symbols() {   # $1=object file
+    local relocs count first
+    relocs="$("$LLVM_OBJDUMP" -dr "$1" 2>/dev/null | awk '
+        /^[0-9a-f]+ <.*>:$/ { in_apply = ($0 ~ /<apply>:$/); next }
+        in_apply && /R_WASM_FUNCTION_INDEX_LEB/ {
+            sym = $NF; sub(/\+[0-9]+$/, "", sym); print sym
+        }')"
+    if [ -z "$relocs" ]; then
+        echo "no call relocations inside apply() in $(basename "$1")"
+        return "$REJECTED"
+    fi
+    count="$(printf '%s\n' "$relocs" | grep -cx 'sysio_set_contract_name' || true)"
+    if [ "$count" -ne 1 ]; then
+        echo "apply() calls sysio_set_contract_name ${count} time(s), not once"
+        return "$REJECTED"
+    fi
+    first="$(printf '%s\n' "$relocs" | head -1)"
+    if [ "$first" != sysio_set_contract_name ]; then
+        echo "the first call in apply() is ${first}, not sysio_set_contract_name"
         return "$REJECTED"
     fi
     echo OK
@@ -337,6 +391,27 @@ mkfixture marker_escaped_ok '
 #line 7 "a\"b.cpp"
     sysio_set_contract_name(r);
     if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+# An #include immediately before the setter. CDT emits an ENTER and a RETURN marker for it --
+# `# 1 "./empty_header.hpp" 1` and `# N "fixture.cpp" 2` -- between the opening brace and the
+# first statement, which is the only shape that pins the trailing `([[:space:]]+[0-9]+)*`:
+# drop that group and neither line is a marker any more, both survive normalisation, and the
+# first is read as apply()'s first statement. Every other marker in these fixtures is
+# flagless, so nothing else covers it.
+cat > "${WORK}/empty_header.hpp" <<'HDREOF'
+#pragma once
+HDREOF
+# Reaches the import through an asm label whose spelling is split across two string literals,
+# so no second contiguous `sysio_set_contract_name` appears in the preprocessed text. Compiles
+# under the driver; the text checker ACCEPTS it, which is the whole reason section 4 exists.
+mkfixture asm_label '
+    sysio_set_contract_name(r);
+    extern void again(uint64_t) __asm__("sysio_set_" "contract_name");
+    again(c);
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
+mkfixture marker_flags_ok '
+#include "empty_header.hpp"
+    sysio_set_contract_name(r);
+    if (c == r) { __sysio_action_go_x(r, c); } else { __sysio_notify_on_x(r, c); }'
 
 # Compiled by the DRIVER, not a host clang: a fixture must be legal in the translation unit
 # that actually ships, and the driver supplies the wasm32 target and the CDT include graph.
@@ -388,7 +463,7 @@ for bad in code_not_receiver inside_branch signature_line double_call comment_sp
 done
 
 # ...and must not reject a well-formed one that merely looks unusual.
-for good in spaced_ok marker_escaped_ok; do
+for good in spaced_ok marker_escaped_ok marker_flags_ok; do
     compile_fixture "$good" || continue
     run_check "${WORK}/fixture_${good}.cpp"
     if [ "$VERDICT_STATUS" -eq 0 ]; then
@@ -450,6 +525,54 @@ for shape in acceptable_output truncated_output; do
     fi
 done
 CDT_CPP="$real_cdt_cpp"
+
+# --- 4. the same requirement over the emitted object ---------------------------------------
+#
+# Exercised the way the text checker is: against the real generated dispatch, against a
+# positive control, and against the counterexample the text checker cannot see.
+run_symbols() {   # $1=label  $2=object  $3=expect: accept|reject
+    local verdict status=0
+    verdict="$(check_dispatch_symbols "$2")" || status=$?
+    if [ "$3" = accept ] && [ "$status" -eq 0 ]; then
+        pass "the symbol check accepts: $1"
+    elif [ "$3" = reject ] && [ "$status" -ne 0 ]; then
+        pass "the symbol check rejects: $1"
+    else
+        fail "the symbol check ${3}s: $1"
+        echo "    ${verdict}"
+    fi
+}
+
+# The real dispatch, compiled on its own: the contract build above already links it, but the
+# object is what carries the relocations.
+if ( cd "$WORK" && "$CDT_CPP" -c "$DISPATCH" -o real_dispatch.o ) > "${WORK}/real.log" 2>&1; then
+    run_symbols "the generated dispatch" "${WORK}/real_dispatch.o" accept
+else
+    fail "the generated dispatch compiles on its own"
+    sed 's/^/      /' "${WORK}/real.log"
+fi
+
+run_symbols "a space before the paren" "${WORK}/fixture_spaced_ok.o" accept
+
+# The setter present exactly once but AFTER the dispatch. Its object is already built by the
+# counterexample loop, and it is what pins the "first call" branch -- without it, deleting that
+# branch leaves this section green.
+run_symbols "the setter after the dispatch" "${WORK}/fixture_after_dispatch.o" reject
+
+# A compile failure here must not read as the rejection this row expects, so the check only
+# runs once the object exists.
+if compile_fixture asm_label; then
+    run_symbols "an asm label reaching the same import" "${WORK}/fixture_asm_label.o" reject
+fi
+
+# ...and the text checker really does miss that one, which is why both run. Reported rather
+# than asserted: a future text checker strong enough to catch it should not fail this suite.
+run_check "${WORK}/fixture_asm_label.cpp"
+if [ "$VERDICT_STATUS" -eq 0 ]; then
+    echo "  NOTE: the text checker accepts asm_label, as expected -- only the symbol check sees it"
+else
+    echo "  NOTE: the text checker now also rejects asm_label (${VERDICT})"
+fi
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
