@@ -284,19 +284,22 @@ describe the key layout:
 }
 ```
 
-Do not reach for `cdt-abidiff` to see this particular change — **on a CDT built before
-[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112)**, which fixes both limitations
-below. It compares tables only by `name` and `type`, so `index_type`, `key_names`, `key_types`,
-`table_id` and the secondary-index metadata are all invisible to it, and its version check reduces
-`eosio::abi/1.2` and `sysio::abi/1.2` to the same number — a port whose tables kept their names can
-come back reporting no difference at all. Either way, normalizing and diffing the JSON directly is
-the check that does not depend on your toolchain's vintage:
+`cdt-abidiff` shows this change, but only on a toolchain that carries
+[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112). **Before it**, the tool compared
+tables by `name` and `type` alone — so `index_type`, `key_names`, `key_types`, `table_id` and the
+secondary-index metadata were all invisible to it — and its version check reduced `eosio::abi/1.2`
+and `sysio::abi/1.2` to the same number, so a port whose tables kept their names could come back
+reporting no difference at all. If you are on an older CDT, or you just want a check that does not
+depend on your toolchain's vintage, normalize and diff the JSON directly:
 
 ```bash
 jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /tmp/old.json /tmp/new.json
 ```
 
-`cdt-abidiff` remains useful for what it does check — structs, fields, actions, types and variants.
+On a current CDT the tool compares every section of the document: `version` (as the full string,
+so `eosio::abi/1.2` and `sysio::abi/1.2` differ), `structs`, `types`, `actions`, `tables` (all of
+the metadata above, secondary indices included), `ricardian_clauses`, `enums`, `protobuf_types`,
+`variants`, `action_results` and `error_messages`.
 
 ---
 
@@ -307,10 +310,11 @@ jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /t
 The `db_store_i64` / `db_find_i64` / `db_idx64_*` / `db_idx128_*` / `db_idx256_*` /
 `db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire. The chain exports none
 of them, so a contract that reaches one fails at deploy. Whether it fails earlier depends on how
-it was declared: a plain `extern "C"` declaration links only because CDT's
-`imports/cdt.imports.in` is handed to `wasm-ld` as `--allow-undefined-file` and still lists these
-names, and [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) turns that into a
-link error by removing them. A declaration carrying `__attribute__((sysio_wasm_import))` — which
+it was declared: a plain `extern "C"` declaration used to link, because CDT's
+`imports/cdt.imports.in` is handed to `wasm-ld` as `--allow-undefined-file` and once listed these
+names. [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) removed them, so on a
+current CDT that declaration is a link error — `wasm-ld: undefined symbol: db_store_i64` — instead
+of a deploy failure. A declaration carrying `__attribute__((sysio_wasm_import))` — which
 is how the old `<sysio/db.h>` declared them — emits an explicit WASM import and links either way,
 so those keep failing at deploy. (The 22 `kv_*` intrinsics are the proof: none is in the
 allow-list, and they all link.) `<sysio/db.h>` is a stub that forwards to
@@ -347,10 +351,10 @@ postfix forms are deleted rather than merely discouraged. The sweep is mechanica
 `for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
 handle-duplicating copy the deletion exists to prevent. Grep reverse loops by hand.
 
-Two behaviours that a port depends on match upstream. **Both arrive with
-[wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are not present in a CDT built
-before it** — on an older toolchain a duplicate `emplace` silently overwrites the row and strands its
-secondary mapping, and the bounds take only `uint64_t`:
+Two behaviours that a port depends on match upstream. **Both landed in
+[wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113); a CDT built before it has
+neither** — there, a duplicate `emplace` silently overwrites the row and strands its secondary
+mapping, and the bounds take only `uint64_t`:
 
 - **A duplicate primary key aborts.** `emplace` rejects a key that already exists, as `db_store_i64`
   did on Antelope, so a contract that relied on that failure keeps failing loudly instead of
@@ -362,9 +366,14 @@ secondary mapping, and the bounds take only `uint64_t`:
   `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
   resolves one on Wire.)
 
-#113 also makes `emplace`, `modify` and `erase` abort when the handle's code is not the receiving
-account, again matching upstream. If your port constructs a table handle on another contract's
-account, it must be read-only.
+The same change makes `emplace`, `modify` and `erase` abort when the handle's code is not the
+receiving account, again matching upstream. If your port constructs a table handle on another
+contract's account, it must be read-only.
+
+**This reaches `sysio::singleton` too.** `singleton` is an alias for `kv_singleton`, which holds a
+`kv_multi_index` as its storage, and `get_or_create`, `set` and `remove` all mutate through it — so
+a singleton handle constructed on another account's code is read-only on the same terms as a table
+handle.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
 `checksum256`. Iteration order is `memcmp` order over a big-endian encoding — with an additional sign-flip
@@ -666,6 +675,18 @@ Antelope; what changed is only *who* the payment lands on by default.
 | `db_idx64_*`, `db_idx128_*`, `db_idx256_*`, `db_idx_double_*`, `db_idx_long_double_*` (50 in total) | `indexed_by` on `multi_index`, or `kv_idx_*`. |
 | `send_deferred`, `cancel_deferred` | See [Features with no Wire equivalent](#features-with-no-wire-equivalent). |
 | `get_permission_last_used`, `get_account_creation_time` | No equivalent intrinsic. Track it in contract state, or read it off-chain. |
+| `add_security_group_participants`, `remove_security_group_participants`, `in_active_security_group`, `get_active_security_group` | No equivalent. Wire does not implement security groups. |
+| `set_kv_parameters_packed` | No equivalent. Wire's KV parameters are not settable from a contract. |
+
+The last two rows behave differently from the rest of this table. Wire's chain never exported them,
+but CDT went on *declaring* them, so a contract calling one compiled, linked, and only failed at
+deploy. [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) deleted the declarations,
+so on a current CDT you find out at compile time instead:
+
+- `#include <sysio/security_group.h>` → `fatal error: 'sysio/security_group.h' file not found`; the
+  header is gone entirely.
+- `set_kv_parameters_packed` → `error: use of undeclared identifier`; `<sysio/privileged.h>` is
+  still there, and every other setter in it still compiles.
 
 ### Unchanged
 
@@ -674,7 +695,11 @@ Everything else you already use is present with the same signature: `require_aut
 `read_action_data`, `action_data_size`, `current_receiver`, `publication_time`, `get_sender`,
 `get_code_hash`, `set_action_return_value`, `current_time`, `get_block_num`, `is_feature_activated`,
 the whole `print*` family, the transaction and TAPOS accessors, `check_transaction_authorization` /
-`check_permission_authorization`, every `privileged.h` setter, `set_finalizers`, and the full
+`check_permission_authorization`, the `privileged.h` accessors that remain
+(`get_resource_limits`, `set_resource_limits`, `set_proposed_producers`,
+`set_proposed_producers_ex`, `get_blockchain_parameters_packed`,
+`set_blockchain_parameters_packed`, `set_privileged` — but not `set_kv_parameters_packed`, removed
+above), `set_finalizers`, and the full
 cryptographic surface — `sha1`/`sha256`/`sha512`/`ripemd160` with their `assert_` forms, plus `sha3` (which has no
 `assert_` form, here or upstream),
 `recover_key`, `assert_recover_key`, `k1_recover`, `blake2_f`, `alt_bn128_add`/`_mul`/`_pair`,

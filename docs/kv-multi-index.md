@@ -22,14 +22,14 @@ divergences are:
   either (here because it is an overload set, upstream because `PK` cannot be deduced); a named
   `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
   resolves one on Wire.
-  **The `name` overload arrives with
-  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; before it the bounds took
-  `uint64_t` only, and a `name` primary key needed `.value` at the call;
+  **The `name` overload landed in
+  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; on a CDT built before it the
+  bounds took `uint64_t` only, and a `name` primary key needed `.value` at the call;
 - secondary key types must be `std::is_trivially_copyable`, not merely serializable — a
   `static_assert` enforces it, where upstream accepts any serializable type;
-- the mutation guards below arrive with
-  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from earlier
-  toolchains.
+- the mutation guards below landed in
+  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from any CDT
+  built before it.
 
 Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*`
 intrinsics.
@@ -55,10 +55,10 @@ The table name is conveyed by `table_id`, not embedded in the key.
 - `payer` parameter honored for RAM billing
 - `rbegin/rend`, `cbegin/cend` support
 - Upstream's mutation guards: `emplace` rejects a duplicate primary key, and `emplace` / `modify` /
-  `erase` reject a handle whose code is not the receiving account — **these arrive with
-  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from any CDT
-  built before it.** On an older toolchain a duplicate `emplace` silently overwrites the row and
-  strands its secondary mapping.
+  `erase` reject a handle whose code is not the receiving account — **both landed in
+  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113); a CDT built before it has
+  neither.** There, a duplicate `emplace` silently overwrites the row and strands its secondary
+  mapping.
 
 ## Singleton
 
@@ -66,7 +66,12 @@ The table name is conveyed by `table_id`, not embedded in the key.
 #include <sysio/singleton.hpp>
 ```
 
-`sysio::singleton<Name, T>` is backed by `kv_multi_index`. API: `exists`, `get`, `get_or_default`, `get_or_create`, `set`, `remove`.
+`sysio::singleton<Name, T>` is an alias for `kv_singleton`, which holds a `kv_multi_index` as its
+storage. API: `exists`, `get`, `get_or_default`, `get_or_create`, `set`, `remove`.
+
+`get_or_create`, `set` and `remove` mutate through that member, so they inherit the guards above: a
+singleton handle constructed on another account's code is read-only, on the same terms as a table
+handle.
 
 ## Example
 
