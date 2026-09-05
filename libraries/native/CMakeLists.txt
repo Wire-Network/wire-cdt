@@ -355,15 +355,18 @@ list( APPEND native_softfloat_sources ${native_softfloat_headers} )
 add_library ( sf STATIC ${softfloat_sources} )
 target_include_directories( sf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR})
 
-add_native_library ( native STATIC ${native_softfloat_sources} intrinsics.cpp crt.cpp ${CRT_ASM} )
-target_include_directories( native PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/sysiolib/capi ${CMAKE_SOURCE_DIR}/sysiolib/contracts ${CMAKE_SOURCE_DIR}/sysiolib/core)
+# The native-HOST library. Everything above this point -- including the `sf` archive -- is
+# WebAssembly and is built in every configuration, because cdt-ld links -lsf for --use-rt and
+# the --fquery modes regardless of whether the native tester is enabled.
+if (ENABLE_NATIVE_COMPILER)
+   add_native_library ( native STATIC ${native_softfloat_sources} intrinsics.cpp crt.cpp ${CRT_ASM} )
+   target_include_directories( native PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/softfloat/source/include" "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_SPECIALIZE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/${NATIVE_SOFTFLOAT_PLATFORM_DIR}" ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/sysiolib/capi ${CMAKE_SOURCE_DIR}/sysiolib/contracts ${CMAKE_SOURCE_DIR}/sysiolib/core)
 
-add_dependencies(native native_sysio)
+   add_dependencies(native native_sysio)
 
-add_custom_command( TARGET native POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native> ${BASE_BINARY_DIR}/lib )
+   add_custom_command( TARGET native POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:native> ${BASE_BINARY_DIR}/lib )
+endif()
 
 add_custom_command( TARGET sf POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sf> ${BASE_BINARY_DIR}/lib )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION ${BASE_BINARY_DIR}/include/sysio FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "softfloat" EXCLUDE)
-
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/native DESTINATION ${BASE_BINARY_DIR}/include/sysiolib FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "softfloat" EXCLUDE)
+# Header staging lives in the stage_cdt_tree target (cmake/stage_cdt_tree.cmake).

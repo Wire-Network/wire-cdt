@@ -14,7 +14,6 @@
 #include <sysio/system.h>
 #include <sysio/transaction.h>
 #include <sysio/types.h>
-#include <sysio/security_group.h>
 
 #include <type_traits>
 #include <functional>
@@ -102,10 +101,6 @@ intrinsic_macro(send_context_free_inline) \
 intrinsic_macro(get_context_free_data) \
 intrinsic_macro(get_sender) \
 intrinsic_macro(set_action_return_value) \
-intrinsic_macro(add_security_group_participants) \
-intrinsic_macro(remove_security_group_participants) \
-intrinsic_macro(in_active_security_group) \
-intrinsic_macro(get_active_security_group) \
 intrinsic_macro(blake2_f) \
 intrinsic_macro(blake2b_256) \
 intrinsic_macro(sha3) \

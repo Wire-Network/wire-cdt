@@ -66,8 +66,9 @@ static bool write_finalize_manifest(const Options& opts, const std::string& outp
       << fm::k_protobuf_files  << "=" << opts.protobuf_files << "\n";
    if (!opts.abigen_output.empty() && opts.abigen_output != "''")
       ss << fm::k_abi_output << "=" << opts.abigen_output << "\n";
-   if (opts.abi_version.first > 0)
-      ss << fm::k_abi_version << "=" << opts.abi_version.first << "." << opts.abi_version.second << "\n";
+   // Always recorded: abi_version::parse rejects a zero major and the default is
+   // non-zero, so there is no "unset" state left for a >0 test to stand in for.
+   ss << fm::k_abi_version << "=" << opts.abi_version.first << "." << opts.abi_version.second << "\n";
    // The descriptor(s) this object produced -- cdt-codegen names each <contract>.<src>.desc in the
    // output dir. One line per source (normally a single source per compile). These ARE per-TU:
    // cdt-ld accumulates every object's desc_file (sources in different subdirectories are all
@@ -150,10 +151,8 @@ int main(int argc, const char **argv) {
             codegen_args.push_back(opts.abigen_output);
          }
 
-         if (opts.abi_version.first > 0) {
-            codegen_args.push_back("--abi-version");
-            codegen_args.push_back(std::to_string(opts.abi_version.first) + "." + std::to_string(opts.abi_version.second));
-         }
+         codegen_args.push_back("--abi-version");
+         codegen_args.push_back(std::to_string(opts.abi_version.first) + "." + std::to_string(opts.abi_version.second));
 
          // Only suppress ABI generation when explicitly not linking (compile-only mode)
          // and abigen was not requested. When linking, always generate ABI.

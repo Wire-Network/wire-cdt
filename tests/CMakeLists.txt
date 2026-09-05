@@ -33,12 +33,24 @@ add_test(NAME version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/version_tests
 set_property(TEST version_tests PROPERTY LABELS unit_tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/abi_version_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh COPYONLY)
-add_test(NAME abi_version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh "${CMAKE_BINARY_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME abi_version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST abi_version_tests PROPERTY LABELS unit_tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/multidir_contract_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh COPYONLY)
 add_test(NAME multidir_contract_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh "${CMAKE_BINARY_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST multidir_contract_tests PROPERTY LABELS unit_tests)
+
+# cdt-abidiff ABI-version handling — the version must be read from parsed components, not a
+# fixed-width suffix read that mis-scores a two-digit minor.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/abidiff_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/abidiff_tests.sh COPYONLY)
+add_test(NAME abidiff_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abidiff_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TEST abidiff_tests PROPERTY LABELS unit_tests)
+
+# Staged-header hygiene — every header under <build>/include must still exist in
+# libraries/. Catches a stale copy left behind when a source header is deleted.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/staged_headers_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/staged_headers_tests.sh COPYONLY)
+add_test(NAME staged_headers_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/staged_headers_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" "$<BOOL:${ENABLE_NATIVE_COMPILER}>" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TEST staged_headers_tests PROPERTY LABELS unit_tests)
 
 # sysio-pp (WABT post-pass) regression — guards the WSA-020 / SEC-10
 # FillFromSegments out-of-bounds write and basic post-pass correctness.

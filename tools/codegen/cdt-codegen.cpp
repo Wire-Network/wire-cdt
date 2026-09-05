@@ -172,9 +172,9 @@ static std::string              contract_name;
 static bool                     explicit_contract = false;
 static std::string              output_dir = ".";
 
-static std::string abi_version;
-static int         abi_version_major           = 1;
-static int         abi_version_minor           = 3;
+static std::string abi_version_arg;
+static int         abi_version_major           = abi_version::default_major;
+static int         abi_version_minor           = abi_version::default_minor;
 static bool        no_abigen                   = false;
 static std::string abi_output_path;
 // Link-time finalize split (see main()):
@@ -234,7 +234,8 @@ static void print_usage(const char* prog) {
              << "\nOptions:\n"
              << "  --contract NAME             Contract name\n"
              << "  --output-dir DIR            Output directory (default: .)\n"
-             << "  --abi-version VERSION        ABI version (e.g. 1.3)\n"
+             << "  --abi-version VERSION        ABI version as <major>[.<minor>] (default: "
+             << abi_version::default_spelling() << ")\n"
              << "  --no-abigen                 Disable ABI generation\n"
              << "  --cxx OPTIONS               Additional C++ compiler options\n"
              << "  -I, --include DIR           C++ include directory (repeatable)\n"
@@ -273,10 +274,13 @@ static void parse_args(int argc, const char** argv) {
       } else if (arg == "--output-dir" && i + 1 < argc) {
          output_dir = argv[++i];
       } else if (arg == "--abi-version" && i + 1 < argc) {
-         abi_version = argv[++i];
-         float tmp;
-         abi_version_major = std::stoi(abi_version);
-         abi_version_minor = (int)(std::modf(std::stof(abi_version), &tmp) * 10);
+         abi_version_arg = argv[++i];
+         if (!abi_version::parse(abi_version_arg, abi_version_major, abi_version_minor)) {
+            std::cerr << "invalid --abi-version '" << abi_version_arg
+                      << "': expected <major>[.<minor>], e.g. "
+                      << abi_version::default_spelling() << "\n";
+            exit(1);
+         }
       } else if (arg == "--cxx" && i + 1 < argc) {
          cxx_arg = argv[++i];
       } else if ((arg == "-I" || arg == "--include") && i + 1 < argc) {
@@ -310,6 +314,19 @@ static void parse_args(int argc, const char** argv) {
       } else {
          input_files.push_back(arg);
       }
+   }
+
+   // A contract with protobuf files ends up stamped at abi_version::protobuf_minor, so
+   // settle the effective version here -- before gen_actions hands it to the plugin and
+   // before the finalize pass stamps the merged ABI. The plugin gates its own sections on
+   // the version it is told, so promoting afterwards produced an ABI claiming 1.3 while
+   // missing the action_results that 1.2 already required, with the descriptors already
+   // written and the entries unrecoverable. Both passes run this, because cdt-ld forwards
+   // --protobuf-files and --abi-version into the finalize invocation.
+   if (protobuf_files.size() && abi_version_major == abi_version::default_major &&
+       abi_version_minor < abi_version::protobuf_minor) {
+      abi_version_minor = abi_version::protobuf_minor;
+      abi_version_arg   = abi_version::spelling(abi_version_major, abi_version_minor);
    }
 
    // The finalize pass does not compile anything (it only merges existing .desc files),
@@ -400,12 +417,12 @@ static void gen_actions(const std::string& input) {
    if (abigen_opts.size())
       abigen_opts += ",";
 
-   if (abi_version.size()) {
-      abigen_opts += "abi_version=" + abi_version;
+   if (abi_version_arg.size()) {
+      abigen_opts += "abi_version=" + abi_version_arg;
    } else if (no_abigen) {
       abigen_opts += "no_abigen";
    } else {
-      abigen_opts += "abi_version=1.3";
+      abigen_opts += "abi_version=" + abi_version::default_spelling();
    }
 
    if (suppress_ricardian_warnings) {
@@ -697,11 +714,25 @@ int main(int argc, const char** argv) {
 
                abi["protobuf_types"] = ojson::parse(protobuf_types_json);
 
-               // Bump ABI version to 1.3 when protobuf_types section is present
-               if (abi_version_major == 1 && abi_version_minor < 3) {
-                  abi_version_minor = 3;
-                  abi["version"] = "sysio::abi/1.3";
+               // The promotion itself happened before gen_actions ran (see above), so the
+               // plugin already gated its sections on this version. All that is left is to
+               // stamp the merged document.
+               //
+               // Take the NEWER of the CLI version and the version the descriptors merged to.
+               // Stamping the CLI version unconditionally downgraded a document whose
+               // descriptors declared something newer -- reachable through the fallback scan
+               // that picks up .desc files from earlier compiles, which may have run with a
+               // different -abi-version. The previous assert() here was tautological (parse()
+               // bounds the major to exactly max_supported_major, so its second disjunct was
+               // unreachable) and compiled away under the default Release TOOLS_BUILD_TYPE.
+               int merged_major = 0;
+               int merged_minor = 0;
+               std::pair<int, int> stamped{abi_version_major, abi_version_minor};
+               if (abi.count("version") &&
+                   abi_version::parse_version_string(abi["version"].as<std::string>(), merged_major, merged_minor)) {
+                  stamped = std::max(stamped, std::pair<int, int>{merged_major, merged_minor});
                }
+               abi["version"] = abi_version::version_string(stamped.first, stamped.second);
             } else if (referenced_pb_types.size()) {
                std::cerr << "protobuf types are used but no protobuf files are specified for contract " << contract_name
                          << ", please use `contract_use_protobuf()` cmake function to specify the protobuf files it depends on\n";

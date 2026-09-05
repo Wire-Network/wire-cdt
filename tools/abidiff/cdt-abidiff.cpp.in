@@ -4,7 +4,11 @@
 #include <exception>
 #include <iostream>
 #include <fstream>
+#include <set>
 #include <sstream>
+#include <utility>
+
+#include <sysio/abi.hpp>
 
 #include <jsoncons/json.hpp>
 
@@ -19,26 +23,177 @@ struct abidiff_exception : public std::exception {
 } abidiff_ex;
 
 
+// Rejects a document containing duplicate object members.
+//
+// jsoncons keeps only the last of a repeated key, so a duplicate is gone before any comparison
+// sees it -- and it is gone for EVERY section, not only protobuf_types. The runtime does not
+// agree: fc preserves both members and protobuf merges duplicate repeated fields, so a
+// descriptor set written with two `file` members is [a,b] on chain and [b] here. Comparing such
+// a document would silently answer about a value the chain never sees, so it is refused
+// instead. The vendored jsoncons has no option to reject duplicates at parse time; this walks
+// the same text through its SAX reader and tracks the keys of each open object.
+class duplicate_member_detector final : public jsoncons::json_content_handler
+{
+public:
+   bool found() const { return found_; }
+   const std::string& duplicate() const { return dup_; }
+
+private:
+   std::vector<std::set<std::string>> stack_;
+   std::string dup_;
+   bool found_ = false;
+
+   void do_begin_document() override {}
+   void do_end_document() override {}
+   void do_begin_object(const jsoncons::serializing_context&) override { stack_.emplace_back(); }
+   void do_end_object(const jsoncons::serializing_context&) override { if (!stack_.empty()) stack_.pop_back(); }
+   void do_begin_array(const jsoncons::serializing_context&) override {}
+   void do_end_array(const jsoncons::serializing_context&) override {}
+   void do_name(const string_view_type& name, const jsoncons::serializing_context&) override {
+      if (stack_.empty())
+         return;
+      const std::string key(name.data(), name.size());
+      if (!stack_.back().insert(key).second && !found_) {
+         found_ = true;
+         dup_   = key;
+      }
+   }
+   void do_null_value(const jsoncons::serializing_context&) override {}
+   void do_string_value(const string_view_type&, const jsoncons::serializing_context&) override {}
+   void do_byte_string_value(const uint8_t*, size_t, const jsoncons::serializing_context&) override {}
+   void do_bignum_value(int, const uint8_t*, size_t, const jsoncons::serializing_context&) override {}
+   void do_double_value(double, const jsoncons::floating_point_options&, const jsoncons::serializing_context&) override {}
+   void do_integer_value(int64_t, const jsoncons::serializing_context&) override {}
+   void do_uinteger_value(uint64_t, const jsoncons::serializing_context&) override {}
+   void do_bool_value(bool, const jsoncons::serializing_context&) override {}
+};
+
+/// @return the duplicated key, or empty when the text has none.
+inline std::string first_duplicate_member(const std::string& text) {
+   duplicate_member_detector det;
+   try {
+      std::istringstream is(text);
+      jsoncons::json_reader reader(is, det);
+      reader.read();
+   } catch (const std::exception&) {
+      return {};      // malformed input is diagnosed by the ordinary parse
+   }
+   return det.found() ? det.duplicate() : std::string{};
+}
+
+namespace {
+   /// The one ABI member whose value may itself be a JSON document: a FileDescriptorSet
+   /// written either as an object, or as a string containing that object's JSON.
+   constexpr auto protobuf_types_key = "protobuf_types";
+
+   /// Parse JSON strictly, refusing anything this tool would otherwise have to normalise.
+   ///
+   /// The bug this closes is comments. jsoncons's DEFAULT handler silently accepts and DISCARDS
+   /// them -- see `default_parse_error_handler`, which swallows `illegal_comment` and nothing
+   /// else -- while fc rejects them outright. A commented document therefore compared EQUAL to
+   /// the uncommented one the chain accepts: the same class of false equality as a dropped
+   /// duplicate member, invisible for the same reason, the difference gone before anything
+   /// compared it.
+   ///
+   /// Strictness beyond that is this TOOL'S POLICY and not a claim about the runtime, which is
+   /// laxer in places: fc's parser consumes any comma it meets (libfc/src/io/json.cpp), so it
+   /// loads a trailing one happily. Refusing to compare is the conservative direction -- it
+   /// never answers "equal" about a document it had to rewrite to read -- and it costs nothing
+   /// that was working, since the default handler already propagated every error but the
+   /// comment. Only the comment case changed behaviour here.
+   ///
+   /// There is also no single parser to mirror even if that were wanted: the outer document is
+   /// fc's to read, while a string-valued protobuf_types is JsonStringToMessage's, and their
+   /// leniencies are not the same. One uniform policy is deliberate.
+   ///
+   /// @throws jsoncons::parse_error on a comment, or on any other input strict JSON rejects.
+   inline ojson parse_strict(const std::string& text) {
+      jsoncons::strict_parse_error_handler strict;
+      return ojson::parse(text, strict);
+   }
+
+   /// Report a document whose comparison would be unfaithful, and exit non-zero.
+   ///
+   /// @param which  the document as named on the command line -- "file1" or "file2".
+   /// @param dup    the member name that appears more than once.
+   /// @param where  where it appears, empty for the document itself.
+   [[noreturn]] void refuse_duplicate(const char* which, const std::string& dup,
+                                      const std::string& where) {
+      std::cerr << "Error: " << which << " has a duplicate object member '" << dup << "'"
+                << where << ". jsoncons keeps only the last, while the chain preserves both and\n"
+                   "protobuf merges duplicate repeated fields -- so any comparison here\n"
+                   "would describe a value the runtime never sees.\n";
+      exit(1);
+   }
+}
+
 class abidiff {
    private:
       ojson abi_1, abi_2;
       std::string fn_1, fn_2;
+
+      // Read a document, refusing one whose comparison would be unfaithful.
+      static ojson load_checked(const std::string& path, const char* which) {
+         std::ifstream in(path);
+         std::stringstream buf;
+         buf << in.rdbuf();
+         const std::string text = buf.str();
+         const std::string dup = first_duplicate_member(text);
+         if (!dup.empty())
+            refuse_duplicate(which, dup, "");
+
+         ojson parsed;
+         try {
+            parsed = parse_strict(text);
+         } catch (const std::exception& e) {
+            std::cerr << "Error: " << which << " is not strict JSON: " << e.what() << "\n"
+                      << "cdt-abidiff refuses what it cannot read strictly, rather than let a\n"
+                         "lenient parse normalise a difference away before anything compares\n"
+                         "it. The runtime's parsers are laxer in places -- fc tolerates a stray\n"
+                         "comma -- so this is this tool's policy, not a verdict on whether the\n"
+                         "chain would load the file.\n";
+            exit(1);
+         }
+
+         // ...and again one level down, inside protobuf_types when it is written as a STRING.
+         // The walk above sees that spelling as a single opaque string value, so a descriptor
+         // set carrying two `file` members passes it -- and canonical_protobuf then parses the
+         // string with jsoncons, which keeps only the last. The document compares EQUAL to one
+         // carrying just that member, while JsonStringToMessage reads the original as both
+         // descriptors: the same false negative the outer check exists to prevent, in the one
+         // place the outer check cannot see. Refused here rather than at the comparison, so a
+         // document is rejected on the same terms whichever spelling it uses.
+         //
+         // ONLY for the spelling canonical_protobuf actually ADOPTS. A string whose JSON root
+         // is not an object is compared verbatim, as the string it is, so nothing is dropped
+         // from the compared value and this refusal's own reason would not hold -- refusing it
+         // would be stricter than the object spelling rather than equal to it, and would take
+         // away a document that diffs faithfully today. The adoption rule is asked for rather
+         // than restated, so the two cannot drift apart.
+         if (parsed.is_object() && parsed.count(protobuf_types_key)) {
+            const ojson& pb = parsed.at(protobuf_types_key);
+            if (pb.is_string() && canonical_protobuf(parsed).is_object()) {
+               const std::string nested = first_duplicate_member(pb.as<std::string>());
+               if (!nested.empty())
+                  refuse_duplicate(which, nested, " inside protobuf_types");
+            }
+         }
+         return parsed;
+      }
    public:
       abidiff( const std::string& fn1, const std::string& fn2) {
          llvm::SmallString<128> _fn1, _fn2;
          if (!llvm::sys::fs::real_path(fn1, _fn1, true)) {
-            std::ifstream in(_fn1.str().str());
             fn_1 = _fn1.str().str();
-            abi_1 = ojson::parse(in);
+            abi_1 = load_checked(fn_1, "file1");
          } else {
             std::cerr << "Error, invalid filepath { " << _fn1.str().str() << " }\n";
             throw abidiff_ex;
          }
 
          if (!llvm::sys::fs::real_path(fn2, _fn2, true)) {
-            std::ifstream in(_fn2.str().str());
             fn_2 = _fn2.str().str();
-            abi_2 = ojson::parse(in);
+            abi_2 = load_checked(fn_2, "file2");
          } else {
             std::cerr << "Error, invalid filepath { " << _fn2.str().str() << " }\n";
             throw abidiff_ex;
@@ -46,13 +201,44 @@ class abidiff {
 
       }
       
-      int get_version(const ojson& abi) {
-         std::string ver = abi["version"].as<std::string>();
-         return (std::stod(ver.substr(ver.size()-3))*10);
+      /// The (major, minor) an ABI declares.
+      ///
+      /// The previous form -- stod over the string's last three characters -- read
+      /// "sysio::abi/1.10" as ".10" -> 1. Version-gated diffs then skipped the variant and
+      /// action-result sections for any two-digit minor, reporting a real difference as none.
+      /// Those gates are gone: every section is diffed unconditionally, since a section one
+      /// document carries and the other does not is precisely the difference this tool exists
+      /// to report. The parse remains because the version is itself compared, and because an
+      /// unreadable one is a reason to stop.
+      ///
+      /// A failed parse is refused, not defaulted. Seeding the outputs with 1.2 and ignoring
+      /// the result meant an unparsable or unsupported version -- including `sysio::abi/2.0`,
+      /// which the shared parser rejects -- silently compared equal to a 1.2 document.
+      std::pair<int, int> get_version(const ojson& abi, const std::string& which) {
+         if (!abi.has_key("version")) {
+            std::cerr << "cdt-abidiff: " << which << " has no \"version\" field\n";
+            exit(1);
+         }
+         const auto text = abi["version"].as<std::string>();
+         int major_v = 0;
+         int minor_v = 0;
+         if (!abi_version::parse_version_string(text, major_v, minor_v)) {
+            std::cerr << "cdt-abidiff: " << which << " declares an unsupported ABI version '"
+                      << text << "'\n";
+            exit(1);
+         }
+         return {major_v, minor_v};
       }
 
+      // The FULL string, not just the parsed components. parse_version_string ignores
+      // everything through the last '/', which is right for ORDERING two versions and wrong
+      // here: Wire's abi_serializer accepts only a "sysio::abi/1." prefix, so an otherwise
+      // identical eosio::abi/1.2 is a deployment-relevant difference. The numeric parse still
+      // runs, to reject an unsupported version.
       void diff_version() {
-         if (get_version(abi_1) != get_version(abi_2)) {
+         (void)get_version(abi_1, "file1");
+         (void)get_version(abi_2, "file2");
+         if (field_or_null(abi_1, "version") != field_or_null(abi_2, "version")) {
             std::cout << "< version\n\t";
             std::cout << abi_1["version"] << "\n";
             std::cout << "> version\n\t";
@@ -62,35 +248,84 @@ class abidiff {
       
       void print_struct(const ojson& abi, int index, char direction) {
          std::cout << direction << " struct\n";
-         std::cout << pretty_print(abi["structs"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "structs").at(index)) << "\n";
       }
       
-      ojson get_base_type(const ojson& abi, const ojson& type) {
-         for (int i=0; i < abi["types"].size(); i++) {
-            if (abi["types"].at(i)["new_type_name"] == type)
-               return abi["types"].at(i)["new_type_name"];
-         } 
-         return type;
+      // An absent key read through the CONST operator[] throws, and a whole SECTION may be
+      // legitimately absent -- a stock Antelope 1.0/1.1 ABI omits `variants` and
+      // `action_results` -- so every section is read through this. Absent reads as an empty
+      // array, which is what "this ABI declares none" means.
+      static const ojson& section_or_empty(const ojson& o, const char* key) {
+         static const ojson none = ojson::array();
+         return o.count(key) ? o.at(key) : none;
       }
+
+      // No section is required. Every list member of abi_def is a vector<> that
+      // default-constructs empty, so the chain reads an absent key and an explicit empty array
+      // identically -- reporting them as different would describe a difference the runtime does
+      // not see. `version` is the exception, and get_version diagnoses a missing or unparsable
+      // one.
+      //
+      // Individual FIELDS are optional too. `table_id` and `secondary_indexes` are Wire's
+      // additions to `table_def`, so a stock Antelope ABI omits them -- while `index_type`,
+      // `key_names` and `key_types` are standard and present there, as the t_antelope fixture
+      // in abidiff_tests.sh carries. Every optional field is read through this, so absent
+      // compares equal to absent and never equal to present.
+
+      static const ojson& field_or_null(const ojson& o, const char* key) {
+         static const ojson absent = ojson::null();
+         return o.count(key) ? o.at(key) : absent;
+      }
+
+      // Element-wise equality over a JSON array. Used for the ABI's list-valued fields, where
+      // both length and order are significant -- order is serialization order.
+      // Absent and empty mean the same thing for these scalars, so an ABI that omits an
+      // empty `base` or `index_type` is not reported as differing from one that writes "".
+      static bool scalars_equal(const ojson& a, const ojson& b) {
+         const auto blank = [](const ojson& v) {
+            return v.is_null() || (v.is_string() && v.as<std::string>().empty());
+         };
+         return a == b || (blank(a) && blank(b));
+      }
+
+      static bool arrays_equal(const ojson& a, const ojson& b) {
+         if (a.size() != b.size())
+            return false;
+         for (size_t k = 0; k < a.size(); ++k)
+            if (a.at(k) != b.at(k))
+               return false;
+         return true;
+      }
+
+      // Same base, same fields, in the same order.
+      //
+      // The previous form had two defects, both reproduced against real ABIs. It seeded a flag
+      // false and set it only INSIDE the field loop, so two byte-identical zero-field structs
+      // -- which every parameterless action generates -- compared as different. And on a field
+      // mismatch it broke out of the loop WITHOUT clearing the flag, so a difference in any
+      // field but the first left the flag set from the previous iteration and the changed
+      // struct was reported as unchanged.
+      static bool structs_match(const ojson& a, const ojson& b) {
+         if (!scalars_equal(field_or_null(a, "base"), field_or_null(b, "base")))
+            return false;
+         const auto& fa = field_or_null(a, "fields");
+         const auto& fb = field_or_null(b, "fields");
+         if (fa.size() != fb.size())
+            return false;
+         for (size_t k = 0; k < fa.size(); ++k)
+            if (fa.at(k)["name"] != fb.at(k)["name"] || fa.at(k)["type"] != fb.at(k)["type"])
+               return false;
+         return true;
+      }
+
       void find_structs(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["structs"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "structs").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["structs"].size(); j++ ) {
-               if (abi1["structs"].at(i)["name"] == abi2["structs"].at(j)["name"]) {
-                  if (abi1["structs"].at(i)["fields"].size() != abi2["structs"].at(j)["fields"].size())
-                     break;
-                  if (abi1["structs"].at(i)["base"] != abi2["structs"].at(j)["base"])
-                     break;
-                  
-                  bool _found = false;
-                  for (int k=0; k < abi1["structs"].at(i)["fields"].size(); k++) {
-                     if (abi1["structs"].at(i)["fields"].at(k)["name"] != abi2["structs"].at(j)["fields"].at(k)["name"] ||
-                         abi1["structs"].at(i)["fields"].at(k)["type"] != abi2["structs"].at(j)["fields"].at(k)["type"])
-                        break;
-                     _found = true;
-                  }
-                  found = _found;
-               }
+            for ( int j=0; j < section_or_empty(abi2, "structs").size(); j++ ) {
+               if (section_or_empty(abi1, "structs").at(i)["name"] != section_or_empty(abi2, "structs").at(j)["name"])
+                  continue;
+               found = structs_match(section_or_empty(abi1, "structs").at(i), section_or_empty(abi2, "structs").at(j));
+               break;      // the name matched; that entry alone decides
             }
             if (!found)
                print_struct(abi1, i, direction);
@@ -99,18 +334,19 @@ class abidiff {
 
       void print_type(const ojson& abi, int index, char direction) {
          std::cout << direction << " type\n";
-         std::cout << pretty_print(abi["types"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "types").at(index)) << "\n";
       }
 
       void find_types(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["types"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "types").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["types"].size(); j++ ) {
-               if (abi1["types"].at(i)["new_type_name"] == abi2["types"].at(j)["new_type_name"]) {
-                  if (abi1["types"].at(i)["type"] != abi2["types"].at(j)["type"])
-                     break;
-                  found = true;
-               }
+            for ( int j=0; j < section_or_empty(abi2, "types").size(); j++ ) {
+               if (section_or_empty(abi1, "types").at(i)["new_type_name"] != section_or_empty(abi2, "types").at(j)["new_type_name"])
+                  continue;
+               if (field_or_null(section_or_empty(abi1, "types").at(i), "type") != field_or_null(section_or_empty(abi2, "types").at(j), "type"))
+                  break;
+               found = true;
+               break;
             }
             if (!found)
                print_type(abi1, i, direction);
@@ -119,20 +355,21 @@ class abidiff {
 
       void print_action(const ojson& abi, int index, char direction) {
          std::cout << direction << " action\n";
-         std::cout << pretty_print(abi["actions"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "actions").at(index)) << "\n";
       }
 
       void find_actions(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["actions"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "actions").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["actions"].size(); j++ ) {
-               if (abi1["actions"].at(i)["name"] == abi2["actions"].at(j)["name"]) {
-                  if (abi1["actions"].at(i)["type"] != abi2["actions"].at(j)["type"])
-                     break;
-                  if (abi1["actions"].at(i)["ricardian_contract"] != abi2["actions"].at(j)["ricardian_contract"])
-                     break;
-                  found = true;
-               }
+            for ( int j=0; j < section_or_empty(abi2, "actions").size(); j++ ) {
+               if (section_or_empty(abi1, "actions").at(i)["name"] != section_or_empty(abi2, "actions").at(j)["name"])
+                  continue;
+               if (field_or_null(section_or_empty(abi1, "actions").at(i), "type") != field_or_null(section_or_empty(abi2, "actions").at(j), "type"))
+                  break;
+               if (field_or_null(section_or_empty(abi1, "actions").at(i), "ricardian_contract") != field_or_null(section_or_empty(abi2, "actions").at(j), "ricardian_contract"))
+                  break;
+               found = true;
+               break;
             }
             if (!found)
                print_action(abi1, i, direction);
@@ -141,18 +378,35 @@ class abidiff {
 
       void print_table(const ojson& abi, int index, char direction) {
          std::cout << direction << " table\n";
-         std::cout << pretty_print(abi["tables"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "tables").at(index)) << "\n";
+      }
+
+      // Every field a table entry can carry. Comparing only name and type -- as this did --
+      // made the tool silent about the metadata it exists to check: index_type, key_names,
+      // key_types, table_id and secondary_indexes could all change and it reported no
+      // difference. table_id is where the row physically lives and each secondary index
+      // carries its own, so a change to either is a migration.
+      //
+      // All of these are optional: read through field_or_null so an ABI that omits them is
+      // compared, not aborted on.
+      static bool tables_match(const ojson& a, const ojson& b) {
+         for (const char* key : {"type", "index_type", "table_id"})
+            if (!scalars_equal(field_or_null(a, key), field_or_null(b, key)))
+               return false;
+         for (const char* key : {"key_names", "key_types", "secondary_indexes"})
+            if (!arrays_equal(field_or_null(a, key), field_or_null(b, key)))
+               return false;
+         return true;
       }
 
       void find_tables(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["tables"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "tables").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["tables"].size(); j++ ) {
-               if (abi1["tables"].at(i)["name"] == abi2["tables"].at(j)["name"]) {
-                  if (abi1["tables"].at(i)["type"] != abi2["tables"].at(j)["type"])
-                     break;
-                  found = true;
-               }
+            for ( int j=0; j < section_or_empty(abi2, "tables").size(); j++ ) {
+               if (section_or_empty(abi1, "tables").at(i)["name"] != section_or_empty(abi2, "tables").at(j)["name"])
+                  continue;
+               found = tables_match(section_or_empty(abi1, "tables").at(i), section_or_empty(abi2, "tables").at(j));
+               break;
             }
             if (!found)
                print_table(abi1, i, direction);
@@ -161,18 +415,19 @@ class abidiff {
 
       void print_clause(const ojson& abi, int index, char direction) {
          std::cout << direction << " clause\n";
-         std::cout << pretty_print(abi["clauses"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "ricardian_clauses").at(index)) << "\n";
       }
 
       void find_clauses(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["ricardian_clauses"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "ricardian_clauses").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["ricardian_clauses"].size(); j++ ) {
-               if (abi1["ricardian_clauses"].at(i)["id"] == abi2["ricardian_clauses"].at(j)["id"]) {
-                  if (abi1["ricardian_clauses"].at(i)["body"] != abi2["ricardian_clauses"].at(j)["body"])
-                     break;
-                  found = true;
-               }
+            for ( int j=0; j < section_or_empty(abi2, "ricardian_clauses").size(); j++ ) {
+               if (section_or_empty(abi1, "ricardian_clauses").at(i)["id"] != section_or_empty(abi2, "ricardian_clauses").at(j)["id"])
+                  continue;
+               if (field_or_null(section_or_empty(abi1, "ricardian_clauses").at(i), "body") != field_or_null(section_or_empty(abi2, "ricardian_clauses").at(j), "body"))
+                  break;
+               found = true;
+               break;
             }
             if (!found)
                print_clause(abi1, i, direction);
@@ -181,20 +436,22 @@ class abidiff {
 
       void print_variant(const ojson& abi, int index, char direction) {
          std::cout << direction << " variant\n";
-         std::cout << pretty_print(abi["variants"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "variants").at(index)) << "\n";
       }
 
       void find_variants(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["variants"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "variants").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["variants"].size(); j++ ) {
-               if (abi1["variants"].at(i)["name"] == abi2["variants"].at(j)["name"]) {
-                  for (int k=0; k < abi1["variants"].at(i)["types"].size(); k++)
-                     if (abi1["variants"].at(i)["types"].at(k) != abi2["variants"].at(j)["types"].at(k))
-                        break;
-                  found = true;
-               }
-
+            for ( int j=0; j < section_or_empty(abi2, "variants").size(); j++ ) {
+               if (section_or_empty(abi1, "variants").at(i)["name"] != section_or_empty(abi2, "variants").at(j)["name"])
+                  continue;
+               // The whole type list, length and order. The original broke out of the element
+               // loop on a mismatch and then set found unconditionally, so a same-named variant
+               // counted as unchanged however its types differed; with no length check, at(k)
+               // also threw on a shorter right-hand side.
+               found = arrays_equal(field_or_null(section_or_empty(abi1, "variants").at(i), "types"),
+                                    field_or_null(section_or_empty(abi2, "variants").at(j), "types"));
+               break;
             }
             if (!found)
                print_variant(abi1, i, direction);
@@ -203,18 +460,19 @@ class abidiff {
 
       void print_action_results(const ojson& abi, int index, char direction) {
          std::cout << direction << " action_result\n";
-         std::cout << pretty_print(abi["action_results"].at(index)) << "\n";
+         std::cout << pretty_print(section_or_empty(abi, "action_results").at(index)) << "\n";
       }
 
       void find_action_results(const ojson& abi1, const ojson& abi2, char direction) {
-         for ( int i=0; i < abi1["action_results"].size(); i++ ) {
+         for ( int i=0; i < section_or_empty(abi1, "action_results").size(); i++ ) {
             bool found = false;
-            for ( int j=0; j < abi2["action_results"].size(); j++ ) {
-               if (abi1["action_results"].at(i)["name"] == abi2["action_results"].at(j)["name"]) {
-                  if (abi1["action_results"].at(i)["result_type"] != abi2["action_results"].at(i)["result_type"])
-                     break;
-                  found = true;
-               }
+            for ( int j=0; j < section_or_empty(abi2, "action_results").size(); j++ ) {
+               if (section_or_empty(abi1, "action_results").at(i)["name"] != section_or_empty(abi2, "action_results").at(j)["name"])
+                  continue;
+               if (field_or_null(section_or_empty(abi1, "action_results").at(i), "result_type") != field_or_null(section_or_empty(abi2, "action_results").at(j), "result_type"))
+                  break;
+               found = true;
+               break;
 
             }
             if (!found)
@@ -256,6 +514,130 @@ class abidiff {
          find_action_results(abi_2, abi_1, '>');
       }
 
+      void print_enum(const ojson& abi, int index, char direction) {
+         std::cout << direction << " enum\n";
+         std::cout << pretty_print(abi["enums"].at(index)) << "\n";
+      }
+
+      // enums and protobuf_types were compared by nothing at all, so a contract could change
+      // an enum's values or an entire protobuf descriptor and cdt-abidiff reported no
+      // difference. Both are optional sections -- absent in most ABIs -- so both sides are
+      // read through field_or_null.
+      void find_enums(const ojson& abi1, const ojson& abi2, char direction) {
+         const ojson& e1 = field_or_null(abi1, "enums");
+         const ojson& e2 = field_or_null(abi2, "enums");
+         for ( size_t i=0; i < e1.size(); i++ ) {
+            bool found = false;
+            for ( size_t j=0; j < e2.size(); j++ ) {
+               if (e1.at(i)["name"] != e2.at(j)["name"])
+                  continue;
+               found = field_or_null(e1.at(i), "type")   == field_or_null(e2.at(j), "type")
+                    && arrays_equal(field_or_null(e1.at(i), "values"), field_or_null(e2.at(j), "values"));
+               break;
+            }
+            if (!found)
+               print_enum(abi1, static_cast<int>(i), direction);
+         }
+      }
+
+      void diff_enums() {
+         find_enums(abi_1, abi_2, '<');
+         find_enums(abi_2, abi_1, '>');
+      }
+
+      // protobuf_types is a whole serialized FileDescriptorSet, not a list keyed by name, so
+      // it is compared as one value rather than element-wise. A difference anywhere in it
+      // changes the wire encoding of every protobuf action.
+      // protobuf_types is a may_not_exist<string> holding a FileDescriptorSet as JSON, and the
+      // chain's custom from_variant accepts either spelling: a JSON object, or a string
+      // containing that object's JSON. Absent and an empty string are likewise the same empty
+      // value. Comparing the raw node reported all of those as differences the runtime does
+      // not see, so each side is reduced to one logical value first.
+      //
+      // This is JSON-level canonicalisation, not protobuf-level: two spellings that decode to
+      // the same FileDescriptorSet but differ as JSON -- an enum written numerically in one
+      // and symbolically in the other, say -- are still reported as different. Collapsing
+      // those would mean parsing both through FileDescriptorSet with the chain's options,
+      // which this tool does not link protobuf to do.
+      //
+      // So it over-reports rather than under-reports, with ONE exception it cannot resolve
+      // here: jsoncons keeps only the last of a duplicate object member, which would hide a
+      // real difference. Such a document is refused at load (see load_checked) rather than
+      // compared -- in EITHER spelling, since the string form's own members are invisible to
+      // a walk of the outer document and are checked separately there.
+      static ojson canonical_protobuf(const ojson& o) {
+         if (!o.count(protobuf_types_key))
+            return ojson::null();
+         const ojson& v = o.at(protobuf_types_key);
+         if (!v.is_string())
+            return v;                       // already an object (or something else; as-is)
+         const std::string text = v.as<std::string>();
+         if (text.empty())
+            return ojson::null();           // empty string == absent, per to_variant
+         try {
+            ojson parsed = parse_strict(text);
+            // ONLY an object root. JsonStringToMessage requires a message, so a string
+            // holding "null" or "[1,2]" is content the chain rejects -- treating it as the
+            // value it decodes to would have equated it with absence, or with a raw array
+            // that the chain reads quite differently. Anything else stays the string it is,
+            // and therefore differs from both.
+            if (parsed.is_object())
+               return parsed;
+         } catch (const std::exception&) {
+            // Not valid JSON, or not STRICT JSON. A string carrying a comment stays the string
+            // it is, and so differs from the object spelling -- which is what the chain sees,
+            // protobuf's JSON parser rejecting the comment and accepting the object.
+         }
+         return v;
+      }
+
+      void diff_protobuf_types() {
+         const ojson p1 = canonical_protobuf(abi_1);
+         const ojson p2 = canonical_protobuf(abi_2);
+         if (p1 != p2) {
+            std::cout << "< protobuf_types\n" << pretty_print(p1) << "\n";
+            std::cout << "> protobuf_types\n" << pretty_print(p2) << "\n";
+         }
+      }
+
+      // error_messages and abi_extensions are the remaining abi_def payload sections. CDT
+      // does not emit either, but an ABI produced elsewhere can carry them, and a change
+      // there is a real interface change. Compared whole, like protobuf_types.
+      // Read through section_or_empty, not field_or_null: an omitted optional section printed
+      // as `null` against an explicit `[]`, a difference the chain does not see.
+      void diff_opaque_section(const char* key) {
+         const ojson& a = section_or_empty(abi_1, key);
+         const ojson& b = section_or_empty(abi_2, key);
+         if (a != b) {
+            std::cout << "< " << key << "\n" << pretty_print(a) << "\n";
+            std::cout << "> " << key << "\n" << pretty_print(b) << "\n";
+         }
+      }
+
+      // error_messages is consumed into a map keyed by error_code, so the same codes listed in
+      // a different order are the same ABI. Matched by key, like every other named section.
+      void find_error_messages(const ojson& abi1, const ojson& abi2, char direction) {
+         const ojson& e1 = section_or_empty(abi1, "error_messages");
+         const ojson& e2 = section_or_empty(abi2, "error_messages");
+         for ( size_t i = 0; i < e1.size(); i++ ) {
+            bool found = false;
+            for ( size_t j = 0; j < e2.size(); j++ ) {
+               if (field_or_null(e1.at(i), "error_code") != field_or_null(e2.at(j), "error_code"))
+                  continue;
+               found = field_or_null(e1.at(i), "error_msg") == field_or_null(e2.at(j), "error_msg");
+               break;
+            }
+            if (!found) {
+               std::cout << direction << " error_message\n" << pretty_print(e1.at(i)) << "\n";
+            }
+         }
+      }
+
+      void diff_error_messages() {
+         find_error_messages(abi_1, abi_2, '<');
+         find_error_messages(abi_2, abi_1, '>');
+      }
+
       void diff() {
          diff_version();
          diff_structs();
@@ -263,10 +645,19 @@ class abidiff {
          diff_actions();
          diff_tables();
          diff_clauses();
-         if ( get_version(abi_1) >= 11 && get_version(abi_2) >= 11 )
-            diff_variants();
-         if ( get_version(abi_1) >= 12 && get_version(abi_2) >= 12 )
-            diff_action_results();
+         diff_enums();
+         diff_protobuf_types();
+         // Unconditional. These were version-gated, which suppressed real differences: two
+         // 1.0 documents whose same-named variant changed from ["uint64"] to ["string"]
+         // reported nothing, and populated action_results below 1.2 likewise. A version
+         // stamp says which sections a document is REQUIRED to carry, not which ones it may
+         // contain -- abigen emits `variants` at every version -- so the gate answered the
+         // wrong question. Both sections are read through section_or_empty, so an input that
+         // genuinely omits them compares as empty rather than throwing.
+         diff_variants();
+         diff_action_results();
+         diff_error_messages();
+         diff_opaque_section("abi_extensions");
       }
 };
 

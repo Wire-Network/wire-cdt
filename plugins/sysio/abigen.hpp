@@ -1072,7 +1072,7 @@ namespace sysio { namespace cdt {
             o["variants"].push_back(variant_to_json( v ));
          }
          o["abi_extensions"]     = ojson::array();
-         if (_abi.version_major == 1 && _abi.version_minor >= 2) {
+         if (abi_version::supports_action_results(_abi.version_major, _abi.version_minor)) {
             o["action_results"]  = ojson::array();
             for ( auto ar : _abi.action_results ) {
                o["action_results"].push_back(action_result_to_json( ar ));
@@ -1461,9 +1461,13 @@ namespace sysio { namespace cdt {
                   output = arg.substr(arg.find("=")+1);
                } else if (sysio::cdt::starts_with(arg, "abi_version=")) {
                   auto str = arg.substr(arg.find("=")+1);
-                  float tmp;
-                  int abi_version_major = std::stoi(str);
-                  int abi_version_minor = (int)(std::modf(std::stof(str), &tmp) * 10);
+                  int  abi_version_major = abi_version::default_major;
+                  int  abi_version_minor = abi_version::default_minor;
+                  if (!abi_version::parse(str, abi_version_major, abi_version_minor)) {
+                     llvm::errs() << "sysio_abigen: invalid abi_version '" << str
+                                  << "': expected <major>[.<minor>]\n";
+                     return false;
+                  }
                   abigen::get().set_abi_version(abi_version_major, abi_version_minor);
                } else if (arg == "no_abigen") {
                   abigen::get().no_abigen = true;
