@@ -41,7 +41,8 @@ compile_commands.json
 [Bb]uild*/
 .ccache/
 .vcpkg-binary-cache/
-cmake-build-debug/
+# CLion-style build dirs: cmake-build-debug/, cmake-build-debug-vcpkg/, cmake-build-release/, ...
+cmake-build-*/
 examples/multi_index_example/build
 examples/hello/build
 
@@ -67,3 +68,14 @@ tmp/
 
 # oh-my-claudecode runtime state (operational artifacts, never committed)
 .omc/
+
+# prequel local review state (operational artifacts, never committed)
+.prequel/
+
+# Core dumps. Restricted to the shapes the kernel actually writes here -- core_pattern is
+# core.%e.%p -- and root-anchored, so neither a tracked header such as
+# libraries/boost/include/boost/hana/core.hpp nor a future core.cpp/core.hpp is hidden.
+/core
+/core.[0-9]*
+/core.*.[0-9]*
+/vgcore.[0-9]*

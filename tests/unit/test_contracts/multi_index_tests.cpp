@@ -342,6 +342,106 @@ namespace _test_multi_index
         return table;
     }
 
+    // Duplicate primary key must be rejected.
+    //
+    // On Antelope the guard was db_store_i64's, at the chain layer, and it was lost when
+    // the legacy DB was removed. kv_set is an upsert, so without an explicit check the row
+    // is silently overwritten and store_secondaries -- an unconditional kv_idx_store --
+    // strands the previous (sec_key -> pri_key) mapping. Verified against the real runtime:
+    // before the guard, a lookup of the OLD secondary value still resolved to this row
+    // after it had been overwritten with a new one.
+    template <uint64_t TableName>
+    void idx64_duplicate_emplace(sysio::name receiver)
+    {
+        typedef record_idx64 record;
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
+            table(receiver, receiver.value);
+        auto payer = receiver;
+
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = "aaa"_n.value; });
+
+        // Changing the secondary value is what made the stale mapping observable.
+        table.emplace(payer, [&](auto& r) { r.id = 1; r.sec = "bbb"_n.value; });
+    }
+
+    // A `name` primary key alongside a secondary index. store/remove/update_secondaries feed
+    // primary_key() straight to pk_to_bytes(uint64_t), so before to_pk_uint64 was applied
+    // there this combination did not compile at all.
+    struct record_name_pk
+    {
+        sysio::name owner;
+        uint64_t    sec;
+
+        sysio::name primary_key() const { return owner; }
+        uint64_t get_secondary() const { return sec; }
+
+        SYSLIB_SERIALIZE(record_name_pk, (owner)(sec))
+    };
+
+    template <uint64_t TableName>
+    void name_pk_secondaries(sysio::name receiver)
+    {
+        typedef record_name_pk record;
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
+            table(receiver, receiver.value);
+        auto payer = receiver;
+
+        table.emplace(payer, [&](auto& r) { r.owner = "alice"_n;   r.sec = 10; });
+        table.emplace(payer, [&](auto& r) { r.owner = "bob"_n;     r.sec = 20; });
+        table.emplace(payer, [&](auto& r) { r.owner = "charlie"_n; r.sec = 30; });
+
+        // A name goes straight to the bounds, as it already did to find/get/require_find.
+        auto lb = table.lower_bound("bob"_n);
+        sysio::check(lb != table.end() && lb->owner == "bob"_n,
+                     "name_pk_secondaries - lower_bound(name) did not land on bob");
+
+        auto ub = table.upper_bound("bob"_n);
+        sysio::check(ub != table.end() && ub->owner == "charlie"_n,
+                     "name_pk_secondaries - upper_bound(name) did not land on charlie");
+
+        // The uint64_t form is unchanged, and must agree with the name form.
+        auto lb_raw = table.lower_bound("bob"_n.value);
+        sysio::check(lb_raw != table.end() && lb_raw->owner == "bob"_n,
+                     "name_pk_secondaries - lower_bound(uint64_t) regressed");
+
+        // The secondary index must resolve back to the name-keyed row: this is the path
+        // to_pk_uint64 fixed. modify() rewrites the mapping, erase() removes it.
+        auto sec = table.template get_index<"bysecondary"_n>();
+        auto sitr = sec.find(20);
+        sysio::check(sitr != sec.end() && sitr->owner == "bob"_n,
+                     "name_pk_secondaries - secondary lookup did not resolve to bob");
+
+        table.modify(*sitr, payer, [&](auto& r) { r.sec = 25; });
+        sysio::check(sec.find(20) == sec.end(),
+                     "name_pk_secondaries - modify left the old secondary mapping behind");
+        auto moved = sec.find(25);
+        sysio::check(moved != sec.end() && moved->owner == "bob"_n,
+                     "name_pk_secondaries - modify did not install the new secondary mapping");
+
+        table.erase(*moved);
+        sysio::check(sec.find(25) == sec.end(),
+                     "name_pk_secondaries - erase left the secondary mapping behind");
+        sysio::check(table.find("bob"_n.value) == table.end(),
+                     "name_pk_secondaries - erase did not remove the primary row");
+    }
+
+    // Mutating through a handle opened on another account must abort. Reads honour the
+    // handle's code; kv_set/kv_idx_store do not and always land on the receiver, and table_id
+    // derives from the table name alone -- so without the guard this writes the receiver's
+    // own row of the same name. Upstream multi_index rejects it.
+    template <uint64_t TableName>
+    void foreign_code_mutation(sysio::name receiver)
+    {
+        typedef record_idx64 record;
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>>
+            foreign("bob"_n, receiver.value);
+
+        foreign.emplace(receiver, [&](auto& r) { r.id = 1; r.sec = 1; });
+    }
+
 } /// _test_multi_index
 
 class [[sysio::contract]] test_multi_index : public sysio::contract
@@ -352,6 +452,18 @@ public:
     [[sysio::action("s1g")]] void idx64_general() {
         _test_multi_index::idx64_store_only<"indextable2"_n.value>( get_self() );
         _test_multi_index::idx64_check_without_storing<"indextable2"_n.value>( get_self() );
+    }
+
+    [[sysio::action("s1foreign")]] void foreign_code_mutation() {
+        _test_multi_index::foreign_code_mutation<"foreigntbl"_n.value>(get_self());
+    }
+
+    [[sysio::action("s1namepk")]] void name_pk_secondaries() {
+        _test_multi_index::name_pk_secondaries<"namepktable"_n.value>(get_self());
+    }
+
+    [[sysio::action("s1dupidx")]] void idx64_duplicate_emplace() {
+        _test_multi_index::idx64_duplicate_emplace<"duptable1"_n.value>(get_self());
     }
 
     [[sysio::action("s1store")]] void idx64_store_only() {

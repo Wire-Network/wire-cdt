@@ -24,6 +24,7 @@ add_unit_test( time_tests )
 add_unit_test( varint_tests )
 add_unit_test( kv_table_tests )
 add_unit_test( kv_cached_tests )
+add_unit_test( kv_multi_index_tests )
 
 add_test( NAME toolchain_tests COMMAND ${CMAKE_BINARY_DIR}/tools/toolchain-tester/toolchain-tester ${CMAKE_SOURCE_DIR}/tests/toolchain --cdt ${CMAKE_BINARY_DIR}/bin --verbose )
 set_property(TEST toolchain_tests PROPERTY LABELS toolchain_tests)
@@ -35,6 +36,10 @@ set_property(TEST version_tests PROPERTY LABELS unit_tests)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/abi_version_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh COPYONLY)
 add_test(NAME abi_version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abi_version_tests.sh "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST abi_version_tests PROPERTY LABELS unit_tests)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/dispatch_receiver_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/dispatch_receiver_tests.sh COPYONLY)
+add_test(NAME dispatch_receiver_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/dispatch_receiver_tests.sh "${CMAKE_BINARY_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TEST dispatch_receiver_tests PROPERTY LABELS unit_tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/multidir_contract_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh COPYONLY)
 add_test(NAME multidir_contract_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/multidir_contract_tests.sh "${CMAKE_BINARY_DIR}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -435,7 +435,18 @@ public:
       sec_ops::update_all(*this, payer, pri.data(), pri.size(), old_val, new_val);
    }
 
-   // Internal insert (no duplicate check — caller must verify)
+private:
+   // Internal insert (no duplicate check — caller must verify).
+   //
+   // Private deliberately. Inserting over an existing key here silently overwrites the row
+   // and, because store_secondaries is an unconditional kv_idx_store, either strands the old
+   // (sec_key -> pri_key) mapping (when the secondary value changed) or trips the host's
+   // ordered_unique constraint on (code, table_id, sec_key, pri_key). emplace() pays one
+   // kv_contains so no PUBLIC path reaches an unguarded insert.
+   //
+   // Only do_insert is sealed. store_secondaries, remove_secondaries, update_secondaries and
+   // do_erase below are public, and calling store_secondaries directly strands a mapping the
+   // same way -- treat them as internal.
    void do_insert(uint64_t payer, const be_key_stream& k, const K& key, const V& value) {
       if constexpr (is_fixed_serializable_v<V>) {
          char vbuf[sizeof(V)];
@@ -448,6 +459,7 @@ public:
       store_secondaries(payer, key, value);
    }
 
+public:
    // Internal erase used by both primary and secondary erase paths
    void do_erase(const K& key, const V& value) {
       remove_secondaries(key, value);
@@ -695,6 +707,17 @@ public:
 
    /// Insert a new row. Asserts if the key already exists. Use upsert()/set()
    /// for insert-or-update semantics.
+   ///
+   /// WRITES IGNORE code(), as they do in kv::global. kv_get and kv_contains take a code
+   /// argument, so reads honour whatever account this handle was constructed with; kv_set,
+   /// kv_erase and kv_idx_store have no such parameter and always land on the current
+   /// receiver. A handle opened on a FOREIGN account is therefore read-only in practice --
+   /// mutating through one probes their table and writes your own, and because table_id is
+   /// derived from the table name alone, that write lands on your row of the same name.
+   /// Nothing detects it at compile time. Construct foreign-code handles for reading only.
+   ///
+   /// (sysio::multi_index does guard this, because upstream does and ported contracts rely
+   /// on the abort; these wrappers have no such compatibility obligation.)
    void emplace(name payer, const K& key, const V& value, const char* exists_msg = "key already exists") {
       auto k = make_key(key);
       sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()), exists_msg);
