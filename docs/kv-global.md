@@ -18,21 +18,32 @@ Each `global` instance receives a unique `table_id` (uint16, DJB2 hash), providi
 
 ## Template Parameter
 
-Both `_n` and `_i` literals work:
+Both `_n` and `_i` literals work. Reach for `_n` unless the name does not fit it:
 
 ```cpp
-kv::global<"config"_n, config_type>             cfg(get_self());  // short name
-kv::global<"app_configuration"_i, config_type>  cfg(get_self());  // long name
+kv::global<"appconfig"_n, config_type>          cfg(get_self());  // fits a name: use _n
+kv::global<"app_configuration"_i, config_type>  cfg(get_self());  // longer, or has _ / A-Z: _i
 ```
 
-**ABI requirement:** When using `_i`, annotate the value struct with `[[sysio::table("app_configuration")]]` so CDT generates the ABI entry.
+`_n` covers a name of up to 13 characters drawn from `.12345a-z` — with the **13th position
+restricted to `.12345a-j`**, because it is encoded in 4 bits rather than 5. Anything else — longer,
+an underscore, an uppercase letter, a digit outside `1-5` — needs `_i`, which hashes the string
+instead. `"app_config"_n` is a *compile* error for that reason, not a style preference.
 
-> **Prefer `_n` for a global.** A `_i`-named `kv::global` with a matching `[[sysio::table]]`
-> annotation emits **two** ABI table entries — the annotated name under one `table_id`, and a
-> decoded-hash name under the one the row actually uses — so `get_table_rows` by the readable
-> name finds nothing. Reads and writes through the contract are unaffected. A name of more than
-> 13 characters, as above, fails to link outright with a `table_id collision`. `_n` produces a
-> single correct entry and covers any name that fits `.12345a-z` in 13 characters. See
+**ABI requirement.** Annotate the value struct with `[[sysio::table("...")]]` so the ABI carries a
+readable name — with `_i` that is the only place the readable name exists, since the literal is a
+hash. The annotation alone is not enough: the struct must also be **reachable from the contract**,
+either declared inside the contract class (as below) or carrying `sysio::contract("...")` beside
+the table attribute. A namespace-scope struct with only `[[sysio::table]]` compiles and runs, but
+emits **no** ABI table entry at all, so `get_table_rows` has nothing to describe it.
+
+> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` did
+> not work here.** `kv::global` named its ABI entry by decoding the raw template parameter, which
+> is a hash for `_i`, not a name — so the ABI carried a garbage twin beside the annotated name.
+> Under 13 characters that was two entries under different `table_id`s, and `get_table_rows` by
+> the readable name found nothing; at 13 or more the two collided and the build failed with a
+> `table_id collision` that renaming could not clear. `kv::table` was never affected. If you are
+> on an older toolchain, use `_n` for globals. See
 > [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
 
 ## API
@@ -51,21 +62,21 @@ kv::global<"app_configuration"_i, config_type>  cfg(get_self());  // long name
 ```cpp
 #include <sysio/sysio.hpp>
 #include <sysio/kv_global.hpp>
-#include <sysio/hash_id.hpp>
 
 using namespace sysio;
 
-struct [[sysio::table("app_config")]] app_config {
-   uint64_t max_transfer;
-   uint32_t fee_bps;
-   SYSLIB_SERIALIZE(app_config, (max_transfer)(fee_bps))
-};
-
-class [[sysio::contract]] myapp : public contract {
+class [[sysio::contract("myapp")]] myapp : public contract {
 public:
    using contract::contract;
 
-   kv::global<"app_config"_i, app_config> cfg{get_self()};
+   // Inside the contract class, so abigen emits the table entry -- see the ABI note above.
+   struct [[sysio::table("appconfig")]] app_config {
+      uint64_t max_transfer;
+      uint32_t fee_bps;
+      SYSLIB_SERIALIZE(app_config, (max_transfer)(fee_bps))
+   };
+
+   kv::global<"appconfig"_n, app_config> cfg{get_self()};
 
    [[sysio::action]]
    void setconfig(uint64_t max_transfer, uint32_t fee_bps) {

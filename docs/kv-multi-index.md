@@ -16,17 +16,32 @@ different store, not the same implementation. Nearly all contract code carries o
 divergences are:
 
 - the postfix iterator operators `it++` / `it--` are deleted, because copying a KV iterator
-  duplicates a host-side handle. Rewrite those to `++it` / `--it`; the compiler finds every one;
-- the primary `lower_bound` / `upper_bound` take a `name` as well as a `uint64_t`, where
-  upstream uses a member template — so the bare `&table_type::lower_bound` does not compile on
-  either (here because it is an overload set, upstream because `PK` cannot be deduced); a named
+  duplicates a host-side handle. Rewrite those to `++it` / `--it`. The compiler finds every
+  *direct* use, but **not the reverse ones**: `rbegin()` / `rend()` hand back a
+  `std::reverse_iterator`, whose postfix operators belong to the adaptor and are not deleted, so
+  `for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
+  handle-duplicating copy the deletion exists to prevent. Sweep reverse loops by hand;
+- the primary `lower_bound` / `upper_bound` take a `name` as well as a `uint64_t`, where upstream
+  uses a member template. That is a real source break in two shapes:
+  - **an explicit template argument stops compiling.** `t.template lower_bound<uint64_t>(k)` is
+    valid upstream, where the API is a member template; against Wire's concrete overloads it is
+    `error: 'lower_bound' following the 'template' keyword does not refer to a template`. Drop the
+    `template` keyword and the explicit argument — `t.lower_bound(k)`;
+  - **a wrapper convertible to both `name` and `uint64_t` becomes ambiguous**, where against a
+    single `uint64_t` parameter it selected the `uint64_t` conversion. Convert at the call site.
+
+  (The bare `&table_type::lower_bound` also does not compile — here because it is an overload set,
+  upstream because `PK` cannot be deduced — so that one is not a Wire-only incompatibility. A named
   `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
-  resolves one on Wire.
+  resolves one on Wire.)
   **The `name` overload landed in
   [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; on a CDT built before it the
   bounds took `uint64_t` only, and a `name` primary key needed `.value` at the call;
-- secondary key types must be `std::is_trivially_copyable`, not merely serializable — a
-  `static_assert` enforces it, where upstream accepts any serializable type;
+- secondary key types must be `std::is_trivially_copyable`. The **supported set is the same as
+  upstream's** — `uint64_t`, `uint128_t`, `double`, `long double`, `checksum256` — because
+  upstream's index backend is exactly the five `db_idx*` intrinsic families and no more. What
+  differs is the diagnosis: Wire's `static_assert` sits in `secondary_index_view`, so it fires
+  when you first call `get_index<...>()` rather than at the declaration;
 - the mutation guards below landed in
   [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from any CDT
   built before it.

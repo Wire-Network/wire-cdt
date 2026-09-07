@@ -12,7 +12,7 @@
 
 Use `scoped_table` when your data is naturally partitioned by an account or category (e.g., token balances per account, proposals per proposer). Use `kv::table` when scope adds no value (singleton-like tables, global registries).
 
-`scoped_table` is a source-compatible alternative to `multi_index` (note the payer moves to the first parameter of the mutators, see below) with the same scope semantics but without the object cache overhead:
+`scoped_table` is a **migration target** for `multi_index`, not a drop-in: it keeps the same scope semantics and drops the object-cache overhead, but the port is a rewrite. The template goes from `<Name, T, ...>` to `<Name, K, V, ...>`, the row splits into a separate key and value type, primary-key access changes with it, and the payer moves to the first parameter of every mutator (see the worked conversion below). What it buys:
 - No `std::map` cache, no `shared_ptr`, no double deserialization
 - Zero-copy fast path for trivially copyable values
 - `if constexpr` scope plumbing — zero overhead vs `kv::table` for the scope branches

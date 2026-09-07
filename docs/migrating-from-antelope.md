@@ -60,7 +60,9 @@ sudo apt install cmake build-essential jq
 Under the deb/rpm layout the toolchain lives in `/usr/lib/cdt`, and only an enumerated list of
 public entry points is symlinked into `/usr/bin`: `cdt-cc`, `cdt-cpp`, `cdt-ld`, `cdt-abidiff`,
 `cdt-init`, `cdt-codegen`, `cdt-protoc`, `cdt-protoc-gen-zpp`, `cdt-pp`, `cdt-wast2wasm`,
-`cdt-wasm2wast` and their `sysio-*` originals. The bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc`
+`cdt-wasm2wast`. Only three carry a `sysio-*` alias — `sysio-pp`, `sysio-wast2wasm` and
+`sysio-wasm2wast`; there is no `sysio-cc`, `sysio-cpp`, `sysio-ld`, `sysio-abidiff`, `sysio-init`,
+`sysio-codegen` or `sysio-protoc`, so reach for the `cdt-` name. The bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc`
 and `llvm-*` binaries stay in `/usr/lib/cdt/bin`, off `PATH`, so nothing shadows your distro's
 compiler — and so do the eight binutils aliases `cdt-ar`, `cdt-ranlib`, `cdt-nm`, `cdt-objcopy`,
 `cdt-objdump`, `cdt-readobj`, `cdt-readelf` and `cdt-strip`, which are build-system plumbing
@@ -299,7 +301,7 @@ jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /t
 On a current CDT the tool compares every section of the document: `version` (as the full string,
 so `eosio::abi/1.2` and `sysio::abi/1.2` differ), `structs`, `types`, `actions`, `tables` (all of
 the metadata above, secondary indices included), `ricardian_clauses`, `enums`, `protobuf_types`,
-`variants`, `action_results` and `error_messages`.
+`variants`, `action_results`, `error_messages` and `abi_extensions`.
 
 ---
 
@@ -376,9 +378,17 @@ a singleton handle constructed on another account's code is read-only on the sam
 handle.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
-`checksum256`. Iteration order is `memcmp` order over a big-endian encoding — with an additional sign-flip
-transform for `double` and `long double`, so negatives order correctly — and the fixed-width
-numeric types sort exactly as they did.
+`checksum256`. Iteration order is `memcmp` order over a big-endian encoding — with an additional
+sign-flip transform for `double` and `long double`, so negatives order correctly — and the
+**integer** types sort exactly as they did.
+
+**The floating types have two edge cases that do not carry over.** The legacy `idx_double` /
+`idx_long_double` indices rejected NaN outright and folded `-0.0` onto `+0.0`, ordering keys that
+compared equal by primary key. Wire's encoder is a pure bit transform — flip every bit when the
+sign bit is set, otherwise flip the sign bit — which admits NaN and sends the two signed zeros to
+distinct byte ranges (`-0.0` below `+0.0`). If your table can hold either value, iteration order
+and `lower_bound` / `upper_bound` results can differ from Antelope. Ordinary finite non-zero keys
+are unaffected.
 
 The constraint is **`std::is_trivially_copyable`**, not "has a serializer" — so `std::string`
 and `std::vector` secondary keys are rejected even though CDT can serialize them. The
@@ -412,7 +422,11 @@ higher per-row constant instead. wire-sysio's own figures, for a 16-byte value:
 | Dense table, few scopes | 124 | 144 (**+16%**) | 136 (+10%) |
 | Dense table + 1 index | 252 | 280 (+11%) | 264 (+5%) |
 
-Measured across EOS mainnet contracts the net effect is a 2–6% saving. The full breakdown is in
+Estimated across EOS mainnet contracts the net effect is a 2–6% saving **excluding `xsat`**,
+whose 345M `idx256` entries dominate the secondary-index population. Including it, secondary
+storage alone is break-even for `kv::table` and about 5% higher for `multi_index`, because
+legacy's `index256_object` stores its 32-byte key inline while KV always pays a `shared_blob`
+offset pointer. Both populations, and the snapshot they come from, are in
 [kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md).
 
 The response-shape change is the one that reaches your front end. `index_position` becomes
@@ -700,8 +714,8 @@ the whole `print*` family, the transaction and TAPOS accessors, `check_transacti
 `set_proposed_producers_ex`, `get_blockchain_parameters_packed`,
 `set_blockchain_parameters_packed`, `set_privileged` — but not `set_kv_parameters_packed`, removed
 above), `set_finalizers`, and the full
-cryptographic surface — `sha1`/`sha256`/`sha512`/`ripemd160` with their `assert_` forms, plus `sha3` (which has no
-`assert_` form, here or upstream),
+cryptographic surface — `sha1`/`sha256`/`sha512`/`ripemd160` with their `assert_` forms, `sha3`
+and `keccak` with theirs (`assert_sha3`, `assert_keccak`, both in `<sysio/crypto_ext.hpp>`),
 `recover_key`, `assert_recover_key`, `k1_recover`, `blake2_f`, `alt_bn128_add`/`_mul`/`_pair`,
 `mod_exp`, and the ten `bls_*` functions.
 
@@ -753,11 +767,17 @@ None of this is required to ship. Do it after the contract builds, deploys and p
    need only the iterator sweep in step 4.
 6. Check secondary-index key types are `std::is_trivially_copyable`; give any `std::string` or
    `std::vector` key a fixed-width surrogate.
-7. **Find every `emplace` / `modify` that names a user as payer.** Decide, per table, whether the
-   contract absorbs the RAM (`get_self()`) or the client will supply `sysio.payer`.
+7. **Find every storage mutator that names a user as payer** — `emplace` and `modify` on a table,
+   and `singleton::set(value, user)` / `get_or_create(user, ...)`, which forward that payer
+   straight into `kv_multi_index::emplace` / `modify` and so hit the same rejection. Decide, per
+   table, whether the contract absorbs the RAM (`get_self()`) or the client supplies
+   `sysio.payer`.
 8. Replace any `send_deferred` with an inline action, an off-chain relayer, or a crank action.
-9. Regenerate the ABI and diff it — `jq -S . old.abi > a && jq -S . new.abi > b && diff -u a b`,
-   not `cdt-abidiff`, which does not compare the table metadata that changed.
+9. Regenerate the ABI and diff it with `cdt-abidiff`, which compares every section including the
+   table metadata this port changes. On a CDT predating
+   [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) it compared tables by name
+   and type only — there, fall back to
+   `jq -S . old.abi > a && jq -S . new.abi > b && diff -u a b`.
 10. Test natively — see [native-tester-compilation.md](native-tester-compilation.md).
 11. Deploy to a test network. Get a policy on the **contract account** before the first call, sized
     from the ×10 `setcode` charge plus the rows the contract will hold.
