@@ -24,18 +24,26 @@ public:
       SYSLIB_SERIALIZE(my_key, (id))
    };
 
-   // Value struct with [[sysio::table]] for ABI generation
+   // One annotated value struct per table. A shared one cannot name both, and for the _i table
+   // the annotation is the ONLY place the readable name exists -- the literal is a hash, so
+   // dropping it would put a decoded-hash name in the ABI.
    struct [[sysio::table("user_balance_history"), sysio::kv_key("my_key")]] my_val {
       uint64_t amount;
       name     owner;
       SYSLIB_SERIALIZE(my_val, (amount)(owner))
    };
 
+   struct [[sysio::table("balances"), sysio::kv_key("my_key")]] balance_val {
+      uint64_t amount;
+      name     owner;
+      SYSLIB_SERIALIZE(balance_val, (amount)(owner))
+   };
+
    // Table with _i literal — no wrapper needed
    using long_table = kv::table<"user_balance_history"_i, my_key, my_val>;
 
    // Table with _n literal for comparison
-   using short_table = kv::table<"balances"_n, my_key, my_val>;
+   using short_table = kv::table<"balances"_n, my_key, balance_val>;
 
    // Global with _i literal
    struct [[sysio::table("app_config")]] config {

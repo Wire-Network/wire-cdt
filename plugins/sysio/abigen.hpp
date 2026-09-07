@@ -471,7 +471,13 @@ namespace sysio { namespace cdt {
                       std::vector<abi_secondary_index> sec_indexes = {} ) {
          abi_table t;
          t.type = decl->getNameAsString();
-         t.name = name_to_string(name);
+         // Same rule add_kv_table uses: a _i-named table's raw value is a DJB2 hash, not a
+         // name encoding, so name_to_string() would render garbage. Prefer the annotation.
+         auto decl_wrap = clang_wrapper::wrap_decl(decl);
+         if (decl_wrap.isSysioTable() && !decl_wrap.getSysioTableAttr()->getName().empty())
+            t.name = decl_wrap.getSysioTableAttr()->getName().str();
+         else
+            t.name = name_to_string(name);
          t.table_id = compute_table_id_from_raw(name);
          if (kind == kv_table_kind::kv_standard) {
             // KV multi_index: key = [scope:8B BE][pk:8B BE], table_id provides isolation
@@ -946,7 +952,15 @@ namespace sysio { namespace cdt {
             for ( const auto& u : _abi.tables ) {
                if (u.name == t.name) {
 
-                  if (t.table_id == 0 && u.table_id != 0)
+                  // The auto-detected entry's table_id comes from the TEMPLATE parameter, which
+                  // is what the runtime computes -- kv::global and kv::table both derive
+                  // _table_id from it. The ctables entry instead guesses from the annotation
+                  // STRING, reading a name of 13 characters or fewer as an _n encoding. For _n
+                  // and for a long _i name the two agree, because the raw value and the string
+                  // derivation coincide. For a SHORT _i name they do not: the row lands under
+                  // the raw-derived id while the ABI advertised the string-derived one, so
+                  // get_table_rows by the readable name could not reach it. The template wins.
+                  if (u.table_id != 0)
                      t.table_id = u.table_id;
                   if (t.secondary_indexes.empty() && !u.secondary_indexes.empty())
                      t.secondary_indexes = u.secondary_indexes;
