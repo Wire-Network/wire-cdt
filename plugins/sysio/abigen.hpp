@@ -471,7 +471,13 @@ namespace sysio { namespace cdt {
                       std::vector<abi_secondary_index> sec_indexes = {} ) {
          abi_table t;
          t.type = decl->getNameAsString();
-         t.name = name_to_string(name);
+         // Same rule add_kv_table uses: a _i-named table's raw value is a DJB2 hash, not a
+         // name encoding, so name_to_string() would render garbage. Prefer the annotation.
+         auto decl_wrap = clang_wrapper::wrap_decl(decl);
+         if (decl_wrap.isSysioTable() && !decl_wrap.getSysioTableAttr()->getName().empty())
+            t.name = decl_wrap.getSysioTableAttr()->getName().str();
+         else
+            t.name = name_to_string(name);
          t.table_id = compute_table_id_from_raw(name);
          if (kind == kv_table_kind::kv_standard) {
             // KV multi_index: key = [scope:8B BE][pk:8B BE], table_id provides isolation
