@@ -465,24 +465,19 @@ kv::table<"user_balance_history"_i, my_key, my_val> users(get_self());
 Annotate the value struct with `[[sysio::table("user_balance_history")]]` so the ABI carries the
 readable name.
 
-> **Use `_i` only for names longer than 13 characters.** The two sides currently derive `table_id`
-> differently for short names: `_i` always DJB2-hashes the string, but the ABI generator routes an
-> annotated name of 13 characters or fewer through the legacy `string_to_name` encoding instead. The
-> row is written under one id and described in the ABI under another, so RPC metadata points at the
-> wrong table:
+> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` was
+> only safe above 13 characters.** The two sides derived `table_id` differently for a short name:
+> `_i` always DJB2-hashes the string, while the ABI generator routed an annotated name of 13
+> characters or fewer through the legacy `string_to_name` encoding. The row was written under one
+> id and described in the ABI under another, so RPC metadata pointed at the wrong table —
+> `user_table` ran at 61956 and was advertised as 3509. Above 13 characters both sides hashed and
+> agreed. #115 makes the template-derived id authoritative, so every length now agrees; on an
+> older toolchain, keep short names on `_n`.
 >
-> | Annotated name | Runtime `table_id` (`_i`) | ABI `table_id` |
-> |---|---|---|
-> | `user_table` (10 chars) | 61956 | 3509 |
-> | `user_balance_history` (20 chars) | 26461 | 26461 ✓ |
->
-> Above 13 characters both sides hash, so they agree — which is the case `_i` exists for.
->
-> **`_n` is not always a way out.** Its alphabet is `.12345a-z`, so a name containing any other
-> character cannot be expressed at all: `"user_table"_n` is a *compile* error, because `_` is not in
-> the alphabet. `_n` is the fix only for short names that are already valid Antelope names. A short
-> identifier that is not — anything with `_`, a digit outside `1-5`, or an uppercase letter — has to
-> be renamed, or lengthened past 13 characters, until abigen is fixed.
+> **`_n` is not always a way out.** Its alphabet is `.12345a-z` — with the 13th position limited to
+> `.12345a-j`, being 4 bits rather than 5 — so a name containing any other character cannot be
+> expressed at all: `"user_table"_n` is a *compile* error, because `_` is not in the alphabet. For
+> such a name `_i` is the answer, at any length.
 
 > **For `kv::global`, lengthening the name is not the remedy.** The mismatch above applies to a
 > `_i`-named `kv::global` too, but with a different shape and a different escape.
