@@ -41,7 +41,11 @@ public:
       uint64_t id;
       SYSLIB_SERIALIZE(compat_pk, (id))
    };
-   struct [[sysio::table("compat2")]] compat_val {
+   // No annotation: this is the SAME table as compat_row above, read through scoped_table
+   // rather than kv_multi_index -- that equivalence is what compatmi() tests. Annotating it
+   // separately described one table twice, under a name whose id was not the one either view
+   // stores under.
+   struct compat_val {
       uint64_t id;
       uint64_t data;
       SYSLIB_SERIALIZE(compat_val, (id)(data))

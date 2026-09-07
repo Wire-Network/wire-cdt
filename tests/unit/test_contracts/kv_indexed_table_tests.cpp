@@ -30,17 +30,22 @@ public:
 
    // ── Additional key types for be_key_reader coverage ──────────────────────
 
-   struct [[sysio::table("signtbl")]] i64_key {
+   // No [[sysio::table]] on a KEY struct: the annotation names the table a VALUE struct backs.
+   // Annotating keys here named three tables that do not exist, and left the three tables that
+   // do share one annotation on simple_val -- so their ABI names and stored ids disagreed.
+   struct i64_key {
       int64_t k;
       SYSLIB_SERIALIZE(i64_key, (k))
    };
-   struct [[sysio::table("simpletbl")]] simple_val {
+   // Shared by i64_table, str_table and multi_table, so it cannot name any one of them. Left
+   // unannotated: each table takes its name from its own template parameter.
+   struct simple_val {
       uint64_t v;
       SYSLIB_SERIALIZE(simple_val, (v))
    };
    using i64_table = kv::table<"signtbl"_n, i64_key, simple_val>;
 
-   struct [[sysio::table("strtbl")]] str_key {
+   struct str_key {
       std::string region;
       uint64_t    id;
       SYSLIB_SERIALIZE(str_key, (region)(id))
@@ -57,7 +62,7 @@ public:
       kv::index<"byscore"_n, const_mem_fun<dbl_val, double, &dbl_val::get_score>>
    >;
 
-   struct [[sysio::table("multitbl")]] multi_key {
+   struct multi_key {
       uint8_t  tag;
       uint64_t id;
       SYSLIB_SERIALIZE(multi_key, (tag)(id))
@@ -652,16 +657,16 @@ public:
 
    // ── Zero-copy: trivially_copyable values use memcpy path ──────────────
 
-   struct [[sysio::table("podtbl")]] pod_val {
-      uint64_t a;
-      uint32_t b;
-      uint16_t c;
-      // trivially_copyable, no padding on WASM: sizeof == 14... actually
-      // WASM may pad this. Use a struct guaranteed to have no padding.
-      SYSLIB_SERIALIZE(pod_val, (a)(b)(c))
-   };
-   // Use a known-good POD: two uint64_t fields, no padding anywhere
-   struct [[sysio::table("podtbl2")]] pod_val2 {
+   // Two uint64_t fields, so no padding anywhere: sizeof == pack_size and the value takes the
+   // memcpy path. (A {uint64,uint32,uint16} struct was tried first and dropped -- WASM pads it,
+   // so sizeof != pack_size and the zero-copy path is not the one under test.)
+   //
+   // The annotation must name the SAME table as the template parameter. It previously said
+   // "podtbl2" while the table was instantiated as "podtbl"_n, which is not a naming choice but
+   // an incoherent ABI: the row is stored under the template's id (49052) and the ABI described
+   // it under the annotation's (55260), so get_table_rows could not reach it. Nothing rejects
+   // that mismatch yet -- it only surfaced here because the two ids then collided.
+   struct [[sysio::table("podtbl")]] pod_val2 {
       uint64_t x;
       uint64_t y;
       SYSLIB_SERIALIZE(pod_val2, (x)(y))
