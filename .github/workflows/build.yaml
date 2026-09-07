@@ -292,6 +292,13 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           notification-type: 1
           workflow-name: "CDT Build & Test"
-          # Comma-separated, matching wire-sysio's all-passing notification.
-          job-results: "discover:${{ needs.discover.result }},build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }},build:${{ needs.build.result }},verify-packages:${{ needs.verify-packages.result }},all-passing:${{ needs.all-passing.result }}"
+          # SPACE-separated `job:status` pairs. The action word-splits this input; a
+          # comma-separated list arrives as one multi-colon word, parses to {}, and
+          # is reported as SUCCESS whatever the jobs actually did.
+          job-results: >-
+            discover:${{ needs.discover.result }}
+            build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }}
+            build:${{ needs.build.result }}
+            verify-packages:${{ needs.verify-packages.result }}
+            all-passing:${{ needs.all-passing.result }}
           github-context: ${{ toJSON(github) }}
