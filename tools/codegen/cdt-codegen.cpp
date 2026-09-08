@@ -606,6 +606,54 @@ int main(int argc, const char** argv) {
          }
       }
 
+      // Drop the placeholder entries a bare [[sysio::table]] produces, now that every
+      // descriptor has been merged and the real tables are all present.
+      //
+      // A bare attribute names no table, so abigen emits an entry named after the ROW STRUCT
+      // and flags it. The real name comes from the multi_index / kv::table that instantiates
+      // that struct -- which may live in a DIFFERENT translation unit, which is why this
+      // cannot be decided while compiling one. Left in, the ABI described one table twice, the
+      // second under a table_id nothing ever writes to, so get_table_rows for it found nothing.
+      //
+      // Only flagged entries are ever removed, so an explicitly named table cannot be dropped
+      // by a row struct that happens to share its ABI type name. A placeholder with no real
+      // table SURVIVES -- a struct annotated but never instantiated has nothing else to name
+      // it -- and its key metadata is folded into the survivor when it has some and the real
+      // entry does not, so [[sysio::kv_key]] on a bare-attributed row is not lost.
+      if (abi.has_key("tables")) {
+         const auto is_placeholder = [](const ojson& t) {
+            return t.has_key("__placeholder") && t["__placeholder"].as<bool>();
+         };
+         const auto has_content = [](const ojson& t, const char* k) {
+            return t.has_key(k) && !t[k].empty();
+         };
+         ojson kept = ojson::array();
+         for (const auto& tbl : abi["tables"].array_range()) {
+            if (is_placeholder(tbl)) {
+               // Superseded by a real entry for the same row type?
+               const ojson* real = nullptr;
+               for (const auto& other : abi["tables"].array_range()) {
+                  if (!is_placeholder(other) && other["type"] == tbl["type"]) {
+                     real = &other;
+                     break;
+                  }
+               }
+               if (real) {
+                  // Carry key metadata across rather than discarding it with the entry.
+                  for (const char* k : {"key_names", "key_types"}) {
+                     if (has_content(tbl, k) && !has_content(*real, k))
+                        const_cast<ojson&>(*real)[k] = tbl[k];
+                  }
+                  continue;
+               }
+            }
+            ojson entry = tbl;
+            entry.erase("__placeholder");
+            kept.push_back(std::move(entry));
+         }
+         abi["tables"] = std::move(kept);
+      }
+
       // Validate table_id uniqueness across all tables and secondary indexes.
       // Two different tables/indices sharing the same table_id would corrupt data.
       if (abi.has_key("tables") && abi["tables"].size() > 1) {

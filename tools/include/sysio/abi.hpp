@@ -206,6 +206,12 @@ struct abi_table {
    std::vector<std::string> key_types;
    uint16_t table_id = 0;
    std::vector<abi_secondary_index> secondary_indexes;
+   /// True when this entry came from a bare [[sysio::table]], whose attribute names no table,
+   /// so `name` is the ROW STRUCT's name standing in rather than the author's choice. Carried
+   /// through the .desc as "__placeholder" and pruned after the link-wide merge, once every
+   /// translation unit has been seen -- see prune_placeholder_tables in cdt-codegen. Never
+   /// reaches the emitted .abi.
+   bool placeholder = false;
    bool operator<(const abi_table& t) const { return name < t.name; }
 };
 
