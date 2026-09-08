@@ -659,6 +659,13 @@ static Options CreateOptions(bool add_defaults=true) {
    }
 
 #ifndef ONLY_LD
+   // Forwarded, not acted on here: GetLdDefaults -- which turns --use-rt into -lsf -- runs only
+   // under ONLY_LD, so a flag the compiler driver consumes without passing on is silently lost.
+   // cdt-cpp accepted --use-rt and then linked without libsf, so a long double / float128
+   // contract could not be built in one step: it failed on librt's undefined f128_* symbols with
+   // a diagnostic telling the user to pass the flag they had already passed.
+   if (use_rt_opt)
+      ldopts.emplace_back("--use-rt");
    if (fquery_opt)
       ldopts.emplace_back("-fquery");
    if (fquery_server_opt)

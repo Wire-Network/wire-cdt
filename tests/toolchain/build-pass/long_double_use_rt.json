@@ -1,0 +1,8 @@
+{
+   "tests": [
+      {
+         "name": "long-double links when --use-rt is passed to the compiler driver",
+         "compile_flags": ["--use-rt"]
+      }
+   ]
+}
