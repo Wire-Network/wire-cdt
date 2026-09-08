@@ -360,6 +360,41 @@ postfix forms are deleted rather than merely discouraged. The sweep is mechanica
 `for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
 handle-duplicating copy the deletion exists to prevent. Grep reverse loops by hand.
 
+**The row type must be default-constructible — and one very common declaration shape breaks that
+without looking like it does.** `kv_multi_index` static-asserts
+`std::is_default_constructible_v<T>`. That is satisfied by an ordinary row struct, but *not* while
+the compiler is still inside the enclosing class, because a default member initializer is parsed in
+a complete-class context — deferred until the enclosing class is finished. So this fails:
+
+```cpp
+class [[sysio::contract]] mycontract : public contract {
+   struct [[sysio::table("data")]] rec {
+      uint64_t id = 0;                       // ← default member initializer
+      ...
+   };
+   using tables = multi_index<"mytable"_n, rec, ...>;
+   tables tbl;                               // ← forces instantiation HERE
+   //  error: static assertion failed ... 'std::is_default_constructible_v<mycontract::rec>'
+```
+
+It needs **all three** — the row struct nested in the contract, a default member initializer, and
+the table held as a data member. Remove any one and it compiles:
+
+- construct the table inside the action instead of holding it as a member (the common modern
+  style, and the smallest change);
+- or move the row struct out of the contract class;
+- or drop the `= 0` initializers and zero the fields in the `emplace` lambda.
+
+The diagnostic names the row type, not the initializer, so it is worth recognising: nothing is
+wrong with the struct.
+
+**The bare `[[sysio::table]]` is fine now.** It used to emit a second ABI table entry named after
+the *row struct* — `account` beside the real `accounts` — under a `table_id` nothing ever writes
+to, so `get_table_rows` for that name returned nothing. Fixed in this PR: the placeholder name a
+bare attribute carries is now superseded by the instantiation that actually names the table. On an
+older CDT, give the attribute an explicit name — `[[sysio::table("accounts")]]` — which avoided it
+on every version and is clearer regardless.
+
 Two behaviours that a port depends on match upstream. **Both landed in
 [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113); a CDT built before it has
 neither** — there, a duplicate `emplace` silently overwrites the row and strands its secondary
