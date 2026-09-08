@@ -63,6 +63,12 @@ class ABIMerger {
          ret["structs"]  = merge_structs(other);
          ret["actions"]  = merge_actions(other);
          ret["tables"]   = merge_tables(other);
+         // Descriptor-only, and stripped by cdt-codegen once it has applied them. Carried
+         // through the merge because the rule they feed -- how many tables a row struct backs --
+         // is only answerable with every descriptor in hand.
+         ojson annotations = merge_table_annotations(other);
+         if (!annotations.empty())
+            ret["____table_annotations"] = std::move(annotations);
          ret["ricardian_clauses"]  = merge_clauses(other);
 
          // A section belongs to the emitted document if it has content, and the emitted
@@ -228,9 +234,17 @@ class ABIMerger {
                 // id, so a TU that sees a [[sysio::table("name")]] without one omits it, and
                 // the TU that does instantiate the table supplies it below.
                 compatible("table_id") &&
+                compatible("____row") &&
                 compatible("key_names") &&
                 compatible("key_types") &&
                 compatible("secondary_indexes");
+      }
+
+      /// Two records of the same annotation. The same header seen from two translation units
+      /// yields identical ones; differing ones mean two row structs claim one ABI table name,
+      /// which the ABI cannot express.
+      static bool annotation_is_same(ojson a, ojson b) {
+         return a["name"] == b["name"] && a["type"] == b["type"] && a["row"] == b["row"];
       }
 
       static bool clause_is_same(ojson a, ojson b) {
@@ -366,6 +380,16 @@ class ABIMerger {
          ojson tabs = ojson::array();
          add_object_to_array(tabs, abi, b, "tables", "name", table_is_same);
          return tabs;
+      }
+
+      ojson merge_table_annotations(ojson b) {
+         ojson anns = ojson::array();
+         if (!abi.has_key("____table_annotations") && !b.has_key("____table_annotations"))
+            return anns;
+         if (!abi.has_key("____table_annotations")) abi["____table_annotations"] = ojson::array();
+         if (!b.has_key("____table_annotations"))   b["____table_annotations"]   = ojson::array();
+         add_object_to_array(anns, abi, b, "____table_annotations", "name", annotation_is_same);
+         return anns;
       }
 
       ojson merge_clauses(ojson b) {

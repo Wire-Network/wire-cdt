@@ -14,7 +14,27 @@
             ]
         },
         {
+            "name": "holder2_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "holder_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "lone2_row",
             "base": "",
             "fields": [
                 {
@@ -91,6 +111,14 @@
             "key_names": ["account_id"],
             "key_types": ["uint64"],
             "table_id": 63099
+        },
+        {
+            "name": "occupied",
+            "type": "holder2_row",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 49412
         },
         {
             "name": "orphan",

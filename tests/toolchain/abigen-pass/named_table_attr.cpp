@@ -34,8 +34,10 @@
 //   `taken`    -- one instantiation, but `taken` is another row struct's table. The annotation
 //                 is refused rather than applied, with its own warning; both live tables keep
 //                 their own names, and neither is dropped.
+//   `occupied` -- annotated, never instantiated, and the name is another row struct's table.
+//                 Publishing it would put two tables called `occupied` in one ABI.
 //
-// Expected: declared, first, orphan, renamed, second, taken.
+// Expected: declared, first, occupied (holder2_row's), orphan, renamed, second, taken.
 #include <sysio/sysio.hpp>
 #include <sysio/multi_index.hpp>
 
@@ -80,6 +82,18 @@ public:
       SYSLIB_SERIALIZE(holder_row, (id))
    };
 
+   struct [[sysio::table("occupied")]] lone2_row {
+      uint64_t id;
+      uint64_t primary_key() const { return id; }
+      SYSLIB_SERIALIZE(lone2_row, (id))
+   };
+
+   struct [[sysio::table]] holder2_row {
+      uint64_t id;
+      uint64_t primary_key() const { return id; }
+      SYSLIB_SERIALIZE(holder2_row, (id))
+   };
+
    [[sysio::action]]
    void test() {
       multi_index<"orig"_n,   one_row>     a(get_self(), get_self().value);
@@ -87,10 +101,12 @@ public:
       multi_index<"second"_n, shared_row>  c(get_self(), get_self().value);
       multi_index<"orphan"_n, collide_row> d(get_self(), get_self().value);
       multi_index<"taken"_n,  holder_row>  e(get_self(), get_self().value);
+      multi_index<"occupied"_n, holder2_row> f(get_self(), get_self().value);
       a.emplace(get_self(), [&](auto& r) { r.id = 1; });
       b.emplace(get_self(), [&](auto& r) { r.id = 2; });
       c.emplace(get_self(), [&](auto& r) { r.id = 3; });
       d.emplace(get_self(), [&](auto& r) { r.id = 4; });
       e.emplace(get_self(), [&](auto& r) { r.id = 5; });
+      f.emplace(get_self(), [&](auto& r) { r.id = 6; });
    }
 };

@@ -1,0 +1,14 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["-contract=named_table_split", "{cwd}/named_table_split_aux/declares_more.cpp"],
+         "expected": {
+            "abi-file": "named_table_split.abi",
+            "stderr": [
+               "can name only one table, but 'config_row' is the row type of 2",
+               "cannot rename 'bravo': another table in this contract is already called 'alpha'"
+            ]
+         }
+      }
+   ]
+}

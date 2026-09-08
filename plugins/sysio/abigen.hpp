@@ -56,16 +56,6 @@ namespace sysio { namespace cdt {
    class abigen : public generation_utils {
       std::set<std::string> checked_actions;
       std::set<std::string> kv_key_structs; // structs referenced by [[sysio::kv_key]], must survive validate_struct
-
-      /// Row struct (canonical decl) -> the raw-derived ABI name of every table instantiated
-      /// over it in this translation unit. Set, not vector: one specialization can be reached
-      /// twice (kv::cached_value<Store> unwraps to a Store that may also be named directly),
-      /// and a repeat visit describes the same table, not a second one.
-      std::map<const clang::CXXRecordDecl*, std::set<std::string>> instantiated_rows;
-
-      /// [[sysio::table("name")]] -> the row struct carrying the annotation. Keyed the way
-      /// `ctables` is, so the two stay in step; first declaration wins, as the set does.
-      std::map<std::string, const clang::CXXRecordDecl*> ctable_rows;
    public:
       using generation_utils::generation_utils;
 
@@ -312,17 +302,16 @@ namespace sysio { namespace cdt {
          // describes a table nothing can read or write, and nothing in wire-sysio relies on it.
          if (table_name.empty())
             return;
-         abi_table t;
+         // Recorded, not applied. Whether this names a table -- and which -- depends on how many
+         // tables are instantiated over the struct link-wide, which no single translation unit
+         // knows. cdt-codegen decides after the descriptors merge; see abi_table_annotation.
+         abi_table_annotation t;
          t.type = decl->getNameAsString();
          // Table names are free-form strings (table_id provides on-chain identity).
          // No 13-char name restriction — _i literals can use long names.
          t.name = table_name.str();
-         // No table_id. Only an instantiation carries the real one, and to_json() copies it
-         // from there. Deriving one from the annotation STRING instead was a guess -- right
-         // only when the table parameter happens to spell the same name, wrong outright for a
-         // short _i name -- and it was overwritten in every case where it could be checked.
-         // Where it could not be, it collided with the real value in another translation
-         // unit's descriptor and ABIMerger refused the link.
+         t.row  = _decl->getQualifiedNameAsString();
+         t.loc  = _decl->getLocation().printToString(_decl->getASTContext().getSourceManager());
 
          // [[sysio::kv_key("struct_name")]] — resolve key struct fields into key_names/key_types
          if (decl.isSysioKvKey()) {
@@ -389,8 +378,7 @@ namespace sysio { namespace cdt {
             }
          }
 
-         ctables.insert(t);
-         ctable_rows.emplace(t.name, _decl->getCanonicalDecl());
+         _abi.table_annotations.insert(t);
       }
 
       enum class kv_table_kind { legacy, kv_standard, kv_global };
@@ -442,12 +430,11 @@ namespace sysio { namespace cdt {
          t.type = get_type(value);
          t.table_id = compute_table_id_from_raw(name);
 
-         // The table parameter is the name. A [[sysio::table("name")]] on V can still rename it,
-         // but only once the whole TU is known -- see resolve_annotated_table_names().
+         // The table parameter is the name. A [[sysio::table("name")]] on V may still rename it,
+         // link-wide, in cdt-codegen; `row` is what pairs the two up.
          t.name = name_to_string(name);
-         // Only a class can carry the annotation, so a non-class row has nothing to rename it.
          if (val_decl)
-            instantiated_rows[val_decl->getCanonicalDecl()].insert(t.name);
+            t.row = val_decl->getQualifiedNameAsString();
 
          // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K
          auto val_wrap = clang_wrapper::wrap_decl(val_decl);
@@ -519,12 +506,10 @@ namespace sysio { namespace cdt {
          // (invalid_type_inside_abi). get_type() gives the spelling add_type() would declare.
          t.type = get_type(row);
          // Same rule add_kv_table uses: the template parameter is the name, and a
-         // [[sysio::table("name")]] on the row struct may rename it once the whole TU is
-         // known -- see resolve_annotated_table_names().
+         // [[sysio::table("name")]] on the row struct may rename it link-wide, in cdt-codegen.
          t.name = name_to_string(name);
-         // Only a class can carry the annotation, so a non-class row has nothing to rename it.
          if (const auto* row_decl = row.getTypePtr()->getAsCXXRecordDecl())
-            instantiated_rows[row_decl->getCanonicalDecl()].insert(t.name);
+            t.row = row_decl->getQualifiedNameAsString();
          t.table_id = compute_table_id_from_raw(name);
          if (kind == kv_table_kind::kv_standard) {
             // KV multi_index: key = [scope:8B BE][pk:8B BE], table_id provides isolation
@@ -930,6 +915,9 @@ namespace sysio { namespace cdt {
             o["key_types"].push_back(kt);
          if (t.table_id != 0)
             o["table_id"] = t.table_id;
+         // Descriptor-only; cdt-codegen strips it. See abi_table::row.
+         if (!t.row.empty())
+            o["____row"] = t.row;
          if (!t.secondary_indexes.empty()) {
             o["secondary_indexes"] = ojson::array();
             for (const auto& si : t.secondary_indexes) {
@@ -987,121 +975,9 @@ namespace sysio { namespace cdt {
       }
 
       bool is_empty() {
-         std::set<abi_table> set_of_tables;
-         for ( auto t : ctables ) {
-            bool has_multi_index = false;
-            for ( auto u : _abi.tables ) {
-               if (t.type == u.type) {
-                  has_multi_index = true;
-                  break;
-               }
-               set_of_tables.insert(u);
-            }
-            if (!has_multi_index)
-               set_of_tables.insert(t);
-         }
-         for ( auto t : _abi.tables ) {
-            set_of_tables.insert(t);
-         }
-
-         return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() && set_of_tables.empty() && _abi.ricardian_clauses.empty() && _abi.variants.empty() && _abi.enums.empty();
-      }
-
-      /// What resolve_annotated_table_names() works out, per translation unit.
-      ///
-      /// The annotation renames the table the ABI publishes over that struct. It has to: a
-      /// `_i`-named table's raw value is a DJB2 hash rather than a name encoding, so
-      /// name_to_string() renders it as garbage and the readable name exists only in the
-      /// annotation.
-      ///
-      /// One annotation renames ONE table, and only into a name no other table holds. Renaming
-      /// eagerly, at the point each instantiation was added, could respect neither condition,
-      /// because neither is knowable there. Both failures are the same failure: abi_table
-      /// orders by NAME ALONE, so two entries given one name collapse to whichever the set
-      /// reached first, and the survivor's `type` then describes one table while its table_id
-      /// addresses the other. Deferring to here, where every instantiation in the translation
-      /// unit is known, is what makes the checks possible at all.
-      ///
-      /// An annotation that renames nothing is still where [[sysio::kv_key]] was resolved into
-      /// key_names/key_types, so that metadata is carried onto the tables it could not name.
-      /// Dropping the entry must not silently revert them to the physical key layout.
-      struct resolved_tables {
-         std::set<abi_table>   tables;      ///< auto-detected, under their final ABI names
-         std::set<std::string> superseded;  ///< annotations that name no table: drop them
-      };
-
-      resolved_tables resolve_annotated_table_names() {
-         resolved_tables out;
-         std::set<std::string>& superseded = out.superseded;
-         // Every name the instantiations already occupy.
-         std::set<std::string> occupied;
-         for (const auto& t : _abi.tables)
-            occupied.insert(t.name);
-
-         std::map<std::string, std::string>     renames;      // auto-detected name -> annotation
-         std::map<std::string, const abi_table*> key_source;  // auto-detected name -> its ctable
-         for (const auto& c : ctables) {
-            auto row = ctable_rows.find(c.name);
-            if (row == ctable_rows.end())
-               continue;
-            auto inst = instantiated_rows.find(row->second);
-            if (inst == instantiated_rows.end())
-               continue; // annotated but never instantiated: the annotation IS the table
-            // An instantiation may already carry the annotation's name, in which case the
-            // annotation is satisfied and there is nothing to rename, drop or report.
-            const bool already_named = inst->second.count(c.name) > 0;
-            if (!already_named && inst->second.size() == 1 && !occupied.count(c.name)) {
-               renames.emplace(*inst->second.begin(), c.name);
-               continue; // the ctable merges by name with the entry it has just named
-            }
-
-            // [[sysio::kv_key]] describes the ROW's logical key, so it belongs to every table
-            // over that row and not only to the one the annotation names. Whichever entry the
-            // ctable merges with receives it through that merge; the rest are given it here, or
-            // an annotation that names none of them would revert them to the physical layout.
-            if (!c.key_names.empty())
-               for (const auto& n : inst->second)
-                  if (n != c.name)
-                     key_source.emplace(n, &c);
-
-            if (already_named)
-               continue;
-
-            if (inst->second.size() > 1) {
-               CDT_CHECK_WARN(false, "abigen_warning", row->second->getLocation(),
-                  "[[sysio::table(\"" + c.name + "\")]] can name only one table, but '" +
-                  row->second->getNameAsString() + "' is the row type of " +
-                  std::to_string(inst->second.size()) +
-                  "; each is named after its own table parameter in the ABI");
-            } else {
-               // The target belongs to a DIFFERENT row struct. Renaming onto it would drop one
-               // of the two tables and leave the survivor mis-described.
-               CDT_CHECK_WARN(false, "abigen_warning", row->second->getLocation(),
-                  "[[sysio::table(\"" + c.name + "\")]] cannot rename '" +
-                  *inst->second.begin() + "': another table in this contract is already called '" +
-                  c.name + "', so it keeps its own table parameter as its ABI name");
-            }
-
-            // Not published: an annotation naming none of the live tables would describe a
-            // table under a table_id nothing writes to -- the phantom a bare [[sysio::table]]
-            // used to produce, reached by another route.
-            superseded.insert(c.name);
-         }
-
-         for (auto t : _abi.tables) {
-            // Both maps are keyed by the auto-detected name; a superseded annotation never
-            // renames, so no entry is looked up under a name it no longer has.
-            auto k = key_source.find(t.name);
-            if (k != key_source.end()) {
-               t.key_names = k->second->key_names;
-               t.key_types = k->second->key_types;
-            }
-            auto r = renames.find(t.name);
-            if (r != renames.end())
-               t.name = r->second;
-            out.tables.insert(std::move(t));
-         }
-         return out;
+         return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() &&
+                _abi.tables.empty() && _abi.table_annotations.empty() &&
+                _abi.ricardian_clauses.empty() && _abi.variants.empty() && _abi.enums.empty();
       }
 
       ojson to_json() {
@@ -1117,51 +993,11 @@ namespace sysio { namespace cdt {
             return name.substr(0,i+1);
          };
 
-         // Apply [[sysio::table("name")]] to the tables instantiated over the annotated struct.
-         const resolved_tables resolved = resolve_annotated_table_names();
-         const std::set<abi_table>& auto_tables = resolved.tables;
-
-         // Merge tables: [[sysio::table]] annotated (ctables) take priority over
-         // auto-detected (auto_tables) when both have the same name.
-         std::set<abi_table> set_of_tables;
-         for ( auto t : ctables ) {
-            // An annotation the resolver could not apply names no table at all: the struct is
-            // instantiated, so the entries the contract actually reads and writes are the ones
-            // named after their own template parameters. Publishing it too would add a table
-            // under a table_id nothing writes -- the phantom a bare [[sysio::table]] used to
-            // produce, arrived at by a different route.
-            if (resolved.superseded.count(t.name))
-               continue;
-
-            // Transfer table_id and secondary_indexes from auto-detected entry
-
-            for ( const auto& u : auto_tables ) {
-               if (u.name == t.name) {
-
-                  // The auto-detected entry's table_id comes from the TEMPLATE parameter, which
-                  // is what the runtime computes -- kv::global and kv::table both derive
-                  // _table_id from it. The ctables entry instead guesses from the annotation
-                  // STRING, reading a name of 13 characters or fewer as an _n encoding. For _n
-                  // and for a long _i name the two agree, because the raw value and the string
-                  // derivation coincide. For a SHORT _i name they do not: the row lands under
-                  // the raw-derived id while the ABI advertised the string-derived one, so
-                  // get_table_rows by the readable name could not reach it. The template wins.
-                  if (u.table_id != 0)
-                     t.table_id = u.table_id;
-                  if (t.secondary_indexes.empty() && !u.secondary_indexes.empty())
-                     t.secondary_indexes = u.secondary_indexes;
-                  if (t.key_names.empty() && !u.key_names.empty()) {
-                     t.key_names = u.key_names;
-                     t.key_types = u.key_types;
-                  }
-                  break;
-               }
-            }
-            set_of_tables.insert(t);
-         }
-         for ( auto t : auto_tables ) {
-            set_of_tables.insert(t); // no-op if name already present from ctables
-         }
+         // Tables go out exactly as the instantiations named them. A
+         // [[sysio::table("name")]] is carried alongside in ____table_annotations and applied by
+         // cdt-codegen once every descriptor is in, because whether it names a table -- and
+         // which -- depends on how many tables the struct backs link-wide.
+         const std::set<abi_table>& set_of_tables = _abi.tables;
 
          std::function<std::string(const std::string&)> get_root_name;
          get_root_name = [&] (const std::string& name) {
@@ -1200,6 +1036,12 @@ namespace sysio { namespace cdt {
                   return true;
                // Include structs referenced by [[sysio::kv_key]]
                if (kv_key_structs.count(as.name))
+                  return true;
+            }
+            // An annotation may still become a table in cdt-codegen, and a table naming a type
+            // the document does not declare is refused by the chain.
+            for( const auto& ta : _abi.table_annotations ) {
+               if (as.name == _translate_type(ta.type))
                   return true;
             }
             for( auto td : _abi.typedefs ) {
@@ -1262,6 +1104,23 @@ namespace sysio { namespace cdt {
          o["tables"]     = ojson::array();
          for ( auto t : set_of_tables ) {
             o["tables"].push_back(table_to_json( t ));
+         }
+         if (!_abi.table_annotations.empty()) {
+            o["____table_annotations"] = ojson::array();
+            for ( const auto& ta : _abi.table_annotations ) {
+               ojson a;
+               a["name"] = ta.name;
+               a["type"] = ta.type;
+               a["row"]  = ta.row;
+               a["loc"]  = ta.loc;
+               a["key_names"] = ojson::array();
+               for (const auto& kn : ta.key_names)
+                  a["key_names"].push_back(kn);
+               a["key_types"] = ojson::array();
+               for (const auto& kt : ta.key_types)
+                  a["key_types"].push_back(kt);
+               o["____table_annotations"].push_back(std::move(a));
+            }
          }
          o["ricardian_clauses"]  = ojson::array();
          for ( auto rc : _abi.ricardian_clauses ) {
@@ -1337,7 +1196,6 @@ namespace sysio { namespace cdt {
 
       private:
          abi                                   _abi;
-         std::set<abi_table>                   ctables;
          std::map<std::string, std::string>    rcs;
          std::set<const clang::Type*>          evaluated;
          std::set<std::string>                 pb_types;

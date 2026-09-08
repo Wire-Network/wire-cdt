@@ -4,11 +4,130 @@
 #include <sysio/whereami/whereami.hpp>
 
 #include <algorithm>
+#include <iostream>
 #include <fstream>
 #include <map>
 #include <set>
+#include <vector>
 #include <sstream>
 #include <unistd.h>
+
+/// Apply each [[sysio::table("name")]] to the tables instantiated over its row struct, now that
+/// every descriptor has been merged and the count is known, then strip the descriptor-only keys.
+///
+/// abigen cannot do this. The annotation renames the table published over a row struct -- it has
+/// to, because a `_i`-named table's raw value is a DJB2 hash and the readable name lives only in
+/// the annotation -- but it renames ONE table, and only into a name no other table holds. Both
+/// are link-wide facts. A translation unit that decides on its own partial view emits a
+/// descriptor that disagrees with its siblings, and the merge then refuses the link.
+///
+/// Row structs are matched by QUALIFIED name (`____row`), not by the ABI `type`: ns1::row and
+/// ns2::row both serialise as `row`, and matching on that conflates them.
+static void resolve_table_annotations(ojson& abi) {
+   if (!abi.has_key("tables"))
+      return;
+
+   const auto row_of = [](const ojson& t) {
+      return t.has_key("____row") ? t["____row"].as<std::string>() : std::string{};
+   };
+
+   // Row struct -> the tables instantiated over it, and every name already taken.
+   std::map<std::string, std::vector<std::size_t>> by_row;
+   std::set<std::string> taken;
+   for (std::size_t i = 0; i < abi["tables"].size(); ++i) {
+      const auto& t = abi["tables"][i];
+      taken.insert(t["name"].as<std::string>());
+      const auto row = row_of(t);
+      if (!row.empty())
+         by_row[row].push_back(i);
+   }
+
+   ojson declared = ojson::array();
+   bool  renamed  = false;
+   if (abi.has_key("____table_annotations")) {
+      for (const auto& a : abi["____table_annotations"].array_range()) {
+         const auto name = a["name"].as<std::string>();
+         const auto row  = a["row"].as<std::string>();
+         const auto loc  = a.has_key("loc") ? a["loc"].as<std::string>() : std::string{};
+         auto       it   = by_row.find(row);
+
+         if (it == by_row.end()) {
+            // Nothing instantiates the struct, so the annotation is the table. No table_id:
+            // only an instantiation carries one.
+            if (taken.count(name)) {
+               std::cerr << loc << ": warning: [[sysio::table(\"" << name
+                         << "\")]] declares a table, but another table in this contract is "
+                            "already called '" << name << "'; '" << row << "' is not described\n";
+               continue;
+            }
+            taken.insert(name);
+            ojson t;
+            t["name"] = a["name"];
+            t["type"] = a["type"];
+            t["index_type"] = "i64";
+            t["key_names"] = a["key_names"];
+            t["key_types"] = a["key_types"];
+            declared.push_back(std::move(t));
+            continue;
+         }
+
+         const auto& idx = it->second;
+         const bool already = std::any_of(idx.begin(), idx.end(), [&](std::size_t i) {
+            return abi["tables"][i]["name"].as<std::string>() == name;
+         });
+
+         if (!already) {
+            if (idx.size() > 1) {
+               std::cerr << loc << ": warning: [[sysio::table(\"" << name
+                         << "\")]] can name only one table, but '" << row << "' is the row type of "
+                         << idx.size() << "; each is named after its own table parameter in the ABI\n";
+            } else if (taken.count(name)) {
+               std::cerr << loc << ": warning: [[sysio::table(\"" << name << "\")]] cannot rename '"
+                         << abi["tables"][idx.front()]["name"].as<std::string>()
+                         << "': another table in this contract is already called '" << name
+                         << "', so it keeps its own table parameter as its ABI name\n";
+            } else {
+               taken.erase(abi["tables"][idx.front()]["name"].as<std::string>());
+               abi["tables"][idx.front()]["name"] = a["name"];
+               taken.insert(name);
+               renamed = true;
+            }
+         }
+
+         // [[sysio::kv_key]] describes the ROW, so its key layout belongs to every table over
+         // that struct -- including the ones the annotation could not name.
+         if (a.has_key("key_names") && !a["key_names"].empty()) {
+            for (std::size_t i : idx) {
+               abi["tables"][i]["key_names"] = a["key_names"];
+               abi["tables"][i]["key_types"] = a["key_types"];
+            }
+         }
+      }
+      abi.erase("____table_annotations");
+   }
+
+   for (auto& t : declared.array_range())
+      abi["tables"].push_back(t);
+
+   for (auto& t : abi["tables"].array_range())
+      t.erase("____row");
+
+   // Descriptors emit their tables in name order and the merge appends each new one, so the
+   // array is ordered by what a table was CALLED in its descriptor. Renaming one, or adding a
+   // table an annotation declares, breaks that -- so sort, and only then: a contract whose
+   // annotations rename nothing keeps the array its descriptors produced.
+   if (renamed || !declared.empty()) {
+      std::vector<ojson> sorted(abi["tables"].array_range().begin(), abi["tables"].array_range().end());
+      std::sort(sorted.begin(), sorted.end(), [](const ojson& x, const ojson& y) {
+         return x["name"].as<std::string>() < y["name"].as<std::string>();
+      });
+      ojson out = ojson::array();
+      for (auto& t : sorted)
+         out.push_back(std::move(t));
+      abi["tables"] = std::move(out);
+   }
+}
+
 #include <sys/stat.h>
 #include <dirent.h>
 #include <llvm/Support/Program.h>
@@ -605,6 +724,8 @@ int main(int argc, const char** argv) {
                has_post_dispatch = true;
          }
       }
+
+      resolve_table_annotations(abi);
 
       // Validate table_id uniqueness across all tables and secondary indexes.
       // Two different tables/indices sharing the same table_id would corrupt data.
