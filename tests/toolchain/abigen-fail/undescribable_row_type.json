@@ -1,0 +1,10 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["--abigen"],
+         "expected": {
+            "stderr": "which the ABI cannot describe"
+         }
+      }
+   ]
+}

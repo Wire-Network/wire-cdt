@@ -1,0 +1,1 @@
+{ "tests": [{ "expected": { "abi-file": "kv_table_builtin_row.abi" } }] }
