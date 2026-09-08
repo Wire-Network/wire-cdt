@@ -7,8 +7,9 @@
 // table_id nothing ever writes to, so get_table_rows for it returned nothing.
 //
 // Expected here: one entry, "accounts", carrying the secondary index. `unused` covers the other
-// direction -- a struct annotated but never instantiated keeps its placeholder, because nothing
-// else can name it.
+// direction -- a struct annotated but NEVER instantiated contributes no table at all, because
+// nothing names one and nothing can read or write it. That is a deliberate behaviour change:
+// such a struct previously got an entry under its own name.
 #include <sysio/sysio.hpp>
 #include <sysio/multi_index.hpp>
 

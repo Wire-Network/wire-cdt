@@ -4,16 +4,6 @@
     "types": [],
     "structs": [
         {
-            "name": "abi_key",
-            "base": "",
-            "fields": [
-                {
-                    "name": "account_id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
             "name": "phys_key",
             "base": "",
             "fields": [

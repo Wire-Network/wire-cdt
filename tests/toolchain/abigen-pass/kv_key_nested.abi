@@ -4,16 +4,22 @@
     "types": [],
     "structs": [
         {
-            "name": "account",
+            "name": "abi_key",
             "base": "",
             "fields": [
                 {
-                    "name": "id",
+                    "name": "account_id",
                     "type": "uint64"
-                },
+                }
+            ]
+        },
+        {
+            "name": "phys_key",
+            "base": "",
+            "fields": [
                 {
-                    "name": "owner",
-                    "type": "name"
+                    "name": "raw_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -21,6 +27,16 @@
             "name": "test",
             "base": "",
             "fields": []
+        },
+        {
+            "name": "val",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
         }
     ],
     "actions": [
@@ -32,19 +48,12 @@
     ],
     "tables": [
         {
-            "name": "accounts",
-            "type": "account",
+            "name": "realname",
+            "type": "val",
             "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 25660,
-            "secondary_indexes": [
-                {
-                    "name": "byowner",
-                    "key_type": "uint64",
-                    "table_id": 57405
-                }
-            ]
+            "key_names": ["account_id"],
+            "key_types": ["uint64"],
+            "table_id": 46377
         }
     ],
     "ricardian_clauses": [],

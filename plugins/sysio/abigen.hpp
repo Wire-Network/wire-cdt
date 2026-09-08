@@ -284,24 +284,30 @@ namespace sysio { namespace cdt {
       void add_table( const clang::CXXRecordDecl* _decl ) {
          auto decl = clang_wrapper::wrap_decl(_decl);
          tables.insert(_decl);
+         auto table_name = decl.getSysioTableAttr()->getName();
+         // A bare [[sysio::table]] names no table, so there is nothing to describe here: the
+         // name, the table_id and the key layout all come from whatever multi_index / kv::table
+         // instantiates this struct, and each instantiation emits its own entry. Naming an entry
+         // after the ROW STRUCT produced a second table beside the real one, under a table_id
+         // nothing ever writes to.
+         //
+         // Emitting it and pruning later was tried and abandoned: the placeholder cannot be
+         // told apart from a real table by anything that survives into the descriptor. It
+         // collides in the by-name set with an instantiation that happens to share the struct's
+         // name, so the marked entry IS sometimes the live table; and the emitted `type` string
+         // cannot distinguish two declarations that share an unqualified name. Both led to a
+         // live table being deleted. Not creating it is the only form with nothing to
+         // disambiguate.
+         //
+         // Consequence: a struct annotated but never instantiated gets no table entry. It
+         // describes a table nothing can read or write, and nothing in wire-sysio relies on it.
+         if (table_name.empty())
+            return;
          abi_table t;
          t.type = decl->getNameAsString();
-         auto table_name = decl.getSysioTableAttr()->getName();
-         if (!table_name.empty()) {
-            // Table names are free-form strings (table_id provides on-chain identity).
-            // No 13-char name restriction — _i literals can use long names.
-            t.name = table_name.str();
-         }
-         else {
-            // A bare [[sysio::table]] names no table, so the ROW STRUCT's name stands in. That
-            // is a placeholder, not the author's choice: the real name comes from whatever
-            // multi_index / kv::table instantiates this struct. Emitting it unconditionally is
-            // deliberate -- every translation unit that sees this struct must produce the SAME
-            // descriptor, or the link-wide merge is order-dependent. It is pruned once, after
-            // the merge, by prune_placeholder_tables in cdt-codegen.
-            t.name = t.type;
-            t.placeholder = true;
-         }
+         // Table names are free-form strings (table_id provides on-chain identity).
+         // No 13-char name restriction — _i literals can use long names.
+         t.name = table_name.str();
          // Compute table_id: if name fits in eosio name encoding, use that.
          // Otherwise hash the string directly.
          if (t.name.size() <= 13) {
@@ -447,18 +453,39 @@ namespace sysio { namespace cdt {
          if (val_wrap.isSysioKvKey()) {
             auto kv_key_name = val_wrap.getSysioKvKeyAttr()->getName().str();
             if (!kv_key_name.empty()) {
-               // Search for the override key struct
+               // Nested types first, then the enclosing context -- the same order add_table
+               // uses for the identical attribute. Searching only the enclosing context missed
+               // a key struct declared INSIDE the value row, and silently fell back to the
+               // physical key, so the ABI advertised the physical field names while the
+               // annotation named a logical override.
                const clang::CXXRecordDecl* override_key = nullptr;
-               if (auto* ctx = val_decl->getDeclContext()) {
-                  for (auto* d : ctx->decls()) {
-                     if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                        if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
-                           override_key = r; break;
+               for (auto* d : val_decl->decls()) {
+                  if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
+                     if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
+                        override_key = r; break;
+                     }
+                  }
+               }
+               if (!override_key) {
+                  if (auto* ctx = val_decl->getDeclContext()) {
+                     for (auto* d : ctx->decls()) {
+                        if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
+                           if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
+                              override_key = r; break;
+                           }
                         }
                      }
                   }
                }
-               if (override_key) key_source = override_key;
+               if (override_key) {
+                  key_source = override_key;
+                  // Protect it from validate_struct, as the other path does for its own.
+                  kv_key_structs.insert(kv_key_name);
+               } else {
+                  CDT_CHECK_WARN(false, "abigen_warning", val_decl->getLocation(),
+                     "kv_key struct '" + kv_key_name + "' not found; the physical key's field "
+                     "names will be used in the ABI");
+               }
             }
          }
 
@@ -853,9 +880,6 @@ namespace sysio { namespace cdt {
          o["name"] = t.name;
          o["type"] = t.type;
          o["index_type"] = "i64";
-         // Provenance for the link-wide prune. Stripped from the emitted ABI; see abi_table.
-         if (t.placeholder)
-            o["__placeholder"] = true;
          o["key_names"] = ojson::array();
          for (const auto& kn : t.key_names)
             o["key_names"].push_back(kn);
