@@ -4,7 +4,26 @@
     "types": [],
     "structs": [
         {
-            "name": "out_of_class3",
+            "name": "account",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "unused",
             "base": "",
             "fields": [
                 {
@@ -12,50 +31,38 @@
                     "type": "uint64"
                 }
             ]
-        },
-        {
-            "name": "tbl_config",
-            "base": "",
-            "fields": [
-                {
-                    "name": "y",
-                    "type": "uint64"
-                },
-                {
-                    "name": "x",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "whatever",
-            "base": "",
-            "fields": []
         }
     ],
     "actions": [
         {
-            "name": "whatever",
-            "type": "whatever",
+            "name": "test",
+            "type": "test",
             "ricardian_contract": ""
         }
     ],
     "tables": [
         {
-            "name": "mi.config52",
-            "type": "out_of_class3",
+            "name": "accounts",
+            "type": "account",
             "index_type": "i64",
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],
-            "table_id": 9314
+            "table_id": 25660,
+            "secondary_indexes": [
+                {
+                    "name": "byowner",
+                    "key_type": "uint64",
+                    "table_id": 57405
+                }
+            ]
         },
         {
-            "name": "tbl_config",
-            "type": "tbl_config",
+            "name": "unused",
+            "type": "unused",
             "index_type": "i64",
             "key_names": [],
             "key_types": [],
-            "table_id": 8868
+            "table_id": 18135
         }
     ],
     "ricardian_clauses": [],

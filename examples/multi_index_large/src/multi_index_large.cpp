@@ -25,7 +25,7 @@ void multi_index_large::print( uint64_t id ) {
 [[sysio::action]] 
 void multi_index_large::byf( double f64 ) {
    auto idx = testtab.get_index<"byf"_n>();
-   for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+   for ( auto itr = idx.begin(); itr != idx.end(); ++itr ) {
       if( itr->f64 == f64) {
          print( itr->id );
       }
@@ -35,7 +35,7 @@ void multi_index_large::byf( double f64 ) {
 [[sysio::action]] 
 void multi_index_large::byff( long double f128 ) {
    auto idx = testtab.get_index<"byff"_n>();
-   for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+   for ( auto itr = idx.begin(); itr != idx.end(); ++itr ) {
       if( itr->f128 == f128) {
          print( itr->id );
       }
@@ -45,7 +45,7 @@ void multi_index_large::byff( long double f128 ) {
 [[sysio::action]] 
 void multi_index_large::byuuuu( uint128_t u128 ) {
    auto idx = testtab.get_index<"byuuuu"_n>();
-   for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+   for ( auto itr = idx.begin(); itr != idx.end(); ++itr ) {
       if( itr->u128 == u128 ) {  
          print( itr->id );
       }
@@ -55,7 +55,7 @@ void multi_index_large::byuuuu( uint128_t u128 ) {
 [[sysio::action]] 
 void multi_index_large::bychkb( sysio::checksum256 chk256 ) {
    auto idx = testtab.get_index<"bychkb"_n>();
-   for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+   for ( auto itr = idx.begin(); itr != idx.end(); ++itr ) {
       if( itr->chk256 == chk256 ) {  
          print( itr->id );
       }

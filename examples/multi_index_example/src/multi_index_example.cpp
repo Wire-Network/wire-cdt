@@ -21,7 +21,7 @@ void multi_index_example::print( name user ) {
 [[sysio::action]] 
 void multi_index_example::bysec( name secid ) {
    auto idx = testtab.get_index<"secid"_n>();
-   for ( auto itr = idx.begin(); itr != idx.end(); itr++ ) {
+   for ( auto itr = idx.begin(); itr != idx.end(); ++itr ) {
       print( itr->test_primary );
    }
 }

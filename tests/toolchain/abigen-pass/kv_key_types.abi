@@ -64,14 +64,6 @@
             "table_id": 54814
         },
         {
-            "name": "kvrow",
-            "type": "kvrow",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": [],
-            "table_id": 53512
-        },
-        {
             "name": "kvrows",
             "type": "kvrow",
             "index_type": "i64",

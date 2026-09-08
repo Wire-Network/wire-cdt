@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
@@ -292,7 +293,11 @@ namespace sysio { namespace cdt {
             t.name = table_name.str();
          }
          else {
+            // A bare [[sysio::table]] names no table. The struct name stands in so the entry
+            // has something, but it is a PLACEHOLDER: the table's real name comes from the
+            // multi_index / kv::table instantiation that uses this struct, if there is one.
             t.name = t.type;
+            unnamed_table_types.insert(t.type);
          }
          // Compute table_id: if name fits in eosio name encoding, use that.
          // Otherwise hash the string directly.
@@ -947,6 +952,16 @@ namespace sysio { namespace cdt {
          // auto-detected (_abi.tables) when both have the same name.
          std::set<abi_table> set_of_tables;
          for ( auto t : ctables ) {
+            // A placeholder entry from a bare [[sysio::table]] is superseded by the
+            // instantiation that actually names the table. Keeping both described one table
+            // twice -- once under the ROW STRUCT's name, whose table_id nothing ever writes
+            // to, so get_table_rows for it returned nothing. A struct annotated but never
+            // instantiated keeps its placeholder, since nothing else can name it.
+            if (unnamed_table_types.count(t.type) &&
+                std::any_of(_abi.tables.begin(), _abi.tables.end(),
+                            [&](const abi_table& u) { return u.type == t.type; }))
+               continue;
+
             // Transfer table_id and secondary_indexes from auto-detected entry
 
             for ( const auto& u : _abi.tables ) {
@@ -1153,6 +1168,9 @@ namespace sysio { namespace cdt {
          abi                                   _abi;
          std::set<const clang::CXXRecordDecl*> tables;
          std::set<abi_table>                   ctables;
+         /// Types whose ctables entry was named after the struct because the
+         /// [[sysio::table]] attribute carried no name. See the merge in to_json.
+         std::set<std::string>                 unnamed_table_types;
          std::map<std::string, std::string>    rcs;
          std::set<const clang::Type*>          evaluated;
          std::set<std::string>                 pb_types;
