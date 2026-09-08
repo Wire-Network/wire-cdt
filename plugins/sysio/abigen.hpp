@@ -24,15 +24,6 @@ static inline uint64_t djbh_hash_raw(uint64_t raw, uint64_t hash = djbh_seed) {
    return hash;
 }
 
-// DJB2-hash a string. Must match sysio::hash_id::djbh_hash in hash_id.hpp, which is what the
-// `_i` literal evaluates: a table named `"long_table_name"_i` carries this value as its raw.
-static inline uint64_t djbh_hash_string(std::string_view str, uint64_t hash = djbh_seed) {
-   for (char c : str)
-      // hash * 33 (2^5 + 1), then add byte
-      hash = ((hash << 5) + hash) + static_cast<uint8_t>(c);
-   return hash;
-}
-
 // Narrowing cast to uint16_t truncates to the low 16 bits (well-defined for unsigned).
 static inline uint16_t compute_table_id_from_raw(uint64_t raw) {
    return static_cast<uint16_t>(djbh_hash_raw(raw));
@@ -326,14 +317,12 @@ namespace sysio { namespace cdt {
          // Table names are free-form strings (table_id provides on-chain identity).
          // No 13-char name restriction — _i literals can use long names.
          t.name = table_name.str();
-         // Compute table_id: if name fits in eosio name encoding, use that.
-         // Otherwise hash the string directly.
-         if (t.name.size() <= 13) {
-            t.table_id = compute_table_id_from_raw(string_to_name(t.name.c_str()));
-         } else {
-            // For long names (_i literals), DJB2 hash the string then hash the raw bytes
-            t.table_id = compute_table_id_from_raw(djbh_hash_string(t.name));
-         }
+         // No table_id. Only an instantiation carries the real one, and to_json() copies it
+         // from there. Deriving one from the annotation STRING instead was a guess -- right
+         // only when the table parameter happens to spell the same name, wrong outright for a
+         // short _i name -- and it was overwritten in every case where it could be checked.
+         // Where it could not be, it collided with the real value in another translation
+         // unit's descriptor and ABIMerger refused the link.
 
          // [[sysio::kv_key("struct_name")]] — resolve key struct fields into key_names/key_types
          if (decl.isSysioKvKey()) {
@@ -1018,8 +1007,7 @@ namespace sysio { namespace cdt {
          return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() && set_of_tables.empty() && _abi.ricardian_clauses.empty() && _abi.variants.empty() && _abi.enums.empty();
       }
 
-      /// Apply each [[sysio::table("name")]] to the table instantiated over the annotated row
-      /// struct, returning the auto-detected tables under their final ABI names.
+      /// What resolve_annotated_table_names() works out, per translation unit.
       ///
       /// The annotation renames the table the ABI publishes over that struct. It has to: a
       /// `_i`-named table's raw value is a DJB2 hash rather than a name encoding, so
@@ -1037,10 +1025,14 @@ namespace sysio { namespace cdt {
       /// An annotation that renames nothing is still where [[sysio::kv_key]] was resolved into
       /// key_names/key_types, so that metadata is carried onto the tables it could not name.
       /// Dropping the entry must not silently revert them to the physical key layout.
-      ///
-      /// \p superseded  receives the annotations that name no table, so to_json() can drop them
-      /// \return        the auto-detected tables, renamed where the annotation applies
-      std::set<abi_table> resolve_annotated_table_names(std::set<std::string>& superseded) {
+      struct resolved_tables {
+         std::set<abi_table>   tables;      ///< auto-detected, under their final ABI names
+         std::set<std::string> superseded;  ///< annotations that name no table: drop them
+      };
+
+      resolved_tables resolve_annotated_table_names() {
+         resolved_tables out;
+         std::set<std::string>& superseded = out.superseded;
          // Every name the instantiations already occupy.
          std::set<std::string> occupied;
          for (const auto& t : _abi.tables)
@@ -1096,7 +1088,6 @@ namespace sysio { namespace cdt {
             superseded.insert(c.name);
          }
 
-         std::set<abi_table> resolved;
          for (auto t : _abi.tables) {
             // Both maps are keyed by the auto-detected name; a superseded annotation never
             // renames, so no entry is looked up under a name it no longer has.
@@ -1108,9 +1099,9 @@ namespace sysio { namespace cdt {
             auto r = renames.find(t.name);
             if (r != renames.end())
                t.name = r->second;
-            resolved.insert(std::move(t));
+            out.tables.insert(std::move(t));
          }
-         return resolved;
+         return out;
       }
 
       ojson to_json() {
@@ -1126,10 +1117,9 @@ namespace sysio { namespace cdt {
             return name.substr(0,i+1);
          };
 
-         // Apply [[sysio::table("name")]] to the tables instantiated over the annotated struct,
-         // and learn which annotations no longer name anything.
-         std::set<std::string> superseded_ctables;
-         const std::set<abi_table> auto_tables = resolve_annotated_table_names(superseded_ctables);
+         // Apply [[sysio::table("name")]] to the tables instantiated over the annotated struct.
+         const resolved_tables resolved = resolve_annotated_table_names();
+         const std::set<abi_table>& auto_tables = resolved.tables;
 
          // Merge tables: [[sysio::table]] annotated (ctables) take priority over
          // auto-detected (auto_tables) when both have the same name.
@@ -1140,7 +1130,7 @@ namespace sysio { namespace cdt {
             // named after their own template parameters. Publishing it too would add a table
             // under a table_id nothing writes -- the phantom a bare [[sysio::table]] used to
             // produce, arrived at by a different route.
-            if (superseded_ctables.count(t.name))
+            if (resolved.superseded.count(t.name))
                continue;
 
             // Transfer table_id and secondary_indexes from auto-detected entry

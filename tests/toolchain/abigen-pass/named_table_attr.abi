@@ -82,8 +82,7 @@
             "type": "lone_row",
             "index_type": "i64",
             "key_names": [],
-            "key_types": [],
-            "table_id": 11993
+            "key_types": []
         },
         {
             "name": "first",

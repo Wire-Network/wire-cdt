@@ -220,10 +220,14 @@ class ABIMerger {
                 a["type"] == b["type"] &&
                 field(a, "index_type") == field(b, "index_type") &&
                 // table_id is where the row physically lives and each secondary index carries
-                // its own, so a difference in either is a different table -- not a merge.
-                // These were omitted while cdt-abidiff's tables_match compared them, leaving
-                // the differ and the merger disagreeing on table identity.
-                field(a, "table_id") == field(b, "table_id") &&
+                // its own, so two DIFFERENT ids are a different table -- not a merge. These were
+                // omitted while cdt-abidiff's tables_match compared them, leaving the differ and
+                // the merger disagreeing on table identity.
+                //
+                // Absence is not a difference, though. Only an instantiation carries the real
+                // id, so a TU that sees a [[sysio::table("name")]] without one omits it, and
+                // the TU that does instantiate the table supplies it below.
+                compatible("table_id") &&
                 compatible("key_names") &&
                 compatible("key_types") &&
                 compatible("secondary_indexes");
@@ -298,7 +302,7 @@ class ABIMerger {
                   // is_same_func has already established these describe the same entity, so
                   // there is no conflict to resolve here: a populated list only ever fills
                   // in for an absent or empty one.
-                  for (const char* k : {"key_names", "key_types", "secondary_indexes"}) {
+                  for (const char* k : {"table_id", "key_names", "key_types", "secondary_indexes"}) {
                      const bool have_a = ret[i].count(k) && !ret[i][k].empty();
                      const bool have_b = obj_b.count(k) && !obj_b[k].empty();
                      if (!have_a && have_b)

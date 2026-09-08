@@ -22,9 +22,11 @@
 // Five cases in one translation unit:
 //   `renamed`  -- one instantiation. The annotation names it; "orig" is not published.
 //   `declared` -- annotated, never instantiated. Nothing else names a table for this struct, so
-//                 the annotation is the table. (A BARE [[sysio::table]] in the same position
-//                 produces nothing -- see bare_table_attr -- because there abigen would be
-//                 inventing the name rather than publishing one the author wrote.)
+//                 the annotation is the table -- but it carries no table_id, because only an
+//                 instantiation has one and there is none. (A BARE [[sysio::table]] in the same
+//                 position produces nothing at all -- see bare_table_attr -- because there
+//                 abigen would be inventing the name rather than publishing one the author
+//                 wrote. See named_table_xtu for why a guessed id is worse than none.)
 //   `shared`   -- two instantiations, and a [[sysio::kv_key]] override. Neither is renamed: each
 //                 keeps its own table parameter and BOTH carry the override's key names, and the
 //                 annotation is published as nothing, with a warning saying so. Publishing it as

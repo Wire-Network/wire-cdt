@@ -60,8 +60,7 @@
             "type": "my_value",
             "index_type": "i64",
             "key_names": ["region","id"],
-            "key_types": ["string","uint64"],
-            "table_id": 54814
+            "key_types": ["string","uint64"]
         },
         {
             "name": "kvrows",
