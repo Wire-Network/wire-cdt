@@ -388,10 +388,11 @@ the table held as a data member. Remove any one and it compiles:
 The diagnostic names the row type, not the initializer, so it is worth recognising: nothing is
 wrong with the struct.
 
-**The bare `[[sysio::table]]` is fine now.** It used to emit a second ABI table entry named after
-the *row struct* — `account` beside the real `accounts` — under a `table_id` nothing ever writes
-to, so `get_table_rows` for that name returned nothing. Fixed in this PR: the placeholder name a
-bare attribute carries is now superseded by the instantiation that actually names the table. On an
+**The bare `[[sysio::table]]` is fine as of
+[wire-cdt#117](https://github.com/Wire-Network/wire-cdt/pull/117).** Before it, the attribute
+emitted a second ABI table entry named after the *row struct* — `account` beside the real
+`accounts` — under a `table_id` nothing ever writes to, so `get_table_rows` for that name returned
+nothing. #117 makes the placeholder yield to the instantiation that actually names the table. On an
 older CDT, give the attribute an explicit name — `[[sysio::table("accounts")]]` — which avoided it
 on every version and is clearer regardless.
 
