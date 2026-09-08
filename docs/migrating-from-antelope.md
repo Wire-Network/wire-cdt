@@ -42,7 +42,8 @@ Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its 
 libc and libc++, the WASM contract library, and the CMake package.
 
 ```bash
-sudo apt install ./wire-cdt_<version>_amd64.deb ./wire-cdt-dev_<version>_amd64.deb
+version=1.0.0     # the release you downloaded
+sudo apt install "./wire-cdt_${version}_amd64.deb" "./wire-cdt-dev_${version}_amd64.deb"
 ```
 
 Install **both** packages. The base package carries the compiler drivers and the WASM libraries;
@@ -164,7 +165,9 @@ is the supported flow and is restricted to registered tier-1 node owners. On a l
 control the privileged `sysio` account, so the familiar form works:
 
 ```bash
-clio create account sysio mycontract <OwnerKey> <ActiveKey>
+owner_key=SYS6MRy...      # your account's public keys
+active_key=SYS6MRy...
+clio create account sysio mycontract "$owner_key" "$active_key"
 ```
 
 **A new account holds zero CPU and zero NET.** For a user account that does not matter — see
@@ -173,10 +176,14 @@ fatal, because on Wire the contract is the payer. Before an ordinary caller can 
 owner must issue it a policy:
 
 ```bash
-clio push action sysio.roa addpolicy '{"owner":"mycontract","issuer":"<nodeowner>","net_weight":"0.1000 SYS","cpu_weight":"0.1000 SYS","ram_weight":"1.0000 SYS","time_block":0,"network_gen":<gen>}' -p <nodeowner>@active
+nodeowner=wirenodeown     # the tier-1 node owner issuing the policy
+gen=1                     # the generation that issuer is registered in -- see below
+clio push action sysio.roa addpolicy \
+  "{\"owner\":\"mycontract\",\"issuer\":\"${nodeowner}\",\"net_weight\":\"0.1000 SYS\",\"cpu_weight\":\"0.1000 SYS\",\"ram_weight\":\"1.0000 SYS\",\"time_block\":0,\"network_gen\":${gen}}" \
+  -p "${nodeowner}@active"
 ```
 
-`<gen>` is the **network generation the issuer is registered in**, not a constant. `addpolicy`
+`gen` is the **network generation the issuer is registered in**, not a constant. `addpolicy`
 opens `nodeowners` scoped to the generation you pass and requires the issuer to be present there, so
 hard-coding `0` fails once the network has rolled over — or, worse, draws against an older
 generation's allocation. Read the current generation from the `roastate` singleton and confirm the
@@ -531,8 +538,8 @@ with, so ordinary calls into it fail.
 
 The full model — policies, node-owner tiers, how weight becomes throughput, subjective billing, and
 how it compares to staking, REX and PowerUp — is documented in wire-sysio:
-`wire-sysio`'s `docs/roa-overview.md`, which lands with
-[wire-sysio#583](https://github.com/Wire-Network/wire-sysio/pull/583) — read it there until that
+`wire-sysio`'s
+[docs/roa-overview.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/roa-overview.md) — read it there for that
 merges; the path does not exist on `master` yet. What follows is only what changes in *contract
 code*.
 
@@ -799,7 +806,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 
 | Doc | Topic |
 |---|---|
-| `docs/roa-overview.md` — in [wire-sysio#583](https://github.com/Wire-Network/wire-sysio/pull/583) until it merges | The resource model in full — policies, tiers, throughput, spam control, scenarios |
+| [`docs/roa-overview.md`](https://github.com/Wire-Network/wire-sysio/blob/master/docs/roa-overview.md) | The resource model in full — policies, tiers, throughput, spam control, scenarios |
 | [docs/kv-ram-billing.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/kv-ram-billing.md) | KV vs legacy RAM billing, with the per-row constants |
 | [docs/get-table-rows-api.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/get-table-rows-api.md) | Querying tables, and what changed from the old endpoint |
 | [docs/key-formats.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/key-formats.md) | Supported public-key formats |

@@ -40,10 +40,11 @@ emits **no** ABI table entry at all, so `get_table_rows` has nothing to describe
 > **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` did
 > not work here.** `kv::global` named its ABI entry by decoding the raw template parameter, which
 > is a hash for `_i`, not a name — so the ABI carried a garbage twin beside the annotated name.
-> Under 13 characters that was two entries under different `table_id`s, and `get_table_rows` by
-> the readable name found nothing; at 13 or more the two collided and the build failed with a
-> `table_id collision` that renaming could not clear. `kv::table` was never affected. If you are
-> on an older toolchain, use `_n` for globals. See
+> At **13 characters or fewer** that was two entries under different `table_id`s, and
+> `get_table_rows` by the readable name found nothing — abigen took the `string_to_name` branch for
+> any annotation that short. **Above 13** both derivations hashed, so the two collided and the build
+> failed with a `table_id collision` that renaming could not clear. `kv::table` was never affected.
+> If you are on an older toolchain, use `_n` for globals. See
 > [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
 
 ## API

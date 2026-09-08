@@ -16,7 +16,7 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 
 | Type | Use Case | Header |
 |------|----------|--------|
-| [`multi_index`](kv-multi-index.md) | Source-compatible EOSIO shim (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
+| [`multi_index`](kv-multi-index.md) | EOSIO compatibility shim (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
 | `singleton` | Scoped single value | `<sysio/singleton.hpp>` |
 
 ## Decision Matrix
@@ -28,7 +28,7 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 | Secondary indices | Optional (up to 16) | Optional (up to 16) | No | Up to 16 |
 | Scope | No (table_id isolation) | Yes (required) | No | Yes |
 | Key layout | `[K encoded]` | `[scope:8B][K encoded]` | `[name:8B]` | `[scope:8B][pk:8B]` |
-| Long table names (`_i`) | Yes | Yes | Not usable — see below | No (`_n` only) |
+| Long table names (`_i`) | Yes | Yes | Yes | Yes |
 | Zero-copy | Yes (trivially_copyable) | Yes | Yes | Yes |
 | Lambda emplace | Yes | Yes | No | Yes |
 | auto-increment PK | Yes (`primary_key()`) | Yes (`primary_key()`) | No | `available_primary_key()` |
@@ -57,14 +57,16 @@ For table names longer than 13 characters or with characters outside `a-z1-5.`:
 kv::table<"user_balance_history"_i, my_key, my_val>  users(get_self());
 ```
 
-The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` for ABI generation — **and keep the annotated name above 13 characters**, or abigen will describe the table under a different `table_id` than the one the rows use.
+The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` — with `_i` that annotation is the only place the readable name exists, since the literal is a hash.
 
-> **Not for `kv::global`.** A `_i`-named `kv::global` emits two ABI table entries — the annotated
-> name under one `table_id`, and a decoded-hash name under the one the rows actually use — so a
-> `get_table_rows` by the readable name finds nothing. Above 13 characters it fails to link with
-> a `table_id collision`. Reads and writes through the contract are correct either way. Use `_n`
-> for a config singleton; see
-> [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
+> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` worked
+> only on `kv::table` and `kv::scoped_table`.** For `kv::global`, `multi_index` and
+> `kv_multi_index`, abigen named the entry by decoding the raw template parameter — a hash, not a
+> name — so the ABI carried a garbage twin beside the annotated one. At **13 characters or fewer**
+> that was two entries under different `table_id`s, and `get_table_rows` by the readable name found
+> nothing; **above 13** the two collided and the build failed. Reads and writes through the
+> contract were correct either way. #115 makes the template-derived id authoritative for every
+> kind and length; on an older toolchain, keep those three on `_n`.
 
 ## Key Encoding
 

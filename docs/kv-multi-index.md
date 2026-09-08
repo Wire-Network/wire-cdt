@@ -11,9 +11,10 @@
 
 ## Overview
 
-`sysio::multi_index` is a source-compatible shim for the EOSIO `multi_index` — the same API over a
-different store, not the same implementation. Nearly all contract code carries over unchanged; the known
-divergences are:
+`sysio::multi_index` is a **compatibility shim** for the EOSIO `multi_index` — the same API over a
+different store, not the same implementation. Nearly all contract code carries over unchanged, but
+it is not fully source-compatible: the divergences below include edits every port must make. They
+are:
 
 - the postfix iterator operators `it++` / `it--` are deleted, because copying a KV iterator
   duplicates a host-side handle. Rewrite those to `++it` / `--it`. The compiler finds every
