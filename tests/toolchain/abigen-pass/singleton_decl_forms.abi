@@ -44,6 +44,16 @@
             ]
         },
         {
+            "name": "plain_memb_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "v",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "plain_tdef_row",
             "base": "",
             "fields": [
@@ -138,6 +148,14 @@
             "table_id": 33396
         },
         {
+            "name": "plainmemb",
+            "type": "plain_memb_row",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 30617
+        },
+        {
             "name": "plaintdef",
             "type": "plain_tdef_row",
             "index_type": "i64",
@@ -152,6 +170,22 @@
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],
             "table_id": 55044
+        },
+        {
+            "name": "scalarmemb",
+            "type": "uint64",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 52032
+        },
+        {
+            "name": "singleton_builtin_long_name",
+            "type": "uint64",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 296
         },
         {
             "name": "singleton_hashed_name",
