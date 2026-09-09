@@ -24,6 +24,16 @@
             ]
         },
         {
+            "name": "simple_name",
+            "base": "",
+            "fields": [
+                {
+                    "name": "value",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "tbl_config",
             "base": "",
             "fields": [
@@ -77,7 +87,7 @@
         },
         {
             "name": "smpl.conf5",
-            "type": "name",
+            "type": "simple_name",
             "index_type": "i64",
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],
@@ -85,7 +95,7 @@
         },
         {
             "name": "smpl.config",
-            "type": "name",
+            "type": "simple_name",
             "index_type": "i64",
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],

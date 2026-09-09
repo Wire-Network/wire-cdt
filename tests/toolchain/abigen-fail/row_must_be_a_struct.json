@@ -1,0 +1,13 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["--abigen"],
+         "expected": {
+            "stderr": [
+               "which is not a contract struct; a table row must be a struct this contract declares",
+               "'scalarrow'", "'textrow'", "'digestrow'", "'listrow'", "'nestedrow'", "'choicerow'", "'extrow'"
+            ]
+         }
+      }
+   ]
+}

@@ -196,6 +196,11 @@ struct abi_secondary_index {
    std::string name;
    std::string key_type;
    uint16_t    table_id = 0;
+   /// Compared when two table entries land under one name, to tell "the same table instantiated
+   /// twice" from "two different tables the ABI can hold only one of".
+   bool operator==(const abi_secondary_index& i) const {
+      return name == i.name && key_type == i.key_type && table_id == i.table_id;
+   }
 };
 
 struct abi_table {

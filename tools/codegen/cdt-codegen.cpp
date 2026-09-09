@@ -83,59 +83,18 @@ static void resolve_table_annotations(ojson& abi) {
          return x.name != y.name ? x.name < y.name : x.row < y.row;
       });
 
-      // [[sysio::kv_key]] describes the ROW, so its key layout belongs to every table over
-      // that struct -- including the ones the annotation could not name. Unconditional, and
-      // ahead of every naming decision, because it does not depend on any of them.
+      // [[sysio::kv_key]] is NOT applied to instantiated tables here. Each table's own path
+      // already knows its key layout: add_kv_table resolves the attribute for kv::table and
+      // composes [scope] + logical for a scoped one, and add_table takes the layout from the
+      // table kind, which is the physical truth for a kv_multi_index. Re-deriving it from the
+      // annotation meant reconstructing physical structure from FIELD NAMES -- the prefix was
+      // recognised by a field being called `scope` -- and that got both halves wrong: a logical
+      // key whose own first field is `scope` suppressed the physical one, and a suffix compared
+      // by name alone read a logical `primary_key:name` as the physical `primary_key:uint64`
+      // already applied. Both published a key the runtime does not write.
       //
-      // It describes the LOGICAL key, and only that. Whether a table also carries a physical
-      // `scope` ahead of it is a property of the TABLE: kv::scoped_table prepends one and
-      // kv::table does not, which is why add_kv_table composes [scope] + logical rather than
-      // publishing either alone. Replacing the whole array here dropped that prefix -- two
-      // scoped tables whose descriptors read [scope, account_id] were published as
-      // [account_id], so every client encoded a key the runtime never writes.
-      const auto scoped = [](const ojson& kn) {
-         return kn.is_array() && kn.size() > 0 && kn[0].as<std::string>() == "scope";
-      };
-      for (const auto& r : reqs) {
-         const auto it = by_row.find(r.row);
-         if (it == by_row.end() || !r.ann.has_key("key_names") || r.ann["key_names"].empty())
-            continue;
-         for (std::size_t i : it->second) {
-            ojson& t = abi["tables"][i];
-            // Already applied, prefix and all: add_kv_table resolves the same attribute on the
-            // kv::table path and composes [scope] + logical there. Re-deriving it here can only
-            // lose information -- the prefix is recognised by the NAME "scope", so a logical
-            // key whose own first field is called `scope` looked like the prefix, suppressed
-            // it, and published a key eight bytes short with its first element mistyped.
-            const auto ends_with_override = [&] {
-               if (!t.has_key("key_names") || t["key_names"].size() < r.ann["key_names"].size())
-                  return false;
-               const std::size_t off = t["key_names"].size() - r.ann["key_names"].size();
-               for (std::size_t k = 0; k < r.ann["key_names"].size(); ++k)
-                  if (t["key_names"][off + k] != r.ann["key_names"][k])
-                     return false;
-               return true;
-            };
-            if (ends_with_override())
-               continue;
-            ojson names = ojson::array();
-            ojson types = ojson::array();
-            // Keep the table's own prefix -- unless the annotation already supplies one. A
-            // [[sysio::kv_key]] with no argument IS the standard [scope][primary_key], and
-            // prepending to that would describe two scopes.
-            if (t.has_key("key_names") && scoped(t["key_names"]) && !scoped(r.ann["key_names"]) &&
-                t.has_key("key_types") && t["key_types"].size() > 0) {
-               names.push_back(t["key_names"][0]);
-               types.push_back(t["key_types"][0]);
-            }
-            for (const auto& n : r.ann["key_names"].array_range())
-               names.push_back(n);
-            for (const auto& ty : r.ann["key_types"].array_range())
-               types.push_back(ty);
-            t["key_names"] = std::move(names);
-            t["key_types"] = std::move(types);
-         }
-      }
+      // The annotation still carries the metadata, because a table it DECLARES has no
+      // instantiation to take a layout from. That is the only place it is used.
 
       // Classify, and refuse what cannot be decided on the annotation's own terms.
       for (auto& r : reqs) {

@@ -5,17 +5,16 @@
 // table_id collision pass, not the annotation resolver -- can see that a table went missing. The
 // contract writes two tables and the ABI describes one.
 //
-// It became reachable when an `_i` name could equal an `_n` one: `"cfg"_n` encodes to a name and
-// `"cfg"_i` hashes to a different table_id, and once the `_i` spelling is recovered both entries
-// ask to be called `cfg`. The ABI genuinely cannot hold both, so the entry is still dropped --
-// but the author is told which two collided, with the table_id and row type of each.
+// Two kv::tables over one row differing only in their KEY struct are the reachable shape: same
+// name, same table_id, same row type, same ABI type. Comparing only those four called them the
+// same table and kept whichever came first, so the published key layout depended on declaration
+// order and nothing said so.
 //
 // Repeated instantiations of ONE table are the ordinary case -- a table constructed in several
 // actions -- and must stay silent. `dup` below is instantiated twice for that reason.
 #include <sysio/sysio.hpp>
-#include <sysio/hash_id.hpp>
+#include <sysio/kv_table.hpp>
 #include <sysio/multi_index.hpp>
-#include <sysio/singleton.hpp>
 
 using namespace sysio;
 
@@ -23,9 +22,12 @@ class [[sysio::contract("table_name_collision")]] table_name_collision : public 
 public:
    using contract::contract;
 
-   struct arow {
-      uint64_t v;
-      SYSLIB_SERIALIZE(arow, (v))
+   struct by_id    { uint64_t id;    SYSLIB_SERIALIZE(by_id, (id)) };
+   struct by_owner { name     owner; SYSLIB_SERIALIZE(by_owner, (owner)) };
+
+   struct [[sysio::table]] row {
+      uint64_t balance;
+      SYSLIB_SERIALIZE(row, (balance))
    };
 
    struct [[sysio::table]] drow {
@@ -34,15 +36,13 @@ public:
       SYSLIB_SERIALIZE(drow, (id))
    };
 
-   using by_n = sysio::singleton<"cfg"_n, arow>;
-   using by_i = sysio::singleton<"cfg"_i, uint64_t>;
+   using keyed_by_id    = kv::table<"same"_n, by_id, row>;
+   using keyed_by_owner = kv::table<"same"_n, by_owner, row>;
 
    [[sysio::action]]
    void test() {
-      by_n a(get_self(), get_self().value);
-      by_i b(get_self(), get_self().value);
-      a.set({1}, get_self());
-      b.set(2, get_self());
+      keyed_by_id    a(get_self());
+      keyed_by_owner b(get_self());
    }
 
    [[sysio::action]]

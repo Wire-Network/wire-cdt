@@ -101,6 +101,68 @@ echo "Descriptor merge order"
 check_order rowless_first
 check_order marker_first
 
+# The same annotation from two translation units, with the [[sysio::kv_key]] override resolved
+# in one and not the other -- a key struct that one TU sees only forward-declared. Keeping
+# whichever record merged first published the physical key or the logical one depending on
+# filenames; the populated list wins now, from either order.
+ann_desc() {
+    cat <<EOF
+{
+  "____comment": "hand-written test descriptor",
+  "version": "sysio::abi/1.2",
+  "structs": [
+    {"name": "config_row", "base": "", "fields": [{"name": "id", "type": "uint64"}]},
+    {"name": "test", "base": "", "fields": []}
+  ],
+  "types": [],
+  "actions": [{"name": "test", "type": "test", "ricardian_contract": ""}],
+  "ricardian_clauses": [], "variants": [], "abi_extensions": [], "action_results": [],
+  "wasm_actions": [], "wasm_notifies": [], "wasm_entries": [], "pb_types": [],
+  "tables": [],
+  "____table_annotations": [
+    {"name": "cfg", "type": "config_row", "row": "config_row", "loc": "row.hpp:5:1",
+     "key_names": $1, "key_types": $2}
+  ]
+}
+EOF
+}
+
+mkdir -p "$WORK/ann_empty_first" "$WORK/ann_rich_first"
+ann_desc '[]' '[]'                        > "$WORK/ann_empty_first/1_empty.desc"
+ann_desc '["account_id"]' '["uint64"]'    > "$WORK/ann_empty_first/2_rich.desc"
+ann_desc '["account_id"]' '["uint64"]'    > "$WORK/ann_rich_first/1_rich.desc"
+ann_desc '[]' '[]'                        > "$WORK/ann_rich_first/2_empty.desc"
+
+check_annotation_order() {
+    local label="$1"
+    local out="$WORK/${label}.abi"
+    rm -f "$out"
+    if ! "$CODEGEN" --finalize --contract merge_probe \
+            --desc-file "$WORK/${label}/1_"*.desc --desc-file "$WORK/${label}/2_"*.desc \
+            --abi-output "$out" 2>"$WORK/${label}.err"; then
+        fail "${label}: cdt-codegen exited non-zero"
+        sed 's/^/      /' "$WORK/${label}.err"
+        return
+    fi
+    local keys
+    keys="$(python3 -c "
+import json, sys
+d = json.load(open(sys.argv[1]))
+t = d.get('tables', [])
+print(','.join(t[0].get('key_names', [])) if t else '<no table>')
+" "$out")"
+    if [ "$keys" = "account_id" ]; then
+        pass "${label}: resolved kv_key metadata survives"
+    else
+        fail "${label}: expected account_id, got ${keys:-<none>}"
+    fi
+}
+
+echo ""
+echo "Annotation metadata merge"
+check_annotation_order ann_empty_first
+check_annotation_order ann_rich_first
+
 echo ""
 echo "  ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ]

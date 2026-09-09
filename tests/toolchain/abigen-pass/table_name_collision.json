@@ -4,7 +4,7 @@
          "expected": {
             "abi-file": "table_name_collision.abi",
             "stderr": [
-               "two different tables are both called 'cfg'"
+               "two different tables are both called 'same'"
             ]
          }
       }

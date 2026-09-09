@@ -8,7 +8,7 @@
 
 #include <algorithm>
 #include <optional>
-#include <set>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -395,14 +395,37 @@ class ABIMerger {
                    (a.has_key("row") ? a["row"].as<std::string>() : std::string{});
          };
          ojson anns = ojson::array();
-         std::set<std::string> seen;
-         const ojson& a = abi;
-         for (const ojson* side : {&a, &b}) {
+         std::map<std::string, std::size_t> at;
+         const ojson& self = abi;
+         for (const ojson* side : {&self, &b}) {
             if (!side->has_key("____table_annotations"))
                continue;
-            for (const auto& a : (*side)["____table_annotations"].array_range())
-               if (seen.insert(key_of(a)).second)
-                  anns.push_back(a);
+            for (const auto& ann : (*side)["____table_annotations"].array_range()) {
+               const auto [it, fresh] = at.emplace(key_of(ann), anns.size());
+               if (fresh) {
+                  anns.push_back(ann);
+                  continue;
+               }
+               // The same annotation from two translation units, and not necessarily with the
+               // same detail: a [[sysio::kv_key]] naming a struct that one TU sees only
+               // forward-declared resolves to nothing there and to its fields in the TU that
+               // completes it. Keeping whichever record sorted first published the physical key
+               // or the logical one depending on filenames. Take the populated list, as table
+               // merging does, and refuse two that disagree.
+               ojson& kept = anns[it->second];
+               for (const char* k : {"key_names", "key_types"}) {
+                  const bool have  = kept.has_key(k) && !kept[k].empty();
+                  const bool other = ann.has_key(k) && !ann[k].empty();
+                  if (!have && other)
+                     kept[k] = ann[k];
+                  else if (have && other && kept[k] != ann[k])
+                     throw std::runtime_error(
+                        std::string("Error, ABI structs malformed : [[sysio::table(\"") +
+                        ann["name"].as<std::string>() + "\")]] on '" +
+                        ann["row"].as<std::string>() + "' resolves " + k +
+                        " differently in two translation units");
+               }
+            }
          }
          return anns;
       }

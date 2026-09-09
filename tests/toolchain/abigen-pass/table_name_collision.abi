@@ -4,12 +4,22 @@
     "types": [],
     "structs": [
         {
-            "name": "arow",
+            "name": "by_id",
             "base": "",
             "fields": [
                 {
-                    "name": "v",
+                    "name": "id",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "by_owner",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
                 }
             ]
         },
@@ -27,6 +37,16 @@
             "name": "one",
             "base": "",
             "fields": []
+        },
+        {
+            "name": "row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
         },
         {
             "name": "test",
@@ -58,20 +78,20 @@
     ],
     "tables": [
         {
-            "name": "cfg",
-            "type": "arow",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 28383
-        },
-        {
             "name": "dup",
             "type": "drow",
             "index_type": "i64",
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],
             "table_id": 32445
+        },
+        {
+            "name": "same",
+            "type": "row",
+            "index_type": "i64",
+            "key_names": ["id"],
+            "key_types": ["uint64"],
+            "table_id": 6122
         }
     ],
     "ricardian_clauses": [],

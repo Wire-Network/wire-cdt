@@ -108,22 +108,6 @@
     ],
     "tables": [
         {
-            "name": "....gorqwljfh",
-            "type": "uint64",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 54034
-        },
-        {
-            "name": "cksing",
-            "type": "checksum256",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 3378
-        },
-        {
             "name": "kvtdefsing",
             "type": "kvtdef_row",
             "index_type": "i64",
@@ -146,14 +130,6 @@
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],
             "table_id": 34840
-        },
-        {
-            "name": "namesing",
-            "type": "name",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 33396
         },
         {
             "name": "plainmemb",
@@ -180,30 +156,6 @@
             "table_id": 55044
         },
         {
-            "name": "scalarmemb",
-            "type": "uint64",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 52032
-        },
-        {
-            "name": "singleton_builtin_long_name",
-            "type": "uint64",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 296
-        },
-        {
-            "name": "singleton_cksum_long_name",
-            "type": "checksum256",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 60525
-        },
-        {
             "name": "singleton_hashed_name",
             "type": "hashed_row",
             "index_type": "i64",
@@ -212,44 +164,12 @@
             "table_id": 14103
         },
         {
-            "name": "singleton_outer_alias_name",
-            "type": "uint64",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 52488
-        },
-        {
-            "name": "singleton_string_long_name",
-            "type": "string",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 51186
-        },
-        {
-            "name": "strsing",
-            "type": "string",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 17390
-        },
-        {
             "name": "tdefsing",
             "type": "tdef_row",
             "index_type": "i64",
             "key_names": ["scope","primary_key"],
             "key_types": ["name","uint64"],
             "table_id": 53061
-        },
-        {
-            "name": "uintsing",
-            "type": "uint64",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 59809
         },
         {
             "name": "usngsing",

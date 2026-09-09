@@ -5,7 +5,6 @@
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Expr.h>
 #include <clang/Basic/Builtins.h>
-#include <clang/Lex/Lexer.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <llvm/Support/raw_ostream.h>
@@ -372,87 +371,6 @@ struct generation_utils {
          if (tname == n) return true;
       }
       return false;
-   }
-
-   /// Put back the TemplateSpecializationType sugar a canonical type has had stripped.
-   ///
-   /// A template argument read with getTemplateArgs()[i].getAsType() is CANONICAL, and both
-   /// translate_type() and add_type() recognise containers, maps, tuples and variants only
-   /// through is_template_specialization(), which needs a TemplateSpecializationType. A
-   /// std::vector<uint64_t> ROW therefore translated to its record name `vector` -- neither an
-   /// ABI builtin nor anything the document declares -- while the identical type spelled in an
-   /// action parameter, where the sugar survives, translated to `uint64[]`. Same type, two
-   /// answers, decided by which side of the toolchain met it.
-   ///
-   /// Rebuilding the sugar puts both back on one path, rather than teaching a second shape to
-   /// every branch that matches the first.
-   ///
-   /// Only for the templates the ABI gives a spelling of its OWN -- the containers, the map
-   /// and pair and array shapes. Everything else keeps the canonical handling at the foot of
-   /// translate_type(), which resolves through the alias table, and must: std::string
-   /// canonicalises to basic_string<char, char_traits<char>, allocator<char>> and reaches
-   /// `string` only by that route. Resugaring it instead produced
-   /// `basic_string_int8_char_traits_char__allocator_char_` -- a name for the ABI's most common
-   /// builtin. Sugar is what those branches need; it is not an improvement everywhere.
-   ///
-   /// NOT variant or tuple. Their canonical arguments are held as a single Pack, which
-   /// get_template_argument() does not handle -- it reaches CDT_INTERNAL_ERROR and terminates
-   /// the compiler. A canonical variant row keeps the old path, where it is refused with a
-   /// diagnostic; turning that diagnostic into an abort is the opposite of what this branch is
-   /// for.
-   ///
-   /// Only the LEADING arguments the ABI spelling uses, too. The rest are allocators,
-   /// comparators and deleters, present in the canonical form and never in a written one, and
-   /// the container helpers in this file decide by COUNTING '<' in getAsString(): rebuilt with
-   /// its allocator, a vector printed `vector<unsigned long, allocator<unsigned long>>`, read
-   /// as a nested container, and was handed to add_struct() -- which synthesised a struct named
-   /// after the allocator, based on an `__vector_base_...` the document never declares.
-   ///
-   /// One level only. A container OF a container is left alone: the explicit-nested machinery
-   /// that names those (`B_vector_uint64_E`) is driven off the same printed form and declares
-   /// the typedef the name needs, and a half-resugared type slipped through it -- published as
-   /// `B_vector_uint64_E[]` with no typedef declared, which is a document the chain refuses.
-   /// Left canonical, a nested row reaches abi_can_describe_row() and is refused where the
-   /// author can see it, which is what master did and what this branch should keep doing until
-   /// nesting is supported deliberately.
-   ///
-   /// Types that already carry sugar, and types that are not class template specializations at
-   /// all, are returned unchanged.
-   inline clang::QualType resugar_specialization( const clang::QualType& type ) {
-      static const std::map<std::string, unsigned> abi_spelled = {
-         {"vector", 1}, {"set", 1}, {"deque", 1}, {"list", 1}, {"optional", 1},
-         {"binary_extension", 1}, {"ignore", 1}, {"pb", 1},
-         {"map", 2}, {"pair", 2}, {"array", 2},
-      };
-      // A type that still carries sugar -- elaborated, typedef'd, already a specialization
-      // type -- is not a RecordType and falls out here, which is what leaves it unchanged.
-      const auto* rt = llvm::dyn_cast<clang::RecordType>(type.getTypePtr());
-      if (!rt)
-         return type;
-      const auto* cts = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(rt->getDecl());
-      if (!cts || !cts->getSpecializedTemplate())
-         return type;
-      const auto it = abi_spelled.find(cts->getSpecializedTemplate()->getName().str());
-      if (it == abi_spelled.end())
-         return type;
-      const auto& args = cts->getTemplateArgs();
-      if (args.size() < it->second)
-         return type;
-      llvm::SmallVector<clang::TemplateArgument, 2> kept;
-      for (unsigned i = 0; i < it->second; ++i) {
-         const auto& arg = args[i];
-         if (arg.getKind() == clang::TemplateArgument::Type) {
-            // A nested container: leave the whole type canonical. See above.
-            if (const auto* art = llvm::dyn_cast<clang::RecordType>(arg.getAsType().getTypePtr()))
-               if (const auto* acts = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(art->getDecl()))
-                  if (acts->getSpecializedTemplate() &&
-                      abi_spelled.count(acts->getSpecializedTemplate()->getName().str()))
-                     return type;
-         }
-         kept.push_back(arg);
-      }
-      return cts->getASTContext().getTemplateSpecializationType(
-         clang::TemplateName(cts->getSpecializedTemplate()), kept, type);
    }
 
    using template_arg_t = std::variant<clang::QualType, clang::Expr*, llvm::APSInt>;
