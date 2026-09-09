@@ -59,32 +59,21 @@ Without the annotation an `_i` table is published under the decode of its hash, 
 can address. A row is always a struct, so there is always somewhere to put the annotation.
 
 **A name is letters, digits, underscore and dot** — the `_n` alphabet, plus what `_i` allows.
-The annotation's argument is read from the source *literally*, not as the compiler's cooked
-value, so anything the two could disagree about is refused rather than guessed at:
+That much is enforced, because these names leave the toolchain in the ABI and are read by
+wire-sysio, SHiP and Hyperion:
 
 ```cpp
 [[sysio::table("accounts")]]           // fine
 [[sysio::table("smpl.conf5")]]         // fine -- `.` is part of the name alphabet
-[[sysio::table("config\x31")]]         // error: not one plain string literal
-[[sysio::table("con" "catenated")]]    // error: not one plain string literal
-[[sysio::table("has space")]]          // error: whitespace does not survive the encoding
-[[sysio::table("")]]                   // error: omit the argument instead
 [[sysio::table("has-hyphen")]]         // error: not a usable table name
 ```
 
-An **object-like macro** carries its argument fine, since the literal is in the macro body:
-
-```cpp
-#define NAMED_TABLE [[sysio::table("user_preferences")]]
-struct NAMED_TABLE preference { … };                     // fine
-```
-
-A **function-like** one cannot — at the macro's own location the argument is the parameter, not
-the caller's literal, so there is nothing to read and it is refused rather than dropped.
-
-These names leave the toolchain in the ABI and are read by wire-sysio, SHiP and Hyperion. `_i`
-still lifts the 13-character limit — the name is hashed, not encoded — so a long readable name is
-exactly what it is for.
+**Write the name as a plain string literal.** abigen reads the annotation's argument as source
+text, not as the compiler's cooked value, so the two can disagree — an escape stays uncooked,
+adjacent literals are truncated to the first, and whitespace does not survive the encoding. Some
+of those are caught by the charset above; the rest simply produce a name you did not write. Write
+`"user_preferences"`, not `"user_" "preferences"` and not `"user\x5fpreferences"`, and put the
+attribute in the source rather than behind a macro that supplies its argument clause.
 
 If the row struct is declared at namespace scope rather than inside the contract class, say which
 contract it belongs to — nothing else associates it:
@@ -97,26 +86,17 @@ struct [[sysio::table("user_preferences"), sysio::contract("mycontract")]] prefe
 
 The override names a struct whose fields become the table's ABI key layout.
 
-**Where it is looked for**, in order: the row itself, then the enclosing class, then each
-enclosing namespace out to the translation unit. It may be a struct or an alias to one. The
-**first scope that declares the name decides** — a nearer declaration shadows an outer one — and
-it must be a complete struct there.
-
-That is a rule, not an approximation of C++ lookup: abigen runs after Sema, so it cannot see
-using-declarations, inline namespaces or dependent scopes. Anything it cannot resolve is an error
-naming what it looked for, rather than a guess.
-
-It must also be **visible where the table is instantiated** — that translation unit is the one
-whose key layout reaches the ABI, and nothing later can repair it:
+**Where it is looked for**: types nested in the row, then the row's enclosing context. If it is
+not found there, abigen warns and the table's ABI key layout falls back to the physical key —
+which is usually not what was intended, so the warning is worth reading:
 
 ```
-error: abigen error (kv_key struct 'logical_key' is not visible where this table is
-       instantiated, so its key layout cannot be described; include the definition in
-       this translation unit)
+warning: kv_key struct 'logical_key' not found; the physical key's field names will be used in
+         the ABI
 ```
 
-A second translation unit that happens to see the struct completed enriches only the annotation
-during the descriptor merge; the live table keeps the physical key it was built with.
+This is a simple scan, not C++ name lookup — abigen runs after Sema — so declare the key struct
+inside the row or beside it, where the scan will find it.
 
 ## What is refused
 

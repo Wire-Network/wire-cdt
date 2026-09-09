@@ -1,9 +1,0 @@
-{
-   "tests": [
-      {
-         "expected": {
-            "stderr": "a macro parameter cannot be used, since the argument is read as source text"
-         }
-      }
-   ]
-}
