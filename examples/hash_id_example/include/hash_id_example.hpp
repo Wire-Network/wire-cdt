@@ -13,8 +13,13 @@ struct preference_key {
    SYSLIB_SERIALIZE(preference_key, (user)(category))
 };
 
-// Value struct — long table name requires [[sysio::table]] for ABI
-struct [[sysio::table("user_preferences"), sysio::kv_key("preference_key")]] preference {
+// Value struct — long table name requires [[sysio::table]] for ABI.
+// [[sysio::contract]] as well: the annotation is only recorded for a struct abigen can tie to
+// this contract, and a struct at namespace scope has nothing else tying it. Without it the
+// annotation never reaches the descriptor, so nothing renames the table and the ABI publishes
+// name_to_string() of the _i hash -- `31v1bqlusjbf5`, which no client can address.
+struct [[sysio::table("user_preferences"), sysio::contract("hash_id_example"),
+         sysio::kv_key("preference_key")]] preference {
    std::string value;
    uint64_t    updated_at;
    SYSLIB_SERIALIZE(preference, (value)(updated_at))
@@ -24,7 +29,7 @@ struct [[sysio::table("user_preferences"), sysio::kv_key("preference_key")]] pre
 using prefs_table = kv::table<"user_preferences"_i, preference_key, preference>;
 
 // Global with long name
-struct [[sysio::table("feature_flags")]] feature_flags {
+struct [[sysio::table("feature_flags"), sysio::contract("hash_id_example")]] feature_flags {
    bool enable_notifications;
    bool enable_dark_mode;
    SYSLIB_SERIALIZE(feature_flags, (enable_notifications)(enable_dark_mode))
