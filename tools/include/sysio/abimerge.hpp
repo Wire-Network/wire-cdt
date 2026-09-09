@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -240,13 +241,6 @@ class ABIMerger {
                 compatible("secondary_indexes");
       }
 
-      /// Two records of the same annotation. The same header seen from two translation units
-      /// yields identical ones; differing ones mean two row structs claim one ABI table name,
-      /// which the ABI cannot express.
-      static bool annotation_is_same(ojson a, ojson b) {
-         return a["name"] == b["name"] && a["type"] == b["type"] && a["row"] == b["row"];
-      }
-
       static bool clause_is_same(ojson a, ojson b) {
          return a["id"] == b["id"] &&
                 a["body"] == b["body"];
@@ -382,13 +376,30 @@ class ABIMerger {
          return tabs;
       }
 
+      /// Annotations are identified by (name, row), so two ROW STRUCTS asking for one ABI name
+      /// both survive the merge and reach the resolver, which refuses them together and says
+      /// so. Keyed on `name` alone -- as every other section is -- the merge threw
+      /// "already defined" instead, and the same source produced a diagnostic or a dead link
+      /// depending only on whether the two rows happened to share a translation unit. Deciding
+      /// a link-wide question link-wide is the point of carrying these at all.
       ojson merge_table_annotations(ojson b) {
          ojson anns = ojson::array();
          if (!abi.has_key("____table_annotations") && !b.has_key("____table_annotations"))
             return anns;
          if (!abi.has_key("____table_annotations")) abi["____table_annotations"] = ojson::array();
          if (!b.has_key("____table_annotations"))   b["____table_annotations"]   = ojson::array();
-         add_object_to_array(anns, abi, b, "____table_annotations", "name", annotation_is_same);
+
+         const auto key_of = [](const ojson& a) {
+            return a["name"].as<std::string>() + '\0' +
+                   (a.has_key("row") ? a["row"].as<std::string>() : std::string{});
+         };
+         std::set<std::string> seen;
+         for (const ojson* side : {&abi, &b}) {
+            for (const auto& a : (*side)["____table_annotations"].array_range()) {
+               if (seen.insert(key_of(a)).second)
+                  anns.push_back(a);
+            }
+         }
          return anns;
       }
 

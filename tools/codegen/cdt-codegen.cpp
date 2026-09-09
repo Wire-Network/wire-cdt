@@ -23,6 +23,29 @@
 ///
 /// Row structs are matched by QUALIFIED name (`____row`), not by the ABI `type`: ns1::row and
 /// ns2::row both serialise as `row`, and matching on that conflates them.
+/// Apply each [[sysio::table("name")]] to the tables instantiated over its row struct, now that
+/// every descriptor has been merged and the count is known, then strip the descriptor-only keys.
+///
+/// abigen cannot do this. The annotation renames the table published over a row struct -- it has
+/// to, because a `_i`-named table's raw value is a DJB2 hash and the readable name lives only in
+/// the annotation -- but it renames ONE table, and only into a name no other table holds. Both
+/// are link-wide facts. A translation unit that decides on its own partial view emits a
+/// descriptor that disagrees with its siblings, and the merge then refuses the link.
+///
+/// Row structs are matched by QUALIFIED name (`____row`), not by the ABI `type`: ns1::row and
+/// ns2::row both serialise as `row`, and matching on that conflates them.
+///
+/// The whole set is resolved before any of it is applied. Deciding one annotation at a time
+/// against a `taken` set that the previous decision had already mutated made the outcome depend
+/// on visit order, and across translation units that order is descriptor merge order: with
+/// physical tables `alpha` and `bravo` and annotations alpha->bravo, bravo->charlie, one order
+/// published {alpha, charlie} and the other {bravo, charlie}. Identical sources, different ABIs.
+///
+/// So: refuse the ambiguities first, then apply what remains to a fixed point. A rename waits
+/// for its target to be free, and a target held by a table that is itself renamed away does
+/// become free -- which is how the chain above resolves to {bravo, charlie} whichever end it is
+/// read from. Targets are unique by then, so no two requests can race for one name, and a cycle
+/// simply never comes free and is refused with the same diagnostic as any occupied name.
 static void resolve_table_annotations(ojson& abi) {
    if (!abi.has_key("tables"))
       return;
@@ -45,89 +68,166 @@ static void resolve_table_annotations(ojson& abi) {
    ojson declared = ojson::array();
    bool  renamed  = false;
    if (abi.has_key("____table_annotations")) {
-      for (const auto& a : abi["____table_annotations"].array_range()) {
-         const auto name = a["name"].as<std::string>();
-         const auto row  = a["row"].as<std::string>();
-         const auto loc  = a.has_key("loc") ? a["loc"].as<std::string>() : std::string{};
-         auto       it   = by_row.find(row);
+      /// One annotation's request, as it stands before anything is applied.
+      struct request {
+         std::string  name;      ///< the ABI name asked for
+         std::string  row;       ///< qualified name of the annotated row struct
+         std::string  loc;       ///< where to report
+         ojson        ann;       ///< the annotation record, for key metadata and declares
+         std::size_t  target = 0;///< the table to rename, when this is a rename
+         bool         declares = false; ///< nothing instantiates the row: the annotation IS the table
+         bool         pending  = true;  ///< still wants the name
+      };
 
+      std::vector<request> reqs;
+      for (const auto& a : abi["____table_annotations"].array_range()) {
+         request r;
+         r.name = a["name"].as<std::string>();
+         r.row  = a["row"].as<std::string>();
+         r.loc  = a.has_key("loc") ? a["loc"].as<std::string>() : std::string{};
+         r.ann  = a;
+         reqs.push_back(std::move(r));
+      }
+      // Descriptors are merged by appending, so the array order is merge order. Sorting by
+      // (name, row) is what makes every later step read the same from any link.
+      std::sort(reqs.begin(), reqs.end(), [](const request& x, const request& y) {
+         return x.name != y.name ? x.name < y.name : x.row < y.row;
+      });
+
+      // [[sysio::kv_key]] describes the ROW, so its key layout belongs to every table over
+      // that struct -- including the ones the annotation could not name. Unconditional, and
+      // ahead of every naming decision, because it does not depend on any of them.
+      //
+      // It describes the LOGICAL key, and only that. Whether a table also carries a physical
+      // `scope` ahead of it is a property of the TABLE: kv::scoped_table prepends one and
+      // kv::table does not, which is why add_kv_table composes [scope] + logical rather than
+      // publishing either alone. Replacing the whole array here dropped that prefix -- two
+      // scoped tables whose descriptors read [scope, account_id] were published as
+      // [account_id], so every client encoded a key the runtime never writes.
+      const auto scoped = [](const ojson& kn) {
+         return kn.is_array() && kn.size() > 0 && kn[0].as<std::string>() == "scope";
+      };
+      for (const auto& r : reqs) {
+         const auto it = by_row.find(r.row);
+         if (it == by_row.end() || !r.ann.has_key("key_names") || r.ann["key_names"].empty())
+            continue;
+         for (std::size_t i : it->second) {
+            ojson& t = abi["tables"][i];
+            ojson names = ojson::array();
+            ojson types = ojson::array();
+            // Keep the table's own prefix -- unless the annotation already supplies one. A
+            // [[sysio::kv_key]] with no argument IS the standard [scope][primary_key], and
+            // prepending to that would describe two scopes.
+            if (t.has_key("key_names") && scoped(t["key_names"]) && !scoped(r.ann["key_names"]) &&
+                t.has_key("key_types") && t["key_types"].size() > 0) {
+               names.push_back(t["key_names"][0]);
+               types.push_back(t["key_types"][0]);
+            }
+            for (const auto& n : r.ann["key_names"].array_range())
+               names.push_back(n);
+            for (const auto& ty : r.ann["key_types"].array_range())
+               types.push_back(ty);
+            t["key_names"] = std::move(names);
+            t["key_types"] = std::move(types);
+         }
+      }
+
+      // Classify, and refuse what cannot be decided on the annotation's own terms.
+      for (auto& r : reqs) {
+         const auto it = by_row.find(r.row);
          if (it == by_row.end()) {
             // Nothing instantiates the struct, so the annotation is the table. No table_id:
             // only an instantiation carries one.
-            if (taken.count(name)) {
-               std::cerr << loc << ": warning: [[sysio::table(\"" << name
-                         << "\")]] declares a table, but another table in this contract is "
-                            "already called '" << name << "'; '" << row << "' is not described\n";
-               continue;
-            }
-            taken.insert(name);
-            ojson t;
-            t["name"] = a["name"];
-            t["type"] = a["type"];
-            t["index_type"] = "i64";
-            t["key_names"] = a["key_names"];
-            t["key_types"] = a["key_types"];
-            declared.push_back(std::move(t));
+            r.declares = true;
             continue;
          }
-
          const auto& idx = it->second;
-         const bool already = std::any_of(idx.begin(), idx.end(), [&](std::size_t i) {
-            return abi["tables"][i]["name"].as<std::string>() == name;
-         });
+         if (std::any_of(idx.begin(), idx.end(), [&](std::size_t i) {
+                return abi["tables"][i]["name"].as<std::string>() == r.name;
+             })) {
+            r.pending = false;   // a table over this row is already called that
+            continue;
+         }
+         if (idx.size() > 1) {
+            std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name
+                      << "\")]] can name only one table, but '" << r.row << "' is the row type of "
+                      << idx.size() << "; each is named after its own table parameter in the ABI\n";
+            r.pending = false;
+            continue;
+         }
+         r.target = idx.front();
+      }
 
-         if (!already) {
-            if (idx.size() > 1) {
-               std::cerr << loc << ": warning: [[sysio::table(\"" << name
-                         << "\")]] can name only one table, but '" << row << "' is the row type of "
-                         << idx.size() << "; each is named after its own table parameter in the ABI\n";
-            } else if (taken.count(name)) {
-               std::cerr << loc << ": warning: [[sysio::table(\"" << name << "\")]] cannot rename '"
-                         << abi["tables"][idx.front()]["name"].as<std::string>()
-                         << "': another table in this contract is already called '" << name
-                         << "', so it keeps its own table parameter as its ABI name\n";
+      // Two row structs asking for one name. Neither can have it -- the ABI holds one table
+      // per name -- and picking by declaration order is how the old set comparator silently
+      // renamed whichever came first. Refused together, and both are told about the other.
+      std::map<std::string, std::vector<const request*>> wanted;
+      for (const auto& r : reqs)
+         if (r.pending)
+            wanted[r.name].push_back(&r);
+      for (auto& r : reqs) {
+         if (!r.pending)
+            continue;
+         const auto& rivals = wanted[r.name];
+         if (rivals.size() < 2)
+            continue;
+         std::string others;
+         for (const auto* o : rivals) {
+            if (o->row == r.row)
+               continue;
+            if (!others.empty())
+               others += ", ";
+            others += "'" + o->row + "'";
+         }
+         std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name << "\")]] is asked for by "
+                   << rivals.size() << " row structs (" << others << " as well as '" << r.row
+                   << "'), and the ABI can hold only one table called '" << r.name
+                   << "'; none of them is renamed\n";
+         r.pending = false;
+      }
+
+      // Apply to a fixed point. A rename frees the name its table held, which may be exactly
+      // what another request is waiting for, so keep sweeping until a sweep changes nothing.
+      for (bool progress = true; progress; ) {
+         progress = false;
+         for (auto& r : reqs) {
+            if (!r.pending || taken.count(r.name))
+               continue;
+            if (r.declares) {
+               ojson t;
+               t["name"]       = r.ann["name"];
+               t["type"]       = r.ann["type"];
+               t["index_type"] = "i64";
+               t["key_names"]  = r.ann["key_names"];
+               t["key_types"]  = r.ann["key_types"];
+               declared.push_back(std::move(t));
             } else {
-               taken.erase(abi["tables"][idx.front()]["name"].as<std::string>());
-               abi["tables"][idx.front()]["name"] = a["name"];
-               taken.insert(name);
+               taken.erase(abi["tables"][r.target]["name"].as<std::string>());
+               abi["tables"][r.target]["name"] = r.ann["name"];
                renamed = true;
             }
-         }
-
-         // [[sysio::kv_key]] describes the ROW, so its key layout belongs to every table over
-         // that struct -- including the ones the annotation could not name.
-         //
-         // It describes the LOGICAL key, and only that. Whether a table also carries a physical
-         // `scope` ahead of it is a property of the TABLE: kv::scoped_table prepends one and
-         // kv::table does not, which is why add_kv_table composes [scope] + logical rather than
-         // publishing either alone. Replacing the whole array here dropped that prefix -- two
-         // scoped tables whose descriptors read [scope, account_id] were published as
-         // [account_id], so every client encoded a key the runtime never writes.
-         if (a.has_key("key_names") && !a["key_names"].empty()) {
-            const auto scoped = [](const ojson& kn) {
-               return kn.is_array() && kn.size() > 0 && kn[0].as<std::string>() == "scope";
-            };
-            for (std::size_t i : idx) {
-               ojson& t = abi["tables"][i];
-               ojson names = ojson::array();
-               ojson types = ojson::array();
-               // Keep the table's own prefix -- unless the annotation already supplies one. A
-               // [[sysio::kv_key]] with no argument IS the standard [scope][primary_key], and
-               // prepending to that would describe two scopes.
-               if (t.has_key("key_names") && scoped(t["key_names"]) && !scoped(a["key_names"]) &&
-                   t.has_key("key_types") && t["key_types"].size() > 0) {
-                  names.push_back(t["key_names"][0]);
-                  types.push_back(t["key_types"][0]);
-               }
-               for (const auto& n : a["key_names"].array_range())
-                  names.push_back(n);
-               for (const auto& ty : a["key_types"].array_range())
-                  types.push_back(ty);
-               t["key_names"] = std::move(names);
-               t["key_types"] = std::move(types);
-            }
+            taken.insert(r.name);
+            r.pending = false;
+            progress  = true;
          }
       }
+
+      // Whatever is still pending wants a name that never came free.
+      for (const auto& r : reqs) {
+         if (!r.pending)
+            continue;
+         if (r.declares) {
+            std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name
+                      << "\")]] declares a table, but another table in this contract is "
+                         "already called '" << r.name << "'; '" << r.row << "' is not described\n";
+         } else {
+            std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name << "\")]] cannot rename '"
+                      << abi["tables"][r.target]["name"].as<std::string>()
+                      << "': another table in this contract is already called '" << r.name
+                      << "', so it keeps its own table parameter as its ABI name\n";
+         }
+      }
+
       abi.erase("____table_annotations");
    }
 

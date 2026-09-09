@@ -227,7 +227,15 @@ struct abi_table_annotation {
    std::string loc;    ///< source location of the annotated struct, for diagnostics
    std::vector<std::string> key_names;  ///< resolved [[sysio::kv_key]] override, if any
    std::vector<std::string> key_types;
-   bool operator<(const abi_table_annotation& a) const { return name < a.name; }
+   /// Ordered by (name, row), not by name alone. The ABI cannot hold two tables under one
+   /// name, but two ROW STRUCTS asking for the same one is a thing a contract can write --
+   /// and it is the resolver's business to refuse it, with a diagnostic naming both. Ordering
+   /// by name alone made the set swallow the second before the resolver ever saw it: only the
+   /// first row was renamed, the other kept its table parameter, nothing was reported, and
+   /// swapping the two declarations swapped which one won.
+   bool operator<(const abi_table_annotation& a) const {
+      return name != a.name ? name < a.name : row < a.row;
+   }
 };
 
 struct abi_ricardian_clause_pair {
