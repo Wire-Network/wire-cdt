@@ -1343,24 +1343,16 @@ namespace sysio { namespace cdt {
             return false;
          }
 
-         /// The contract member -- alias or data member -- that names this specialization, or
-         /// null. defined_in_contract() is this reduced to a bool; the decl itself is what the
-         /// `_i` recovery below needs, because only a WRITTEN declaration keeps the
-         /// TypeSourceInfo in which the literal's spelling survives.
-         const clang::Decl* contract_member_naming(const clang::ClassTemplateSpecializationDecl* decl) const {
+         bool defined_in_contract(const clang::ClassTemplateSpecializationDecl* decl) {
             if (!contract_class)
-               return nullptr;
+               return false;
 
             for (const clang::Decl* cur_decl : contract_class->decls()) {
                if (is_same_type(cur_decl, decl))
-                  return cur_decl;
+                  return true;
             }
 
-            return nullptr;
-         }
-
-         bool defined_in_contract(const clang::ClassTemplateSpecializationDecl* decl) {
-            return contract_member_naming(decl) != nullptr;
+            return false;
          }
 
          /// The table name as the contract WROTE it, when the template parameter cannot carry
@@ -1380,7 +1372,26 @@ namespace sysio { namespace cdt {
          ///
          /// `_n` needs none of this: there the raw IS the name, and re-deriving it from source
          /// text would only add a way to disagree with the runtime.
-         static std::string written_i_name(const clang::Decl* member, clang::ASTContext& ctx) {
+         /// Every member that names this specialization is tried, not just the first: a
+         /// contract may hold both an alias and a data member of it, and only the alias writes
+         /// the arguments out. Reading the member's TypeSourceInfo there finds `cfg_t`, a
+         /// TypedefTypeLoc with no arguments at all, and gives up on a name the declaration
+         /// beside it spells in full.
+         std::string written_i_name(const clang::ClassTemplateSpecializationDecl* decl,
+                                    clang::ASTContext& ctx) const {
+            if (!contract_class)
+               return {};
+            for (const clang::Decl* cur_decl : contract_class->decls()) {
+               if (!is_same_type(cur_decl, decl))
+                  continue;
+               const std::string written = written_i_name_of(cur_decl, ctx);
+               if (!written.empty())
+                  return written;
+            }
+            return {};
+         }
+
+         static std::string written_i_name_of(const clang::Decl* member, clang::ASTContext& ctx) {
             if (!member)
                return {};
 
@@ -1584,7 +1595,7 @@ namespace sysio { namespace cdt {
                         // once the whole link is in view.
                         const std::string written = table_type
                            ? std::string{}
-                           : written_i_name(contract_member_naming(owner), d->getASTContext());
+                           : written_i_name(owner, d->getASTContext());
                         ag.add_table(table_name_raw, row_type, kind, std::move(sec_indexes), written);
                         // The ABI has to DEFINE the type it names as a table's row.
                         // [[sysio::table]] is not what makes a struct part of the contract:

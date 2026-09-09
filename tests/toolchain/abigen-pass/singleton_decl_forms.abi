@@ -196,6 +196,14 @@
             "table_id": 14103
         },
         {
+            "name": "singleton_outer_alias_name",
+            "type": "uint64",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 52488
+        },
+        {
             "name": "strsing",
             "type": "string",
             "index_type": "i64",

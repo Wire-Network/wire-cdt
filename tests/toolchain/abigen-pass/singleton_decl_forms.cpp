@@ -14,6 +14,7 @@
 //   a singleton held as a data member, named by no alias at all
 //   a `_i`-named singleton, published under the name its row annotation gives it
 //   a `_i`-named singleton over a SCALAR row, which has nowhere to put that annotation
+//   the same, held by a member written through an alias declared outside the contract class
 //   an UNANNOTATED row struct, reached through defined_in_contract(), by typedef and by using
 //   a row type that is not a class: a builtin (`name`), a scalar, a string, a checksum
 //
@@ -38,13 +39,20 @@
 
 using namespace sysio;
 
+// Declared OUTSIDE the contract class, so a member of this type writes `outer_alias` and not
+// the arguments: its TypeSourceInfo is a TypedefTypeLoc with none to read. The in-class alias
+// beside it does write them, which is why the `_i` recovery tries every member naming the
+// specialization rather than stopping at the first.
+using outer_alias = sysio::singleton<"singleton_outer_alias_name"_i, uint64_t>;
+
 class [[sysio::contract("singleton_decl_forms")]] singleton_decl_forms : public contract {
 public:
    singleton_decl_forms( name receiver, name code, datastream<const char*> ds )
       : contract(receiver, code, ds)
       , member_inst(receiver, receiver.value)
       , scalar_inst(receiver, receiver.value)
-      , plain_inst(receiver, receiver.value) {}
+      , plain_inst(receiver, receiver.value)
+      , outer_inst(receiver, receiver.value) {}
 
    struct [[sysio::table]] tdef_row {
       uint64_t v;
@@ -134,6 +142,12 @@ public:
    sysio::singleton<"scalarmemb"_n, uint64_t>       scalar_inst;
    sysio::singleton<"plainmemb"_n,  plain_memb_row> plain_inst;
 
+   // Deliberately ahead of the alias that spells the arguments out: taking the first member
+   // that names the specialization finds this one and publishes the decoded hash
+   // `3rwajluzfjyc1` instead.
+   outer_alias outer_inst;
+   using outer_alias_in_class = sysio::singleton<"singleton_outer_alias_name"_i, uint64_t>;
+
    [[sysio::action]]
    void test() {
       tdef_singleton    a(get_self(), get_self().value);
@@ -166,5 +180,6 @@ public:
       member_inst.set({10}, get_self());
       scalar_inst.set(12, get_self());
       plain_inst.set({13}, get_self());
+      outer_inst.set(14, get_self());
    }
 };

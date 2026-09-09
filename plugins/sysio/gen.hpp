@@ -402,10 +402,8 @@ struct generation_utils {
          "vector", "set", "deque", "list", "optional", "map", "pair", "tuple", "array",
          "variant", "binary_extension", "ignore", "pb"
       };
-      if (llvm::isa<clang::TemplateSpecializationType>(type.getTypePtr()) ||
-          llvm::isa<clang::ElaboratedType>(type.getTypePtr()) ||
-          llvm::isa<clang::TypedefType>(type.getTypePtr()))
-         return type;
+      // A type that still carries sugar -- elaborated, typedef'd, already a specialization
+      // type -- is not a RecordType and falls out here, which is what leaves it unchanged.
       const auto* rt = llvm::dyn_cast<clang::RecordType>(type.getTypePtr());
       if (!rt)
          return type;
@@ -428,12 +426,13 @@ struct generation_utils {
          if (tst) {
             auto arg = tst->template_arguments()[index];
             if ( arg.getKind() == clang::TemplateArgument::ArgKind::Type ) {
-               // The ARGUMENT of a sugared type is itself canonical, so a nested container
-               // arrives here stripped even when its parent did not. Resugaring at this one
-               // boundary is what makes std::vector<std::vector<uint8_t>> translate to
-               // `bytes[]` and declare its element, rather than translating to `vector[]` and
-               // handing add_struct() an implicitly-instantiated class with no definition --
-               // which asserts inside CXXRecordDecl::data() and takes the compiler with it.
+               // Every argument read back out of a type is CANONICAL, however sugared the
+               // parent was, so this is the one boundary where the stripping happens and the
+               // one place that has to undo it. It is what makes a nested
+               // std::vector<std::vector<uint8_t>> translate to `bytes[]` and declare its
+               // element, rather than translating to `vector[]` and handing add_struct() an
+               // implicitly-instantiated class with no definition -- which asserts inside
+               // CXXRecordDecl::data() and takes the compiler with it.
                ret_val = resugar_specialization(arg.getAsType());
                return;
             } else if ( arg.getKind() == clang::TemplateArgument::ArgKind::Integral ) {

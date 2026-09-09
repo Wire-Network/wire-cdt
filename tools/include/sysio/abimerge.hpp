@@ -389,23 +389,20 @@ class ABIMerger {
       /// "already defined" instead, and the same source produced a diagnostic or a dead link
       /// depending only on whether the two rows happened to share a translation unit. Deciding
       /// a link-wide question link-wide is the point of carrying these at all.
-      ojson merge_table_annotations(ojson b) {
-         ojson anns = ojson::array();
-         if (!abi.has_key("____table_annotations") && !b.has_key("____table_annotations"))
-            return anns;
-         if (!abi.has_key("____table_annotations")) abi["____table_annotations"] = ojson::array();
-         if (!b.has_key("____table_annotations"))   b["____table_annotations"]   = ojson::array();
-
+      ojson merge_table_annotations(const ojson& b) {
          const auto key_of = [](const ojson& a) {
             return a["name"].as<std::string>() + '\0' +
                    (a.has_key("row") ? a["row"].as<std::string>() : std::string{});
          };
+         ojson anns = ojson::array();
          std::set<std::string> seen;
-         for (const ojson* side : {&abi, &b}) {
-            for (const auto& a : (*side)["____table_annotations"].array_range()) {
+         const ojson& a = abi;
+         for (const ojson* side : {&a, &b}) {
+            if (!side->has_key("____table_annotations"))
+               continue;
+            for (const auto& a : (*side)["____table_annotations"].array_range())
                if (seen.insert(key_of(a)).second)
                   anns.push_back(a);
-            }
          }
          return anns;
       }
