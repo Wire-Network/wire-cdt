@@ -58,14 +58,6 @@
             "table_id": 28309
         },
         {
-            "name": "nestsing",
-            "type": "bytes[]",
-            "index_type": "i64",
-            "key_names": ["scope","primary_key"],
-            "key_types": ["name","uint64"],
-            "table_id": 58130
-        },
-        {
             "name": "optsing",
             "type": "uint64?",
             "index_type": "i64",

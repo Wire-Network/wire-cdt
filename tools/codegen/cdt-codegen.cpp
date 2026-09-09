@@ -23,17 +23,6 @@
 ///
 /// Row structs are matched by QUALIFIED name (`____row`), not by the ABI `type`: ns1::row and
 /// ns2::row both serialise as `row`, and matching on that conflates them.
-/// Apply each [[sysio::table("name")]] to the tables instantiated over its row struct, now that
-/// every descriptor has been merged and the count is known, then strip the descriptor-only keys.
-///
-/// abigen cannot do this. The annotation renames the table published over a row struct -- it has
-/// to, because a `_i`-named table's raw value is a DJB2 hash and the readable name lives only in
-/// the annotation -- but it renames ONE table, and only into a name no other table holds. Both
-/// are link-wide facts. A translation unit that decides on its own partial view emits a
-/// descriptor that disagrees with its siblings, and the merge then refuses the link.
-///
-/// Row structs are matched by QUALIFIED name (`____row`), not by the ABI `type`: ns1::row and
-/// ns2::row both serialise as `row`, and matching on that conflates them.
 ///
 /// The whole set is resolved before any of it is applied. Deciding one annotation at a time
 /// against a `taken` set that the previous decision had already mutated made the outcome depend
@@ -113,6 +102,22 @@ static void resolve_table_annotations(ojson& abi) {
             continue;
          for (std::size_t i : it->second) {
             ojson& t = abi["tables"][i];
+            // Already applied, prefix and all: add_kv_table resolves the same attribute on the
+            // kv::table path and composes [scope] + logical there. Re-deriving it here can only
+            // lose information -- the prefix is recognised by the NAME "scope", so a logical
+            // key whose own first field is called `scope` looked like the prefix, suppressed
+            // it, and published a key eight bytes short with its first element mistyped.
+            const auto ends_with_override = [&] {
+               if (!t.has_key("key_names") || t["key_names"].size() < r.ann["key_names"].size())
+                  return false;
+               const std::size_t off = t["key_names"].size() - r.ann["key_names"].size();
+               for (std::size_t k = 0; k < r.ann["key_names"].size(); ++k)
+                  if (t["key_names"][off + k] != r.ann["key_names"][k])
+                     return false;
+               return true;
+            };
+            if (ends_with_override())
+               continue;
             ojson names = ojson::array();
             ojson types = ojson::array();
             // Keep the table's own prefix -- unless the annotation already supplies one. A

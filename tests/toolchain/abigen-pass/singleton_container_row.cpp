@@ -17,10 +17,11 @@
 // names, and `uint64[]` resolves by stripping the suffix -- which is exactly how the chain's
 // own serializer reads it. abigen-fail/undescribable_row_type pins the other side.
 //
-// Nesting is covered because it is where the canonical form leaks in a second time: the
-// ARGUMENT of a resugared type is itself canonical, and handing an implicitly-instantiated
-// std::vector<uint8_t> with no definition to add_struct() asserts inside CXXRecordDecl::data()
-// and takes the compiler down with it.
+// ONE level. A container of a container is still refused -- abigen-fail/nested_container_row --
+// because the machinery that names those (`B_vector_uint64_E`) is driven off the same printed
+// form and declares the typedef the name needs, and a half-resugared type slipped past it and
+// published `B_vector_uint64_E[]` with nothing declaring it. Refusing where the author can see
+// it is what master did; supporting it is a separate piece of work.
 #include <sysio/sysio.hpp>
 #include <sysio/singleton.hpp>
 #include <map>
@@ -41,7 +42,6 @@ public:
 
    using vec_singleton    = sysio::singleton<"vecsing"_n,    std::vector<uint64_t>>;
    using bytes_singleton  = sysio::singleton<"bytessing"_n,  std::vector<uint8_t>>;
-   using nested_singleton = sysio::singleton<"nestsing"_n,   std::vector<std::vector<uint8_t>>>;
    using opt_singleton    = sysio::singleton<"optsing"_n,    std::optional<uint64_t>>;
    using map_singleton    = sysio::singleton<"mapsing"_n,    std::map<uint64_t, uint64_t>>;
    using pair_singleton   = sysio::singleton<"pairsing"_n,   std::pair<uint64_t, uint64_t>>;
@@ -53,7 +53,6 @@ public:
    void test() {
       vec_singleton    a(get_self(), get_self().value);
       bytes_singleton  b(get_self(), get_self().value);
-      nested_singleton c(get_self(), get_self().value);
       opt_singleton    d(get_self(), get_self().value);
       map_singleton    e(get_self(), get_self().value);
       pair_singleton   f(get_self(), get_self().value);
@@ -61,7 +60,6 @@ public:
 
       a.set({1, 2, 3}, get_self());
       b.set({4, 5}, get_self());
-      c.set({{6}, {7}}, get_self());
       d.set(8, get_self());
       e.set({{9, 10}}, get_self());
       f.set({11, 12}, get_self());

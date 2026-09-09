@@ -144,7 +144,7 @@ public:
 
    // Deliberately ahead of the alias that spells the arguments out: taking the first member
    // that names the specialization finds this one and publishes the decoded hash
-   // `3rwajluzfjyc1` instead.
+   // `b1xrr4kjycdsj` instead.
    outer_alias outer_inst;
    using outer_alias_in_class = sysio::singleton<"singleton_outer_alias_name"_i, uint64_t>;
 

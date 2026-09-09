@@ -387,20 +387,42 @@ struct generation_utils {
    /// Rebuilding the sugar puts both back on one path, rather than teaching a second shape to
    /// every branch that matches the first.
    ///
-   /// Only for the templates the ABI gives a spelling of its OWN -- the containers, the map and
-   /// pair and tuple and array shapes, the variant. Everything else keeps the canonical
-   /// handling at the foot of translate_type(), which resolves through the alias table, and
-   /// must: std::string canonicalises to basic_string<char, char_traits<char>, allocator<char>>
-   /// and reaches `string` only by that route. Resugaring it instead produced
+   /// Only for the templates the ABI gives a spelling of its OWN -- the containers, the map
+   /// and pair and array shapes. Everything else keeps the canonical handling at the foot of
+   /// translate_type(), which resolves through the alias table, and must: std::string
+   /// canonicalises to basic_string<char, char_traits<char>, allocator<char>> and reaches
+   /// `string` only by that route. Resugaring it instead produced
    /// `basic_string_int8_char_traits_char__allocator_char_` -- a name for the ABI's most common
    /// builtin. Sugar is what those branches need; it is not an improvement everywhere.
+   ///
+   /// NOT variant or tuple. Their canonical arguments are held as a single Pack, which
+   /// get_template_argument() does not handle -- it reaches CDT_INTERNAL_ERROR and terminates
+   /// the compiler. A canonical variant row keeps the old path, where it is refused with a
+   /// diagnostic; turning that diagnostic into an abort is the opposite of what this branch is
+   /// for.
+   ///
+   /// Only the LEADING arguments the ABI spelling uses, too. The rest are allocators,
+   /// comparators and deleters, present in the canonical form and never in a written one, and
+   /// the container helpers in this file decide by COUNTING '<' in getAsString(): rebuilt with
+   /// its allocator, a vector printed `vector<unsigned long, allocator<unsigned long>>`, read
+   /// as a nested container, and was handed to add_struct() -- which synthesised a struct named
+   /// after the allocator, based on an `__vector_base_...` the document never declares.
+   ///
+   /// One level only. A container OF a container is left alone: the explicit-nested machinery
+   /// that names those (`B_vector_uint64_E`) is driven off the same printed form and declares
+   /// the typedef the name needs, and a half-resugared type slipped through it -- published as
+   /// `B_vector_uint64_E[]` with no typedef declared, which is a document the chain refuses.
+   /// Left canonical, a nested row reaches abi_can_describe_row() and is refused where the
+   /// author can see it, which is what master did and what this branch should keep doing until
+   /// nesting is supported deliberately.
    ///
    /// Types that already carry sugar, and types that are not class template specializations at
    /// all, are returned unchanged.
    inline clang::QualType resugar_specialization( const clang::QualType& type ) {
-      static const std::set<std::string> abi_spelled = {
-         "vector", "set", "deque", "list", "optional", "map", "pair", "tuple", "array",
-         "variant", "binary_extension", "ignore", "pb"
+      static const std::map<std::string, unsigned> abi_spelled = {
+         {"vector", 1}, {"set", 1}, {"deque", 1}, {"list", 1}, {"optional", 1},
+         {"binary_extension", 1}, {"ignore", 1}, {"pb", 1},
+         {"map", 2}, {"pair", 2}, {"array", 2},
       };
       // A type that still carries sugar -- elaborated, typedef'd, already a specialization
       // type -- is not a RecordType and falls out here, which is what leaves it unchanged.
@@ -410,10 +432,27 @@ struct generation_utils {
       const auto* cts = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(rt->getDecl());
       if (!cts || !cts->getSpecializedTemplate())
          return type;
-      if (!abi_spelled.count(cts->getSpecializedTemplate()->getName().str()))
+      const auto it = abi_spelled.find(cts->getSpecializedTemplate()->getName().str());
+      if (it == abi_spelled.end())
          return type;
+      const auto& args = cts->getTemplateArgs();
+      if (args.size() < it->second)
+         return type;
+      llvm::SmallVector<clang::TemplateArgument, 2> kept;
+      for (unsigned i = 0; i < it->second; ++i) {
+         const auto& arg = args[i];
+         if (arg.getKind() == clang::TemplateArgument::Type) {
+            // A nested container: leave the whole type canonical. See above.
+            if (const auto* art = llvm::dyn_cast<clang::RecordType>(arg.getAsType().getTypePtr()))
+               if (const auto* acts = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(art->getDecl()))
+                  if (acts->getSpecializedTemplate() &&
+                      abi_spelled.count(acts->getSpecializedTemplate()->getName().str()))
+                     return type;
+         }
+         kept.push_back(arg);
+      }
       return cts->getASTContext().getTemplateSpecializationType(
-         clang::TemplateName(cts->getSpecializedTemplate()), cts->getTemplateArgs().asArray(), type);
+         clang::TemplateName(cts->getSpecializedTemplate()), kept, type);
    }
 
    using template_arg_t = std::variant<clang::QualType, clang::Expr*, llvm::APSInt>;
@@ -426,14 +465,7 @@ struct generation_utils {
          if (tst) {
             auto arg = tst->template_arguments()[index];
             if ( arg.getKind() == clang::TemplateArgument::ArgKind::Type ) {
-               // Every argument read back out of a type is CANONICAL, however sugared the
-               // parent was, so this is the one boundary where the stripping happens and the
-               // one place that has to undo it. It is what makes a nested
-               // std::vector<std::vector<uint8_t>> translate to `bytes[]` and declare its
-               // element, rather than translating to `vector[]` and handing add_struct() an
-               // implicitly-instantiated class with no definition -- which asserts inside
-               // CXXRecordDecl::data() and takes the compiler with it.
-               ret_val = resugar_specialization(arg.getAsType());
+               ret_val = arg.getAsType();
                return;
             } else if ( arg.getKind() == clang::TemplateArgument::ArgKind::Integral ) {
                ret_val = arg.getAsIntegral();
