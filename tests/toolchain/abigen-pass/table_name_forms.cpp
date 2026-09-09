@@ -5,6 +5,11 @@
 //     `#define NAMED_TABLE [[sysio::table("x")]]` published the decoded hash of its `_i`
 //     parameter. The argument is still at the SPELLING location, inside the macro body.
 //
+//   an argument separated from the attribute name by TRIVIA -- whitespace or a comment is legal
+//     between them, and probing the next source CHARACTER for `(` read the attribute as bare and
+//     dropped its name. The next TOKEN is the question, and skipping trivia is what a token scan
+//     does for free.
+//
 //   a DOTTED name -- `.` is part of the `_n` alphabet (`.12345a-z`), singleton_contract already
 //     publishes `smpl.conf5`, and it round-trips the annotation encoding. Restricting the name
 //     to the C++ identifier charset rejected a spelling that has always been valid.
@@ -37,7 +42,7 @@ public:
       SYSLIB_SERIALIZE(macro_row, (v))
    };
 
-   struct [[sysio::table("foo.bar")]] dotted_row {
+   struct [[sysio::table /* legal trivia between name and argument */ ("foo.bar")]] dotted_row {
       uint64_t v;
       SYSLIB_SERIALIZE(dotted_row, (v))
    };

@@ -43,11 +43,20 @@ public:
       SYSLIB_SERIALIZE(emptied, (id))
    };
 
+   // The GNU spelling takes the other parse path entirely -- clang hands it a cooked
+   // StringLiteral -- so an empty check confined to the C++11 branch never saw it.
+   struct __attribute__((sysio_table(""))) gnu_emptied {
+      uint64_t id;
+      uint64_t primary_key() const { return id; }
+      SYSLIB_SERIALIZE(gnu_emptied, (id))
+   };
+
    [[sysio::action]]
    void test() {
       multi_index<"a"_n, spliced> a(get_self(), get_self().value);
       multi_index<"b"_n, escaped> b(get_self(), get_self().value);
       multi_index<"c"_n, spaced>  c(get_self(), get_self().value);
       multi_index<"d"_n, emptied> d(get_self(), get_self().value);
+      multi_index<"e"_n, gnu_emptied> e(get_self(), get_self().value);
    }
 };

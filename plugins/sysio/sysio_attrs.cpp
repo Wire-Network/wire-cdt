@@ -6,6 +6,7 @@
 #include <clang/Sema/Sema.h>
 #include <clang/Sema/SemaDiagnostic.h>
 #include <llvm/IR/Attributes.h>
+#include <optional>
 
 using namespace clang;
 
@@ -37,7 +38,9 @@ using namespace clang;
         AttrHandling handleDeclAttribute(Sema &S, Decl *D, \
                                          const ParsedAttr &Attr) const override { \
           StringRef Str = ""; \
+          bool arg_supplied = false; \
           if (Attr.getNumArgs() > 0) { \
+            arg_supplied = true; \
             Expr *ArgExpr = Attr.getArgAsExpr(0); \
             clang::StringLiteral *Literal = \
                 dyn_cast<clang::StringLiteral>(ArgExpr->IgnoreParenCasts()); \
@@ -50,74 +53,54 @@ using namespace clang;
             } \
           } \
           else if (spellingIndexToSemanticSpelling(Attr)) { \
+             /* Clang does not parse arguments for a C++11-spelled plugin attribute -- */ \
+             /* getNumArgs() is 0 even for `[[sysio::table("x")]]`, and stays 0 with a */ \
+             /* required argument declared -- so the argument is read from source. TOKENS, */ \
+             /* not characters: an argument clause may be separated from the attribute name */ \
+             /* by whitespace or a comment, and probing the next character for `(` read */ \
+             /* `[[sysio::table /* c *\/ ("name")]]` as bare and dropped the name. */ \
              auto& SM = S.getSourceManager(); \
-             auto AttrRange = SM.getExpansionRange(Attr.getRange()); \
              auto LangOpts = S.Context.getLangOpts(); \
-             auto offset = Lexer::getSourceText(SM.getExpansionRange(AttrRange.getEnd()), SM, LangOpts).size(); \
-             auto Begin = AttrRange.getEnd().getLocWithOffset(offset); \
-             auto opens = [&](SourceLocation L) { \
-                return Lexer::getSourceText(CharSourceRange(SourceRange(L), true), SM, LangOpts) == "("; \
+             auto AttrRange = SM.getExpansionRange(Attr.getRange()); \
+             auto opening = [&](SourceLocation NameLoc) -> std::optional<Token> { \
+                auto t = Lexer::findNextToken(NameLoc, SM, LangOpts); \
+                if (t && t->getKind() == tok::l_paren) return t; \
+                return std::nullopt; \
              }; \
-             /* An attribute written inside a macro has an EXPANSION range that ends at the */ \
-             /* macro invocation, so the probe above finds no `(` and the attribute reads as */ \
-             /* bare -- silently dropping its name. `#define NAMED_TABLE [[sysio::table("x")]]` */ \
-             /* published the decoded hash of its `_i` parameter instead of `x`. The argument */ \
-             /* is still there at the SPELLING location, inside the macro body, so look for it */ \
-             /* there before concluding the attribute has no argument. */ \
-             if (!opens(Begin) && Attr.getRange().getBegin().isMacroID()) { \
-                auto SpellEnd = SM.getSpellingLoc(Attr.getRange().getEnd()); \
-                auto soffset = Lexer::getSourceText(CharSourceRange(SourceRange(SpellEnd), true), SM, LangOpts).size(); \
-                auto SpellBegin = SpellEnd.getLocWithOffset(soffset); \
-                if (opens(SpellBegin)) \
-                   Begin = SpellBegin; \
-             } \
-             if (opens(Begin)) { \
-                /* A C++11-spelled attribute does not get its argument parsed into an Expr, so */ \
-                /* the argument is read as SOURCE TEXT -- the token's own spelling, not the */ \
-                /* compiler's cooked value. The two disagree in exactly two ways, and both */ \
-                /* named a table at another string's table_id: an escape reached the ABI */ \
-                /* uncooked, `[[sysio::table("config\x31")]]` publishing `config\x31` at */ \
-                /* cooked `config1`'s id; and adjacent literals were truncated to the first, */ \
-                /* `("con" "catenated")` publishing `con` at the concatenation's id. */ \
-                /* Refused rather than cooked: these are names that reach wire-sysio, SHiP and */ \
-                /* Hyperion, and a name worth having is one you can write plainly. */ \
-                auto ArgLoc = Begin.getLocWithOffset(1); \
-                Token Tok, Next; \
-                bool one_plain_literal = \
-                   !Lexer::getRawToken(ArgLoc, Tok, SM, LangOpts, true) && \
-                   Tok.getKind() == tok::string_literal && \
-                   !Lexer::getRawToken(Tok.getEndLoc(), Next, SM, LangOpts, true) && \
-                   Next.getKind() == tok::r_paren; \
-                if (one_plain_literal) { \
-                   /* The token's own spelling, taken by length rather than by re-lexing a */ \
-                   /* range, so the whole literal is in hand for the check below. */ \
-                   Str = StringRef(SM.getCharacterData(Tok.getLocation()), Tok.getLength()); \
-                   one_plain_literal = !Str.contains('\\'); \
-                } \
+             auto open = opening(AttrRange.getEnd()); \
+             /* An attribute written inside a macro has an expansion range ending at the */ \
+             /* invocation, so nothing follows it there; the argument is still in the macro */ \
+             /* body, at the spelling location. */ \
+             if (!open && Attr.getRange().getBegin().isMacroID()) \
+                open = opening(SM.getSpellingLoc(Attr.getRange().getEnd())); \
+             if (open) { \
+                arg_supplied = true; \
+                auto tok = Lexer::findNextToken(open->getLocation(), SM, LangOpts); \
+                auto after = tok ? Lexer::findNextToken(tok->getLocation(), SM, LangOpts) \
+                                 : std::nullopt; \
+                /* Read as text, so it has to be text that survives being read: the compiler */ \
+                /* cooks escapes and splices adjacent literals and this does not, and each */ \
+                /* disagreement named a table at another string's table_id. */ \
+                const bool one_plain_literal = \
+                   tok && tok->getKind() == tok::string_literal && \
+                   after && after->getKind() == tok::r_paren && \
+                   !StringRef(SM.getCharacterData(tok->getLocation()), tok->getLength()).contains('\\'); \
                 if (!one_plain_literal) { \
-                   /* In a function-like macro the argument here is the PARAMETER, and the */ \
-                   /* literal the caller passed is not reachable from it -- say so, since the */ \
-                   /* author did write a plain literal, just not where this can read it. */ \
                    if (Attr.getRange().getBegin().isMacroID()) { \
-                     S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+                     S.Diag(open->getLocation(), S.getDiagnostics().getCustomDiagID( \
+                        DiagnosticsEngine::Error, \
                         "sysio attribute argument must be one plain string literal written in " \
                         "place; a macro parameter cannot be used, since the argument is read as " \
                         "source text")); \
                    } else { \
-                     S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+                     S.Diag(open->getLocation(), S.getDiagnostics().getCustomDiagID( \
+                        DiagnosticsEngine::Error, \
                         "sysio attribute argument must be one plain string literal -- no escape " \
                         "sequences, no adjacent literals; it is read exactly as written")); \
                    } \
                    return AttributeNotApplied; \
                 } \
-                /* An empty argument encodes identically to no argument at all, so every later */ \
-                /* check reads it as a bare attribute and the validation meant for a written */ \
-                /* name is never reached. Refused here, where the difference is still visible. */ \
-                if (Str.size() <= 2) { \
-                   S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
-                      "sysio attribute argument may not be empty; omit the argument instead")); \
-                   return AttributeNotApplied; \
-                } \
+                Str = StringRef(SM.getCharacterData(tok->getLocation()), tok->getLength()); \
              } else if (_NumArgs) { \
                S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) \
                    << Attr.getAttrName() << "attribute takes one argument"; \
@@ -126,6 +109,16 @@ using namespace clang;
           } \
           auto arg = Str.str(); \
           if (arg.size() > 1 && arg[0] == '\"') arg = arg.substr(1, arg.size()-2); \
+          /* An empty argument encodes identically to no argument at all, so every later check */ \
+          /* reads it as a bare attribute and the validation meant for a written name is never */ \
+          /* reached. Checked here, after BOTH spellings, because only the parse knows whether */ \
+          /* an argument was written -- confined to the C++11 branch it missed */ \
+          /* `__attribute__((sysio_table("")))` entirely. */ \
+          if (arg_supplied && arg.empty()) { \
+            S.Diag(Attr.getLoc(), S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+               "sysio attribute argument may not be empty; omit the argument instead")); \
+            return AttributeNotApplied; \
+          } \
           /* The argument survives as text: it is encoded into an AnnotateAttr as `NAME(arg)` */ \
           /* and split back out on [\s,]+. So whitespace, a comma, a paren or a quote does not */ \
           /* round-trip -- `[[sysio::table("has space")]]` published `has`, truncated by the */ \

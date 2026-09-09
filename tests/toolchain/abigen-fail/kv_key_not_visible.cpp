@@ -11,7 +11,10 @@
 // and reasoning about which leading fields are physical, which is the machinery this branch
 // removed for getting that question wrong twice.
 //
-// So: an error, where the include is missing.
+// So: an error, where the include is missing. The struct is looked for in the row, the enclosing
+// class and each enclosing namespace, and the FIRST scope that declares the name decides -- this
+// one declares it without defining it, which is an error rather than a reason to keep climbing.
+// abigen-pass/kv_key_resolution is the other side of that rule.
 #include <sysio/sysio.hpp>
 #include <sysio/kv_table.hpp>
 

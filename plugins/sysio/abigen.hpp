@@ -13,30 +13,69 @@
 // DJB2 hash of 8 big-endian bytes of a uint64_t, truncated to uint16.
 // Must match sysio::kv::compute_table_id in kv_constants.hpp.
 
-/// Find the struct a [[sysio::kv_key("name")]] names: types nested in the row first, then each
-/// ENCLOSING declaration context out to the translation unit.
+/// Resolve a [[sysio::kv_key("name")]] to its struct.
 ///
-/// Stopping at the row's immediate context reported a definition that is plainly visible as
-/// absent -- a row nested in the contract class could not see a struct at namespace scope, which
-/// C++ finds without difficulty. Harmless while the miss was a warning that fell back to the
-/// physical key; a build failure once it became the error it should have been.
+/// The rule, stated rather than approximated: the struct is looked for in the ROW, then in the
+/// enclosing class, then in each enclosing namespace out to the translation unit, and it may be
+/// a struct or an alias to one. The FIRST scope that declares the name decides -- a nearer
+/// declaration shadows an outer one, as it would in C++ -- and if what that scope declares is
+/// not a complete struct, that is an error rather than a reason to keep climbing.
+///
+/// This is not C++ name lookup and does not pretend to be. Sema is long gone by the time abigen
+/// runs, and a hand-rolled walk cannot see using-declarations, inline namespaces or dependent
+/// scopes. What made the earlier approximation dangerous was climbing PAST a nearer declaration
+/// in search of something usable: a global struct shadowed by a contract-local alias was
+/// silently preferred to it, and the ABI published another key schema entirely. Stopping at the
+/// nearest declaration turns every shape this cannot resolve into a diagnostic instead.
+///
+/// \p declared_but_unusable  set when a scope declares the name but not as a complete struct,
+///                           so the caller can say that rather than "not found".
 static inline const clang::CXXRecordDecl* find_kv_key_struct( const clang::DeclContext* nested,
                                                               const clang::DeclContext* from,
-                                                              const std::string& name ) {
-   const auto declared_in = [&name](const clang::DeclContext* ctx) -> const clang::CXXRecordDecl* {
+                                                              const std::string& name,
+                                                              bool& declared_but_unusable ) {
+   declared_but_unusable = false;
+   const auto declared_in = [&name](const clang::DeclContext* ctx,
+                                    bool& saw_name) -> const clang::CXXRecordDecl* {
+      saw_name = false;
       if (!ctx)
          return nullptr;
-      for (auto* d : ctx->decls())
-         if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d))
-            if (r->getNameAsString() == name && r->isCompleteDefinition())
-               return r;
+      for (auto* d : ctx->decls()) {
+         const clang::CXXRecordDecl* r = nullptr;
+         if (auto* rec = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
+            if (rec->getNameAsString() != name)
+               continue;
+            r = rec;
+         } else if (auto* alias = llvm::dyn_cast<clang::TypedefNameDecl>(d)) {
+            if (alias->getNameAsString() != name)
+               continue;
+            if (const auto* t = alias->getUnderlyingType().getTypePtrOrNull())
+               r = t->getAsCXXRecordDecl();
+         } else {
+            continue;
+         }
+         saw_name = true;
+         if (r && r->isCompleteDefinition())
+            return r;
+      }
       return nullptr;
    };
-   if (const auto* r = declared_in(nested))
+
+   bool saw = false;
+   if (const auto* r = declared_in(nested, saw))
       return r;
-   for (const clang::DeclContext* ctx = from; ctx; ctx = ctx->getParent())
-      if (const auto* r = declared_in(ctx))
+   if (saw) {
+      declared_but_unusable = true;
+      return nullptr;
+   }
+   for (const clang::DeclContext* ctx = from; ctx; ctx = ctx->getParent()) {
+      if (const auto* r = declared_in(ctx, saw))
          return r;
+      if (saw) {
+         declared_but_unusable = true;
+         return nullptr;
+      }
+   }
    return nullptr;
 }
 
@@ -361,8 +400,9 @@ namespace sysio { namespace cdt {
                t.key_names = {"scope", "primary_key"};
                t.key_types = {"name", "uint64"};
             } else {
+               bool key_unusable = false;
                const clang::CXXRecordDecl* key_record =
-                  find_kv_key_struct(_decl, _decl->getDeclContext(), key_struct_name);
+                  find_kv_key_struct(_decl, _decl->getDeclContext(), key_struct_name, key_unusable);
                if (key_record) {
                   // Extract field names/types for key_names/key_types
                   for (auto* field : key_record->fields()) {
@@ -469,8 +509,9 @@ namespace sysio { namespace cdt {
                // context missed a key struct declared INSIDE the value row and silently fell
                // back to the physical key, so the ABI advertised the physical field names
                // while the annotation named a logical override.
+               bool key_unusable = false;
                const clang::CXXRecordDecl* override_key =
-                  find_kv_key_struct(val_decl, val_decl->getDeclContext(), kv_key_name);
+                  find_kv_key_struct(val_decl, val_decl->getDeclContext(), kv_key_name, key_unusable);
                if (override_key) {
                   key_source = override_key;
                   // Protect it from validate_struct, as the other path does for its own -- and
@@ -499,9 +540,16 @@ namespace sysio { namespace cdt {
                   // completed enriches only the ANNOTATION, while the live table keeps the
                   // physical names. The override has to be visible here.
                   CDT_CHECK_ERROR(false, "abigen_error", val_decl->getLocation(),
-                     "kv_key struct '" + kv_key_name + "' is not visible where this table is "
-                     "instantiated, so its key layout cannot be described; include the "
-                     "definition in this translation unit");
+                     key_unusable
+                        ? "[[sysio::kv_key(\"" + kv_key_name + "\")]]: '" + kv_key_name +
+                          "' is declared here but is not a complete struct in this translation "
+                          "unit. Its fields ARE the table's ABI key layout, so the definition "
+                          "has to be visible where the table is instantiated."
+                        : "[[sysio::kv_key(\"" + kv_key_name + "\")]]: no struct named '" +
+                          kv_key_name + "' was found in the row, the enclosing class, or any "
+                          "enclosing namespace. The key struct must be declared in one of "
+                          "those -- as a struct or an alias to one -- and be complete in this "
+                          "translation unit; see docs/abi-tables.md.");
                }
             }
          }

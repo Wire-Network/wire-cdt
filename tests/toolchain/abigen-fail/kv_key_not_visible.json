@@ -3,7 +3,7 @@
       {
          "compile_flags": ["--abigen"],
          "expected": {
-            "stderr": "is not visible where this table is instantiated"
+            "stderr": "is declared here but is not a complete struct in this translation unit"
          }
       }
    ]

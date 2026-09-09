@@ -95,9 +95,19 @@ struct [[sysio::table("user_preferences"), sysio::contract("mycontract")]] prefe
 
 ## `[[sysio::kv_key]]`
 
-The override names a struct whose fields become the table's ABI key layout. It must be **visible
-where the table is instantiated** — that translation unit is the one whose key layout reaches the
-ABI, and nothing later can repair it:
+The override names a struct whose fields become the table's ABI key layout.
+
+**Where it is looked for**, in order: the row itself, then the enclosing class, then each
+enclosing namespace out to the translation unit. It may be a struct or an alias to one. The
+**first scope that declares the name decides** — a nearer declaration shadows an outer one — and
+it must be a complete struct there.
+
+That is a rule, not an approximation of C++ lookup: abigen runs after Sema, so it cannot see
+using-declarations, inline namespaces or dependent scopes. Anything it cannot resolve is an error
+naming what it looked for, rather than a guess.
+
+It must also be **visible where the table is instantiated** — that translation unit is the one
+whose key layout reaches the ABI, and nothing later can repair it:
 
 ```
 error: abigen error (kv_key struct 'logical_key' is not visible where this table is
