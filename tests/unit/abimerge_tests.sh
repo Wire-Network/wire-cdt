@@ -54,24 +54,31 @@ desc() {
 EOF
 }
 
-# An older abigen's descriptor: the table entry carries no ____row.
-desc '{"name": "cfgtbl", "type": "config_row", "index_type": "i64",
-       "key_names": ["scope", "primary_key"], "key_types": ["name", "uint64"]}' > "$WORK/a.desc"
+ROWLESS='{"name": "cfgtbl", "type": "config_row", "index_type": "i64",
+          "key_names": ["scope", "primary_key"], "key_types": ["name", "uint64"]}'
+MARKER='{"name": "cfgtbl", "type": "config_row", "index_type": "i64",
+         "key_names": ["scope", "primary_key"], "key_types": ["name", "uint64"],
+         "table_id": 49879, "____row": "config_row"}'
 
-# This one's: the same table, with the row marker and the id only an instantiation has.
-desc '{"name": "cfgtbl", "type": "config_row", "index_type": "i64",
-       "key_names": ["scope", "primary_key"], "key_types": ["name", "uint64"],
-       "table_id": 49879, "____row": "config_row"}' > "$WORK/z.desc"
+# cdt-codegen sorts its descriptor list before merging, so that ABI output does not depend on
+# directory iteration order. Merge order is therefore FILENAME order, and that -- not the order
+# the --desc-file options are written in -- is what these names control. An earlier draft of
+# this test passed both orders on the broken code for exactly that reason.
+mkdir -p "$WORK/rowless_first" "$WORK/marker_first"
+desc "$ROWLESS" > "$WORK/rowless_first/1_old.desc"
+desc "$MARKER"  > "$WORK/rowless_first/2_new.desc"
+desc "$MARKER"  > "$WORK/marker_first/1_new.desc"
+desc "$ROWLESS" > "$WORK/marker_first/2_old.desc"
 
 # The annotation renames the one table over config_row, whichever order the descriptors
 # merge in. `cfgtbl` surviving means the marker was lost; `cfg` AND `cfgtbl` together means
 # it was lost and a phantom declared beside the real table.
 check_order() {
-    local desc_a="$1" desc_b="$2" label="$3"
+    local label="$1"
     local out="$WORK/${label}.abi"
     rm -f "$out"
     if ! "$CODEGEN" --finalize --contract merge_probe \
-            --desc-file "$WORK/${desc_a}" --desc-file "$WORK/${desc_b}" \
+            --desc-file "$WORK/${label}/1_"*.desc --desc-file "$WORK/${label}/2_"*.desc \
             --abi-output "$out" 2>"$WORK/${label}.err"; then
         fail "${label}: cdt-codegen exited non-zero"
         sed 's/^/      /' "$WORK/${label}.err"
@@ -91,8 +98,8 @@ print(','.join(sorted('%s:%s' % (t['name'], t.get('table_id')) for t in d.get('t
 }
 
 echo "Descriptor merge order"
-check_order a.desc z.desc rowless_first
-check_order z.desc a.desc marker_first
+check_order rowless_first
+check_order marker_first
 
 echo ""
 echo "  ${PASS} passed, ${FAIL} failed"

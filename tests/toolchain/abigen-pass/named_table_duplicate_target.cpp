@@ -13,14 +13,20 @@
 //   Error, ABI structs malformed : xshared already defined
 //
 // -- a dead link rather than a diagnostic, and the same source produced one or the other
-// depending only on whether the two rows happened to share a translation unit. Annotations
-// merge by (name, row) now, so both reach the resolver and both get the same answer whichever
-// file they were written in. Deciding link-wide questions link-wide is why they are carried at
-// all rather than applied where they are found.
+// depending only on how the two rows were spread over files. Annotations merge by (name, row)
+// now, so both reach the resolver and both get the same answer wherever they were written.
+// Deciding link-wide questions link-wide is why they are carried at all rather than applied
+// where they are found.
+//
+// The x_* pair is declared in a header PER TRANSLATION UNIT for that reason. In a shared header
+// the per-TU set drops one of the two before the merge is reached, both descriptors record the
+// same survivor, and the merge has nothing to reconcile -- so a shared header exercises the
+// comparator (the s_* pair) and not the merge.
 //
 // Expected: every table keeps its own parameter -- sfirst, ssecond, xfirst, xsecond -- and four
 // warnings, one per refused annotation.
 #include "named_table_duplicate_target_aux/rows.hpp"
+#include "named_table_duplicate_target_aux/x_main.hpp"
 #include <sysio/multi_index.hpp>
 
 class [[sysio::contract("named_table_duplicate_target")]] named_table_duplicate_target : public sysio::contract {
