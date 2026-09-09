@@ -58,12 +58,42 @@ using prefs = kv::table<"user_preferences"_i, pref_key, preference>;   // -> "us
 Without the annotation an `_i` table is published under the decode of its hash, which no client
 can address. A row is always a struct, so there is always somewhere to put the annotation.
 
+**A name is letters, digits and underscore.** The annotation's argument is read from the source
+*literally* — it is not the compiler's cooked value — so anything the two could disagree about is
+refused rather than guessed at:
+
+```cpp
+[[sysio::table("config\x31")]]         // error: not one plain string literal
+[[sysio::table("con" "catenated")]]    // error: not one plain string literal
+[[sysio::table("has space")]]          // error: whitespace does not survive the encoding
+[[sysio::table("has-hyphen")]]         // error: not a usable table name
+```
+
+These names leave the toolchain in the ABI and are read by wire-sysio, SHiP and Hyperion. `_i`
+still lifts the 13-character limit — the name is hashed, not encoded — so a long readable name is
+exactly what it is for.
+
 If the row struct is declared at namespace scope rather than inside the contract class, say which
 contract it belongs to — nothing else associates it:
 
 ```cpp
 struct [[sysio::table("user_preferences"), sysio::contract("mycontract")]] preference { … };
 ```
+
+## `[[sysio::kv_key]]`
+
+The override names a struct whose fields become the table's ABI key layout. It must be **visible
+where the table is instantiated** — that translation unit is the one whose key layout reaches the
+ABI, and nothing later can repair it:
+
+```
+error: abigen error (kv_key struct 'logical_key' is not visible where this table is
+       instantiated, so its key layout cannot be described; include the definition in
+       this translation unit)
+```
+
+A second translation unit that happens to see the struct completed enriches only the annotation
+during the descriptor merge; the live table keeps the physical key it was built with.
 
 ## What is refused
 

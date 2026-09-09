@@ -56,7 +56,34 @@ using namespace clang;
              auto offset = Lexer::getSourceText(SM.getExpansionRange(AttrRange.getEnd()), SM, LangOpts).size(); \
              auto Begin = AttrRange.getEnd().getLocWithOffset(offset); \
              if (Lexer::getSourceText(CharSourceRange(SourceRange(Begin), true), SM, LangOpts) == "(") { \
-                Str = Lexer::getSourceText(CharSourceRange(SourceRange(Begin.getLocWithOffset(1)), true), SM, LangOpts); \
+                /* A C++11-spelled attribute does not get its argument parsed into an Expr, so */ \
+                /* the argument is read as SOURCE TEXT -- the token's own spelling, not the */ \
+                /* compiler's cooked value. The two disagree in exactly two ways, and both */ \
+                /* named a table at another string's table_id: an escape reached the ABI */ \
+                /* uncooked, `[[sysio::table("config\x31")]]` publishing `config\x31` at */ \
+                /* cooked `config1`'s id; and adjacent literals were truncated to the first, */ \
+                /* `("con" "catenated")` publishing `con` at the concatenation's id. */ \
+                /* Refused rather than cooked: these are names that reach wire-sysio, SHiP and */ \
+                /* Hyperion, and a name worth having is one you can write plainly. */ \
+                auto ArgLoc = Begin.getLocWithOffset(1); \
+                Token Tok, Next; \
+                bool one_plain_literal = \
+                   !Lexer::getRawToken(ArgLoc, Tok, SM, LangOpts, true) && \
+                   Tok.getKind() == tok::string_literal && \
+                   !Lexer::getRawToken(Tok.getEndLoc(), Next, SM, LangOpts, true) && \
+                   Next.getKind() == tok::r_paren; \
+                if (one_plain_literal) { \
+                   /* The token's own spelling, taken by length rather than by re-lexing a */ \
+                   /* range, so the whole literal is in hand for the check below. */ \
+                   Str = StringRef(SM.getCharacterData(Tok.getLocation()), Tok.getLength()); \
+                   one_plain_literal = !Str.contains('\\'); \
+                } \
+                if (!one_plain_literal) { \
+                   S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+                      "sysio attribute argument must be one plain string literal -- no escape " \
+                      "sequences, no adjacent literals; it is read exactly as written")); \
+                   return AttributeNotApplied; \
+                } \
              } else if (_NumArgs) { \
                S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) \
                    << Attr.getAttrName() << "attribute takes one argument"; \
@@ -65,6 +92,17 @@ using namespace clang;
           } \
           auto arg = Str.str(); \
           if (arg.size() > 1 && arg[0] == '\"') arg = arg.substr(1, arg.size()-2); \
+          /* The argument survives as text: it is encoded into an AnnotateAttr as `NAME(arg)` */ \
+          /* and split back out on [\s,]+. So whitespace, a comma, a paren or a quote does not */ \
+          /* round-trip -- `[[sysio::table("has space")]]` published `has`, truncated by the */ \
+          /* encoding rather than by anything the author could see. Refused rather than */ \
+          /* mangled; these names travel out through the ABI to wire-sysio, SHiP and Hyperion. */ \
+          if (arg.find_first_of(" \t\r\n,()\"\\") != std::string::npos) { \
+            S.Diag(Attr.getLoc(), S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+               "sysio attribute argument may not contain whitespace, a comma, a parenthesis, a " \
+               "quote or a backslash")); \
+            return AttributeNotApplied; \
+          } \
           std::string annotation; \
           if (arg.empty()) { \
             annotation = #GNU; \

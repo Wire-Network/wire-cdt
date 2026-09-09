@@ -307,9 +307,18 @@ namespace sysio { namespace cdt {
          // knows. cdt-codegen decides after the descriptors merge; see abi_table_annotation.
          abi_table_annotation t;
          t.type = decl->getNameAsString();
-         // Table names are free-form strings (table_id provides on-chain identity).
-         // No 13-char name restriction — _i literals can use long names.
+         // No 13-char restriction -- an `_i` literal's name is hashed, not encoded, so it may be
+         // as long as it likes. The CHARSET is restricted though, to what a C++ identifier
+         // allows: this name is the table's public label, and it travels out through the ABI to
+         // wire-sysio, SHiP and Hyperion, none of which should have to carry whatever the
+         // attribute happened to be written with.
          t.name = table_name.str();
+         CDT_CHECK_ERROR(!t.name.empty() &&
+                         std::all_of(t.name.begin(), t.name.end(), [](unsigned char c) {
+                            return std::isalnum(c) || c == '_';
+                         }), "abigen_error", _decl->getLocation(),
+            "[[sysio::table(\"" + t.name + "\")]] is not a usable table name; use only letters, "
+            "digits and underscore");
          t.row  = _decl->getQualifiedNameAsString();
          t.loc  = _decl->getLocation().printToString(_decl->getASTContext().getSourceManager());
 
@@ -490,9 +499,16 @@ namespace sysio { namespace cdt {
                   }
                   _abi.structs.insert(ks);
                } else {
-                  CDT_CHECK_WARN(false, "abigen_warning", val_decl->getLocation(),
-                     "kv_key struct '" + kv_key_name + "' not found; the physical key's field "
-                     "names will be used in the ABI");
+                  // An ERROR, not a warning: this is the translation unit that instantiates the
+                  // table, so it is the one whose key layout reaches the ABI. Falling back to
+                  // the physical key published a layout the author did not ask for, and no
+                  // later pass can repair it -- another TU that happens to see the struct
+                  // completed enriches only the ANNOTATION, while the live table keeps the
+                  // physical names. The override has to be visible here.
+                  CDT_CHECK_ERROR(false, "abigen_error", val_decl->getLocation(),
+                     "kv_key struct '" + kv_key_name + "' is not visible where this table is "
+                     "instantiated, so its key layout cannot be described; include the "
+                     "definition in this translation unit");
                }
             }
          }

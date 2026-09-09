@@ -1,0 +1,10 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["--abigen"],
+         "expected": {
+            "stderr": "is not visible where this table is instantiated"
+         }
+      }
+   ]
+}
