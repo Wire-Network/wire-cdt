@@ -1,0 +1,80 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "arow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "v",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "drow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "one",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "two",
+            "base": "",
+            "fields": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "one",
+            "type": "one",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "two",
+            "type": "two",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "cfg",
+            "type": "arow",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 28383
+        },
+        {
+            "name": "dup",
+            "type": "drow",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 32445
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

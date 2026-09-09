@@ -13,6 +13,9 @@
 //
 // Refusing at the declaration is what master did for every container, and is what this keeps
 // doing for the nested ones until they are supported deliberately rather than by accident.
+// The map-of-vector shape lives in its own fixture, nested_map_row: an abigen-fail test is
+// satisfied by ANY non-zero exit carrying the expected text, so a row that fails regardless
+// would mask one that stops failing. One discriminating row per fixture.
 #include <sysio/sysio.hpp>
 #include <sysio/singleton.hpp>
 #include <vector>

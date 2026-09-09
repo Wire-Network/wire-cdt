@@ -15,6 +15,8 @@
 //   a `_i`-named singleton, published under the name its row annotation gives it
 //   a `_i`-named singleton over a SCALAR row, which has nowhere to put that annotation
 //   the same, held by a member written through an alias declared outside the contract class
+//   a `_i` name over a CLASS row the author does not own -- std::string, checksum256
+//   a `_i` parameter whose source text does not hash back to it, which must NOT be published
 //   an UNANNOTATED row struct, reached through defined_in_contract(), by typedef and by using
 //   a row type that is not a class: a builtin (`name`), a scalar, a string, a checksum
 //
@@ -120,6 +122,19 @@ public:
    // live table no client could address by name. Deliberately longer than 13 characters, which
    // is the case an `_n` literal cannot express at all.
    using   long_i_singleton  = sysio::singleton<"singleton_builtin_long_name"_i, uint64_t>;
+
+   // `_i` over a class row the contract author cannot annotate. std::string and checksum256 are
+   // classes, so gating the recovery on "the row is not a class" -- which is not the same
+   // question as "the row can carry [[sysio::table]]" -- left both publishing a decoded hash.
+   using   str_i_singleton   = sysio::singleton<"singleton_string_long_name"_i, std::string>;
+   using   ck_i_singleton    = sysio::singleton<"singleton_cksum_long_name"_i, sysio::checksum256>;
+
+   // Adjacent string literals are spliced by the COMPILER, not by the lexer the recovery reads
+   // with, so the source text of this argument is `"cat"_i` while the parameter is the hash of
+   // `concat`. Publishing `cat` would put a plausible name on a table that is not there --
+   // worse than the decoded raw, which is unusable but visibly so. The recovered text has to
+   // hash back to the parameter, and this one does not, so the entry keeps the raw's decode.
+   using   spliced_singleton = sysio::singleton<"con" "cat"_i, uint64_t>;
    typedef sysio::singleton<"plaintdef"_n, plain_tdef_row>   plain_tdef_singleton;
    using   plain_usng_singleton = sysio::singleton<"plainusng"_n, plain_usng_row>;
 
@@ -156,6 +171,9 @@ public:
       kv_usng_singleton d(get_self(), get_self().value);
       hashed_singleton  e(get_self(), get_self().value);
       long_i_singleton  l(get_self(), get_self().value);
+      str_i_singleton   m(get_self(), get_self().value);
+      ck_i_singleton    n(get_self(), get_self().value);
+      spliced_singleton o(get_self(), get_self().value);
 
       plain_tdef_singleton f(get_self(), get_self().value);
       plain_usng_singleton g(get_self(), get_self().value);
@@ -181,5 +199,8 @@ public:
       scalar_inst.set(12, get_self());
       plain_inst.set({13}, get_self());
       outer_inst.set(14, get_self());
+      m.set("fifteen", get_self());
+      n.set(checksum256(), get_self());
+      o.set(16, get_self());
    }
 };

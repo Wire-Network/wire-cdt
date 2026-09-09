@@ -13,8 +13,14 @@
 // annotation can name only one of them, so it is refused as a rename and the key fold is the
 // only part of it that still applies. The warning below is expected.
 //
-// Expected: both tables keep ["scope", "account_id"] -- the physical prefix and the logical
-// override, in that order.
+// The second pair goes further: its override's OWN first field is called `scope`. The guard that
+// preserves the prefix recognises it by that name, so a logical field sharing it looked like the
+// prefix, suppressed it, and published a key eight bytes short whose first element was typed
+// `uint64` instead of `name` -- the same failure, reached through the fix for it. A layout that
+// already ends with the override is left alone now, which needs no name match at all.
+//
+// Expected: the first pair keeps ["scope", "account_id"]; the second keeps
+// ["scope", "scope", "account_id"], the physical prefix ahead of the override entire.
 #include <sysio/sysio.hpp>
 #include <sysio/kv_scoped_table.hpp>
 #include <sysio/kv_table.hpp>
@@ -39,14 +45,30 @@ public:
       SYSLIB_SERIALIZE(val, (balance))
    };
 
+   struct [[sysio::table("secondalias"), sysio::kv_key("shadow_key")]] shadow {
+      struct shadow_key {
+         uint64_t scope;        // shares the physical prefix's name, and is not it
+         uint64_t account_id;
+         SYSLIB_SERIALIZE(shadow_key, (scope)(account_id))
+      };
+      uint64_t balance;
+      SYSLIB_SERIALIZE(shadow, (balance))
+   };
+
    using scoped_a = kv::scoped_table<"scopeda"_n, phys_key, val>;
    using scoped_b = kv::scoped_table<"scopedb"_n, phys_key, val>;
+   using shadow_a = kv::scoped_table<"shadowa"_n, phys_key, shadow>;
+   using shadow_b = kv::scoped_table<"shadowb"_n, phys_key, shadow>;
 
    [[sysio::action]]
    void test() {
       scoped_a a(get_self(), 1);
       scoped_b b(get_self(), 1);
+      shadow_a c(get_self(), 1);
+      shadow_b d(get_self(), 1);
       a.emplace(get_self(), {1}, {100});
       b.emplace(get_self(), {2}, {200});
+      c.emplace(get_self(), {3}, {300});
+      d.emplace(get_self(), {4}, {400});
    }
 };

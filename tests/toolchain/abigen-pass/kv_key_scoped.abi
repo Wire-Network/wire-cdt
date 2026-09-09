@@ -24,6 +24,30 @@
             ]
         },
         {
+            "name": "shadow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "shadow_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "scope",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "test",
             "base": "",
             "fields": []
@@ -62,6 +86,22 @@
             "key_names": ["scope","account_id"],
             "key_types": ["name","uint64"],
             "table_id": 7145
+        },
+        {
+            "name": "shadowa",
+            "type": "shadow",
+            "index_type": "i64",
+            "key_names": ["scope","scope","account_id"],
+            "key_types": ["name","uint64","uint64"],
+            "table_id": 60606
+        },
+        {
+            "name": "shadowb",
+            "type": "shadow",
+            "index_type": "i64",
+            "key_names": ["scope","scope","account_id"],
+            "key_types": ["name","uint64","uint64"],
+            "table_id": 30942
         }
     ],
     "ricardian_clauses": [],
