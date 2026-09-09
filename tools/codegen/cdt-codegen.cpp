@@ -857,9 +857,9 @@ int main(int argc, const char** argv) {
       if (abi.has_key("tables") && abi["tables"].size() > 1) {
          std::map<uint64_t, std::string> seen_ids; // table_id -> owner name
          for (const auto& tbl : abi["tables"].array_range()) {
+            auto tname = tbl["name"].as<std::string>();
             if (tbl.has_key("table_id")) {
                auto tid = tbl["table_id"].as<uint64_t>();
-               auto tname = tbl["name"].as<std::string>();
                auto [it, inserted] = seen_ids.emplace(tid, tname);
                if (!inserted) {
                   throw std::runtime_error(
@@ -867,19 +867,23 @@ int main(int argc, const char** argv) {
                      "' both have table_id " + std::to_string(tid) +
                      ". Rename one of the tables to avoid the collision.");
                }
-               if (tbl.has_key("secondary_indexes")) {
-                  for (const auto& si : tbl["secondary_indexes"].array_range()) {
-                     if (si.has_key("table_id")) {
-                        auto sid = si["table_id"].as<uint64_t>();
-                        auto sname = tname + "." + si["name"].as<std::string>();
-                        auto [sit, sins] = seen_ids.emplace(sid, sname);
-                        if (!sins) {
-                           throw std::runtime_error(
-                              "table_id collision: '" + sit->second + "' and '" + sname +
-                              "' both have table_id " + std::to_string(sid) +
-                              ". Rename one of the tables/indexes to avoid the collision.");
-                        }
-                     }
+            }
+            // A table with no id of its own can still have indexes that do: only an
+            // instantiation carries a table_id, and a table an annotation DECLARES has none,
+            // so nesting this loop under the table's own id meant a whole family of ids went
+            // unchecked by the one pass that exists to catch them.
+            if (tbl.has_key("secondary_indexes")) {
+               for (const auto& si : tbl["secondary_indexes"].array_range()) {
+                  if (!si.has_key("table_id"))
+                     continue;
+                  auto sid = si["table_id"].as<uint64_t>();
+                  auto sname = tname + "." + si["name"].as<std::string>();
+                  auto [sit, sins] = seen_ids.emplace(sid, sname);
+                  if (!sins) {
+                     throw std::runtime_error(
+                        "table_id collision: '" + sit->second + "' and '" + sname +
+                        "' both have table_id " + std::to_string(sid) +
+                        ". Rename one of the tables/indexes to avoid the collision.");
                   }
                }
             }

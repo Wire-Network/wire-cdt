@@ -310,7 +310,14 @@ class ABIMerger {
                   // is_same_func has already established these describe the same entity, so
                   // there is no conflict to resolve here: a populated list only ever fills
                   // in for an absent or empty one.
-                  for (const char* k : {"table_id", "key_names", "key_types", "secondary_indexes"}) {
+                  // ____row included: compatible() already accepts a descriptor that lacks it
+                  // -- a TU that sees a [[sysio::table]] without its instantiation has no row
+                  // to record -- so leaving it out of the fill list let a rowless entry
+                  // arriving first discard the marker. The resolver then read the annotation
+                  // as uninstantiated and declared a phantom beside the real table, and
+                  // reversing the merge order renamed correctly. Anything compatible() forgives
+                  // the absence of has to be filled back in here.
+                  for (const char* k : {"table_id", "____row", "key_names", "key_types", "secondary_indexes"}) {
                      const bool have_a = ret[i].count(k) && !ret[i][k].empty();
                      const bool have_b = obj_b.count(k) && !obj_b[k].empty();
                      if (!have_a && have_b)

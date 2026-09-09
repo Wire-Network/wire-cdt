@@ -205,6 +205,12 @@ struct abi_table {
    std::vector<std::string> key_names;
    std::vector<std::string> key_types;
    uint16_t table_id = 0;
+   /// Whether table_id holds a computed id, as distinct from holding zero. The hash is an
+   /// unrestricted uint16_t and zero is one of its values -- "rzy2"_n and "s3hm"_n both reach
+   /// it -- so `table_id != 0` read a real id as an absent one, dropped it from the descriptor
+   /// and took both tables out of the collision check that exists to catch exactly that. Only
+   /// an instantiation carries an id at all, which is why absence has to be representable.
+   bool has_table_id = false;
    std::vector<abi_secondary_index> secondary_indexes;
    /// Qualified name of the row struct this table was instantiated over, e.g. "ns1::config_row".
    /// Descriptor-only (emitted as ____row, stripped from the ABI): it is how cdt-codegen matches

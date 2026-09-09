@@ -449,7 +449,8 @@ namespace sysio { namespace cdt {
          abi_table t;
          // The ABI type name, not the C++ record name -- see add_table() for why they differ.
          t.type = get_type(value);
-         t.table_id = compute_table_id_from_raw(name);
+         t.table_id     = compute_table_id_from_raw(name);
+         t.has_table_id = true;
 
          // The table parameter is the name. A [[sysio::table("name")]] on V may still rename it,
          // link-wide, in cdt-codegen; `row` is what pairs the two up.
@@ -554,7 +555,8 @@ namespace sysio { namespace cdt {
          t.name = written_name.empty() ? name_to_string(name) : written_name;
          if (const auto* row_decl = row.getTypePtr()->getAsCXXRecordDecl())
             t.row = row_decl->getQualifiedNameAsString();
-         t.table_id = compute_table_id_from_raw(name);
+         t.table_id     = compute_table_id_from_raw(name);
+         t.has_table_id = true;
          if (kind == kv_table_kind::kv_standard) {
             // KV multi_index: key = [scope:8B BE][pk:8B BE], table_id provides isolation
             t.key_names = {"scope", "primary_key"};
@@ -960,7 +962,8 @@ namespace sysio { namespace cdt {
          o["key_types"] = ojson::array();
          for (const auto& kt : t.key_types)
             o["key_types"].push_back(kt);
-         if (t.table_id != 0)
+         // Presence, not value: zero is a table_id the hash really produces.
+         if (t.has_table_id)
             o["table_id"] = t.table_id;
          // Descriptor-only; cdt-codegen strips it. See abi_table::row.
          if (!t.row.empty())
