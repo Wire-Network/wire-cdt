@@ -3,7 +3,7 @@
       {
          "compile_flags": ["--abigen"],
          "expected": {
-            "stderr": "is not a usable table name; use only letters, digits and underscore"
+            "stderr": "is not a usable table name; use only letters, digits, underscore and dot"
          }
       }
    ]

@@ -33,10 +33,21 @@ public:
       SYSLIB_SERIALIZE(spaced, (id))
    };
 
+   // An empty argument encodes identically to no argument, so every later check reads it as a
+   // bare attribute and the validation meant for a written name is never reached -- an `_i`
+   // table with this annotation published the decode of its hash. Refused where the difference
+   // is still visible.
+   struct [[sysio::table("")]] emptied {
+      uint64_t id;
+      uint64_t primary_key() const { return id; }
+      SYSLIB_SERIALIZE(emptied, (id))
+   };
+
    [[sysio::action]]
    void test() {
       multi_index<"a"_n, spliced> a(get_self(), get_self().value);
       multi_index<"b"_n, escaped> b(get_self(), get_self().value);
       multi_index<"c"_n, spaced>  c(get_self(), get_self().value);
+      multi_index<"d"_n, emptied> d(get_self(), get_self().value);
    }
 };

@@ -4,7 +4,8 @@
          "expected": {
             "stderr": [
                "must be one plain string literal",
-               "may not contain whitespace, a comma, a parenthesis, a quote or a backslash"
+               "may not contain whitespace, a comma, a parenthesis, a quote or a backslash",
+               "may not be empty; omit the argument instead"
             ]
          }
       }

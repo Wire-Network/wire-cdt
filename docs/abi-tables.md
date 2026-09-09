@@ -58,16 +58,29 @@ using prefs = kv::table<"user_preferences"_i, pref_key, preference>;   // -> "us
 Without the annotation an `_i` table is published under the decode of its hash, which no client
 can address. A row is always a struct, so there is always somewhere to put the annotation.
 
-**A name is letters, digits and underscore.** The annotation's argument is read from the source
-*literally* — it is not the compiler's cooked value — so anything the two could disagree about is
-refused rather than guessed at:
+**A name is letters, digits, underscore and dot** — the `_n` alphabet, plus what `_i` allows.
+The annotation's argument is read from the source *literally*, not as the compiler's cooked
+value, so anything the two could disagree about is refused rather than guessed at:
 
 ```cpp
+[[sysio::table("accounts")]]           // fine
+[[sysio::table("smpl.conf5")]]         // fine -- `.` is part of the name alphabet
 [[sysio::table("config\x31")]]         // error: not one plain string literal
 [[sysio::table("con" "catenated")]]    // error: not one plain string literal
 [[sysio::table("has space")]]          // error: whitespace does not survive the encoding
+[[sysio::table("")]]                   // error: omit the argument instead
 [[sysio::table("has-hyphen")]]         // error: not a usable table name
 ```
+
+An **object-like macro** carries its argument fine, since the literal is in the macro body:
+
+```cpp
+#define NAMED_TABLE [[sysio::table("user_preferences")]]
+struct NAMED_TABLE preference { … };                     // fine
+```
+
+A **function-like** one cannot — at the macro's own location the argument is the parameter, not
+the caller's literal, so there is nothing to read and it is refused rather than dropped.
 
 These names leave the toolchain in the ABI and are read by wire-sysio, SHiP and Hyperion. `_i`
 still lifts the 13-character limit — the name is hashed, not encoded — so a long readable name is

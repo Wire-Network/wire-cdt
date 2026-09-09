@@ -55,7 +55,23 @@ using namespace clang;
              auto LangOpts = S.Context.getLangOpts(); \
              auto offset = Lexer::getSourceText(SM.getExpansionRange(AttrRange.getEnd()), SM, LangOpts).size(); \
              auto Begin = AttrRange.getEnd().getLocWithOffset(offset); \
-             if (Lexer::getSourceText(CharSourceRange(SourceRange(Begin), true), SM, LangOpts) == "(") { \
+             auto opens = [&](SourceLocation L) { \
+                return Lexer::getSourceText(CharSourceRange(SourceRange(L), true), SM, LangOpts) == "("; \
+             }; \
+             /* An attribute written inside a macro has an EXPANSION range that ends at the */ \
+             /* macro invocation, so the probe above finds no `(` and the attribute reads as */ \
+             /* bare -- silently dropping its name. `#define NAMED_TABLE [[sysio::table("x")]]` */ \
+             /* published the decoded hash of its `_i` parameter instead of `x`. The argument */ \
+             /* is still there at the SPELLING location, inside the macro body, so look for it */ \
+             /* there before concluding the attribute has no argument. */ \
+             if (!opens(Begin) && Attr.getRange().getBegin().isMacroID()) { \
+                auto SpellEnd = SM.getSpellingLoc(Attr.getRange().getEnd()); \
+                auto soffset = Lexer::getSourceText(CharSourceRange(SourceRange(SpellEnd), true), SM, LangOpts).size(); \
+                auto SpellBegin = SpellEnd.getLocWithOffset(soffset); \
+                if (opens(SpellBegin)) \
+                   Begin = SpellBegin; \
+             } \
+             if (opens(Begin)) { \
                 /* A C++11-spelled attribute does not get its argument parsed into an Expr, so */ \
                 /* the argument is read as SOURCE TEXT -- the token's own spelling, not the */ \
                 /* compiler's cooked value. The two disagree in exactly two ways, and both */ \
@@ -79,9 +95,27 @@ using namespace clang;
                    one_plain_literal = !Str.contains('\\'); \
                 } \
                 if (!one_plain_literal) { \
+                   /* In a function-like macro the argument here is the PARAMETER, and the */ \
+                   /* literal the caller passed is not reachable from it -- say so, since the */ \
+                   /* author did write a plain literal, just not where this can read it. */ \
+                   if (Attr.getRange().getBegin().isMacroID()) { \
+                     S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+                        "sysio attribute argument must be one plain string literal written in " \
+                        "place; a macro parameter cannot be used, since the argument is read as " \
+                        "source text")); \
+                   } else { \
+                     S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+                        "sysio attribute argument must be one plain string literal -- no escape " \
+                        "sequences, no adjacent literals; it is read exactly as written")); \
+                   } \
+                   return AttributeNotApplied; \
+                } \
+                /* An empty argument encodes identically to no argument at all, so every later */ \
+                /* check reads it as a bare attribute and the validation meant for a written */ \
+                /* name is never reached. Refused here, where the difference is still visible. */ \
+                if (Str.size() <= 2) { \
                    S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
-                      "sysio attribute argument must be one plain string literal -- no escape " \
-                      "sequences, no adjacent literals; it is read exactly as written")); \
+                      "sysio attribute argument may not be empty; omit the argument instead")); \
                    return AttributeNotApplied; \
                 } \
              } else if (_NumArgs) { \

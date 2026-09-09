@@ -13,6 +13,33 @@
 // DJB2 hash of 8 big-endian bytes of a uint64_t, truncated to uint16.
 // Must match sysio::kv::compute_table_id in kv_constants.hpp.
 
+/// Find the struct a [[sysio::kv_key("name")]] names: types nested in the row first, then each
+/// ENCLOSING declaration context out to the translation unit.
+///
+/// Stopping at the row's immediate context reported a definition that is plainly visible as
+/// absent -- a row nested in the contract class could not see a struct at namespace scope, which
+/// C++ finds without difficulty. Harmless while the miss was a warning that fell back to the
+/// physical key; a build failure once it became the error it should have been.
+static inline const clang::CXXRecordDecl* find_kv_key_struct( const clang::DeclContext* nested,
+                                                              const clang::DeclContext* from,
+                                                              const std::string& name ) {
+   const auto declared_in = [&name](const clang::DeclContext* ctx) -> const clang::CXXRecordDecl* {
+      if (!ctx)
+         return nullptr;
+      for (auto* d : ctx->decls())
+         if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d))
+            if (r->getNameAsString() == name && r->isCompleteDefinition())
+               return r;
+      return nullptr;
+   };
+   if (const auto* r = declared_in(nested))
+      return r;
+   for (const clang::DeclContext* ctx = from; ctx; ctx = ctx->getParent())
+      if (const auto* r = declared_in(ctx))
+         return r;
+   return nullptr;
+}
+
 // DJB2 initial hash seed (canonical value from Daniel J. Bernstein's hash function).
 static constexpr uint64_t djbh_seed = 5381;
 
@@ -313,12 +340,16 @@ namespace sysio { namespace cdt {
          // wire-sysio, SHiP and Hyperion, none of which should have to carry whatever the
          // attribute happened to be written with.
          t.name = table_name.str();
+         // Letters, digits, underscore and DOT. `.` is part of the `_n` alphabet
+         // (`.12345a-z`), singleton_contract publishes `smpl.conf5`, and it round-trips the
+         // annotation encoding without trouble -- picking the C++ identifier charset instead
+         // rejected a spelling that has always been valid.
          CDT_CHECK_ERROR(!t.name.empty() &&
                          std::all_of(t.name.begin(), t.name.end(), [](unsigned char c) {
-                            return std::isalnum(c) || c == '_';
+                            return std::isalnum(c) || c == '_' || c == '.';
                          }), "abigen_error", _decl->getLocation(),
             "[[sysio::table(\"" + t.name + "\")]] is not a usable table name; use only letters, "
-            "digits and underscore");
+            "digits, underscore and dot");
          t.row  = _decl->getQualifiedNameAsString();
          t.loc  = _decl->getLocation().printToString(_decl->getASTContext().getSourceManager());
 
@@ -330,29 +361,8 @@ namespace sysio { namespace cdt {
                t.key_names = {"scope", "primary_key"};
                t.key_types = {"name", "uint64"};
             } else {
-               // Search for key struct: nested types, then enclosing class
-               const clang::CXXRecordDecl* key_record = nullptr;
-               // Check nested types within the table struct
-               for (auto* d : _decl->decls()) {
-                  if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                     if (r->getNameAsString() == key_struct_name && r->isCompleteDefinition()) {
-                        key_record = r; break;
-                     }
-                  }
-               }
-               // Check enclosing class (contract)
-               if (!key_record) {
-                  if (auto* ctx = _decl->getDeclContext()) {
-                     for (auto* d : ctx->decls()) {
-                        if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                           if (r->getNameAsString() == key_struct_name && r->isCompleteDefinition()) {
-                              key_record = r; break;
-                           }
-                        }
-                     }
-                  }
-               }
-
+               const clang::CXXRecordDecl* key_record =
+                  find_kv_key_struct(_decl, _decl->getDeclContext(), key_struct_name);
                if (key_record) {
                   // Extract field names/types for key_names/key_types
                   for (auto* field : key_record->fields()) {
@@ -454,30 +464,13 @@ namespace sysio { namespace cdt {
          if (val_decl && val_wrap.isSysioKvKey()) {
             auto kv_key_name = val_wrap.getSysioKvKeyAttr()->getName().str();
             if (!kv_key_name.empty()) {
-               // Nested types first, then the enclosing context -- the same order add_table
-               // uses for the identical attribute. Searching only the enclosing context missed
-               // a key struct declared INSIDE the value row, and silently fell back to the
-               // physical key, so the ABI advertised the physical field names while the
-               // annotation named a logical override.
-               const clang::CXXRecordDecl* override_key = nullptr;
-               for (auto* d : val_decl->decls()) {
-                  if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                     if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
-                        override_key = r; break;
-                     }
-                  }
-               }
-               if (!override_key) {
-                  if (auto* ctx = val_decl->getDeclContext()) {
-                     for (auto* d : ctx->decls()) {
-                        if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                           if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
-                              override_key = r; break;
-                           }
-                        }
-                     }
-                  }
-               }
+               // The same lookup add_table uses for the identical attribute: nested
+               // types first, then every enclosing scope. Searching only the enclosing
+               // context missed a key struct declared INSIDE the value row and silently fell
+               // back to the physical key, so the ABI advertised the physical field names
+               // while the annotation named a logical override.
+               const clang::CXXRecordDecl* override_key =
+                  find_kv_key_struct(val_decl, val_decl->getDeclContext(), kv_key_name);
                if (override_key) {
                   key_source = override_key;
                   // Protect it from validate_struct, as the other path does for its own -- and

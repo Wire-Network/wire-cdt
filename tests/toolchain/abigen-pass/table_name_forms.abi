@@ -1,0 +1,98 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "dotted_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "v",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "logical_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "macro_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "v",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "phys_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "raw_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "val",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "foo.bar",
+            "type": "dotted_row",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 10823
+        },
+        {
+            "name": "macro_table_name",
+            "type": "macro_row",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 43674
+        },
+        {
+            "name": "rows",
+            "type": "val",
+            "index_type": "i64",
+            "key_names": ["owner"],
+            "key_types": ["name"],
+            "table_id": 19355
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}
