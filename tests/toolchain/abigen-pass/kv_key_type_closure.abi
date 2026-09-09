@@ -8,7 +8,21 @@
             "base": "",
             "fields": [
                 {
-                    "name": "account_id",
+                    "name": "account",
+                    "type": "logical_id"
+                }
+            ]
+        },
+        {
+            "name": "logical_id",
+            "base": "",
+            "fields": [
+                {
+                    "name": "hi",
+                    "type": "uint64"
+                },
+                {
+                    "name": "lo",
                     "type": "uint64"
                 }
             ]
@@ -51,8 +65,8 @@
             "name": "realname",
             "type": "val",
             "index_type": "i64",
-            "key_names": ["account_id"],
-            "key_types": ["uint64"],
+            "key_names": ["account"],
+            "key_types": ["logical_id"],
             "table_id": 46377
         }
     ],

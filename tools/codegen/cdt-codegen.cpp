@@ -96,10 +96,35 @@ static void resolve_table_annotations(ojson& abi) {
 
          // [[sysio::kv_key]] describes the ROW, so its key layout belongs to every table over
          // that struct -- including the ones the annotation could not name.
+         //
+         // It describes the LOGICAL key, and only that. Whether a table also carries a physical
+         // `scope` ahead of it is a property of the TABLE: kv::scoped_table prepends one and
+         // kv::table does not, which is why add_kv_table composes [scope] + logical rather than
+         // publishing either alone. Replacing the whole array here dropped that prefix -- two
+         // scoped tables whose descriptors read [scope, account_id] were published as
+         // [account_id], so every client encoded a key the runtime never writes.
          if (a.has_key("key_names") && !a["key_names"].empty()) {
+            const auto scoped = [](const ojson& kn) {
+               return kn.is_array() && kn.size() > 0 && kn[0].as<std::string>() == "scope";
+            };
             for (std::size_t i : idx) {
-               abi["tables"][i]["key_names"] = a["key_names"];
-               abi["tables"][i]["key_types"] = a["key_types"];
+               ojson& t = abi["tables"][i];
+               ojson names = ojson::array();
+               ojson types = ojson::array();
+               // Keep the table's own prefix -- unless the annotation already supplies one. A
+               // [[sysio::kv_key]] with no argument IS the standard [scope][primary_key], and
+               // prepending to that would describe two scopes.
+               if (t.has_key("key_names") && scoped(t["key_names"]) && !scoped(a["key_names"]) &&
+                   t.has_key("key_types") && t["key_types"].size() > 0) {
+                  names.push_back(t["key_names"][0]);
+                  types.push_back(t["key_types"][0]);
+               }
+               for (const auto& n : a["key_names"].array_range())
+                  names.push_back(n);
+               for (const auto& ty : a["key_types"].array_range())
+                  types.push_back(ty);
+               t["key_names"] = std::move(names);
+               t["key_types"] = std::move(types);
             }
          }
       }

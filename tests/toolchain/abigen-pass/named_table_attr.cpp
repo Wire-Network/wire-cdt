@@ -31,6 +31,11 @@
 //                 keeps its own table parameter and BOTH carry the override's key names, and the
 //                 annotation is published as nothing, with a warning saying so. Publishing it as
 //                 well would add a table under a table_id nothing writes to.
+//                 The override replaces the LOGICAL key and leaves the physical `scope` in
+//                 front of it -- these are kv_multi_index tables, whose key is
+//                 [scope:8B BE][pk:8B BE]. Replacing the whole array published ["account_id"]
+//                 and lost the scope, so a client encoded eight bytes less than the runtime
+//                 writes; kv_key_scoped pins the same defect on kv::scoped_table.
 //   `taken`    -- one instantiation, but `taken` is another row struct's table. The annotation
 //                 is refused rather than applied, with its own warning; both live tables keep
 //                 their own names, and neither is dropped.

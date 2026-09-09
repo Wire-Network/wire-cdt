@@ -4,7 +4,7 @@
     "types": [],
     "structs": [
         {
-            "name": "abi_key",
+            "name": "logical_key",
             "base": "",
             "fields": [
                 {
@@ -48,12 +48,20 @@
     ],
     "tables": [
         {
-            "name": "realname",
+            "name": "scopeda",
             "type": "val",
             "index_type": "i64",
-            "key_names": ["account_id"],
-            "key_types": ["uint64"],
-            "table_id": 46377
+            "key_names": ["scope","account_id"],
+            "key_types": ["name","uint64"],
+            "table_id": 36809
+        },
+        {
+            "name": "scopedb",
+            "type": "val",
+            "index_type": "i64",
+            "key_names": ["scope","account_id"],
+            "key_types": ["name","uint64"],
+            "table_id": 7145
         }
     ],
     "ricardian_clauses": [],

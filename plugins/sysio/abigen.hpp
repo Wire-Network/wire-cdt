@@ -457,10 +457,12 @@ namespace sysio { namespace cdt {
          if (val_decl)
             t.row = val_decl->getQualifiedNameAsString();
 
-         // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K
+         // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K.
+         // Only a class can carry the attribute, and V need not be one -- the row type check
+         // that reports a non-describable V runs after this, so a scalar V arrives here first.
          auto val_wrap = clang_wrapper::wrap_decl(val_decl);
          const clang::CXXRecordDecl* key_source = key_decl;
-         if (val_wrap.isSysioKvKey()) {
+         if (val_decl && val_wrap.isSysioKvKey()) {
             auto kv_key_name = val_wrap.getSysioKvKeyAttr()->getName().str();
             if (!kv_key_name.empty()) {
                // Nested types first, then the enclosing context -- the same order add_table
@@ -489,8 +491,24 @@ namespace sysio { namespace cdt {
                }
                if (override_key) {
                   key_source = override_key;
-                  // Protect it from validate_struct, as the other path does for its own.
+                  // Protect it from validate_struct, as the other path does for its own -- and
+                  // DECLARE it, which protecting alone does not do. An entry kept in a set it
+                  // never joined is nothing: the override struct was never emitted and its
+                  // fields never ran through add_type, so a key field of a contract type left
+                  // the ABI naming a type the document does not define. A bare
+                  // [[sysio::table, sysio::kv_key("k")]] published key_types ["logical_id"]
+                  // with neither `k` nor `logical_id` in structs, and query-key decoding had
+                  // nothing to resolve. add_table's identical branch has always done both;
+                  // this one only ever did half, and the bare attribute returns before
+                  // reaching that branch at all.
                   kv_key_structs.insert(kv_key_name);
+                  abi_struct ks;
+                  ks.name = kv_key_name;
+                  for (auto* field : override_key->fields()) {
+                     ks.fields.push_back({field->getName().str(), get_type(field->getType())});
+                     add_type(field->getType());
+                  }
+                  _abi.structs.insert(ks);
                } else {
                   CDT_CHECK_WARN(false, "abigen_warning", val_decl->getLocation(),
                      "kv_key struct '" + kv_key_name + "' not found; the physical key's field "

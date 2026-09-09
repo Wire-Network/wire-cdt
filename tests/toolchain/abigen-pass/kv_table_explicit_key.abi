@@ -18,6 +18,20 @@
             ]
         },
         {
+            "name": "item_key_abi",
+            "base": "",
+            "fields": [
+                {
+                    "name": "cat",
+                    "type": "uint64"
+                },
+                {
+                    "name": "item_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "item_val",
             "base": "",
             "fields": [

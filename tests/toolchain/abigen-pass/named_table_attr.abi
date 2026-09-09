@@ -108,8 +108,8 @@
             "name": "first",
             "type": "shared_row",
             "index_type": "i64",
-            "key_names": ["account_id"],
-            "key_types": ["uint64"],
+            "key_names": ["scope","account_id"],
+            "key_types": ["name","uint64"],
             "table_id": 63099
         },
         {
@@ -140,8 +140,8 @@
             "name": "second",
             "type": "shared_row",
             "index_type": "i64",
-            "key_names": ["account_id"],
-            "key_types": ["uint64"],
+            "key_names": ["scope","account_id"],
+            "key_types": ["name","uint64"],
             "table_id": 20069
         },
         {
