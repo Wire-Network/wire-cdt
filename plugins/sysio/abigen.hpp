@@ -42,6 +42,25 @@ static inline const clang::CXXRecordDecl* find_kv_key_struct( const clang::DeclC
    return declared_in(from);
 }
 
+/// What `____row` carries: the row struct's qualified name, made TU-unique when that name is
+/// not.
+///
+/// The marker exists so cdt-codegen can match a [[sysio::table("name")]] to the tables over its
+/// row across translation units, which means it has to name the same type wherever it appears.
+/// A struct in an anonymous namespace is a DIFFERENT type in every translation unit and yet
+/// prints as `(anonymous namespace)::row` in all of them, so two unrelated rows were grouped as
+/// one -- each annotation then looked like it was naming two tables, both were refused with a
+/// warning, and both tables kept their raw parameters as names.
+static inline std::string row_identity( const clang::CXXRecordDecl* decl ) {
+   std::string id = decl->getQualifiedNameAsString();
+   if (decl->isInAnonymousNamespace()) {
+      const auto& sm = decl->getASTContext().getSourceManager();
+      id += "@";
+      id += sm.getFilename(sm.getLocForStartOfFile(sm.getMainFileID())).str();
+   }
+   return id;
+}
+
 // DJB2 initial hash seed (canonical value from Daniel J. Bernstein's hash function).
 static constexpr uint64_t djbh_seed = 5381;
 
@@ -352,7 +371,7 @@ namespace sysio { namespace cdt {
                          }), "abigen_error", _decl->getLocation(),
             "[[sysio::table(\"" + t.name + "\")]] is not a usable table name; use only letters, "
             "digits, underscore and dot");
-         t.row  = _decl->getQualifiedNameAsString();
+         t.row  = row_identity(_decl);
          t.loc  = _decl->getLocation().printToString(_decl->getASTContext().getSourceManager());
 
          // [[sysio::kv_key("struct_name")]] — resolve key struct fields into key_names/key_types
@@ -456,7 +475,7 @@ namespace sysio { namespace cdt {
          // link-wide, in cdt-codegen; `row` is what pairs the two up.
          t.name = name_to_string(name);
          if (val_decl)
-            t.row = val_decl->getQualifiedNameAsString();
+            t.row = row_identity(val_decl);
 
          // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K.
          // Only a class can carry the attribute, and V need not be one -- the row type check
@@ -466,11 +485,10 @@ namespace sysio { namespace cdt {
          if (val_decl && val_wrap.isSysioKvKey()) {
             auto kv_key_name = val_wrap.getSysioKvKeyAttr()->getName().str();
             if (!kv_key_name.empty()) {
-               // The same lookup add_table uses for the identical attribute: nested
-               // types first, then every enclosing scope. Searching only the enclosing
-               // context missed a key struct declared INSIDE the value row and silently fell
-               // back to the physical key, so the ABI advertised the physical field names
-               // while the annotation named a logical override.
+               // The same lookup add_table uses for the identical attribute. Searching only
+               // the enclosing context missed a key struct declared INSIDE the value row and
+               // silently fell back to the physical key, so the ABI advertised the physical
+               // field names while the annotation named a logical override.
                const clang::CXXRecordDecl* override_key =
                   find_kv_key_struct(val_decl, val_decl->getDeclContext(), kv_key_name);
                if (override_key) {
@@ -568,7 +586,7 @@ namespace sysio { namespace cdt {
          // somewhere to put it.
          t.name = name_to_string(name);
          if (const auto* row_decl = row.getTypePtr()->getAsCXXRecordDecl())
-            t.row = row_decl->getQualifiedNameAsString();
+            t.row = row_identity(row_decl);
          t.table_id     = compute_table_id_from_raw(name);
          t.has_table_id = true;
          if (kind == kv_table_kind::kv_standard) {
@@ -1091,11 +1109,17 @@ namespace sysio { namespace cdt {
                if (as.name == _translate_type(a.type))
                   return true;
             }
+            // A [[sysio::kv_key]] override is a dependency of the ATTRIBUTE, not of any one
+            // table, so this cannot sit inside the loop below -- it never depended on `t`, and
+            // a contract whose only table is one an annotation DECLARES has no instantiated
+            // table to iterate. The key struct and the types its fields name were pruned out
+            // from under it, leaving key_types naming something the document does not define
+            // and the chain's key codec with nothing to resolve; adding any unrelated table
+            // made them reappear.
+            if (kv_key_structs.count(as.name))
+               return true;
             for( auto t : set_of_tables ) {
                if (as.name == _translate_type(t.type))
-                  return true;
-               // Include structs referenced by [[sysio::kv_key]]
-               if (kv_key_structs.count(as.name))
                   return true;
             }
             // An annotation may still become a table in cdt-codegen, and a table naming a type
@@ -1362,23 +1386,6 @@ namespace sysio { namespace cdt {
             return false;
          }
 
-         /// The table name as the contract WROTE it, when the template parameter cannot carry
-         /// it -- or empty, which means name_to_string() is right and should be used.
-         ///
-         /// `_i` (hash_id.hpp) DJB2-hashes its argument and hands the result over as name::raw,
-         /// so the parameter holds no name encoding and name_to_string() decodes it into text
-         /// nothing can address the table by. #115 recovers the spelling from
-         /// [[sysio::table("name")]] on the row struct -- but a row need not be a class
-         /// (singleton<"cfg"_i, uint64_t> is ordinary contract code) and a scalar has nowhere
-         /// to put an annotation. That combination published a decoded hash as the table name,
-         /// at the correct table_id, so the table was live and unaddressable by name.
-         ///
-         /// The written form is still in the AST. A specialization over a non-class row reaches
-         /// the ABI only through the contract member that names it, and that member keeps a
-         /// TypeSourceInfo whose first argument is the literal exactly as it was typed.
-         ///
-         /// `_n` needs none of this: there the raw IS the name, and re-deriving it from source
-         /// text would only add a way to disagree with the runtime.
          virtual bool VisitDecl(clang::Decl* decl) {
             if (const auto* d = dyn_cast<clang::ClassTemplateSpecializationDecl>(decl)) {
                // kv::cached_value<Store> is a transparent wrapper: the table it stands for is the one
