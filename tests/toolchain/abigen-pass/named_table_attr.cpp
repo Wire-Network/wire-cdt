@@ -58,18 +58,7 @@ public:
       SYSLIB_SERIALIZE(one_row, (id))
    };
 
-   // The key struct and the typedef its field names are dependencies of the ANNOTATION, not of
-   // any instantiated table -- there is no instantiation here. validate_struct() consulted
-   // kv_key_structs from inside its loop over instantiated tables, so with `declared` as the
-   // only table over this row the loop never ran, both were pruned, and the entry published
-   // key_types naming a type the document does not define.
-   using lone_id = uint64_t;
-   struct lone_key {
-      lone_id account;
-      SYSLIB_SERIALIZE(lone_key, (account))
-   };
-
-   struct [[sysio::table("declared"), sysio::kv_key("lone_key")]] lone_row {
+   struct [[sysio::table("declared")]] lone_row {
       uint64_t id;
       uint64_t primary_key() const { return id; }
       SYSLIB_SERIALIZE(lone_row, (id))

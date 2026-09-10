@@ -3,6 +3,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
+#include <llvm/Support/Path.h>
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Frontend/FrontendPluginRegistry.h>
 
@@ -42,23 +43,25 @@ static inline const clang::CXXRecordDecl* find_kv_key_struct( const clang::DeclC
    return declared_in(from);
 }
 
-/// What `____row` carries: the row struct's qualified name, made TU-unique when that name is
-/// not.
+/// What `____row` carries: an identity for the row DECLARATION, not just its printed name.
 ///
-/// The marker exists so cdt-codegen can match a [[sysio::table("name")]] to the tables over its
-/// row across translation units, which means it has to name the same type wherever it appears.
-/// A struct in an anonymous namespace is a DIFFERENT type in every translation unit and yet
-/// prints as `(anonymous namespace)::row` in all of them, so two unrelated rows were grouped as
-/// one -- each annotation then looked like it was naming two tables, both were refused with a
-/// warning, and both tables kept their raw parameters as names.
+/// The marker matches an annotation to the tables over its row once the descriptors are merged,
+/// so it has to AGREE for copies of one declaration seen from different translation units and
+/// DIFFER for separate declarations that happen to print the same. A qualified name does neither
+/// on its own: a struct in an anonymous namespace is a distinct type per TU and prints
+/// identically in each, while two local structs in one file print identically and are distinct.
+///
+/// The declaration's spelling location answers both -- one header declaration has one spelling
+/// location however many TUs include it, and two declarations never share one. By basename
+/// rather than path, because the same header reached through different relative paths is still
+/// one declaration, and `./aux/row.hpp` beside `aux/row.hpp` is a spelling this toolchain
+/// really does produce.
 static inline std::string row_identity( const clang::CXXRecordDecl* decl ) {
-   std::string id = decl->getQualifiedNameAsString();
-   if (decl->isInAnonymousNamespace()) {
-      const auto& sm = decl->getASTContext().getSourceManager();
-      id += "@";
-      id += sm.getFilename(sm.getLocForStartOfFile(sm.getMainFileID())).str();
-   }
-   return id;
+   const auto& sm = decl->getASTContext().getSourceManager();
+   const auto loc = sm.getSpellingLoc(decl->getLocation());
+   return decl->getQualifiedNameAsString() + "@" +
+          llvm::sys::path::filename(sm.getFilename(loc)).str() + ":" +
+          std::to_string(sm.getFileOffset(loc));
 }
 
 // DJB2 initial hash seed (canonical value from Daniel J. Bernstein's hash function).

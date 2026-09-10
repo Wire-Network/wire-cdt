@@ -1,12 +1,7 @@
 {
     "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
     "version": "sysio::abi/1.2",
-    "types": [
-        {
-            "new_type_name": "lone_id",
-            "type": "uint64"
-        }
-    ],
+    "types": [],
     "structs": [
         {
             "name": "collide_row",
@@ -45,16 +40,6 @@
                 {
                     "name": "id",
                     "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "lone_key",
-            "base": "",
-            "fields": [
-                {
-                    "name": "account",
-                    "type": "lone_id"
                 }
             ]
         },
@@ -116,8 +101,8 @@
             "name": "declared",
             "type": "lone_row",
             "index_type": "i64",
-            "key_names": ["account"],
-            "key_types": ["lone_id"]
+            "key_names": [],
+            "key_types": []
         },
         {
             "name": "first",

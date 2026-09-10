@@ -9,8 +9,17 @@
 // tables, both were refused with "can name only one table, but ... is the row type of 2", and
 // both tables kept their raw parameters -- `one` and `two` rather than `first` and `second`.
 //
-// Expected: first, second -- and no warnings.
+// The other half of the same rule: `shared_row` is ONE declaration in a header both TUs
+// include. Each TU gets a distinct type from it, but it is a single declaration carrying a
+// single annotation, so the two tables over it must group as one. Keying the marker on the main
+// FILE rather than on the declaration split them instead, and the merge refused the link with
+// `orig already defined` -- a table that had linked fine before. The declaration's spelling
+// location answers both halves: one header declaration has one, two declarations never share
+// one.
+//
+// Expected: first, orig, second -- and no warnings.
 #include <sysio/sysio.hpp>
+#include "named_table_internal_linkage_aux/shared_row.hpp"
 #include <sysio/multi_index.hpp>
 
 using namespace sysio;
@@ -30,6 +39,8 @@ public:
    [[sysio::action]]
    void test() {
       sysio::multi_index<"one"_n, row> t(get_self(), get_self().value);
+      sysio::multi_index<"orig"_n, shared_row> s(get_self(), get_self().value);
       t.emplace(get_self(), [&](auto& r) { r.id = 1; });
+      s.emplace(get_self(), [&](auto& r) { r.id = 2; });
    }
 };

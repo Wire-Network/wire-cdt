@@ -56,7 +56,32 @@ using namespace clang;
              auto offset = Lexer::getSourceText(SM.getExpansionRange(AttrRange.getEnd()), SM, LangOpts).size(); \
              auto Begin = AttrRange.getEnd().getLocWithOffset(offset); \
              if (Lexer::getSourceText(CharSourceRange(SourceRange(Begin), true), SM, LangOpts) == "(") { \
-                Str = Lexer::getSourceText(CharSourceRange(SourceRange(Begin.getLocWithOffset(1)), true), SM, LangOpts); \
+                /* Clang does not parse arguments for a C++11-spelled plugin attribute, so this */ \
+                /* is read from SOURCE TEXT -- and the compiler splices adjacent string */ \
+                /* literals while a source read does not. Wrapping a long name across two lines */ \
+                /* is ordinary C++ and exactly what a `_i` name is long enough to want: */ \
+                /* */ \
+                /*   [[sysio::table("user_preferences_" "history")]] */ \
+                /*   multi_index<"user_preferences_history"_i, row> */ \
+                /* */ \
+                /* published `user_preferences_` at table_id 32944, the id of the FULL name. */ \
+                /* The name in the ABI addressed nothing and the id was unreachable by name. */ \
+                /* Refused rather than joined: one literal is what the reader and the compiler */ \
+                /* are guaranteed to agree on. */ \
+                auto ArgLoc = Begin.getLocWithOffset(1); \
+                Token Tok, Next; \
+                if (!Lexer::getRawToken(ArgLoc, Tok, SM, LangOpts, true) && \
+                    Tok.getKind() == tok::string_literal && \
+                    !Lexer::getRawToken(Tok.getEndLoc(), Next, SM, LangOpts, true) && \
+                    Next.getKind() == tok::r_paren) { \
+                   Str = StringRef(SM.getCharacterData(Tok.getLocation()), Tok.getLength()); \
+                } else { \
+                   S.Diag(ArgLoc, S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, \
+                      "a sysio attribute argument must be one string literal; adjacent literals " \
+                      "are joined by the compiler but not by the ABI generator, which would name " \
+                      "the table after the first alone")); \
+                   return AttributeNotApplied; \
+                } \
              } else if (_NumArgs) { \
                S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) \
                    << Attr.getAttrName() << "attribute takes one argument"; \
