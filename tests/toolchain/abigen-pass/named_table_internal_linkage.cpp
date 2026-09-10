@@ -23,7 +23,13 @@
 // naming two tables apiece. The canonical path settles both -- alternate spellings of one file
 // agree, different files do not.
 //
-// Expected: alpha, bravo, first, orig, second -- and no warnings.
+// Every table here is instantiated under its OWN raw name. Reusing a name another row already
+// holds makes the second entry a collision, discarded before annotation resolution runs -- the
+// annotation then publishes a table on its own, with no table_id and no key layout, and the
+// fixture passes whether or not the identity it is testing works at all.
+//
+// Expected: alpha, bravo, first, orig, second -- all five with a table_id and the kv_multi_index
+// key layout, and no warnings.
 #include <sysio/sysio.hpp>
 #include "named_table_internal_linkage_aux/shared_row.hpp"
 #include "named_table_internal_linkage_aux/a/samebase.hpp"
@@ -47,7 +53,7 @@ public:
    void test() {
       sysio::multi_index<"one"_n, row> t(get_self(), get_self().value);
       sysio::multi_index<"orig"_n, shared_row> s(get_self(), get_self().value);
-      sysio::multi_index<"one"_n, same> u(get_self(), get_self().value);
+      sysio::multi_index<"onesame"_n, same> u(get_self(), get_self().value);
       t.emplace(get_self(), [&](auto& r) { r.id = 1; });
       s.emplace(get_self(), [&](auto& r) { r.id = 2; });
       u.emplace(get_self(), [&](auto& r) { r.id = 3; });

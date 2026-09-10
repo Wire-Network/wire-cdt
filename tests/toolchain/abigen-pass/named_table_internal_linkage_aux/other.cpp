@@ -1,5 +1,5 @@
 #include <sysio/sysio.hpp>
-#include "shared_row.hpp"
+#include "./shared_row.hpp"
 #include "b/samebase.hpp"
 #include <sysio/multi_index.hpp>
 
@@ -18,6 +18,6 @@ namespace {
    sysio::multi_index<"two"_n, row> t(sysio::name{}, 0);
    // the SAME table as the other TU instantiates, over the SAME declaration
    sysio::multi_index<"orig"_n, shared_row> s(sysio::name{}, 0);
-   sysio::multi_index<"two"_n, same> u(sysio::name{}, 0);
+   sysio::multi_index<"twosame"_n, same> u(sysio::name{}, 0);
    (void)t; (void)s; (void)u;
 }
