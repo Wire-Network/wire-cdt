@@ -14,6 +14,16 @@
             ]
         },
         {
+            "name": "same",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "shared_row",
             "base": "",
             "fields": [
@@ -37,6 +47,20 @@
         }
     ],
     "tables": [
+        {
+            "name": "alpha",
+            "type": "same",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "bravo",
+            "type": "same",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
         {
             "name": "first",
             "type": "row",

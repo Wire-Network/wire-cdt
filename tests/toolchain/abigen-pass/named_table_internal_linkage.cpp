@@ -17,9 +17,16 @@
 // location answers both halves: one header declaration has one, two declarations never share
 // one.
 //
-// Expected: first, orig, second -- and no warnings.
+// And the third: `a/samebase.hpp` and `b/samebase.hpp` share a basename and declare an anonymous
+// `same` at the same offset. Keying on the basename to absorb the spelling difference above
+// collapsed these two distinct declarations into one, and both annotations were refused as
+// naming two tables apiece. The canonical path settles both -- alternate spellings of one file
+// agree, different files do not.
+//
+// Expected: alpha, bravo, first, orig, second -- and no warnings.
 #include <sysio/sysio.hpp>
 #include "named_table_internal_linkage_aux/shared_row.hpp"
+#include "named_table_internal_linkage_aux/a/samebase.hpp"
 #include <sysio/multi_index.hpp>
 
 using namespace sysio;
@@ -40,7 +47,9 @@ public:
    void test() {
       sysio::multi_index<"one"_n, row> t(get_self(), get_self().value);
       sysio::multi_index<"orig"_n, shared_row> s(get_self(), get_self().value);
+      sysio::multi_index<"one"_n, same> u(get_self(), get_self().value);
       t.emplace(get_self(), [&](auto& r) { r.id = 1; });
       s.emplace(get_self(), [&](auto& r) { r.id = 2; });
+      u.emplace(get_self(), [&](auto& r) { r.id = 3; });
    }
 };

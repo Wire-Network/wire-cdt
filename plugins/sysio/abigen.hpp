@@ -3,6 +3,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Frontend/FrontendPluginRegistry.h>
@@ -52,15 +53,22 @@ static inline const clang::CXXRecordDecl* find_kv_key_struct( const clang::DeclC
 /// identically in each, while two local structs in one file print identically and are distinct.
 ///
 /// The declaration's spelling location answers both -- one header declaration has one spelling
-/// location however many TUs include it, and two declarations never share one. By basename
-/// rather than path, because the same header reached through different relative paths is still
-/// one declaration, and `./aux/row.hpp` beside `aux/row.hpp` is a spelling this toolchain
-/// really does produce.
+/// location however many TUs include it, and two declarations never share one.
+///
+/// By CANONICAL path. The spelling alone is not stable: this toolchain really does produce
+/// `./aux/row.hpp` from one translation unit and `aux/row.hpp` from another for a single header.
+/// A basename fixes that and breaks the other half -- `a/row.hpp` and `b/row.hpp` are two
+/// declarations and collapsed into one, so both annotations were refused as naming two tables
+/// apiece. real_path settles both: alternate spellings of one file agree, different files do
+/// not.
 static inline std::string row_identity( const clang::CXXRecordDecl* decl ) {
    const auto& sm = decl->getASTContext().getSourceManager();
    const auto loc = sm.getSpellingLoc(decl->getLocation());
-   return decl->getQualifiedNameAsString() + "@" +
-          llvm::sys::path::filename(sm.getFilename(loc)).str() + ":" +
+   const auto spelled = sm.getFilename(loc);
+   llvm::SmallString<256> path;
+   if (llvm::sys::fs::real_path(spelled, path))
+      path.assign(spelled);   // unreadable: the spelling is the best identity available
+   return decl->getQualifiedNameAsString() + "@" + std::string(path.str()) + ":" +
           std::to_string(sm.getFileOffset(loc));
 }
 
