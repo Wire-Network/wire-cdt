@@ -42,6 +42,13 @@ static void resolve_table_annotations(ojson& abi) {
    const auto row_of = [](const ojson& t) {
       return t.has_key("____row") ? t["____row"].as<std::string>() : std::string{};
    };
+   // ____row identifies a DECLARATION -- qualified name, then where it was written -- so that
+   // copies of one declaration agree across translation units and separate ones differ. Only
+   // the name half means anything to the author reading a diagnostic.
+   const auto row_name = [](const std::string& row) {
+      const auto at = row.find('@');
+      return at == std::string::npos ? row : row.substr(0, at);
+   };
 
    // Row struct -> the tables instantiated over it, and every name already taken.
    std::map<std::string, std::vector<std::size_t>> by_row;
@@ -114,7 +121,7 @@ static void resolve_table_annotations(ojson& abi) {
          }
          if (idx.size() > 1) {
             std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name
-                      << "\")]] can name only one table, but '" << r.row << "' is the row type of "
+                      << "\")]] can name only one table, but '" << row_name(r.row) << "' is the row type of "
                       << idx.size() << "; each is named after its own table parameter in the ABI\n";
             r.pending = false;
             continue;
@@ -141,10 +148,10 @@ static void resolve_table_annotations(ojson& abi) {
                continue;
             if (!others.empty())
                others += ", ";
-            others += "'" + o->row + "'";
+            others += "'" + row_name(o->row) + "'";
          }
          std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name << "\")]] is asked for by "
-                   << rivals.size() << " row structs (" << others << " as well as '" << r.row
+                   << rivals.size() << " row structs (" << others << " as well as '" << row_name(r.row)
                    << "'), and the ABI can hold only one table called '" << r.name
                    << "'; none of them is renamed\n";
          r.pending = false;
@@ -183,7 +190,7 @@ static void resolve_table_annotations(ojson& abi) {
          if (r.declares) {
             std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name
                       << "\")]] declares a table, but another table in this contract is "
-                         "already called '" << r.name << "'; '" << r.row << "' is not described\n";
+                         "already called '" << r.name << "'; '" << row_name(r.row) << "' is not described\n";
          } else {
             std::cerr << r.loc << ": warning: [[sysio::table(\"" << r.name << "\")]] cannot rename '"
                       << abi["tables"][r.target]["name"].as<std::string>()
