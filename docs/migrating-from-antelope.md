@@ -392,9 +392,12 @@ wrong with the struct.
 [wire-cdt#117](https://github.com/Wire-Network/wire-cdt/pull/117).** Before it, the attribute
 emitted a second ABI table entry named after the *row struct* — `account` beside the real
 `accounts` — under a `table_id` nothing ever writes to, so `get_table_rows` for that name returned
-nothing. #117 makes the placeholder yield to the instantiation that actually names the table. On an
-older CDT, give the attribute an explicit name — `[[sysio::table("accounts")]]` — which avoided it
-on every version and is clearer regardless.
+nothing. A bare attribute now contributes no entry at all: the name, the `table_id` and the key
+layout all come from whatever `multi_index` or `kv::table` instantiates the struct, which is where
+they were always going to come from. A struct annotated but never instantiated therefore gets no
+entry either — it described a table nothing could read or write. On an older CDT, give the
+attribute an explicit name — `[[sysio::table("accounts")]]` — which avoided it on every version
+and is clearer regardless.
 
 Two behaviours that a port depends on match upstream. **Both landed in
 [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113); a CDT built before it has
@@ -419,6 +422,16 @@ contract's account, it must be read-only.
 `kv_multi_index` as its storage, and `get_or_create`, `set` and `remove` all mutate through it — so
 a singleton handle constructed on another account's code is read-only on the same terms as a table
 handle.
+
+**Your singletons appear in the ABI again as of
+[wire-cdt#117](https://github.com/Wire-Network/wire-cdt/pull/117)** — a port from an Antelope chain
+will notice this, because upstream they always did. That same aliasing is why they stopped:
+`sysio::singleton` is an alias *template* over `kv_singleton`, and an alias template has no
+specialization of its own, so abigen's table visitor — which tested for the name `singleton` —
+never matched one. `sysio::multi_index` is the same shape over `kv_multi_index`, which *was* on
+that list, so a contract mixing the two saw its `multi_index` tables described and its singletons
+silently omitted. Nothing was wrong with the stored data; only the ABI was short an entry, and
+`clio get table`, SHiP and generated clients could not see it.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
 `checksum256`. Iteration order is `memcmp` order over a big-endian encoding — with an additional
@@ -494,9 +507,11 @@ identical key bytes, less overhead. The full comparison and a step-by-step conve
 [KV Storage Guide](kv-storage-guide.md).
 
 Table names are also no longer confined to what `sysio::name` can hold — 13 characters of
-`a-z1-5.`. The `_i` literal hashes the identifier instead, so `a-zA-Z0-9_` and longer names are
-usable. (`hash_id::max_length` is 128, but nothing validates against it or against an alphabet —
-treat both as conventions, not as checks.)
+`a-z1-5.`. The `_i` literal hashes the identifier instead, so longer names are usable. The name a
+`[[sysio::table("…")]]` publishes is checked against `a-zA-Z0-9_.` and must be written as a single
+plain string literal — it reaches the ABI verbatim and is read from there by wire-sysio, SHiP and
+Hyperion. Length is not checked (`hash_id::max_length` is 128, a convention rather than a limit).
+[What abigen describes, and what it refuses](abi-tables.md) has the rules and their diagnostics.
 
 ```cpp
 #include <sysio/hash_id.hpp>
@@ -522,29 +537,18 @@ readable name.
 > expressed at all: `"user_table"_n` is a *compile* error, because `_` is not in the alphabet. For
 > such a name `_i` is the answer, at any length.
 
-> **For `kv::global`, lengthening the name is not the remedy.** The mismatch above applies to a
-> `_i`-named `kv::global` too, but with a different shape and a different escape.
+> **`kv::global` was the worst of it, and is also fixed.** The same pre-#115 mismatch applied
+> there, in a shape renaming could not escape: `[[sysio::table("app_config")]]` over
+> `kv::global<"app_config"_i, T>` published **two** entries — the annotated name at the
+> `string_to_name` id, which is not where the row lived, and a decoded-hash name at the real one —
+> while lengthening the name past 13 characters turned that into a `table_id collision` the build
+> could not get past. Reads and writes were correct throughout; only the ABI metadata disagreed,
+> and only for lookups by name.
 >
-> **Reads and writes are correct either way** — the contract and the host both use the
-> compile-time `table_id`, so the row is stored and fetched consistently. Only the ABI metadata
-> disagrees, and only for lookups *by name*.
->
-> With `[[sysio::table("app_config")]]` over `kv::global<"app_config"_i, T>`, the ABI carries
-> **two** table entries rather than one: `app_config` → 38424 (the `string_to_name` id, which is
-> not where the row lives) and a decoded-hash name `idrzzw4ktxljf` → 21489 (the real one). A
-> `get_table_rows` by the readable name therefore finds nothing.
->
-> Renaming past 13 characters fixes this for `kv::table`, but for a `kv::global` it turns the
-> mismatch into a build failure: both entries then compute the same id under different names and
-> trip the duplicate check —
-> `table_id collision: 'app_config_table' and 'wdfp4hyupu.q2' both have table_id 42322. Rename one
-> of the tables to avoid the collision.` (From
-> `cdt-codegen`'s link-stage ABI finalize; `cdt-cpp -c` on the same file succeeds.)
->
-> So for a config singleton prefer `_n`, whose name fits `.12345a-z` in 13 characters in almost
-> every case, and which produces a single correct entry.
-> `tests/unit/test_contracts/hash_id_tests.cpp` uses the short `_i` form: it works, its
-> integration test passes, and its ABI carries the extra entry.
+> On a current toolchain that example publishes one entry, `app_config` at the id the row is
+> actually stored under, and `tests/unit/test_contracts/hash_id_tests.cpp` — which uses the short
+> `_i` form — produces three clean entries with no twin. On an older CDT, keep a config singleton
+> on `_n`.
 
 ---
 
@@ -784,7 +788,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
   identical scope semantics and byte-identical primary keys, without the object-cache overhead.
 - **[`kv::table`](kv-table.md) and [`kv::global`](kv-global.md)** — user-defined key structs and
   single-value config, with zero-copy serialization for trivially-copyable POD values.
-- **Long table names** via the `_i` literal (`a-zA-Z0-9_`, no enforced length).
+- **Long table names** via the `_i` literal — `a-zA-Z0-9_.`, with no length limit.
 - **[Protocol Buffers](protocol-buffers.md)** — protobuf-encoded action data via `sysio::pb<T>`, with
   the `FileDescriptorSet` embedded in the ABI so clients can decode it. Useful when you need schema
   evolution or a language-neutral wire format.
@@ -832,6 +836,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 | Doc | Topic |
 |---|---|
 | [KV Storage Guide](kv-storage-guide.md) | The storage layer, the decision matrix, and `multi_index` → `kv::table` migration |
+| [abi-tables.md](abi-tables.md) | What abigen describes and what it refuses — row types, table names, `[[sysio::kv_key]]` |
 | [kv-intrinsics-reference.md](kv-intrinsics-reference.md) | All 22 KV host functions |
 | [kv-abi-key-metadata.md](kv-abi-key-metadata.md) | How key metadata lands in the ABI |
 | [native-tester-compilation.md](native-tester-compilation.md) | Host-side contract testing |
