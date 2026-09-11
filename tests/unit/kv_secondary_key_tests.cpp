@@ -187,13 +187,23 @@ struct by_plain_functor {
    uint64_t operator()(const idx_row* r) const { return r->u64; }
 };
 
+// The other shape: a reference overload only, with the result_type typedef. This is what
+// Wire extractors looked like before the derivation changed, and it is NOT upstream-legal
+// -- upstream's decltype(Extractor()(nullptr)) needs something nullptr can bind to. Both
+// shapes work here because the type is derived by calling the extractor with a row.
+struct by_reference_only {
+   using result_type = uint64_t;
+   uint64_t operator()(const idx_row& r) const { return r.u64; }
+};
+
 using idx_table = sysio::kv_multi_index<"ordtbl"_n, idx_row,
    sysio::indexed_by<"byint"_n,  sysio::const_mem_fun<idx_row, uint64_t,    &idx_row::by_u64>>,
    sysio::indexed_by<"bybig"_n, sysio::const_mem_fun<idx_row, uint128_t,   &idx_row::by_u128>>,
    sysio::indexed_by<"bydbl"_n,  sysio::const_mem_fun<idx_row, double,      &idx_row::by_double>>,
    sysio::indexed_by<"byldbl"_n, sysio::const_mem_fun<idx_row, long double, &idx_row::by_ldouble>>,
    sysio::indexed_by<"byhash"_n, sysio::const_mem_fun<idx_row, checksum256, &idx_row::by_hash>>,
-   sysio::indexed_by<"byfunc"_n, by_plain_functor>>;
+   sysio::indexed_by<"byfunc"_n, by_plain_functor>,
+   sysio::indexed_by<"byref"_n,  by_reference_only>>;
 
 template<sysio::name::raw N>
 constexpr bool view_is_complete() {
@@ -208,6 +218,8 @@ static_assert(view_is_complete<"byldbl"_n>(), "long double secondary key rejecte
 static_assert(view_is_complete<"byhash"_n>(), "checksum256 secondary key rejected");
 static_assert(view_is_complete<"byfunc"_n>(),
               "a functor extractor without result_type was rejected; upstream accepts it");
+static_assert(view_is_complete<"byref"_n>(),
+              "a reference-only extractor was rejected; it worked before this change");
 
 } // namespace
 

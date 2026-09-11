@@ -119,7 +119,7 @@ namespace _kv_multi_index_detail {
    "multi_index secondary keys are limited to the five types upstream supports: uint64_t, " \
    "uint128_t, double, long double, checksum256. Any other type has no order-preserving "   \
    "encoding here and would iterate in its byte order rather than its value order. For a "  \
-   "wider key -- a narrow integer, an enum, a name, or a composite struct -- use kv::table "\
+   "wider key -- a narrow integer, a name, or a composite struct -- use kv::table "\
    "with kv::index, which encodes through be_key_stream."
 
    // Deliberately viable for every T rather than SFINAE'd to the five: constraining it
@@ -172,14 +172,24 @@ namespace _kv_multi_index_detail {
       return buf;
    }
 
-   inline fixed_buf<u128_size> encode_secondary(const long double& key) {
-      char raw[u128_size];
-      memcpy(raw, &key, u128_size);
-      fixed_buf<u128_size> buf;
-      for (int i = 0; i < static_cast<int>(u128_size); ++i)
-         buf.data_[i] = raw[u128_size - 1 - i];
+   // Sized off long double itself, not off u128_size. They are the same 16 bytes on
+   // wasm32, which is what contracts compile for, so no stored key moves -- but this
+   // header also compiles natively for the test harness, and macOS on ARM64 makes
+   // long double an 8-byte double. Reading u128_size bytes out of it is an
+   // out-of-bounds read, and the encoding would be twice sizeof, which breaks the
+   // width invariant the reverse-iteration sentinel depends on.
+   //
+   // The byte reversal only yields a MEANINGFUL order where long double is IEEE
+   // binary128. Elsewhere it is merely well-defined; see kv_secondary_key_tests.
+   inline fixed_buf<sizeof(long double)> encode_secondary(const long double& key) {
+      constexpr size_t n = sizeof(long double);
+      char raw[n];
+      memcpy(raw, &key, n);
+      fixed_buf<n> buf;
+      for (size_t i = 0; i < n; ++i)
+         buf.data_[i] = raw[n - 1 - i];
       if (static_cast<uint8_t>(buf.data_[0]) & 0x80u)
-         for (int i = 0; i < static_cast<int>(u128_size); ++i) buf.data_[i] = ~buf.data_[i];
+         for (size_t i = 0; i < n; ++i) buf.data_[i] = ~buf.data_[i];
       else
          buf.data_[0] = static_cast<char>(static_cast<uint8_t>(buf.data_[0]) ^ 0x80u);
       return buf;
@@ -897,15 +907,18 @@ public:
 
       using index_type = typename std::tuple_element<index_number, std::tuple<Indices...>>::type;
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
-      // Derived by CALLING the extractor, which is what upstream does --
+      // Derived by CALLING the extractor with a row. Upstream spells this --
       //    typedef typename std::decay<decltype( Extractor()(nullptr) )>::type secondary_key_type;
-      // (AntelopeIO CDT multi_index.hpp) -- rather than by requiring an
-      // Extractor::result_type typedef. const_mem_fun carries that typedef here and
-      // upstream alike, so the common case is unchanged; a hand-written functor
-      // extractor need not, and one that compiles on an Antelope chain has to compile
-      // here. The call sits in an unevaluated operand, so the null pointer is never
-      // dereferenced.
-      using secondary_key_type = std::decay_t<decltype(secondary_extractor_type()(nullptr))>;
+      // (AntelopeIO CDT multi_index.hpp) -- which works there because its const_mem_fun
+      // carries a ChainedPtr overload that nullptr binds to. Passing a ROW REFERENCE
+      // instead accepts strictly more: const_mem_fun, an upstream-shaped functor taking
+      // a pointer, AND one that only takes `const T&` -- which the old result_type form
+      // allowed here and nullptr rejects. Every extraction site calls the extractor with
+      // a row, so the reference overload is the one an extractor cannot do without.
+      //
+      // Unevaluated operand: nothing is constructed and no row is read.
+      using secondary_key_type =
+         std::decay_t<decltype(std::declval<const secondary_extractor_type&>()(std::declval<const T&>()))>;
       // Secondary key encoding uses sizeof(secondary_key_type) for stack buffer sizing.
       // Trivially copyable types guarantee sizeof == packed size (no varint prefixes),
       // and each of the five encoders below writes exactly sizeof bytes.
