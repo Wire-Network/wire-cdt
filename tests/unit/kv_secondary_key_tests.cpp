@@ -177,12 +177,23 @@ struct idx_row {
    checksum256 by_hash()     const { return hash; }
 };
 
+// A hand-written functor extractor, with no result_type typedef. Upstream derives the key
+// type by calling the extractor -- std::decay<decltype(Extractor()(nullptr))> -- so this
+// shape compiles on an Antelope chain, and a contract using it has to build here too.
+// const_mem_fun supplies result_type in both projects, so the common case is unaffected;
+// this pins the uncommon one.
+struct by_plain_functor {
+   uint64_t operator()(const idx_row& r) const { return r.u64; }
+   uint64_t operator()(const idx_row* r) const { return r->u64; }
+};
+
 using idx_table = sysio::kv_multi_index<"ordtbl"_n, idx_row,
    sysio::indexed_by<"byint"_n,  sysio::const_mem_fun<idx_row, uint64_t,    &idx_row::by_u64>>,
    sysio::indexed_by<"bybig"_n, sysio::const_mem_fun<idx_row, uint128_t,   &idx_row::by_u128>>,
    sysio::indexed_by<"bydbl"_n,  sysio::const_mem_fun<idx_row, double,      &idx_row::by_double>>,
    sysio::indexed_by<"byldbl"_n, sysio::const_mem_fun<idx_row, long double, &idx_row::by_ldouble>>,
-   sysio::indexed_by<"byhash"_n, sysio::const_mem_fun<idx_row, checksum256, &idx_row::by_hash>>>;
+   sysio::indexed_by<"byhash"_n, sysio::const_mem_fun<idx_row, checksum256, &idx_row::by_hash>>,
+   sysio::indexed_by<"byfunc"_n, by_plain_functor>>;
 
 template<sysio::name::raw N>
 constexpr bool view_is_complete() {
@@ -195,6 +206,8 @@ static_assert(view_is_complete<"bybig"_n>(), "uint128_t secondary key rejected")
 static_assert(view_is_complete<"bydbl"_n>(),  "double secondary key rejected");
 static_assert(view_is_complete<"byldbl"_n>(), "long double secondary key rejected");
 static_assert(view_is_complete<"byhash"_n>(), "checksum256 secondary key rejected");
+static_assert(view_is_complete<"byfunc"_n>(),
+              "a functor extractor without result_type was rejected; upstream accepts it");
 
 } // namespace
 

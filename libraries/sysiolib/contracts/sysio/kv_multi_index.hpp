@@ -897,7 +897,15 @@ public:
 
       using index_type = typename std::tuple_element<index_number, std::tuple<Indices...>>::type;
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
-      using secondary_key_type = std::decay_t<typename secondary_extractor_type::result_type>;
+      // Derived by CALLING the extractor, which is what upstream does --
+      //    typedef typename std::decay<decltype( Extractor()(nullptr) )>::type secondary_key_type;
+      // (AntelopeIO CDT multi_index.hpp) -- rather than by requiring an
+      // Extractor::result_type typedef. const_mem_fun carries that typedef here and
+      // upstream alike, so the common case is unchanged; a hand-written functor
+      // extractor need not, and one that compiles on an Antelope chain has to compile
+      // here. The call sits in an unevaluated operand, so the null pointer is never
+      // dereferenced.
+      using secondary_key_type = std::decay_t<decltype(secondary_extractor_type()(nullptr))>;
       // Secondary key encoding uses sizeof(secondary_key_type) for stack buffer sizing.
       // Trivially copyable types guarantee sizeof == packed size (no varint prefixes),
       // and each of the five encoders below writes exactly sizeof bytes.
