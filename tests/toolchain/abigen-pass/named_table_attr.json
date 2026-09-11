@@ -1,0 +1,14 @@
+{
+   "tests": [
+      {
+         "expected": {
+            "abi-file": "named_table_attr.abi",
+            "stderr": [
+               "can name only one table, but 'named_table_attr::shared_row' is the row type of 2",
+               "cannot rename 'orphan': another table in this contract is already called 'taken'",
+               "declares a table, but another table in this contract is already called 'occupied'"
+            ]
+         }
+      }
+   ]
+}

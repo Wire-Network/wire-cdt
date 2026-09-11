@@ -1,0 +1,56 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [
+        {
+            "new_type_name": "lone_id",
+            "type": "uint64"
+        }
+    ],
+    "structs": [
+        {
+            "name": "lone_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "lone_id"
+                }
+            ]
+        },
+        {
+            "name": "lone_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "v",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "declared",
+            "type": "lone_row",
+            "index_type": "i64",
+            "key_names": ["account"],
+            "key_types": ["lone_id"]
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

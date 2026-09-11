@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -63,6 +64,12 @@ class ABIMerger {
          ret["structs"]  = merge_structs(other);
          ret["actions"]  = merge_actions(other);
          ret["tables"]   = merge_tables(other);
+         // Descriptor-only, and stripped by cdt-codegen once it has applied them. Carried
+         // through the merge because the rule they feed -- how many tables a row struct backs --
+         // is only answerable with every descriptor in hand.
+         ojson annotations = merge_table_annotations(other);
+         if (!annotations.empty())
+            ret["____table_annotations"] = std::move(annotations);
          ret["ricardian_clauses"]  = merge_clauses(other);
 
          // A section belongs to the emitted document if it has content, and the emitted
@@ -220,10 +227,15 @@ class ABIMerger {
                 a["type"] == b["type"] &&
                 field(a, "index_type") == field(b, "index_type") &&
                 // table_id is where the row physically lives and each secondary index carries
-                // its own, so a difference in either is a different table -- not a merge.
-                // These were omitted while cdt-abidiff's tables_match compared them, leaving
-                // the differ and the merger disagreeing on table identity.
-                field(a, "table_id") == field(b, "table_id") &&
+                // its own, so two DIFFERENT ids are a different table -- not a merge. These were
+                // omitted while cdt-abidiff's tables_match compared them, leaving the differ and
+                // the merger disagreeing on table identity.
+                //
+                // Absence is not a difference, though. Only an instantiation carries the real
+                // id, so a TU that sees a [[sysio::table("name")]] without one omits it, and
+                // the TU that does instantiate the table supplies it below.
+                compatible("table_id") &&
+                compatible("____row") &&
                 compatible("key_names") &&
                 compatible("key_types") &&
                 compatible("secondary_indexes");
@@ -298,7 +310,14 @@ class ABIMerger {
                   // is_same_func has already established these describe the same entity, so
                   // there is no conflict to resolve here: a populated list only ever fills
                   // in for an absent or empty one.
-                  for (const char* k : {"key_names", "key_types", "secondary_indexes"}) {
+                  // ____row included: compatible() already accepts a descriptor that lacks it
+                  // -- a TU that sees a [[sysio::table]] without its instantiation has no row
+                  // to record -- so leaving it out of the fill list let a rowless entry
+                  // arriving first discard the marker. The resolver then read the annotation
+                  // as uninstantiated and declared a phantom beside the real table, and
+                  // reversing the merge order renamed correctly. Anything compatible() forgives
+                  // the absence of has to be filled back in here.
+                  for (const char* k : {"table_id", "____row", "key_names", "key_types", "secondary_indexes"}) {
                      const bool have_a = ret[i].count(k) && !ret[i][k].empty();
                      const bool have_b = obj_b.count(k) && !obj_b[k].empty();
                      if (!have_a && have_b)
@@ -362,6 +381,53 @@ class ABIMerger {
          ojson tabs = ojson::array();
          add_object_to_array(tabs, abi, b, "tables", "name", table_is_same);
          return tabs;
+      }
+
+      /// Annotations are identified by (name, row), so two ROW STRUCTS asking for one ABI name
+      /// both survive the merge and reach the resolver, which refuses them together and says
+      /// so. Keyed on `name` alone -- as every other section is -- the merge threw
+      /// "already defined" instead, and the same source produced a diagnostic or a dead link
+      /// depending only on whether the two rows happened to share a translation unit. Deciding
+      /// a link-wide question link-wide is the point of carrying these at all.
+      ojson merge_table_annotations(const ojson& b) {
+         const auto key_of = [](const ojson& a) {
+            return a["name"].as<std::string>() + '\0' +
+                   (a.has_key("row") ? a["row"].as<std::string>() : std::string{});
+         };
+         ojson anns = ojson::array();
+         std::map<std::string, std::size_t> at;
+         const ojson& self = abi;
+         for (const ojson* side : {&self, &b}) {
+            if (!side->has_key("____table_annotations"))
+               continue;
+            for (const auto& ann : (*side)["____table_annotations"].array_range()) {
+               const auto [it, fresh] = at.emplace(key_of(ann), anns.size());
+               if (fresh) {
+                  anns.push_back(ann);
+                  continue;
+               }
+               // The same annotation from two translation units, and not necessarily with the
+               // same detail: a [[sysio::kv_key]] naming a struct that one TU sees only
+               // forward-declared resolves to nothing there and to its fields in the TU that
+               // completes it. Keeping whichever record sorted first published the physical key
+               // or the logical one depending on filenames. Take the populated list, as table
+               // merging does, and refuse two that disagree.
+               ojson& kept = anns[it->second];
+               for (const char* k : {"key_names", "key_types"}) {
+                  const bool have  = kept.has_key(k) && !kept[k].empty();
+                  const bool other = ann.has_key(k) && !ann[k].empty();
+                  if (!have && other)
+                     kept[k] = ann[k];
+                  else if (have && other && kept[k] != ann[k])
+                     throw std::runtime_error(
+                        std::string("Error, ABI structs malformed : [[sysio::table(\"") +
+                        ann["name"].as<std::string>() + "\")]] on '" +
+                        ann["row"].as<std::string>() + "' resolves " + k +
+                        " differently in two translation units");
+               }
+            }
+         }
+         return anns;
       }
 
       ojson merge_clauses(ojson b) {

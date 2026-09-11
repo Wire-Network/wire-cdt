@@ -1,0 +1,1 @@
+{ "tests": [{ "compile_flags": ["-contract=bare_table_xtu", "{cwd}/bare_table_xtu_aux/second.cpp"], "expected": { "abi-file": "bare_table_xtu.abi" } }] }

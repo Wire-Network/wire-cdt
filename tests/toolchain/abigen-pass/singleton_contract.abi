@@ -4,12 +4,32 @@
     "types": [],
     "structs": [
         {
+            "name": "out_of_class",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "out_of_class3",
             "base": "",
             "fields": [
                 {
                     "name": "id",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "simple_name",
+            "base": "",
+            "fields": [
+                {
+                    "name": "value",
+                    "type": "name"
                 }
             ]
         },
@@ -42,6 +62,22 @@
     ],
     "tables": [
         {
+            "name": "config",
+            "type": "tbl_config",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 21143
+        },
+        {
+            "name": "config55",
+            "type": "out_of_class",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 52508
+        },
+        {
             "name": "mi.config52",
             "type": "out_of_class3",
             "index_type": "i64",
@@ -50,20 +86,20 @@
             "table_id": 9314
         },
         {
-            "name": "out_of_class3",
-            "type": "out_of_class3",
+            "name": "smpl.conf5",
+            "type": "simple_name",
             "index_type": "i64",
-            "key_names": [],
-            "key_types": [],
-            "table_id": 8120
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 50418
         },
         {
-            "name": "tbl_config",
-            "type": "tbl_config",
+            "name": "smpl.config",
+            "type": "simple_name",
             "index_type": "i64",
-            "key_names": [],
-            "key_types": [],
-            "table_id": 8868
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 55500
         }
     ],
     "ricardian_clauses": [],

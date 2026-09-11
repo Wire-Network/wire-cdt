@@ -1,0 +1,10 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["-contract=named_table_rename_chain", "{cwd}/named_table_rename_chain_aux/other.cpp"],
+         "expected": {
+            "abi-file": "named_table_rename_chain.abi"
+         }
+      }
+   ]
+}

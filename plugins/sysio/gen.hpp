@@ -1,5 +1,6 @@
 #pragma once
 
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/Expr.h>
@@ -13,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <regex>
 #include <utility>
 #include <variant>

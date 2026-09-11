@@ -1,0 +1,10 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["-contract=named_table_internal_linkage", "{cwd}/named_table_internal_linkage_aux/other.cpp"],
+         "expected": {
+            "abi-file": "named_table_internal_linkage.abi"
+         }
+      }
+   ]
+}

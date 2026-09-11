@@ -1,0 +1,13 @@
+{
+   "tests": [
+      {
+         "expected": {
+            "abi-file": "kv_key_scoped.abi",
+            "stderr": [
+               "can name only one table, but 'kv_key_scoped::val' is the row type of 2",
+               "can name only one table, but 'kv_key_scoped::shadow' is the row type of 2"
+            ]
+         }
+      }
+   ]
+}

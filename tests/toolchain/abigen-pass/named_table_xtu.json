@@ -1,0 +1,1 @@
+{ "tests": [{ "compile_flags": ["-contract=named_table_xtu", "{cwd}/named_table_xtu_aux/declares_only.cpp"], "expected": { "abi-file": "named_table_xtu.abi" } }] }

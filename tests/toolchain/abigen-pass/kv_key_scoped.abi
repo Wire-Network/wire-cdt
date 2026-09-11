@@ -1,0 +1,110 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "logical_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "phys_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "raw_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "shadow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "shadow_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "scope",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "val",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "scopeda",
+            "type": "val",
+            "index_type": "i64",
+            "key_names": ["scope","account_id"],
+            "key_types": ["name","uint64"],
+            "table_id": 36809
+        },
+        {
+            "name": "scopedb",
+            "type": "val",
+            "index_type": "i64",
+            "key_names": ["scope","account_id"],
+            "key_types": ["name","uint64"],
+            "table_id": 7145
+        },
+        {
+            "name": "shadowa",
+            "type": "shadow",
+            "index_type": "i64",
+            "key_names": ["scope","scope","account_id"],
+            "key_types": ["name","uint64","uint64"],
+            "table_id": 60606
+        },
+        {
+            "name": "shadowb",
+            "type": "shadow",
+            "index_type": "i64",
+            "key_names": ["scope","scope","account_id"],
+            "key_types": ["name","uint64","uint64"],
+            "table_id": 30942
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}
