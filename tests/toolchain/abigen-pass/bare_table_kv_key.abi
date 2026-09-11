@@ -1,0 +1,62 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "abi_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "phys_key",
+            "base": "",
+            "fields": [
+                {
+                    "name": "raw_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "val",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "realname",
+            "type": "val",
+            "index_type": "i64",
+            "key_names": ["account_id"],
+            "key_types": ["uint64"],
+            "table_id": 46377
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

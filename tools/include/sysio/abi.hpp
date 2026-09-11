@@ -196,6 +196,11 @@ struct abi_secondary_index {
    std::string name;
    std::string key_type;
    uint16_t    table_id = 0;
+   /// Compared when two table entries land under one name, to tell "the same table instantiated
+   /// twice" from "two different tables the ABI can hold only one of".
+   bool operator==(const abi_secondary_index& i) const {
+      return name == i.name && key_type == i.key_type && table_id == i.table_id;
+   }
 };
 
 struct abi_table {
@@ -205,8 +210,43 @@ struct abi_table {
    std::vector<std::string> key_names;
    std::vector<std::string> key_types;
    uint16_t table_id = 0;
+   /// Whether table_id holds a computed id, as distinct from holding zero. The hash is an
+   /// unrestricted uint16_t and zero is one of its values -- "rzy2"_n and "s3hm"_n both reach
+   /// it -- so `table_id != 0` read a real id as an absent one, dropped it from the descriptor
+   /// and took both tables out of the collision check that exists to catch exactly that. Only
+   /// an instantiation carries an id at all, which is why absence has to be representable.
+   bool has_table_id = false;
    std::vector<abi_secondary_index> secondary_indexes;
+   /// Qualified name of the row struct this table was instantiated over, e.g. "ns1::config_row".
+   /// Descriptor-only (emitted as ____row, stripped from the ABI): it is how cdt-codegen matches
+   /// a [[sysio::table("name")]] to its tables across translation units, which `type` cannot do
+   /// -- ns1::row and ns2::row both serialise as `row`. Empty when the row type is not a class.
+   std::string row;
    bool operator<(const abi_table& t) const { return name < t.name; }
+};
+
+/// A [[sysio::table("name")]] on a row struct, carried in the descriptor rather than applied.
+///
+/// The annotation renames the table published over that struct, but only when the struct backs
+/// exactly one and the name is free -- and both are link-wide facts. A single translation unit
+/// that renames on its own partial view produces descriptors that disagree, which the merge then
+/// refuses. So abigen records the annotation and cdt-codegen applies it after the merge.
+struct abi_table_annotation {
+   std::string name;   ///< the annotation's argument: the ABI name it asks for
+   std::string type;   ///< the row struct's ABI type name
+   std::string row;    ///< the row struct's qualified name, matching abi_table::row
+   std::string loc;    ///< source location of the annotated struct, for diagnostics
+   std::vector<std::string> key_names;  ///< resolved [[sysio::kv_key]] override, if any
+   std::vector<std::string> key_types;
+   /// Ordered by (name, row), not by name alone. The ABI cannot hold two tables under one
+   /// name, but two ROW STRUCTS asking for the same one is a thing a contract can write --
+   /// and it is the resolver's business to refuse it, with a diagnostic naming both. Ordering
+   /// by name alone made the set swallow the second before the resolver ever saw it: only the
+   /// first row was renamed, the other kept its table parameter, nothing was reported, and
+   /// swapping the two declarations swapped which one won.
+   bool operator<(const abi_table_annotation& a) const {
+      return name != a.name ? name < a.name : row < a.row;
+   }
 };
 
 struct abi_ricardian_clause_pair {
@@ -286,6 +326,7 @@ struct abi {
    std::set<abi_typedef>                  typedefs;
    std::set<abi_action>                   actions;
    std::set<abi_table>                    tables;
+   std::set<abi_table_annotation>         table_annotations;
    std::set<abi_variant>                  variants;
    std::set<abi_enum>                     enums;
    std::vector<abi_ricardian_clause_pair> ricardian_clauses;

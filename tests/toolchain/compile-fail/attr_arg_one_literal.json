@@ -1,0 +1,9 @@
+{
+   "tests": [
+      {
+         "expected": {
+            "stderr": "must be one string literal; adjacent literals are joined by the compiler but not by the ABI generator"
+         }
+      }
+   ]
+}

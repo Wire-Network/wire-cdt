@@ -1,0 +1,16 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["-contract=named_table_duplicate_target", "{cwd}/named_table_duplicate_target_aux/other.cpp"],
+         "expected": {
+            "abi-file": "named_table_duplicate_target.abi",
+            "stderr": [
+               "is asked for by 2 row structs ('s_two_row' as well as 's_one_row'), and the ABI can hold only one table called 'sshared'",
+               "is asked for by 2 row structs ('s_one_row' as well as 's_two_row'), and the ABI can hold only one table called 'sshared'",
+               "is asked for by 2 row structs ('x_two_row' as well as 'x_one_row'), and the ABI can hold only one table called 'xshared'",
+               "is asked for by 2 row structs ('x_one_row' as well as 'x_two_row'), and the ABI can hold only one table called 'xshared'"
+            ]
+         }
+      }
+   ]
+}

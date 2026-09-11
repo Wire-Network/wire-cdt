@@ -1,7 +1,10 @@
 #pragma once
+#include <algorithm>
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/Path.h>
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Frontend/FrontendPluginRegistry.h>
 
@@ -11,6 +14,63 @@
 
 // DJB2 hash of 8 big-endian bytes of a uint64_t, truncated to uint16.
 // Must match sysio::kv::compute_table_id in kv_constants.hpp.
+
+/// Find the struct a [[sysio::kv_key("name")]] names: types nested in the row first, then the
+/// row's enclosing context.
+///
+/// Both paths that read the attribute share this, which is the point of it. add_kv_table used to
+/// search only the enclosing context while add_table searched nested types first, so a key struct
+/// declared INSIDE the value row was invisible to the kv::table path and it silently fell back to
+/// the physical key -- the ABI advertising physical field names while the annotation named a
+/// logical override.
+///
+/// Deliberately not name lookup. A miss is a warning and a fallback to the physical key, so being
+/// approximately right is enough; it is a hard error that would make every gap in a hand-rolled
+/// scope walk matter, and there is no version of this that wins against C++ lookup.
+static inline const clang::CXXRecordDecl* find_kv_key_struct( const clang::DeclContext* nested,
+                                                              const clang::DeclContext* from,
+                                                              const std::string& name ) {
+   const auto declared_in = [&name](const clang::DeclContext* ctx) -> const clang::CXXRecordDecl* {
+      if (!ctx)
+         return nullptr;
+      for (auto* d : ctx->decls())
+         if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d))
+            if (r->getNameAsString() == name && r->isCompleteDefinition())
+               return r;
+      return nullptr;
+   };
+   if (const auto* r = declared_in(nested))
+      return r;
+   return declared_in(from);
+}
+
+/// What `____row` carries: an identity for the row DECLARATION, not just its printed name.
+///
+/// The marker matches an annotation to the tables over its row once the descriptors are merged,
+/// so it has to AGREE for copies of one declaration seen from different translation units and
+/// DIFFER for separate declarations that happen to print the same. A qualified name does neither
+/// on its own: a struct in an anonymous namespace is a distinct type per TU and prints
+/// identically in each, while two local structs in one file print identically and are distinct.
+///
+/// The declaration's spelling location answers both -- one header declaration has one spelling
+/// location however many TUs include it, and two declarations never share one.
+///
+/// By CANONICAL path. The spelling alone is not stable: this toolchain really does produce
+/// `./aux/row.hpp` from one translation unit and `aux/row.hpp` from another for a single header.
+/// A basename fixes that and breaks the other half -- `a/row.hpp` and `b/row.hpp` are two
+/// declarations and collapsed into one, so both annotations were refused as naming two tables
+/// apiece. real_path settles both: alternate spellings of one file agree, different files do
+/// not.
+static inline std::string row_identity( const clang::CXXRecordDecl* decl ) {
+   const auto& sm = decl->getASTContext().getSourceManager();
+   const auto loc = sm.getSpellingLoc(decl->getLocation());
+   const auto spelled = sm.getFilename(loc);
+   llvm::SmallString<256> path;
+   if (llvm::sys::fs::real_path(spelled, path))
+      path.assign(spelled);   // unreadable: the spelling is the best identity available
+   return decl->getQualifiedNameAsString() + "@" + std::string(path.str()) + ":" +
+          std::to_string(sm.getFileOffset(loc));
+}
 
 // DJB2 initial hash seed (canonical value from Daniel J. Bernstein's hash function).
 static constexpr uint64_t djbh_seed = 5381;
@@ -282,29 +342,48 @@ namespace sysio { namespace cdt {
 
       void add_table( const clang::CXXRecordDecl* _decl ) {
          auto decl = clang_wrapper::wrap_decl(_decl);
-         tables.insert(_decl);
-         abi_table t;
-         t.type = decl->getNameAsString();
          auto table_name = decl.getSysioTableAttr()->getName();
-         if (!table_name.empty()) {
-            // Table names are free-form strings (table_id provides on-chain identity).
-            // No 13-char name restriction — _i literals can use long names.
-            t.name = table_name.str();
-         }
-         else {
-            t.name = t.type;
-         }
-         // Compute table_id: if name fits in eosio name encoding, use that.
-         // Otherwise hash the string directly.
-         if (t.name.size() <= 13) {
-            t.table_id = compute_table_id_from_raw(string_to_name(t.name.c_str()));
-         } else {
-            // For long names (_i literals), DJB2 hash the string then hash the raw bytes
-            uint64_t str_hash = 5381;
-            for (char c : t.name)
-               str_hash = ((str_hash << 5) + str_hash) + static_cast<uint8_t>(c);
-            t.table_id = compute_table_id_from_raw(str_hash);
-         }
+         // A bare [[sysio::table]] names no table, so there is nothing to describe here: the
+         // name, the table_id and the key layout all come from whatever multi_index / kv::table
+         // instantiates this struct, and each instantiation emits its own entry. Naming an entry
+         // after the ROW STRUCT produced a second table beside the real one, under a table_id
+         // nothing ever writes to.
+         //
+         // Emitting it and pruning later was tried and abandoned: the placeholder cannot be
+         // told apart from a real table by anything that survives into the descriptor. It
+         // collides in the by-name set with an instantiation that happens to share the struct's
+         // name, so the marked entry IS sometimes the live table; and the emitted `type` string
+         // cannot distinguish two declarations that share an unqualified name. Both led to a
+         // live table being deleted. Not creating it is the only form with nothing to
+         // disambiguate.
+         //
+         // Consequence: a struct annotated but never instantiated gets no table entry. It
+         // describes a table nothing can read or write, and nothing in wire-sysio relies on it.
+         if (table_name.empty())
+            return;
+         // Recorded, not applied. Whether this names a table -- and which -- depends on how many
+         // tables are instantiated over the struct link-wide, which no single translation unit
+         // knows. cdt-codegen decides after the descriptors merge; see abi_table_annotation.
+         abi_table_annotation t;
+         t.type = decl->getNameAsString();
+         // No 13-char restriction -- an `_i` literal's name is hashed, not encoded, so it may be
+         // as long as it likes. The CHARSET is restricted though, to what a C++ identifier
+         // allows: this name is the table's public label, and it travels out through the ABI to
+         // wire-sysio, SHiP and Hyperion, none of which should have to carry whatever the
+         // attribute happened to be written with.
+         t.name = table_name.str();
+         // Letters, digits, underscore and DOT. `.` is part of the `_n` alphabet
+         // (`.12345a-z`), singleton_contract publishes `smpl.conf5`, and it round-trips the
+         // annotation encoding without trouble -- picking the C++ identifier charset instead
+         // rejected a spelling that has always been valid.
+         CDT_CHECK_ERROR(!t.name.empty() &&
+                         std::all_of(t.name.begin(), t.name.end(), [](unsigned char c) {
+                            return std::isalnum(c) || c == '_' || c == '.';
+                         }), "abigen_error", _decl->getLocation(),
+            "[[sysio::table(\"" + t.name + "\")]] is not a usable table name; use only letters, "
+            "digits, underscore and dot");
+         t.row  = row_identity(_decl);
+         t.loc  = _decl->getLocation().printToString(_decl->getASTContext().getSourceManager());
 
          // [[sysio::kv_key("struct_name")]] — resolve key struct fields into key_names/key_types
          if (decl.isSysioKvKey()) {
@@ -314,29 +393,8 @@ namespace sysio { namespace cdt {
                t.key_names = {"scope", "primary_key"};
                t.key_types = {"name", "uint64"};
             } else {
-               // Search for key struct: nested types, then enclosing class
-               const clang::CXXRecordDecl* key_record = nullptr;
-               // Check nested types within the table struct
-               for (auto* d : _decl->decls()) {
-                  if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                     if (r->getNameAsString() == key_struct_name && r->isCompleteDefinition()) {
-                        key_record = r; break;
-                     }
-                  }
-               }
-               // Check enclosing class (contract)
-               if (!key_record) {
-                  if (auto* ctx = _decl->getDeclContext()) {
-                     for (auto* d : ctx->decls()) {
-                        if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                           if (r->getNameAsString() == key_struct_name && r->isCompleteDefinition()) {
-                              key_record = r; break;
-                           }
-                        }
-                     }
-                  }
-               }
-
+               const clang::CXXRecordDecl* key_record =
+                  find_kv_key_struct(_decl, _decl->getDeclContext(), key_struct_name);
                if (key_record) {
                   // Extract field names/types for key_names/key_types
                   for (auto* field : key_record->fields()) {
@@ -371,7 +429,7 @@ namespace sysio { namespace cdt {
             }
          }
 
-         ctables.insert(t);
+         _abi.table_annotations.insert(t);
       }
 
       enum class kv_table_kind { legacy, kv_standard, kv_global };
@@ -415,42 +473,60 @@ namespace sysio { namespace cdt {
 
       /// Add a kv::table<Name, K, V> — extracts key metadata from K, uses V as row type.
       /// If V has [[sysio::kv_key("struct")]] annotation, that overrides K's fields.
-      void add_kv_table( uint64_t name, const clang::CXXRecordDecl* key_decl, const clang::CXXRecordDecl* val_decl,
+      void add_kv_table( uint64_t name, const clang::CXXRecordDecl* key_decl, const clang::QualType& value,
                          std::vector<abi_secondary_index> sec_indexes, bool scoped ) {
+         const auto* val_decl = value.getTypePtr()->getAsCXXRecordDecl();
          abi_table t;
-         t.type = val_decl->getNameAsString();
-         t.table_id = compute_table_id_from_raw(name);
+         // The ABI type name, not the C++ record name -- see add_table() for why they differ.
+         t.type = get_type(value);
+         t.table_id     = compute_table_id_from_raw(name);
+         t.has_table_id = true;
 
-         // Use [[sysio::table("name")]] from V for the table name if available,
-         // otherwise fall back to name_to_string(template param)
+         // The table parameter is the name. A [[sysio::table("name")]] on V may still rename it,
+         // link-wide, in cdt-codegen; `row` is what pairs the two up.
+         t.name = name_to_string(name);
+         if (val_decl)
+            t.row = row_identity(val_decl);
+
+         // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K.
+         // Only a class can carry the attribute, and V need not be one -- the row type check
+         // that reports a non-describable V runs after this, so a scalar V arrives here first.
          auto val_wrap = clang_wrapper::wrap_decl(val_decl);
-         if (val_wrap.isSysioTable()) {
-            auto tbl_name = val_wrap.getSysioTableAttr()->getName();
-            if (!tbl_name.empty())
-               t.name = tbl_name.str();
-            else
-               t.name = name_to_string(name);
-         } else {
-            t.name = name_to_string(name);
-         }
-
-         // Use [[sysio::kv_key("struct")]] from V if present, otherwise auto-derive from K
          const clang::CXXRecordDecl* key_source = key_decl;
-         if (val_wrap.isSysioKvKey()) {
+         if (val_decl && val_wrap.isSysioKvKey()) {
             auto kv_key_name = val_wrap.getSysioKvKeyAttr()->getName().str();
             if (!kv_key_name.empty()) {
-               // Search for the override key struct
-               const clang::CXXRecordDecl* override_key = nullptr;
-               if (auto* ctx = val_decl->getDeclContext()) {
-                  for (auto* d : ctx->decls()) {
-                     if (auto* r = llvm::dyn_cast<clang::CXXRecordDecl>(d)) {
-                        if (r->getNameAsString() == kv_key_name && r->isCompleteDefinition()) {
-                           override_key = r; break;
-                        }
-                     }
+               // The same lookup add_table uses for the identical attribute. Searching only
+               // the enclosing context missed a key struct declared INSIDE the value row and
+               // silently fell back to the physical key, so the ABI advertised the physical
+               // field names while the annotation named a logical override.
+               const clang::CXXRecordDecl* override_key =
+                  find_kv_key_struct(val_decl, val_decl->getDeclContext(), kv_key_name);
+               if (override_key) {
+                  key_source = override_key;
+                  // Protect it from validate_struct, as the other path does for its own -- and
+                  // DECLARE it, which protecting alone does not do. An entry kept in a set it
+                  // never joined is nothing: the override struct was never emitted and its
+                  // fields never ran through add_type, so a key field of a contract type left
+                  // the ABI naming a type the document does not define. A bare
+                  // [[sysio::table, sysio::kv_key("k")]] published key_types ["logical_id"]
+                  // with neither `k` nor `logical_id` in structs, and query-key decoding had
+                  // nothing to resolve. add_table's identical branch has always done both;
+                  // this one only ever did half, and the bare attribute returns before
+                  // reaching that branch at all.
+                  kv_key_structs.insert(kv_key_name);
+                  abi_struct ks;
+                  ks.name = kv_key_name;
+                  for (auto* field : override_key->fields()) {
+                     ks.fields.push_back({field->getName().str(), get_type(field->getType())});
+                     add_type(field->getType());
                   }
+                  _abi.structs.insert(ks);
+               } else {
+                  CDT_CHECK_WARN(false, "abigen_warning", val_decl->getLocation(),
+                     "kv_key struct '" + kv_key_name + "' not found; the physical key's field "
+                     "names will be used in the ABI");
                }
-               if (override_key) key_source = override_key;
             }
          }
 
@@ -464,21 +540,66 @@ namespace sysio { namespace cdt {
          }
          t.secondary_indexes = std::move(sec_indexes);
          kv_key_structs.insert(key_decl->getNameAsString());
-         _abi.tables.insert(t);
+         insert_table(std::move(t), val_decl ? val_decl->getLocation() : key_decl->getLocation());
       }
 
-      void add_table( uint64_t name, const clang::CXXRecordDecl* decl, kv_table_kind kind = kv_table_kind::legacy,
-                      std::vector<abi_secondary_index> sec_indexes = {} ) {
+      /// Add the table an instantiation of multi_index / kv_multi_index / kv_singleton /
+      /// kv::global names.
+      ///
+      /// \p name  the raw table parameter: a name encoding, or the DJB2 hash a `_i` literal gives
+      /// \p row   the row type, which need NOT be a class -- sysio::singleton<"cfg"_n, uint64_t>
+      ///          is ordinary contract code
+      /// Insert, or report the entry this one collides with.
+      ///
+      /// abi_table is ordered by NAME, so a second table under a name already present is
+      /// dropped by the set -- silently, and inside the plugin, so it never reaches the
+      /// descriptor and none of cdt-codegen's checks can see it. Two instantiations of the same
+      /// table are the ordinary case and must stay silent; a different table_id, row or type
+      /// under one name is a contract that writes two tables and describes one.
+      void insert_table( abi_table t, const clang::SourceLocation& loc ) {
+         const auto [it, inserted] = _abi.tables.insert(t);
+         if (inserted)
+            return;
+         // Everything an entry describes, not just its identity. Two kv::tables sharing a name
+         // over one row type differ ONLY in the key struct, so comparing id, type and row alone
+         // called them the same table and kept whichever arrived first -- silently, which is
+         // exactly what this is here to stop.
+         if (it->table_id == t.table_id && it->type == t.type && it->row == t.row &&
+             it->key_names == t.key_names && it->key_types == t.key_types &&
+             it->secondary_indexes == t.secondary_indexes)
+            return;
+         const auto describe = [](const abi_table& e) {
+            std::string d = "table_id " + std::to_string(e.table_id) + " over '" +
+                            (e.row.empty() ? e.type : e.row) + "' keyed on (";
+            for (std::size_t i = 0; i < e.key_names.size(); ++i)
+               d += (i ? ", " : "") + e.key_names[i];
+            return d + ")";
+         };
+         CDT_CHECK_WARN(false, "abigen_warning", loc,
+            "two different tables are both called '" + t.name + "': " + describe(*it) +
+            ", and " + describe(t) +
+            "; the ABI can describe only one, and the second is not described");
+      }
+
+      void add_table( uint64_t name, const clang::QualType& row, kv_table_kind kind = kv_table_kind::legacy,
+                      std::vector<abi_secondary_index> sec_indexes = {},
+                      const clang::SourceLocation& loc = {} ) {
          abi_table t;
-         t.type = decl->getNameAsString();
-         // Same rule add_kv_table uses: a _i-named table's raw value is a DJB2 hash, not a
-         // name encoding, so name_to_string() would render garbage. Prefer the annotation.
-         auto decl_wrap = clang_wrapper::wrap_decl(decl);
-         if (decl_wrap.isSysioTable() && !decl_wrap.getSysioTableAttr()->getName().empty())
-            t.name = decl_wrap.getSysioTableAttr()->getName().str();
-         else
-            t.name = name_to_string(name);
-         t.table_id = compute_table_id_from_raw(name);
+         // The ABI type name, not the C++ record name. std::string's record is `basic_string`
+         // and sysio::checksum256's is `fixed_bytes`, neither of which any ABI declares, and the
+         // chain refuses a document whose table names a type it cannot resolve
+         // (invalid_type_inside_abi). get_type() gives the spelling add_type() would declare.
+         t.type = get_type(row);
+         // Same rule add_kv_table uses: the template parameter is the name, and a
+         // [[sysio::table("name")]] on the row struct may rename it link-wide, in cdt-codegen.
+         // That annotation is the only channel a `_i` name has -- the raw is a DJB2 hash and
+         // no string is recoverable from it -- and a row is always a struct, so there is always
+         // somewhere to put it.
+         t.name = name_to_string(name);
+         if (const auto* row_decl = row.getTypePtr()->getAsCXXRecordDecl())
+            t.row = row_identity(row_decl);
+         t.table_id     = compute_table_id_from_raw(name);
+         t.has_table_id = true;
          if (kind == kv_table_kind::kv_standard) {
             // KV multi_index: key = [scope:8B BE][pk:8B BE], table_id provides isolation
             t.key_names = {"scope", "primary_key"};
@@ -489,7 +610,36 @@ namespace sysio { namespace cdt {
             t.key_types = {"name"};
          }
          t.secondary_indexes = std::move(sec_indexes);
-         _abi.tables.insert(t);
+         insert_table(std::move(t), loc);
+      }
+
+      /// A table row must be a STRUCT this document declares.
+      ///
+      /// That is the rule upstream has always enforced -- its add_table() takes a
+      /// CXXRecordDecl and dereferences it -- and keeping it means a contract ported from
+      /// another Antelope chain behaves here exactly as it did there. It also keeps the ABI
+      /// self-describing: a table's rows are named fields, not a bare scalar or a container
+      /// whose shape lives only in the C++.
+      ///
+      /// So this refuses a scalar, a container, a variant, a binary_extension, and the class
+      /// types a contract author does not own -- std::string, sysio::checksum256,
+      /// fixed_bytes<N> -- with one diagnostic naming the row. Wrap the value in a one-field
+      /// struct, which is what the ABI needs in order to describe it at all.
+      ///
+      /// Must be called after add_type(row): that is what puts the struct in the document, and
+      /// validate_struct() keeps a struct a table names, so a type found here is still there
+      /// when the document is written.
+      bool abi_row_is_struct( const clang::QualType& row ) {
+         if (!row.getTypePtr()->getAsCXXRecordDecl())
+            return false;
+         const std::string type = get_type(row);
+         if (is_builtin_type(type))
+            return false;
+         if (starts_with(type, "protobuf::"))
+            return true;
+         for (const auto& s : _abi.structs)
+            if (s.name == type) return true;
+         return false;
       }
 
       void add_clauses( const std::vector<std::pair<std::string, std::string>>& clauses ) {
@@ -851,8 +1001,12 @@ namespace sysio { namespace cdt {
          o["key_types"] = ojson::array();
          for (const auto& kt : t.key_types)
             o["key_types"].push_back(kt);
-         if (t.table_id != 0)
+         // Presence, not value: zero is a table_id the hash really produces.
+         if (t.has_table_id)
             o["table_id"] = t.table_id;
+         // Descriptor-only; cdt-codegen strips it. See abi_table::row.
+         if (!t.row.empty())
+            o["____row"] = t.row;
          if (!t.secondary_indexes.empty()) {
             o["secondary_indexes"] = ojson::array();
             for (const auto& si : t.secondary_indexes) {
@@ -910,24 +1064,9 @@ namespace sysio { namespace cdt {
       }
 
       bool is_empty() {
-         std::set<abi_table> set_of_tables;
-         for ( auto t : ctables ) {
-            bool has_multi_index = false;
-            for ( auto u : _abi.tables ) {
-               if (t.type == u.type) {
-                  has_multi_index = true;
-                  break;
-               }
-               set_of_tables.insert(u);
-            }
-            if (!has_multi_index)
-               set_of_tables.insert(t);
-         }
-         for ( auto t : _abi.tables ) {
-            set_of_tables.insert(t);
-         }
-
-         return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() && set_of_tables.empty() && _abi.ricardian_clauses.empty() && _abi.variants.empty() && _abi.enums.empty();
+         return _abi.structs.empty() && _abi.typedefs.empty() && _abi.actions.empty() &&
+                _abi.tables.empty() && _abi.table_annotations.empty() &&
+                _abi.ricardian_clauses.empty() && _abi.variants.empty() && _abi.enums.empty();
       }
 
       ojson to_json() {
@@ -943,39 +1082,11 @@ namespace sysio { namespace cdt {
             return name.substr(0,i+1);
          };
 
-         // Merge tables: [[sysio::table]] annotated (ctables) take priority over
-         // auto-detected (_abi.tables) when both have the same name.
-         std::set<abi_table> set_of_tables;
-         for ( auto t : ctables ) {
-            // Transfer table_id and secondary_indexes from auto-detected entry
-
-            for ( const auto& u : _abi.tables ) {
-               if (u.name == t.name) {
-
-                  // The auto-detected entry's table_id comes from the TEMPLATE parameter, which
-                  // is what the runtime computes -- kv::global and kv::table both derive
-                  // _table_id from it. The ctables entry instead guesses from the annotation
-                  // STRING, reading a name of 13 characters or fewer as an _n encoding. For _n
-                  // and for a long _i name the two agree, because the raw value and the string
-                  // derivation coincide. For a SHORT _i name they do not: the row lands under
-                  // the raw-derived id while the ABI advertised the string-derived one, so
-                  // get_table_rows by the readable name could not reach it. The template wins.
-                  if (u.table_id != 0)
-                     t.table_id = u.table_id;
-                  if (t.secondary_indexes.empty() && !u.secondary_indexes.empty())
-                     t.secondary_indexes = u.secondary_indexes;
-                  if (t.key_names.empty() && !u.key_names.empty()) {
-                     t.key_names = u.key_names;
-                     t.key_types = u.key_types;
-                  }
-                  break;
-               }
-            }
-            set_of_tables.insert(t);
-         }
-         for ( auto t : _abi.tables ) {
-            set_of_tables.insert(t); // no-op if name already present from ctables
-         }
+         // Tables go out exactly as the instantiations named them. A
+         // [[sysio::table("name")]] is carried alongside in ____table_annotations and applied by
+         // cdt-codegen once every descriptor is in, because whether it names a table -- and
+         // which -- depends on how many tables the struct backs link-wide.
+         const std::set<abi_table>& set_of_tables = _abi.tables;
 
          std::function<std::string(const std::string&)> get_root_name;
          get_root_name = [&] (const std::string& name) {
@@ -1009,11 +1120,23 @@ namespace sysio { namespace cdt {
                if (as.name == _translate_type(a.type))
                   return true;
             }
+            // A [[sysio::kv_key]] override is a dependency of the ATTRIBUTE, not of any one
+            // table, so this cannot sit inside the loop below -- it never depended on `t`, and
+            // a contract whose only table is one an annotation DECLARES has no instantiated
+            // table to iterate. The key struct and the types its fields name were pruned out
+            // from under it, leaving key_types naming something the document does not define
+            // and the chain's key codec with nothing to resolve; adding any unrelated table
+            // made them reappear.
+            if (kv_key_structs.count(as.name))
+               return true;
             for( auto t : set_of_tables ) {
                if (as.name == _translate_type(t.type))
                   return true;
-               // Include structs referenced by [[sysio::kv_key]]
-               if (kv_key_structs.count(as.name))
+            }
+            // An annotation may still become a table in cdt-codegen, and a table naming a type
+            // the document does not declare is refused by the chain.
+            for( const auto& ta : _abi.table_annotations ) {
+               if (as.name == _translate_type(ta.type))
                   return true;
             }
             for( auto td : _abi.typedefs ) {
@@ -1076,6 +1199,23 @@ namespace sysio { namespace cdt {
          o["tables"]     = ojson::array();
          for ( auto t : set_of_tables ) {
             o["tables"].push_back(table_to_json( t ));
+         }
+         if (!_abi.table_annotations.empty()) {
+            o["____table_annotations"] = ojson::array();
+            for ( const auto& ta : _abi.table_annotations ) {
+               ojson a;
+               a["name"] = ta.name;
+               a["type"] = ta.type;
+               a["row"]  = ta.row;
+               a["loc"]  = ta.loc;
+               a["key_names"] = ojson::array();
+               for (const auto& kn : ta.key_names)
+                  a["key_names"].push_back(kn);
+               a["key_types"] = ojson::array();
+               for (const auto& kt : ta.key_types)
+                  a["key_types"].push_back(kt);
+               o["____table_annotations"].push_back(std::move(a));
+            }
          }
          o["ricardian_clauses"]  = ojson::array();
          for ( auto rc : _abi.ricardian_clauses ) {
@@ -1151,8 +1291,6 @@ namespace sysio { namespace cdt {
 
       private:
          abi                                   _abi;
-         std::set<const clang::CXXRecordDecl*> tables;
-         std::set<abi_table>                   ctables;
          std::map<std::string, std::string>    rcs;
          std::set<const clang::Type*>          evaluated;
          std::set<std::string>                 pb_types;
@@ -1225,6 +1363,25 @@ namespace sysio { namespace cdt {
                }
             }
 
+            // A data member whose type IS the specialization owns it exactly as much as an
+            // alias to it does -- `singleton<"cfg"_n, uint64_t> cfg;` is the most direct way a
+            // contract holds one, and needs no alias at all. Matching only the specialization
+            // itself and a TypedefNameDecl meant such a member admitted nothing: a member
+            // singleton over a scalar, or over a row struct carrying no annotation, emitted no
+            // table whatsoever. The contract built and its `tables` array was empty.
+            //
+            // Members whose row struct DOES carry [[sysio::table]] were admitted all along by
+            // the other arm of the caller's ||, which is what kept the hole this narrow.
+            //
+            // DeclaratorDecl rather than FieldDecl so a static data member counts too; a member
+            // function is one as well, but its type is a function type and asks nothing here.
+            if (const clang::DeclaratorDecl* var_decl = llvm::dyn_cast<clang::DeclaratorDecl>(decl1)) {
+               if (const auto* cur_type = var_decl->getType().getTypePtrOrNull()) {
+                  if (decl2 == cur_type->getAsCXXRecordDecl())
+                     return true;
+               }
+            }
+
             return false;
          }
 
@@ -1257,21 +1414,47 @@ namespace sysio { namespace cdt {
                         d = store_spec;
                   }
                }
+               // These are the names a SPECIALIZATION can carry, which is not the same as the
+               // names a contract writes. sysio::multi_index and sysio::singleton are alias
+               // templates (multi_index.hpp, singleton.hpp) over kv_multi_index and
+               // kv_singleton; an alias template has no specialization of its own, so the AST
+               // only ever holds the aliased one and neither spelling can match here. That is
+               // how every singleton went undescribed: `kv_multi_index` was on this list and
+               // `kv_singleton` was not, so a contract's multi_index tables reached the ABI
+               // and its singletons -- written the same way, through the same alias -- did not.
                if (d->getName() == "multi_index" || d->getName() == "singleton" ||
-                   d->getName() == "kv_multi_index" || d->getName() == "table" ||
-                   d->getName() == "scoped_table" || d->getName() == "global") {
+                   d->getName() == "kv_multi_index" || d->getName() == "kv_singleton" ||
+                   d->getName() == "table" || d->getName() == "scoped_table" ||
+                   d->getName() == "global") {
                   abigen::kv_table_kind kind = abigen::kv_table_kind::legacy;
-                  if (d->getName() == "kv_multi_index")
+                  // kv_singleton IS a kv_multi_index -- it holds one privately and pins the
+                  // primary key -- so it lands under the same [scope][primary_key] KV layout.
+                  if (d->getName() == "kv_multi_index" || d->getName() == "kv_singleton")
                      kind = abigen::kv_table_kind::kv_standard;
                   else if (d->getName() == "global")
                      kind = abigen::kv_table_kind::kv_global;
                   if ((d->getName() == "table" || d->getName() == "scoped_table") && d->getTemplateArgs().size() >= 3) {
                      // kv::table<Name, K, V, ...Indices>
-                     const auto* key_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
-                     const auto* val_type = d->getTemplateArgs()[2].getAsType().getTypePtr()->getAsCXXRecordDecl();
+                     const auto  key_qual = d->getTemplateArgs()[1].getAsType();
+                     const auto  val_qual = d->getTemplateArgs()[2].getAsType();
+                     const auto* key_type = key_qual.getTypePtr()->getAsCXXRecordDecl();
+                     const auto* val_type = val_qual.getTypePtr()->getAsCXXRecordDecl();
                      auto val_decl = clang_wrapper::wrap_decl(val_type);
                      if ((val_decl.isSysioTable() && ag.is_sysio_contract(val_decl, ag.get_contract_name())) || defined_in_contract(owner)) {
                         auto table_name_raw = d->getTemplateArgs()[0].getAsIntegral().getLimitedValue();
+
+                        // A kv::table's key layout IS the key struct's fields, so a key that is
+                        // not a class describes nothing -- and asking a non-class type for its
+                        // CXXRecordDecl gives null, which crashed the compiler here rather than
+                        // saying so. Reported against the contract class: an implicit
+                        // specialization's location is the template inside sysiolib.
+                        CDT_CHECK_ERROR(key_type, "abigen_error",
+                           contract_class ? contract_class->getLocation() : d->getLocation(),
+                           "table '" + name_to_string(table_name_raw) + "' has key type '" +
+                           key_qual.getAsString() + "', which is not a struct; a kv::table key "
+                           "type's fields are the table's key layout");
+                        if (!key_type)
+                           return true;
 
                         // Extract secondary index info from Indices... (args[3..])
                         // Variadic packs may appear as individual args OR as a single Pack arg.
@@ -1307,16 +1490,34 @@ namespace sysio { namespace cdt {
                            }
                         }
 
-                        ag.add_kv_table(table_name_raw, key_type, val_type, std::move(sec_indexes),
+                        ag.add_kv_table(table_name_raw, key_type, val_qual, std::move(sec_indexes),
                                         d->getName() == "scoped_table");
-                        ag.add_struct(val_type);
+                        ag.add_type(val_qual);
                         ag.add_struct(key_type);
+                        CDT_CHECK_ERROR(ag.abi_row_is_struct(val_qual), "abigen_error",
+                           contract_class ? contract_class->getLocation() : d->getLocation(),
+                           "table '" + name_to_string(table_name_raw) + "' has row type '" +
+                           val_qual.getAsString() + "', which is not a contract struct; a table "
+                           "row must be a struct this contract declares -- wrap the value in one");
                      }
                   } else {
-                     // multi_index, singleton, kv_multi_index, global — arg[1] is value type
-                     const auto* table_type = d->getTemplateArgs()[1].getAsType().getTypePtr()->getAsCXXRecordDecl();
+                     // multi_index, singleton, kv_multi_index, kv_singleton, global — arg[1] is
+                     // the row type. For kv_singleton that is the payload T, not its private
+                     // one-field `row` wrapper: SYSLIB_SERIALIZE(row, (value)) makes the two
+                     // serialize to the same bytes, and T is the type a client decodes to.
+                     //
+                     // A row type need not be a CLASS -- sysio::singleton<"cfg"_n, uint64_t> is
+                     // ordinary contract code -- and asking a non-class type for its
+                     // CXXRecordDecl gives null. Only a class can carry [[sysio::table]], so a
+                     // null decl simply has no annotation, which is what wrap_decl reports for
+                     // it. The row is carried on as a QualType from here because add_table used
+                     // to take the decl and read a name off it, and that null deref crashed the
+                     // compiler outright as soon as kv_singleton started reaching this branch.
+                     const auto row_type = d->getTemplateArgs()[1].getAsType();
+                     const auto* table_type = row_type.getTypePtr()->getAsCXXRecordDecl();
                      auto table_decl = clang_wrapper::wrap_decl(table_type);
-                     if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) || defined_in_contract(owner)) {
+                     if ((table_decl.isSysioTable() && ag.is_sysio_contract(table_decl, ag.get_contract_name())) ||
+                         defined_in_contract(owner)) {
                         const auto table_name_raw = d->getTemplateArgs()[0].getAsIntegral().getLimitedValue();
 
                         // Extract indexed_by<...> secondary indices for multi_index/kv_multi_index.
@@ -1347,9 +1548,27 @@ namespace sysio { namespace cdt {
                            }
                         }
 
-                        ag.add_table(table_name_raw, table_type, kind, std::move(sec_indexes));
-                        if (table_decl.isSysioTable())
-                           ag.add_struct(table_type);
+                        ag.add_table(table_name_raw, row_type, kind, std::move(sec_indexes),
+                                     contract_class ? contract_class->getLocation() : d->getLocation());
+                        // The ABI has to DEFINE the type it names as a table's row.
+                        // [[sysio::table]] is not what makes a struct part of the contract:
+                        // defined_in_contract() admits a table whose row type carries no
+                        // annotation at all, which is how an ordinary singleton over a plain
+                        // struct is written -- and the chain refuses a document whose table
+                        // names a type it does not define (invalid_type_inside_abi), so this
+                        // cannot be conditional on the annotation. add_type is the same entry
+                        // point an action parameter goes through, so a builtin, a container and
+                        // an alias each land where they already do, and its spelling is the one
+                        // add_table published as `type`.
+                        ag.add_type(row_type);
+                        // Reported against the contract class: `d` is an implicit
+                        // specialization, so its location is the template's definition inside
+                        // sysiolib, which tells the author nothing about their own source.
+                        CDT_CHECK_ERROR(ag.abi_row_is_struct(row_type), "abigen_error",
+                           contract_class ? contract_class->getLocation() : d->getLocation(),
+                           "table '" + name_to_string(table_name_raw) + "' has row type '" +
+                           row_type.getAsString() + "', which is not a contract struct; a table "
+                           "row must be a struct this contract declares -- wrap the value in one");
                      }
                   }
                }

@@ -1,0 +1,10 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["--abigen"],
+         "expected": {
+            "stderr": "table_id collision: 'rzy2' and 's3hm' both have table_id 0"
+         }
+      }
+   ]
+}

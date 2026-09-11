@@ -1,0 +1,10 @@
+{
+   "tests": [
+      {
+         "compile_flags": ["--abigen"],
+         "expected": {
+            "stderr": "which is not a struct; a kv::table key type's fields are the table's key layout"
+         }
+      }
+   ]
+}

@@ -1,0 +1,42 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "dotted_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "v",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "base": "",
+            "fields": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "test",
+            "type": "test",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "foo.bar",
+            "type": "dotted_row",
+            "index_type": "i64",
+            "key_names": ["scope","primary_key"],
+            "key_types": ["name","uint64"],
+            "table_id": 10823
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

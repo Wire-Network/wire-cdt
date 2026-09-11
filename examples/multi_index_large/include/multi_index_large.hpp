@@ -4,15 +4,13 @@ using namespace sysio;
 class [[sysio::contract]] multi_index_large : public contract {
    public:
       using contract::contract;
-      multi_index_large( name receiver, name code, datastream<const char*> ds )
-         : contract(receiver, code, ds), testtab(receiver, receiver.value) {}
 
       struct [[sysio::table("data")]] main_record {
          uint64_t           id         = 0;
 
          uint64_t           u64 = 0;
          uint128_t          u128 = 0ULL;
-         double             f64 = 0.0L;
+         double             f64 = 0.0;
          long double        f128 = 0.0L;
          sysio::checksum256 chk256;
 
@@ -38,7 +36,13 @@ class [[sysio::contract]] multi_index_large : public contract {
          sysio::indexed_by< "bychkb"_n, sysio::const_mem_fun< main_record, const sysio::checksum256&,
                                                             &main_record::get_chk256 > >
       >;
-      test_tables testtab;
+      // Constructed per action rather than held as a member. A default member initializer --
+      // `uint64_t id = 0` above -- is parsed in a COMPLETE-CLASS context, deferred until the
+      // enclosing class is finished, so while the compiler is still inside this class
+      // main_record is not yet default-constructible. A `test_tables` DATA MEMBER forces the
+      // multi_index instantiation right there, and its
+      // static_assert(std::is_default_constructible_v<T>) fires, naming the row type rather
+      // than the initializers. Constructing inside each action defers it past the class.
 
       [[sysio::action]] 
       void set( uint64_t id, uint64_t u64, uint128_t u128,

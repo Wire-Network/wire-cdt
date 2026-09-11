@@ -5,6 +5,10 @@ using namespace sysio;
 
 // Test: kv_multi_index tables get auto key metadata,
 // and [[sysio::kv_key]] provides custom key metadata.
+//
+// `custom` is annotated but never instantiated, so it carries no table_id: only an instantiation
+// has one. See named_table_xtu for why guessing it from the annotation string is worse than
+// omitting it.
 class [[sysio::contract("kv_key_types")]] kv_key_types : public contract {
    public:
       using contract::contract;

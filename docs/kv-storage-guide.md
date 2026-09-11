@@ -19,6 +19,11 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 | [`multi_index`](kv-multi-index.md) | EOSIO compatibility shim (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
 | `singleton` | Scoped single value | `<sysio/singleton.hpp>` |
 
+## What reaches the ABI
+
+A table is described only if its row is a struct the contract declares, and only if abigen can
+see the table. See [What abigen describes, and what it refuses](abi-tables.md).
+
 ## Decision Matrix
 
 | Feature | `kv::table` | `kv::scoped_table` | `kv::global` | `multi_index` |
