@@ -104,7 +104,8 @@ namespace _kv_multi_index_detail {
    //
    // A contract written FOR Wire should use kv::table, whose kv::index keys through
    // sysio::kv::be_key_stream and accepts any type that encoder can spell: the narrow
-   // integers, enums, name, and composite structs. The chain agrees with that encoder
+   // integers, name, and composite structs -- not enums, which none of its overloads
+   // accept. The chain agrees with that encoder
    // from the other side -- get_table_rows builds its query bound with
    // sysio::chain::be_key_codec, which is big-endian for every leaf kind it knows.
    template<typename T>
@@ -916,9 +917,15 @@ public:
       // allowed here and nullptr rejects. Every extraction site calls the extractor with
       // a row, so the reference overload is the one an extractor cannot do without.
       //
+      // Through a MUTABLE lvalue, because that is what every extraction site is:
+      // `extractor_t ext; ext(obj)`. Deducing through a const lvalue is stricter than the
+      // code that runs -- it rejects an extractor whose operator() is not const-qualified,
+      // and where both qualifications exist it could pick an overload returning a
+      // different type than the one that actually writes the key.
+      //
       // Unevaluated operand: nothing is constructed and no row is read.
       using secondary_key_type =
-         std::decay_t<decltype(std::declval<const secondary_extractor_type&>()(std::declval<const T&>()))>;
+         std::decay_t<decltype(std::declval<secondary_extractor_type&>()(std::declval<const T&>()))>;
       // Secondary key encoding uses sizeof(secondary_key_type) for stack buffer sizing.
       // Trivially copyable types guarantee sizeof == packed size (no varint prefixes),
       // and each of the five encoders below writes exactly sizeof bytes.

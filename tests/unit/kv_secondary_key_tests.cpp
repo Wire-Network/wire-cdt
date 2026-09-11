@@ -187,6 +187,15 @@ struct by_plain_functor {
    uint64_t operator()(const idx_row* r) const { return r->u64; }
 };
 
+// A non-const operator(). Every extraction site is `extractor_t ext; ext(obj)` -- a mutable
+// lvalue -- so this is callable at runtime and compiled before the derivation changed.
+// Deducing through a const lvalue would reject it, and where an extractor has both
+// qualifications could even deduce a different type than the one that writes the key.
+struct by_non_const_call {
+   using result_type = uint64_t;
+   uint64_t operator()(const idx_row& r) { return r.u64; }   // deliberately not const
+};
+
 // The other shape: a reference overload only, with the result_type typedef. This is what
 // Wire extractors looked like before the derivation changed, and it is NOT upstream-legal
 // -- upstream's decltype(Extractor()(nullptr)) needs something nullptr can bind to. Both
@@ -203,7 +212,8 @@ using idx_table = sysio::kv_multi_index<"ordtbl"_n, idx_row,
    sysio::indexed_by<"byldbl"_n, sysio::const_mem_fun<idx_row, long double, &idx_row::by_ldouble>>,
    sysio::indexed_by<"byhash"_n, sysio::const_mem_fun<idx_row, checksum256, &idx_row::by_hash>>,
    sysio::indexed_by<"byfunc"_n, by_plain_functor>,
-   sysio::indexed_by<"byref"_n,  by_reference_only>>;
+   sysio::indexed_by<"byref"_n,  by_reference_only>,
+   sysio::indexed_by<"bync"_n,   by_non_const_call>>;
 
 template<sysio::name::raw N>
 constexpr bool view_is_complete() {
@@ -220,6 +230,9 @@ static_assert(view_is_complete<"byfunc"_n>(),
               "a functor extractor without result_type was rejected; upstream accepts it");
 static_assert(view_is_complete<"byref"_n>(),
               "a reference-only extractor was rejected; it worked before this change");
+static_assert(view_is_complete<"bync"_n>(),
+              "an extractor with a non-const operator() was rejected; the call sites use a "
+              "mutable lvalue, so it is callable at runtime");
 
 } // namespace
 

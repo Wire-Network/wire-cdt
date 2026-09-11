@@ -12,9 +12,11 @@
 //
 // multi_index is the backward-compatibility shim, and a contract ported from an Antelope
 // chain cannot have a key outside the five: it would not have compiled where it came from.
-// So the set is closed rather than widened. A contract that wants a narrow integer, an enum,
-// a name or a composite key should use kv::table with kv::index, which encodes through
+// So the set is closed rather than widened. A contract that wants a narrow integer, a name
+// or a composite key should use kv::table with kv::index, which encodes through
 // be_key_stream -- the same encoding the chain's be_key_codec builds query bounds with.
+// (Enums are not on that list: be_key_stream has no enum overload, and a scoped enum binds
+// to none of its integer ones.)
 #include <sysio/sysio.hpp>
 #include <sysio/multi_index.hpp>
 
