@@ -130,8 +130,12 @@ SYSIO_TEST_BEGIN(secondary_key_order_checksum256)
    check_bytes("checksum256 bytes", c[1], mid);
 SYSIO_TEST_END
 
-// Byte-exactness for the rest of the five, so a future change to any encoder has to be
-// deliberate: every one of these is a stored key layout.
+// Byte-exactness for the three types whose encoding is the same on every host, so a future
+// change to any of them has to be deliberate: each is a stored key layout. long double is
+// absent on purpose -- its bytes depend on the float format, and this file builds natively
+// (x87 80-bit) while contracts compile for wasm32 (IEEE binary128). What holds for it here
+// is the width check above; its ordering is pinned on the wasm side by the s1secord
+// integration action.
 SYSIO_TEST_BEGIN(secondary_key_bytes_unchanged)
    const unsigned char u64_be[8] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
    check_bytes("uint64_t", static_cast<uint64_t>(0x0123456789ABCDEFULL), u64_be);
