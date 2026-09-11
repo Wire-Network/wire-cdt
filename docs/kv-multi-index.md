@@ -22,8 +22,9 @@ are:
   `std::reverse_iterator`, whose postfix operators belong to the adaptor and are not deleted, so
   `for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
   handle-duplicating copy the deletion exists to prevent. Sweep reverse loops by hand;
-- the primary `lower_bound` / `upper_bound` take a `name` as well as a `uint64_t`, where upstream
-  uses a member template. That is a real source break in two shapes:
+- the five primary lookups — `find`, `require_find`, `get`, `lower_bound`, `upper_bound` — take a
+  `name` as well as a `uint64_t`, where upstream declares each as a member template. That is a real
+  source break in two shapes, and it applies to all five:
   - **an explicit template argument stops compiling.** `t.template lower_bound<uint64_t>(k)` is
     valid upstream, where the API is a member template; against Wire's concrete overloads it is
     `error: 'lower_bound' following the 'template' keyword does not refer to a template`. Drop the
@@ -38,11 +39,14 @@ are:
   **The `name` overload landed in
   [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; on a CDT built before it the
   bounds took `uint64_t` only, and a `name` primary key needed `.value` at the call;
-- secondary key types must be `std::is_trivially_copyable`. The **supported set is the same as
-  upstream's** — `uint64_t`, `uint128_t`, `double`, `long double`, `checksum256` — because
-  upstream's index backend is exactly the five `db_idx*` intrinsic families and no more. What
-  differs is the diagnosis: Wire's `static_assert` sits in `secondary_index_view`, so it fires
-  when you first call `get_index<...>()` rather than at the declaration;
+- secondary key types must be `std::is_trivially_copyable` — and that is the *only* check. Upstream
+  supports exactly five, `uint64_t`, `uint128_t`, `double`, `long double` and `checksum256`, because
+  its index backend is the five `db_idx*` intrinsic families and no more. Wire does not enforce that
+  set: `encode_secondary` is order-preserving for those five and falls back to a generic `pack()`
+  for anything else, so a `uint32_t` key compiles and then sorts by its native little-endian bytes
+  — `find` still matches, `lower_bound` and ordered iteration are silently wrong. **Keep to the
+  five.** The diagnosis also differs: Wire's `static_assert` sits in `secondary_index_view`, so it
+  fires when you first call `get_index<...>()` rather than at the declaration;
 - the mutation guards below landed in
   [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from any CDT
   built before it.

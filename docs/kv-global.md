@@ -43,7 +43,9 @@ emits **no** ABI table entry at all, so `get_table_rows` has nothing to describe
 > At **13 characters or fewer** that was two entries under different `table_id`s, and
 > `get_table_rows` by the readable name found nothing — abigen took the `string_to_name` branch for
 > any annotation that short. **Above 13** both derivations hashed, so the two collided and the build
-> failed with a `table_id collision` that renaming could not clear. `kv::table` was never affected.
+> failed with a `table_id collision` that renaming could not clear. `kv::table` and
+> `kv::scoped_table` split the same way on a short name — the runtime hashed while the ABI
+> published the `_n` reading of the annotation — so no table kind was safe there.
 > If you are on an older toolchain, use `_n` for globals. See
 > [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
 

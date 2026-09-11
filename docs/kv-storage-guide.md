@@ -64,14 +64,15 @@ kv::table<"user_balance_history"_i, my_key, my_val>  users(get_self());
 
 The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` — with `_i` that annotation is the only place the readable name exists, since the literal is a hash.
 
-> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` worked
-> only on `kv::table` and `kv::scoped_table`.** For `kv::global`, `multi_index` and
-> `kv_multi_index`, abigen named the entry by decoding the raw template parameter — a hash, not a
-> name — so the ABI carried a garbage twin beside the annotated one. At **13 characters or fewer**
-> that was two entries under different `table_id`s, and `get_table_rows` by the readable name found
-> nothing; **above 13** the two collided and the build failed. Reads and writes through the
-> contract were correct either way. #115 makes the template-derived id authoritative for every
-> kind and length; on an older toolchain, keep those three on `_n`.
+> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), a short `_i`
+> name was wrong on every table kind.** The runtime hashes the template parameter, but abigen read
+> an annotation of **13 characters or fewer** as an `_n` encoding and published that id instead — so
+> `kv::table<"user_table"_i>` stored under 61956 while its ABI advertised 3509, and `get_table_rows`
+> by the readable name found nothing. `kv::global`, `multi_index` and `kv_multi_index` also decoded
+> the raw parameter as the *name*, adding a garbage twin entry; **above 13 characters** both
+> derivations hashed, so those twins collided and the build failed instead. Reads and writes through
+> the contract were correct either way. #115 makes the template-derived id authoritative for every
+> kind and length; on an older toolchain, use `_n`.
 
 ## Key Encoding
 

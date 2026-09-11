@@ -12,7 +12,7 @@ serialization format are all the ones you already know. Three things are genuine
 | What | Size of the job |
 |---|---|
 | **Every `eosio` identifier is spelled `sysio`** | Mechanical. One `sed` pass over the source. |
-| **The legacy `db_*_i64` table store no longer exists** | Small: `sysio::multi_index` is a compatibility shim over the new KV store, so your table declarations carry over. Expect a mechanical `it++` → `++it` sweep, and note that RAM sizing and client-side `get_table_rows` calls both change. |
+| **The legacy `db_*_i64` table store no longer exists** | Small: `sysio::multi_index` is a compatibility shim over the new KV store, so your table declarations carry over. Expect an `it++` → `++it` sweep and edits where queries take an explicit template argument, and note that RAM sizing and client-side `get_table_rows` calls both change. |
 | **The contract is billed for CPU, NET, and RAM — by default, not the signer** | One decision, and often one line: where your contract bills RAM. Everything else follows from it. A signer *can* still volunteer to pay, by opting in with the reserved `sysio.payer` permission — but that is the exception, not how ordinary traffic works. |
 
 Plus a short list of Antelope features Wire does not carry: deferred transactions and two
@@ -40,6 +40,12 @@ permission intrinsics. See [Features with no Wire equivalent](#features-with-no-
 
 Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its own LLVM 18, its own
 libc and libc++, the WASM contract library, and the CMake package.
+
+> **Build from source for now.** The only published release, `v1.0.0`, predates #112, #113, #115
+> and #117 — so it has the silent duplicate-`emplace` overwrite, the `_i` ABI id mismatch, the
+> phantom table entries and the old `cdt-abidiff`. It also reports the same version string as
+> master, so a version check cannot tell them apart. Build at or after `7f756bbf` until a release
+> carrying these lands; everything below applies either way.
 
 ```bash
 version=1.0.0     # the release you downloaded
@@ -99,7 +105,8 @@ Tool-name mapping, if you have scripts to update:
 | `eosio-init` | `cdt-init` |
 | `eosio-wast2wasm` / `eosio-wasm2wast` | `cdt-wast2wasm` / `cdt-wasm2wast` |
 | `eosio-pp` | `sysio-pp` (also aliased `cdt-pp`) |
-| `find_package(cdt)` / `${CDT_ROOT}` | unchanged — the CMake package is still named `cdt` |
+| `find_package(eosio.cdt)` | `find_package(cdt)` — **not** `sysio.cdt`, which does not exist |
+| `${EOSIO_CDT_ROOT}` | `${CDT_ROOT}` |
 
 `cleos` becomes `clio`, `nodeos` becomes `nodeop`, and `keosd` becomes `kiod`.
 
@@ -203,9 +210,6 @@ Generations containing a `0` or a `6`-`9` happen to work, because `name()` rejec
 characters and the integer fallback runs. Omitting `-S` iterates every scope; read `network_gen`
 off each row.
 
-Keep the JSON on one line: a `\` used to wrap it would fall *inside* the single quotes and be
-passed through as a literal backslash rather than continuing the command.
-
 Without it, an ordinary contract-paid call fails with
 `account mycontract net usage is too high: 132 > 0` — which looks like a broken contract and is not
 one. "Ordinary" is the operative word: because billing keys on the payer alone, a caller that names
@@ -223,8 +227,10 @@ its own tables.
 clio set contract mycontract ./build/mycontract -p mycontract@active
 ```
 
-`setcode` bills code RAM at **ten times** the WASM size (`setcode_ram_bytes_multiplier`), so size
-the RAM side of the policy from the ×10 figure. `setabi` is billed 1×.
+`setcode` bills code RAM at **ten times** the WASM size (`setcode_ram_bytes_multiplier`); `setabi`
+is billed 1× on the ABI bytes; and a first deployment also pays a one-time 152-byte
+`account_metadata_object` row. Size the RAM side of the policy from all three, or `clio set
+contract` fails part-way through.
 
 ---
 
@@ -331,7 +337,8 @@ allow-list, and they all link.) `<sysio/db.h>` is a stub that forwards to
 `table_id`.
 
 Code that called those intrinsics directly must be rewritten. Code that used `multi_index` — which
-is nearly all of it — carries over with one mechanical exception, below.
+is nearly all of it — keeps its table declarations. What needs editing is the iterator sweep and
+the query shapes below.
 
 ### `multi_index` still works
 
@@ -577,11 +584,9 @@ registered node owner through the `sysio.roa` contract. A contract with no polic
 with, so ordinary calls into it fail.
 
 The full model — policies, node-owner tiers, how weight becomes throughput, subjective billing, and
-how it compares to staking, REX and PowerUp — is documented in wire-sysio:
-`wire-sysio`'s
-[docs/roa-overview.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/roa-overview.md) — read it there for that
-merges; the path does not exist on `master` yet. What follows is only what changes in *contract
-code*.
+how it compares to staking, REX and PowerUp — is in wire-sysio's
+[docs/roa-overview.md](https://github.com/Wire-Network/wire-sysio/blob/master/docs/roa-overview.md).
+What follows is only what changes in *contract code*.
 
 ### The one mandatory source change: where you bill RAM
 
@@ -801,12 +806,19 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 
 1. Install Wire CDT — the **base and `-dev` packages both** — plus CMake and a build tool. Confirm
    `cdt-cpp --version` resolves to the binary you meant.
-2. Rename `eosio` → `sysio` across sources, headers and CMake, including the `eosio_assert` /
-   `eosio_exit` C API that a `\beosio\b` pass skips. Review the diff for string literals.
+2. Rename `eosio` → `sysio` across sources and headers, including the `eosio_assert` /
+   `eosio_exit` C API that a `\beosio\b` pass skips. Review the diff for string literals. **CMake
+   is not a substitution**: `find_package(eosio.cdt)` becomes `find_package(cdt)` and
+   `${EOSIO_CDT_ROOT}` becomes `${CDT_ROOT}` — `sysio.cdt` does not exist.
 3. Build. Every remaining `eosio` reference is now a compiler error with a file and line.
 4. Sweep `it++` → `++it` and `it--` → `--it` on table iterators; the postfix forms are deleted.
-5. Search for direct `db_*_i64` / `db_idx*` calls — those must be rewritten. `multi_index` users
-   need only the iterator sweep in step 4.
+   Drop any explicit template argument on `find` / `require_find` / `get` / `lower_bound` /
+   `upper_bound` — Wire gives each concrete `name` and `uint64_t` overloads where upstream has a
+   member template.
+5. Search for direct `db_*_i64` / `db_idx*` calls — those must be rewritten. `multi_index` table
+   declarations carry over; what needs touching is step 4, and the default-constructibility shape
+   above if your row is nested in the contract, carries member initializers, *and* the table is
+   held as a data member.
 6. Check secondary-index key types are `std::is_trivially_copyable`; give any `std::string` or
    `std::vector` key a fixed-width surrogate.
 7. **Find every storage mutator that names a user as payer** — `emplace` and `modify` on a table,
@@ -822,7 +834,8 @@ None of this is required to ship. Do it after the contract builds, deploys and p
    `jq -S . old.abi > a && jq -S . new.abi > b && diff -u a b`.
 10. Test natively — see [native-tester-compilation.md](native-tester-compilation.md).
 11. Deploy to a test network. Get a policy on the **contract account** before the first call, sized
-    from the ×10 `setcode` charge plus the rows the contract will hold.
+    from the ×10 `setcode` charge, the ABI at 1×, the one-time 152-byte account-metadata row, and
+    the rows the contract will hold.
 12. Update front-end `get_table_rows` calls for the `{key, value}` response shape.
 13. Measure `cpu_usage_us` and the action's billable NET size from a real trace, and size the
     production policy from those numbers.
