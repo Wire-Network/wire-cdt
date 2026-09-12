@@ -442,6 +442,114 @@ namespace _test_multi_index
         foreign.emplace(receiver, [&](auto& r) { r.id = 1; r.sec = 1; });
     }
 
+    // A secondary index iterates in the order its ENCODED key sorts under memcmp, because
+    // that is what the chain's kv_idx_* intrinsics compare -- the host never sees the C++
+    // type. multi_index supports exactly the five types upstream does, and this walks all
+    // five against the real intrinsics: the unit tests pin the encoders in isolation, but
+    // nothing until now checked that a real index built on them comes back in value order.
+    //
+    // checksum256 is the one this round actually moved -- it used to reach a generic pack()
+    // and now has its own overload -- so it is the case with something to lose. The rest are
+    // regression guards. The values are picked so a little-endian encoding would order them
+    // differently: the integers are byte-rotations of each other, which LE reverses outright,
+    // and the floats straddle zero, which LE sorts above the negatives.
+    struct record_sec_order
+    {
+        uint64_t           id;
+        uint64_t           big;
+        uint128_t          wide;
+        double             dbl;
+        long double        ldbl;
+        sysio::checksum256 hash;
+
+        auto               primary_key() const { return id; }
+        uint64_t           by_big() const { return big; }
+        uint128_t          by_wide() const { return wide; }
+        double             by_dbl() const { return dbl; }
+        long double        by_ldbl() const { return ldbl; }
+        sysio::checksum256 by_hash() const { return hash; }
+
+        SYSLIB_SERIALIZE(record_sec_order, (id)(big)(wide)(dbl)(ldbl)(hash))
+    };
+
+    static sysio::checksum256 hash_from_low_byte(uint8_t b)
+    {
+        std::array<uint8_t, 32> raw{};
+        raw[31] = b;
+        return sysio::checksum256(raw);
+    }
+
+    template <uint64_t TableName>
+    void secondary_key_ordering(sysio::name receiver)
+    {
+        typedef record_sec_order record;
+
+        sysio::kv_multi_index<sysio::name{TableName}, record,
+                    sysio::indexed_by<"bybig"_n,  sysio::const_mem_fun<record, uint64_t,           &record::by_big>>,
+                    sysio::indexed_by<"bywide"_n, sysio::const_mem_fun<record, uint128_t,          &record::by_wide>>,
+                    sysio::indexed_by<"bydbl"_n,  sysio::const_mem_fun<record, double,             &record::by_dbl>>,
+                    sysio::indexed_by<"byldbl"_n, sysio::const_mem_fun<record, long double,        &record::by_ldbl>>,
+                    sysio::indexed_by<"byhash"_n, sysio::const_mem_fun<record, sysio::checksum256, &record::by_hash>>>
+            table(receiver, receiver.value);
+
+        // id 1..4, each field ordered so that ascending id means DESCENDING key. Every walk
+        // below therefore has to come back reversed, which a wrong encoding cannot fake.
+        const record rows[] = {
+            {1, 0x0100000000000000ull, static_cast<uint128_t>(1) << 120,  1.0,  1.0L, hash_from_low_byte(4)},
+            {2, 0x0000010000000000ull, static_cast<uint128_t>(1) << 80,   0.0,  0.0L, hash_from_low_byte(3)},
+            {3, 0x0000000000000100ull, static_cast<uint128_t>(1) << 8,   -0.5, -0.5L, hash_from_low_byte(2)},
+            {4, 0x0000000000000001ull, static_cast<uint128_t>(1),        -1.0, -1.0L, hash_from_low_byte(1)},
+        };
+        for (const auto& r : rows)
+            table.emplace(receiver, [&](auto& x) { x = r; });
+
+        const uint64_t expect[4] = {4, 3, 2, 1};
+
+        auto walk = [&](auto& idx, const char* what) {
+            size_t i = 0;
+            for (auto it = idx.begin(); it != idx.end(); ++it, ++i) {
+                sysio::check(i < 4, std::string(what) + " - more rows than emplaced");
+                sysio::check(it->id == expect[i],
+                             std::string(what) + " - wrong row at position " + std::to_string(i));
+            }
+            sysio::check(i == 4, std::string(what) + " - fewer rows than emplaced");
+        };
+
+        auto big_idx  = table.template get_index<"bybig"_n>();
+        auto wide_idx = table.template get_index<"bywide"_n>();
+        auto dbl_idx  = table.template get_index<"bydbl"_n>();
+        auto ldbl_idx = table.template get_index<"byldbl"_n>();
+        auto hash_idx = table.template get_index<"byhash"_n>();
+
+        walk(big_idx,  "bybig");
+        walk(wide_idx, "bywide");
+        walk(dbl_idx,  "bydbl");
+        walk(ldbl_idx, "byldbl");
+        walk(hash_idx, "byhash");
+
+        // lower_bound has to land on the first key >= the bound, which only holds if the
+        // bound encodes the way the stored keys do.
+        sysio::check(big_idx.lower_bound(0x0000000000000100ull)->id == 3,
+                     "bybig - lower_bound missed its row");
+        sysio::check(big_idx.lower_bound(0x0000000000000002ull)->id == 3,
+                     "bybig - lower_bound between keys did not advance");
+        sysio::check(dbl_idx.lower_bound(-0.5)->id == 3, "bydbl - lower_bound(-0.5) missed its row");
+        sysio::check(dbl_idx.lower_bound(-0.4)->id == 2, "bydbl - lower_bound between keys did not advance");
+        sysio::check(hash_idx.lower_bound(hash_from_low_byte(2))->id == 3,
+                     "byhash - lower_bound missed its row");
+
+        // Reverse iteration from the end sentinel builds its bound from sizeof(key), so it
+        // exercises a different path than the forward walk.
+        auto rit = hash_idx.end();
+        --rit;
+        sysio::check(rit->id == 1, "byhash - --end() did not land on the last row");
+
+        // find() matches on equality alone and is correct under any encoding. Checking it
+        // keeps an ordering failure above distinguishable from a storage failure.
+        sysio::check(big_idx.find(0x0000010000000000ull)->id == 2, "bybig - find lost its row");
+        sysio::check(hash_idx.find(hash_from_low_byte(3))->id == 2, "byhash - find lost its row");
+    }
+
 } /// _test_multi_index
 
 class [[sysio::contract]] test_multi_index : public sysio::contract
@@ -460,6 +568,10 @@ public:
 
     [[sysio::action("s1namepk")]] void name_pk_secondaries() {
         _test_multi_index::name_pk_secondaries<"namepktable"_n.value>(get_self());
+    }
+
+    [[sysio::action("s1secord")]] void secondary_key_ordering() {
+        _test_multi_index::secondary_key_ordering<"secordtable"_n.value>(get_self());
     }
 
     [[sysio::action("s1dupidx")]] void idx64_duplicate_emplace() {

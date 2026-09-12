@@ -19,6 +19,7 @@
 #include <sysio/detail/kv_idx_intrinsics.hpp>   // secondary-index intrinsics
 
 #include <sysio/name.hpp>
+#include <sysio/fixed_bytes.hpp>       // checksum256, one of the five secondary key types
 #include <sysio/serialize.hpp>
 #include <sysio/datastream.hpp>
 #include <sysio/check.hpp>
@@ -89,14 +90,48 @@ namespace _kv_multi_index_detail {
       friend bool operator!=(const fixed_buf& a, const fixed_buf& b) { return !(a == b); }
    };
 
-   // Encode a secondary key to bytes for kv_idx_store
+   // The closed set of secondary key types.
+   //
+   // multi_index is the backward-compatibility shim: it is here so a contract written for
+   // an Antelope chain builds unchanged. Upstream's secondary index backend is five
+   // db_idx* intrinsic families and no more, so a port cannot arrive with a key outside
+   // this set -- it would not have compiled where it came from. Each of the five has an
+   // order-preserving encoder below, which is what the index needs: kv_idx_lower_bound
+   // compares the encoded key with memcmp, so the encoding, not the C++ type, decides the
+   // order. A sixth type would reach a generic pack(), which writes integers in native
+   // little-endian -- under which 0x00000100 sorts below 0x00000001 -- and iterate wrong
+   // while find() still matched. It is refused instead.
+   //
+   // A contract written FOR Wire should use kv::table, whose kv::index keys through
+   // sysio::kv::be_key_stream and accepts any type that encoder can spell: the narrow
+   // integers, name, and composite structs -- not enums, which none of its overloads
+   // accept. The chain agrees with that encoder
+   // from the other side -- get_table_rows builds its query bound with
+   // sysio::chain::be_key_codec, which is big-endian for every leaf kind it knows.
    template<typename T>
-   inline std::vector<char> encode_secondary(const T& key) {
-      auto sz = pack_size(key);
-      std::vector<char> buf(sz);
-      datastream<char*> ds(buf.data(), buf.size());
-      ds << key;
-      return buf;
+   inline constexpr bool is_supported_secondary_key =
+      std::is_same<T, uint64_t>::value    || std::is_same<T, uint128_t>::value ||
+      std::is_same<T, double>::value      || std::is_same<T, long double>::value ||
+      std::is_same<T, fixed_bytes<32>>::value;
+
+// A macro, not a constexpr char*, because static_assert takes a string literal. Both the
+// encoder and secondary_index_view assert the same condition and must say the same thing.
+#define SYSIO_MI_SECONDARY_KEY_ERROR                                                        \
+   "multi_index secondary keys are limited to the five types upstream supports: uint64_t, " \
+   "uint128_t, double, long double, checksum256. Any other type has no order-preserving "   \
+   "encoding here and would iterate in its byte order rather than its value order. For a "  \
+   "wider key -- a narrow integer, a name, or a composite struct -- use kv::table "\
+   "with kv::index, which encodes through be_key_stream."
+
+   // Deliberately viable for every T rather than SFINAE'd to the five: constraining it
+   // would leave an unsupported key to fail against the overloads below, which reports an
+   // ambiguous call or no matching function from inside store_all. Keeping the candidate
+   // reachable puts the explanation here instead. secondary_index_view asserts the same
+   // thing, and fires earlier -- at get_index<>() -- for a table that is queried too.
+   template<typename T>
+   inline std::vector<char> encode_secondary(const T&) {
+      static_assert(is_supported_secondary_key<T>, SYSIO_MI_SECONDARY_KEY_ERROR);
+      return {};
    }
 
    // Non-template overloads for fixed-size types — preferred over the template,
@@ -127,14 +162,35 @@ namespace _kv_multi_index_detail {
       return buf;
    }
 
-   inline fixed_buf<u128_size> encode_secondary(const long double& key) {
-      char raw[u128_size];
-      memcpy(raw, &key, u128_size);
-      fixed_buf<u128_size> buf;
-      for (int i = 0; i < static_cast<int>(u128_size); ++i)
-         buf.data_[i] = raw[u128_size - 1 - i];
+   // checksum256. Byte-for-byte what the previous pack() path produced: fixed_bytes
+   // serialises through extract_as_byte_array(), which emits each word big-endian in
+   // _data order and so agrees with fixed_bytes::operator<. Spelled out here because the
+   // generic above no longer encodes anything.
+   inline fixed_buf<32> encode_secondary(const fixed_bytes<32>& key) {
+      const auto arr = key.extract_as_byte_array();
+      fixed_buf<32> buf;
+      memcpy(buf.data(), arr.data(), arr.size());
+      return buf;
+   }
+
+   // Sized off long double itself, not off u128_size. They are the same 16 bytes on
+   // wasm32, which is what contracts compile for, so no stored key moves -- but this
+   // header also compiles natively for the test harness, and macOS on ARM64 makes
+   // long double an 8-byte double. Reading u128_size bytes out of it is an
+   // out-of-bounds read, and the encoding would be twice sizeof, which breaks the
+   // width invariant the reverse-iteration sentinel depends on.
+   //
+   // The byte reversal only yields a MEANINGFUL order where long double is IEEE
+   // binary128. Elsewhere it is merely well-defined; see kv_secondary_key_tests.
+   inline fixed_buf<sizeof(long double)> encode_secondary(const long double& key) {
+      constexpr size_t n = sizeof(long double);
+      char raw[n];
+      memcpy(raw, &key, n);
+      fixed_buf<n> buf;
+      for (size_t i = 0; i < n; ++i)
+         buf.data_[i] = raw[n - 1 - i];
       if (static_cast<uint8_t>(buf.data_[0]) & 0x80u)
-         for (int i = 0; i < static_cast<int>(u128_size); ++i) buf.data_[i] = ~buf.data_[i];
+         for (size_t i = 0; i < n; ++i) buf.data_[i] = ~buf.data_[i];
       else
          buf.data_[0] = static_cast<char>(static_cast<uint8_t>(buf.data_[0]) ^ 0x80u);
       return buf;
@@ -309,8 +365,9 @@ class kv_multi_index {
    // parameter; encoding scope into sec_key provides equivalent isolation to
    // the legacy db_idx*_find_secondary(code, scope, ...) API.
    //
-   // Generic version: delegates to _kv_multi_index_detail::encode_secondary()
-   // which has specializations for uint64_t, uint128_t, double, and long double.
+   // Generic version: delegates to _kv_multi_index_detail::encode_secondary(), which
+   // has an allocation-free overload for each of the five supported key types and
+   // refuses anything else.
    template<typename SecVal>
    std::vector<char> encode_scoped_secondary(const SecVal& val) const {
       auto raw = _kv_multi_index_detail::encode_secondary(val);
@@ -851,11 +908,34 @@ public:
 
       using index_type = typename std::tuple_element<index_number, std::tuple<Indices...>>::type;
       using secondary_extractor_type = typename index_type::secondary_extractor_type;
-      using secondary_key_type = std::decay_t<typename secondary_extractor_type::result_type>;
+      // Derived by CALLING the extractor with a row. Upstream spells this --
+      //    typedef typename std::decay<decltype( Extractor()(nullptr) )>::type secondary_key_type;
+      // (AntelopeIO CDT multi_index.hpp) -- which works there because its const_mem_fun
+      // carries a ChainedPtr overload that nullptr binds to. Passing a ROW REFERENCE
+      // instead accepts strictly more: const_mem_fun, an upstream-shaped functor taking
+      // a pointer, AND one that only takes `const T&` -- which the old result_type form
+      // allowed here and nullptr rejects. Every extraction site calls the extractor with
+      // a row, so the reference overload is the one an extractor cannot do without.
+      //
+      // Through a MUTABLE lvalue, because that is what every extraction site is:
+      // `extractor_t ext; ext(obj)`. Deducing through a const lvalue is stricter than the
+      // code that runs -- it rejects an extractor whose operator() is not const-qualified,
+      // and where both qualifications exist it could pick an overload returning a
+      // different type than the one that actually writes the key.
+      //
+      // Unevaluated operand: nothing is constructed and no row is read.
+      using secondary_key_type =
+         std::decay_t<decltype(std::declval<secondary_extractor_type&>()(std::declval<const T&>()))>;
       // Secondary key encoding uses sizeof(secondary_key_type) for stack buffer sizing.
-      // Trivially copyable types guarantee sizeof == packed size (no varint prefixes).
+      // Trivially copyable types guarantee sizeof == packed size (no varint prefixes),
+      // and each of the five encoders below writes exactly sizeof bytes.
       static_assert(std::is_trivially_copyable<secondary_key_type>::value,
                     "secondary key type must be trivially copyable for fixed-size encoding");
+      // ...and it has to be one of the five types this shim supports, or lower_bound and
+      // ordered iteration would return rows in the key's byte order instead of its value
+      // order. find() would still match, so the failure is silent.
+      static_assert(_kv_multi_index_detail::is_supported_secondary_key<secondary_key_type>,
+                    SYSIO_MI_SECONDARY_KEY_ERROR);
 
       const kv_multi_index* _mi;
       secondary_index_view(const kv_multi_index& mi) : _mi(&mi) {}
@@ -1124,3 +1204,6 @@ public:
 };
 
 } // namespace sysio
+
+// Both uses are above; do not leak it out of a public header.
+#undef SYSIO_MI_SECONDARY_KEY_ERROR
