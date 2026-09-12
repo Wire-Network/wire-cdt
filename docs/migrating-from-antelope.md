@@ -49,8 +49,14 @@ Build per [BUILD.md](../BUILD.md), then package and install:
 
 ```bash
 cd build
-cpack -G DEB                                    # or -G RPM
+
+# Debian / Ubuntu
+cpack -G DEB
 sudo apt install ./wire-cdt_*_amd64.deb ./wire-cdt-dev_*_amd64.deb
+
+# RPM-based
+cpack -G RPM
+sudo dnf install ./wire-cdt-*.rpm ./wire-cdt-dev-*.rpm
 ```
 
 Install **both**. The base package carries the compiler drivers and the WASM libraries;
@@ -67,12 +73,25 @@ That layout is why nothing below needs `PATH` or CMake configuration. The toolch
 bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` stay private, so they cannot shadow
 your distro's compiler, and `find_package(cdt)` resolves with no prefix argument.
 
-On macOS, `cpack -G DEB` does not apply — build the portable tarball instead (`cpack -G TGZ`) and
-see [BUILD.md](../BUILD.md), which also covers pointing another project at a CDT build tree
-directly with `-DCDT_ROOT=<build dir>` rather than installing at all.
+On macOS there is no deb or rpm — build the portable tarball instead:
 
-Watch for collisions if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
-`cdt-cc`, `cdt-ld` and `cdt-init`. Check `which cdt-cpp`.
+```bash
+cpack -G TGZ
+sudo tar xzf wire-cdt-*-macos-arm64.tar.gz -C /opt    # -> /opt/wire-cdt
+export CMAKE_PREFIX_PATH=/opt/wire-cdt
+/opt/wire-cdt/bin/cdt-cpp --version
+```
+
+The tarball has no `/usr/bin` split, so its `bin/` holds the bundled `clang`, `lld`, `llvm-*` and
+the rest — do **not** put it on `PATH`. Either write `/opt/wire-cdt/bin/` in front of the `cdt-*`
+commands below, or symlink just the public entry points listed above into a directory of your own.
+[BUILD.md](../BUILD.md) also covers consuming a CDT build tree directly, without installing.
+
+**If you have Antelope CDT installed, read this first.** The packages deliberately supersede a
+package named `cdt` — the deb declares `Conflicts`/`Replaces`/`Provides: cdt`, the rpm
+`Obsoletes`/`Provides: cdt` — so installing `wire-cdt` can *remove* a package-managed Antelope CDT
+rather than sit beside it. A manually installed copy is not removed and will still collide on
+`cdt-cpp`, `cdt-cc`, `cdt-ld` and `cdt-init`; `type -a cdt-cpp` shows every candidate.
 
 Verify:
 
