@@ -16,7 +16,7 @@ Wire uses a key-value database for smart contract state, replacing EOSIO's `db_*
 
 | Type | Use Case | Header |
 |------|----------|--------|
-| [`multi_index`](kv-multi-index.md) | Drop-in EOSIO replacement (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
+| [`multi_index`](kv-multi-index.md) | EOSIO compatibility shim (scoped, uint64 pk) | `<sysio/multi_index.hpp>` |
 | `singleton` | Scoped single value | `<sysio/singleton.hpp>` |
 
 ## What reaches the ABI
@@ -33,7 +33,7 @@ see the table. See [What abigen describes, and what it refuses](abi-tables.md).
 | Secondary indices | Optional (up to 16) | Optional (up to 16) | No | Up to 16 |
 | Scope | No (table_id isolation) | Yes (required) | No | Yes |
 | Key layout | `[K encoded]` | `[scope:8B][K encoded]` | `[name:8B]` | `[scope:8B][pk:8B]` |
-| Long table names (`_i`) | Yes | Yes | Yes | No (`_n` only) |
+| Long table names (`_i`) | Yes | Yes | Yes | Yes |
 | Zero-copy | Yes (trivially_copyable) | Yes | Yes | Yes |
 | Lambda emplace | Yes | Yes | No | Yes |
 | auto-increment PK | Yes (`primary_key()`) | Yes (`primary_key()`) | No | `available_primary_key()` |
@@ -57,12 +57,12 @@ For table names longer than 13 characters or with characters outside `a-z1-5.`:
 
 ```cpp
 #include <sysio/hash_id.hpp>
+#include <sysio/kv_table.hpp>
 
 kv::table<"user_balance_history"_i, my_key, my_val>  users(get_self());
-kv::global<"app_configuration"_i, config>             cfg(get_self());
 ```
 
-The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` for ABI generation.
+The `_i` literal computes a DJB2 hash and returns `name::raw`. When using `_i`, annotate the value struct with `[[sysio::table("user_balance_history")]]` — with `_i` that annotation is the only place the readable name exists, since the literal is a hash.
 
 ## Key Encoding
 
@@ -186,6 +186,12 @@ Each table entry in the ABI includes:
 For custom keys via `[[sysio::kv_key("key_struct")]]`, `key_names`/`key_types` reflect the key struct's fields. See [ABI Key Metadata](kv-abi-key-metadata.md).
 
 ## Migration from multi\_index
+
+> Porting a contract from EOS/Telos/WAX or another Antelope chain? Start with
+> [Migrating a Contract from an Antelope Chain to Wire](migrating-from-antelope.md). `multi_index` is
+> a compatibility shim rather than a drop-in — it needs a mechanical `it++` → `++it` sweep, since the
+> postfix iterator operators are deleted — so make those adjustments first; this section is the
+> optional second step.
 
 `multi_index` continues to work. To migrate to `kv::table`:
 

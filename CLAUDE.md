@@ -392,11 +392,13 @@ When a change is likely to be visible downstream, build wire-sysio's contracts a
 
 | Doc | Topic |
 |---|---|
+| [docs/migrating-from-antelope.md](./docs/migrating-from-antelope.md) | Porting a contract from EOS/Telos/WAX/Antelope: getting started, renames, storage, resources, host-function diff |
 | [docs/kv-storage-guide.md](./docs/kv-storage-guide.md) | Overview of the KV storage layer |
 | [docs/kv-table.md](./docs/kv-table.md) | `sysio::kv::table` |
 | [docs/kv-multi-index.md](./docs/kv-multi-index.md) | `sysio::multi_index` |
 | [docs/kv-scoped-table.md](./docs/kv-scoped-table.md) | `sysio::kv::scoped_table` |
 | [docs/kv-global.md](./docs/kv-global.md) | `sysio::kv::global` |
+| [docs/abi-tables.md](./docs/abi-tables.md) | What abigen describes and what it refuses: row types, table names, `[[sysio::kv_key]]` |
 | [docs/kv-abi-key-metadata.md](./docs/kv-abi-key-metadata.md) | How KV key metadata lands in the ABI |
 | [docs/kv-intrinsics-reference.md](./docs/kv-intrinsics-reference.md) | KV host intrinsics |
 | [docs/protocol-buffers.md](./docs/protocol-buffers.md) | Protobuf support (`cdt-protoc`, `protoc-gen-zpp`) |

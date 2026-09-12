@@ -34,6 +34,14 @@ Wire CDT version 4.x.x
 
 Follow the instructions in [BUILD.md](./BUILD.md) to build Wire CDT from source.
 
+## Coming from EOS, Telos, WAX or another Antelope chain?
+
+[docs/migrating-from-antelope.md](./docs/migrating-from-antelope.md) walks through getting started on
+Wire and porting an existing contract — the `eosio` → `sysio` renames, the KV storage layer that
+replaces the legacy `db_*_i64` tables, the host functions Wire adds and removes, and the resource
+model change that matters most: on Wire the **contract** is billed for CPU and NET **by default**
+rather than the signer, and RAM follows whichever account the contract names as payer.
+
 ## Testing
 
 Wire CDT supports the following test suites:

@@ -300,9 +300,14 @@ it coexists with a deb/rpm install (which lives at `/usr`, a different prefix):
 
 ```bash
 tar xzf wire-cdt-<version>-x86_64.tar.gz -C /opt      # -> /opt/wire-cdt/
-export PATH=/opt/wire-cdt/bin:$PATH
-cdt-cpp --version
+export CMAKE_PREFIX_PATH=/opt/wire-cdt
+/opt/wire-cdt/bin/cdt-cpp --version
 ```
+
+Note what is **not** here: `export PATH=/opt/wire-cdt/bin:$PATH`. Unlike the deb/rpm layout, the
+tarball's `bin/` holds the bundled unprefixed `clang`, `clang++`, `lld`, `wasm-ld`, `opt`, `llc`
+and `llvm-*`, so putting it on `PATH` shadows the host toolchain. Invoke the drivers by absolute
+path, or symlink just the public entry points into a directory of your own.
 
 The tarball carries **both** packaged components, `base` **and** `dev` — so it
 includes the native (host) contract-testing payload: `lib/libnative*.a`,
@@ -375,14 +380,37 @@ stays the logical prefix the files will be read from.
 
 ### Use from the Build Directory
 
+The build tree carries the same `lib/cmake/cdt/` subtree an install does, so another project can
+consume it in place — no install step at all. Two variables are needed, not one:
+
 ```bash
-export PATH=/path/to/wire-cdt/build/bin:$PATH
+cmake ... \
+  -DCMAKE_PREFIX_PATH=/path/to/wire-cdt/build \
+  -DCDT_ROOT=/path/to/wire-cdt/build
 ```
 
-For CMake projects, use the generated CDT Wasm toolchain file:
+`CMAKE_PREFIX_PATH` is what actually locates `cdt-config.cmake`. `CDT_ROOT` is **not** a
+package-root hint for `find_package(cdt)` — CMP0074 spells that `cdt_ROOT`, matching the package
+name's case — so on its own it fails with *"Could not find a package configuration file provided
+by cdt"*. `-Dcdt_DIR=/path/to/wire-cdt/build/lib/cmake/cdt` works as an alternative to the prefix
+path.
+
+Once the config is loaded, `CDT_ROOT` is what selects the in-tree tools: wire-sysio's
+`cmake/contract-tools.cmake` calls `find_package(cdt REQUIRED)` first and then uses
+`$CDT_ROOT/lib/cmake/cdt/CDTWasmToolchain.cmake` as the contract toolchain file.
+
+For a project that takes the toolchain file directly:
 
 ```bash
--DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/CDTWasmToolchain.cmake
+-DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/cdt/CDTWasmToolchain.cmake
+```
+
+Putting `build/bin` on `PATH` also works for invoking the drivers, but note it holds the bundled
+unprefixed `clang`, `clang++`, `lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` — unlike the packaged
+layout, which keeps them private — so it will shadow the host toolchain:
+
+```bash
+export PATH=/path/to/wire-cdt/build/bin:$PATH
 ```
 
 ## Installed Tools
