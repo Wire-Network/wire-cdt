@@ -54,9 +54,8 @@ sudo cmake --install build --prefix /opt/wire-cdt
 **Not `/usr/local`.** A source install puts everything directly under the prefix, and that
 includes the bundled unprefixed `clang`, `clang++`, `lld`, `ld.lld`, `wasm-ld`, `opt`, `llc` and
 `llvm-*`. From `/usr/local/bin` — which usually precedes `/usr/bin` — those shadow your distro's
-compiler. For the same reason, do not put `/opt/wire-cdt/bin` on `PATH`: invoke it by absolute
-path (`/opt/wire-cdt/bin/cdt-cpp`), alias the `cdt-*` names, or symlink just the public entry
-points into a directory of your own.
+compiler. For the same reason, do not put `/opt/wire-cdt/bin` on `PATH` wholesale; symlink just
+the public entry points, as below.
 
 CMake then needs pointing at it, since `find_package(cdt)` derives its search prefixes from `PATH`
 with a trailing `bin` stripped — exactly what the above avoids doing:
@@ -64,6 +63,17 @@ with a trailing `bin` stripped — exactly what the above avoids doing:
 ```bash
 cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt
 # or: cmake .. -Dcdt_DIR=/opt/wire-cdt/lib/cmake/cdt
+```
+
+Then put the public entry points — and only those — on `PATH`, which is what the deb layout does
+for you. **Every `cdt-*` command below assumes this**; `cmake` still needs the prefix above.
+
+```bash
+mkdir -p ~/.local/bin        # already on PATH on most distros
+for t in cdt-cc cdt-cpp cdt-ld cdt-abidiff cdt-init cdt-codegen cdt-pp \
+         cdt-protoc cdt-protoc-gen-zpp cdt-wast2wasm cdt-wasm2wast; do
+   ln -sf "/opt/wire-cdt/bin/$t" ~/.local/bin/"$t"
+done
 ```
 
 Watch for collisions if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
@@ -119,7 +129,7 @@ Tool-name mapping, if you have scripts to update:
 
 ```bash
 cdt-init -project=mycontract          # add -path=<dir> to place it elsewhere
-cd mycontract/build && cmake .. && make
+cd mycontract/build && cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt && make
 ```
 
 `cdt-init` scaffolds `src/`, `include/`, `ricardian/`, `build/` and a CMake project that already
