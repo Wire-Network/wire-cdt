@@ -451,9 +451,20 @@ silently omitted. Nothing was wrong with the stored data; only the ABI was short
 `clio get table`, SHiP and generated clients could not see it.
 
 Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
-`checksum256`. Iteration order is `memcmp` order over a big-endian encoding — with an additional
-sign-flip transform for `double` and `long double`, so negatives order correctly — and the
-**integer** types sort exactly as they did.
+`checksum256` — the same five upstream supports, and as of
+[wire-cdt#118](https://github.com/Wire-Network/wire-cdt/pull/118) the same five `multi_index`
+*enforces*. A sixth type is a compile error rather than a key that iterates in its byte order.
+Your port cannot hit that: upstream's own ceiling is these five `db_idx*` families, so a contract
+that compiled there uses nothing else.
+
+Iteration order is `memcmp` order over a big-endian encoding — with an additional sign-flip
+transform for `double` and `long double`, so negatives order correctly — and the **integer** types
+sort exactly as they did.
+
+Writing *new* Wire code and want a wider key? `kv::table`'s `kv::index` takes narrow integers,
+`name` and composite structs, encoding them through `be_key_stream` — the same encoding the chain
+uses to build `get_table_rows` bounds, so the index stays queryable by name over RPC. See
+[kv-multi-index.md](kv-multi-index.md) and [kv-table.md](kv-table.md).
 
 **The floating types have two edge cases that do not carry over.** The legacy `idx_double` /
 `idx_long_double` indices rejected NaN outright and folded `-0.0` onto `+0.0`, ordering keys that
@@ -463,9 +474,9 @@ distinct byte ranges (`-0.0` below `+0.0`). If your table can hold either value,
 and `lower_bound` / `upper_bound` results can differ from Antelope. Ordinary finite non-zero keys
 are unaffected.
 
-The constraint is **`std::is_trivially_copyable`**, not "has a serializer" — so `std::string`
-and `std::vector` secondary keys are rejected even though CDT can serialize them. The
-`static_assert` sits in `secondary_index_view`, so it fires when you first call
+A second constraint is **`std::is_trivially_copyable`**, not "has a serializer" — so `std::string`
+and `std::vector` secondary keys are rejected even though CDT can serialize them. Both
+`static_assert`s sit in `secondary_index_view`, so they fire when you first call
 `get_index<...>()`, not at the declaration: a variable-length secondary index compiles, and can
 even be written through `emplace`, until something reads it back. A variable-length secondary key
 needs a fixed-width surrogate: hash it into a `checksum256`, or truncate to a `uint64_t` and
@@ -809,8 +820,10 @@ None of this is required to ship. Do it after the contract builds, deploys and p
    declarations carry over; what needs touching is step 4, and the default-constructibility shape
    above if your row is nested in the contract, carries member initializers, *and* the table is
    held as a data member.
-6. Check secondary-index key types are `std::is_trivially_copyable`; give any `std::string` or
-   `std::vector` key a fixed-width surrogate.
+6. Secondary-index keys must be one of `uint64_t`, `uint128_t`, `double`, `long double` or
+   `checksum256` — the same five upstream allows, so a port already satisfies this, and anything
+   else is now a compile error at `get_index<...>()`. Give a `std::string` or `std::vector` key a
+   fixed-width surrogate. For new Wire code wanting a wider key, use `kv::table` with `kv::index`.
 7. **Find every storage mutator that names a user as payer** — `emplace` and `modify` on a table,
    and `singleton::set(value, user)` / `get_or_create(user, ...)`, which forward that payer
    straight into `kv_multi_index::emplace` / `modify` and so hit the same rejection. Decide, per
