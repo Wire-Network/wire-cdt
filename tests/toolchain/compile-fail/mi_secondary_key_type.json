@@ -1,0 +1,9 @@
+{
+   "tests": [
+      {
+         "expected": {
+            "stderr": "multi_index secondary keys are limited to the five types upstream supports"
+         }
+      }
+   ]
+}

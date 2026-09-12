@@ -37,6 +37,16 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    push_action( "testapi"_n, "s1g"_n,  "testapi"_n, {} );        // idx64_general
    push_action( "testapi"_n, "s1namepk"_n, "testapi"_n, {} );    // name_pk_secondaries
 
+   // Secondary keys must iterate in value order, which is a property of the ENCODING --
+   // the chain's kv_idx_* intrinsics compare the stored key bytes with memcmp and have no
+   // view of the C++ type. The action walks all five supported key types, with rows laid
+   // out so that ascending id means descending key, and asserts the sequence, the
+   // lower_bound landings, --end(), and that find() still matches. checksum256 is the case
+   // with something to lose: it moved from a generic pack() to its own encoder.
+   // tests/unit/kv_secondary_key_tests.cpp pins the encoders directly and does run in CI,
+   // which this does not -- ENABLE_INTEGRATION_TESTS is off by default.
+   push_action( "testapi"_n, "s1secord"_n, "testapi"_n, {} );    // secondary_key_ordering
+
    // A foreign-code handle cannot mutate: reads honour the handle's code but writes land on
    // the receiver, so without the guard this silently wrote the receiver's own row.
    check_failure( "s1foreign"_n, "cannot create objects in table of another contract" );
