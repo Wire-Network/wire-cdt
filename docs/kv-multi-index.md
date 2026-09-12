@@ -36,9 +36,6 @@ are:
   upstream because `PK` cannot be deduced — so that one is not a Wire-only incompatibility. A named
   `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
   resolves one on Wire.)
-  **The `name` overload landed in
-  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113)**; on a CDT built before it the
-  bounds took `uint64_t` only, and a `name` primary key needed `.value` at the call;
 - secondary key types must be `std::is_trivially_copyable` — and that is the *only* check. Upstream
   supports exactly five, `uint64_t`, `uint128_t`, `double`, `long double` and `checksum256`, because
   its index backend is the five `db_idx*` intrinsic families and no more. Wire does not enforce that
@@ -46,10 +43,7 @@ are:
   for anything else, so a `uint32_t` key compiles and then sorts by its native little-endian bytes
   — `find` still matches, `lower_bound` and ordered iteration are silently wrong. **Keep to the
   five.** The diagnosis also differs: Wire's `static_assert` sits in `secondary_index_view`, so it
-  fires when you first call `get_index<...>()` rather than at the declaration;
-- the mutation guards below landed in
-  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113) and are absent from any CDT
-  built before it.
+  fires when you first call `get_index<...>()` rather than at the declaration.
 
 Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*`
 intrinsics.
@@ -75,10 +69,7 @@ The table name is conveyed by `table_id`, not embedded in the key.
 - `payer` parameter honored for RAM billing
 - `rbegin/rend`, `cbegin/cend` support
 - Upstream's mutation guards: `emplace` rejects a duplicate primary key, and `emplace` / `modify` /
-  `erase` reject a handle whose code is not the receiving account — **both landed in
-  [wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113); a CDT built before it has
-  neither.** There, a duplicate `emplace` silently overwrites the row and strands its secondary
-  mapping.
+  `erase` reject a handle whose code is not the receiving account.
 
 ## Singleton
 

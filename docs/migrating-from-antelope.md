@@ -41,14 +41,20 @@ permission intrinsics. See [Features with no Wire equivalent](#features-with-no-
 Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its own LLVM 18, its own
 libc and libc++, the WASM contract library, and the CMake package.
 
-> **Build from source for now.** The only published release, `v1.0.0`, predates #112, #113, #115
-> and #117 — so it has the silent duplicate-`emplace` overwrite, the `_i` ABI id mismatch, the
-> phantom table entries and the old `cdt-abidiff`. It also reports the same version string as
-> master, so a version check cannot tell them apart. Build at or after `7f756bbf` until a release
-> carrying these lands; everything below applies either way.
+> **Build it from source.** The only published release, `v1.0.0`, predates the ABI and storage
+> fixes this guide assumes — it has the silent duplicate-`emplace` overwrite, the `_i` ABI id
+> mismatch, the phantom table entries and the old `cdt-abidiff` — and it reports the same version
+> string as `master`, so a version check cannot tell them apart. Check out `7f756bbf` or newer and
+> follow [BUILD.md](../BUILD.md); do not install the published `v1.0.0` artifacts for contract
+> development. **Everything below assumes that baseline**, and no caveats for older builds are
+> given.
+
+`sudo cmake --install build` puts the toolchain under `/usr/local`, where `find_package(cdt)`
+finds it with no further configuration. Once a release carrying the fixes is published, the
+packages install with:
 
 ```bash
-version=1.0.0     # the release you downloaded
+version=X.Y.Z     # the release you downloaded
 sudo apt install "./wire-cdt_${version}_amd64.deb" "./wire-cdt-dev_${version}_amd64.deb"
 ```
 
@@ -87,6 +93,12 @@ Building from source is documented in [BUILD.md](../BUILD.md).
 > The same applies if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
 > `cdt-cc`, `cdt-ld` and `cdt-init`, so those names collide. Check `which cdt-cpp`, or invoke the
 > one you want by absolute path.
+>
+> CMake will not find it either. `find_package(cdt)` derives its search prefixes from `PATH` with
+> a trailing `bin` stripped — which is exactly what the workarounds above avoid doing — so point it
+> at the root explicitly: `cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt`, or
+> `-Dcdt_DIR=/opt/wire-cdt/lib/cmake/cdt`. The same applies to a source install under a custom
+> `-DCMAKE_INSTALL_PREFIX`.
 
 Verify:
 
@@ -210,6 +222,11 @@ Generations containing a `0` or a `6`-`9` happen to work, because `name()` rejec
 characters and the integer fallback runs. Omitting `-S` iterates every scope; read `network_gen`
 off each row.
 
+`clio get table` pages: it returns at most `--limit` rows (default 50) plus `more` and `next_key`.
+A generation can hold far more node owners than one page, and omitting `-S` walks every
+generation's scope as well, so follow `next_key` until `more` is `false` before concluding the
+issuer is absent — a miss on the first page proves nothing.
+
 Without it, an ordinary contract-paid call fails with
 `account mycontract net usage is too high: 132 > 0` — which looks like a broken contract and is not
 one. "Ordinary" is the operative word: because billing keys on the payer alone, a caller that names
@@ -300,12 +317,9 @@ describe the key layout:
 ```
 
 `cdt-abidiff` shows this change, but only on a toolchain that carries
-[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112). **Before it**, the tool compared
-tables by `name` and `type` alone — so `index_type`, `key_names`, `key_types`, `table_id` and the
-secondary-index metadata were all invisible to it — and its version check reduced `eosio::abi/1.2`
-and `sysio::abi/1.2` to the same number, so a port whose tables kept their names could come back
-reporting no difference at all. If you are on an older CDT, or you just want a check that does not
-depend on your toolchain's vintage, normalize and diff the JSON directly:
+[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112), which also taught it to tell
+`eosio::abi/1.2` from `sysio::abi/1.2`. For a check that does not depend on the toolchain at all,
+normalize and diff the JSON directly:
 
 ```bash
 jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /tmp/old.json /tmp/new.json
@@ -402,14 +416,10 @@ emitted a second ABI table entry named after the *row struct* — `account` besi
 nothing. A bare attribute now contributes no entry at all: the name, the `table_id` and the key
 layout all come from whatever `multi_index` or `kv::table` instantiates the struct, which is where
 they were always going to come from. A struct annotated but never instantiated therefore gets no
-entry either — it described a table nothing could read or write. On an older CDT, give the
-attribute an explicit name — `[[sysio::table("accounts")]]` — which avoided it on every version
-and is clearer regardless.
+entry either — it described a table nothing could read or write. Giving the attribute an explicit
+name — `[[sysio::table("accounts")]]` — is clearer regardless.
 
-Two behaviours that a port depends on match upstream. **Both landed in
-[wire-cdt#113](https://github.com/Wire-Network/wire-cdt/pull/113); a CDT built before it has
-neither** — there, a duplicate `emplace` silently overwrites the row and strands its secondary
-mapping, and the bounds take only `uint64_t`:
+Two behaviours that a port depends on match upstream:
 
 - **A duplicate primary key aborts.** `emplace` rejects a key that already exists, as `db_store_i64`
   did on Antelope, so a contract that relied on that failure keeps failing loudly instead of
@@ -530,32 +540,10 @@ kv::table<"user_balance_history"_i, my_key, my_val> users(get_self());
 Annotate the value struct with `[[sysio::table("user_balance_history")]]` so the ABI carries the
 readable name.
 
-> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` was
-> only safe above 13 characters.** The two sides derived `table_id` differently for a short name:
-> `_i` always DJB2-hashes the string, while the ABI generator routed an annotated name of 13
-> characters or fewer through the legacy `string_to_name` encoding. The row was written under one
-> id and described in the ABI under another, so RPC metadata pointed at the wrong table —
-> `user_table` ran at 61956 and was advertised as 3509. Above 13 characters both sides hashed and
-> agreed. #115 makes the template-derived id authoritative, so every length now agrees; on an
-> older toolchain, keep short names on `_n`.
->
 > **`_n` is not always a way out.** Its alphabet is `.12345a-z` — with the 13th position limited to
 > `.12345a-j`, being 4 bits rather than 5 — so a name containing any other character cannot be
 > expressed at all: `"user_table"_n` is a *compile* error, because `_` is not in the alphabet. For
 > such a name `_i` is the answer, at any length.
-
-> **`kv::global` was the worst of it, and is also fixed.** The same pre-#115 mismatch applied
-> there, in a shape renaming could not escape: `[[sysio::table("app_config")]]` over
-> `kv::global<"app_config"_i, T>` published **two** entries — the annotated name at the
-> `string_to_name` id, which is not where the row lived, and a decoded-hash name at the real one —
-> while lengthening the name past 13 characters turned that into a `table_id collision` the build
-> could not get past. Reads and writes were correct throughout; only the ABI metadata disagreed,
-> and only for lookups by name.
->
-> On a current toolchain that example publishes one entry, `app_config` at the id the row is
-> actually stored under, and `tests/unit/test_contracts/hash_id_tests.cpp` — which uses the short
-> `_i` form — produces three clean entries with no twin. On an older CDT, keep a config singleton
-> on `_n`.
 
 ---
 
@@ -804,8 +792,10 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 
 ## Porting checklist
 
-1. Install Wire CDT — the **base and `-dev` packages both** — plus CMake and a build tool. Confirm
-   `cdt-cpp --version` resolves to the binary you meant.
+1. Install Wire CDT from source at `7f756bbf` or newer ([BUILD.md](../BUILD.md)) — the published
+   `v1.0.0` predates the fixes this guide assumes. Add CMake and a build tool, and confirm
+   `cdt-cpp --version` resolves to the binary you meant. When a release lands, install the **base
+   and `-dev` packages both**.
 2. Rename `eosio` → `sysio` across sources and headers, including the `eosio_assert` /
    `eosio_exit` C API that a `\beosio\b` pass skips. Review the diff for string literals. **CMake
    is not a substitution**: `find_package(eosio.cdt)` becomes `find_package(cdt)` and
@@ -828,10 +818,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
    `sysio.payer`.
 8. Replace any `send_deferred` with an inline action, an off-chain relayer, or a crank action.
 9. Regenerate the ABI and diff it with `cdt-abidiff`, which compares every section including the
-   table metadata this port changes. On a CDT predating
-   [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) it compared tables by name
-   and type only — there, fall back to
-   `jq -S . old.abi > a && jq -S . new.abi > b && diff -u a b`.
+   table metadata this port changes.
 10. Test natively — see [native-tester-compilation.md](native-tester-compilation.md).
 11. Deploy to a test network. Get a policy on the **contract account** before the first call, sized
     from the ×10 `setcode` charge, the ABI at 1×, the one-time 152-byte account-metadata row, and

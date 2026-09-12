@@ -37,18 +37,6 @@ either declared inside the contract class (as below) or carrying `sysio::contrac
 the table attribute. A namespace-scope struct with only `[[sysio::table]]` compiles and runs, but
 emits **no** ABI table entry at all, so `get_table_rows` has nothing to describe it.
 
-> **On a CDT before [wire-cdt#115](https://github.com/Wire-Network/wire-cdt/pull/115), `_i` did
-> not work here.** `kv::global` named its ABI entry by decoding the raw template parameter, which
-> is a hash for `_i`, not a name — so the ABI carried a garbage twin beside the annotated name.
-> At **13 characters or fewer** that was two entries under different `table_id`s, and
-> `get_table_rows` by the readable name found nothing — abigen took the `string_to_name` branch for
-> any annotation that short. **Above 13** both derivations hashed, so the two collided and the build
-> failed with a `table_id collision` that renaming could not clear. `kv::table` and
-> `kv::scoped_table` split the same way on a short name — the runtime hashed while the ABI
-> published the `_n` reading of the annotation — so no table kind was safe there.
-> If you are on an older toolchain, use `_n` for globals. See
-> [migrating-from-antelope.md](migrating-from-antelope.md#step-2--storage).
-
 ## API
 
 | Method | Description |
