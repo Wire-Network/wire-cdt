@@ -41,13 +41,9 @@ permission intrinsics. See [Features with no Wire equivalent](#features-with-no-
 Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its own LLVM 18, its own
 libc and libc++, the WASM contract library, and the CMake package.
 
-> **Build it from source.** The only published release, `v1.0.0`, predates the ABI and storage
-> fixes this guide assumes — it has the silent duplicate-`emplace` overwrite, the `_i` ABI id
-> mismatch, the phantom table entries and the old `cdt-abidiff` — and it reports the same version
-> string as `master`, so a version check cannot tell them apart. Check out `7f756bbf` or newer and
-> follow [BUILD.md](../BUILD.md); do not install the published `v1.0.0` artifacts for contract
-> development. **Everything below assumes that baseline**, and no caveats for older builds are
-> given.
+> **Build it from source.** The published `v1.0.0` is missing ABI and storage fixes this guide
+> assumes, and reports the same version string as `master`, so a version check cannot tell them
+> apart. Build from `master` and follow [BUILD.md](../BUILD.md). Everything below assumes that.
 
 `sudo cmake --install build` puts the toolchain under `/usr/local`, where `find_package(cdt)`
 finds it with no further configuration. Once a release carrying the fixes is published, the
@@ -316,10 +312,8 @@ describe the key layout:
 }
 ```
 
-`cdt-abidiff` shows this change, but only on a toolchain that carries
-[wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112), which also taught it to tell
-`eosio::abi/1.2` from `sysio::abi/1.2`. For a check that does not depend on the toolchain at all,
-normalize and diff the JSON directly:
+`cdt-abidiff` shows this change. For a check that does not depend on the toolchain, normalize and
+diff the JSON directly:
 
 ```bash
 jq -S . old.abi > /tmp/old.json && jq -S . new.abi > /tmp/new.json && diff -u /tmp/old.json /tmp/new.json
@@ -338,15 +332,10 @@ the metadata above, secondary indices included), `ricardian_clauses`, `enums`, `
 
 The `db_store_i64` / `db_find_i64` / `db_idx64_*` / `db_idx128_*` / `db_idx256_*` /
 `db_idx_double_*` / `db_idx_long_double_*` intrinsics do not exist on Wire. The chain exports none
-of them, so a contract that reaches one fails at deploy. Whether it fails earlier depends on how
-it was declared: a plain `extern "C"` declaration used to link, because CDT's
-`imports/cdt.imports.in` is handed to `wasm-ld` as `--allow-undefined-file` and once listed these
-names. [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) removed them, so on a
-current CDT that declaration is a link error — `wasm-ld: undefined symbol: db_store_i64` — instead
-of a deploy failure. A declaration carrying `__attribute__((sysio_wasm_import))` — which
-is how the old `<sysio/db.h>` declared them — emits an explicit WASM import and links either way,
-so those keep failing at deploy. (The 22 `kv_*` intrinsics are the proof: none is in the
-allow-list, and they all link.) `<sysio/db.h>` is a stub that forwards to
+of them. Where you find out depends on how the intrinsic was declared. A plain `extern "C"`
+declaration is a link error — `wasm-ld: undefined symbol: db_store_i64`. One carrying
+`__attribute__((sysio_wasm_import))`, which is how `<sysio/db.h>` declared them, emits an explicit
+WASM import and links, so it fails at deploy instead. `<sysio/db.h>` is a stub that forwards to
 `<sysio/kv.h>`. Contract state lives in a key-value store addressed by a compile-time
 `table_id`.
 
@@ -371,21 +360,17 @@ for (auto it = idx.begin(); it != idx.end(); it++)   // error: overload resoluti
 for (auto it = idx.begin(); it != idx.end(); ++it)   // rewrite to this
 ```
 
-A postfix increment has to copy the iterator, and copying a KV iterator means duplicating a
-host-side handle — affordable to do deliberately, not to do once per loop step, which is why the
-postfix forms are deleted rather than merely discouraged. The sweep is mechanical —
-`it++` → `++it`, `it--` → `--it`.
+Postfix has to copy the iterator, and copying a KV iterator duplicates a host-side handle — too
+expensive to do once per loop step. The sweep is mechanical: `it++` → `++it`, `it--` → `--it`.
 
-**The compiler does not find every one.** `rbegin()`/`rend()` hand back a
-`std::reverse_iterator`, whose postfix operators belong to the adaptor and are *not* deleted, so
-`for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
-handle-duplicating copy the deletion exists to prevent. Grep reverse loops by hand.
+**The compiler does not find every one.** `rbegin()`/`rend()` return a `std::reverse_iterator`,
+whose postfix operators belong to the adaptor and are not deleted — so a reverse loop using `rit++`
+compiles clean and makes exactly the copy the deletion exists to prevent. Grep those by hand.
 
-**The row type must be default-constructible — and one very common declaration shape breaks that
-without looking like it does.** `kv_multi_index` static-asserts
-`std::is_default_constructible_v<T>`. That is satisfied by an ordinary row struct, but *not* while
-the compiler is still inside the enclosing class, because a default member initializer is parsed in
-a complete-class context — deferred until the enclosing class is finished. So this fails:
+**The row type must be default-constructible, and one common shape breaks that without looking
+like it.** A default member initializer is parsed in a complete-class context — deferred until the
+enclosing class is finished — so the row is not yet default-constructible while the compiler is
+still inside that class. This fails:
 
 ```cpp
 class [[sysio::contract]] mycontract : public contract {
@@ -398,26 +383,16 @@ class [[sysio::contract]] mycontract : public contract {
    //  error: static assertion failed ... 'std::is_default_constructible_v<mycontract::rec>'
 ```
 
-It needs **all three** — the row struct nested in the contract, a default member initializer, and
-the table held as a data member. Remove any one and it compiles:
+It needs **all three** — row struct nested in the contract, a default member initializer, and the
+table held as a data member. Remove any one: construct the table inside the action (smallest
+change), move the row struct out of the contract class, or drop the initializers and zero the
+fields in the `emplace` lambda. The diagnostic names the row type rather than the initializer, so
+it is worth recognising.
 
-- construct the table inside the action instead of holding it as a member (the common modern
-  style, and the smallest change);
-- or move the row struct out of the contract class;
-- or drop the `= 0` initializers and zero the fields in the `emplace` lambda.
-
-The diagnostic names the row type, not the initializer, so it is worth recognising: nothing is
-wrong with the struct.
-
-**The bare `[[sysio::table]]` is fine as of
-[wire-cdt#117](https://github.com/Wire-Network/wire-cdt/pull/117).** Before it, the attribute
-emitted a second ABI table entry named after the *row struct* — `account` beside the real
-`accounts` — under a `table_id` nothing ever writes to, so `get_table_rows` for that name returned
-nothing. A bare attribute now contributes no entry at all: the name, the `table_id` and the key
-layout all come from whatever `multi_index` or `kv::table` instantiates the struct, which is where
-they were always going to come from. A struct annotated but never instantiated therefore gets no
-entry either — it described a table nothing could read or write. Giving the attribute an explicit
-name — `[[sysio::table("accounts")]]` — is clearer regardless.
+**A bare `[[sysio::table]]` contributes no ABI entry of its own.** The name, the `table_id` and
+the key layout all come from whatever `multi_index` or `kv::table` instantiates the struct. A
+struct annotated but never instantiated therefore gets no entry at all. Giving the attribute an
+explicit name — `[[sysio::table("accounts")]]` — is clearer regardless.
 
 Two behaviours that a port depends on match upstream:
 
@@ -440,22 +415,12 @@ contract's account, it must be read-only.
 a singleton handle constructed on another account's code is read-only on the same terms as a table
 handle.
 
-**Your singletons appear in the ABI again as of
-[wire-cdt#117](https://github.com/Wire-Network/wire-cdt/pull/117)** — a port from an Antelope chain
-will notice this, because upstream they always did. That same aliasing is why they stopped:
-`sysio::singleton` is an alias *template* over `kv_singleton`, and an alias template has no
-specialization of its own, so abigen's table visitor — which tested for the name `singleton` —
-never matched one. `sysio::multi_index` is the same shape over `kv_multi_index`, which *was* on
-that list, so a contract mixing the two saw its `multi_index` tables described and its singletons
-silently omitted. Nothing was wrong with the stored data; only the ABI was short an entry, and
-`clio get table`, SHiP and generated clients could not see it.
+Your singletons appear in the ABI, as they do upstream.
 
-Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double`, and
-`checksum256` — the same five upstream supports, and as of
-[wire-cdt#118](https://github.com/Wire-Network/wire-cdt/pull/118) the same five `multi_index`
-*enforces*. A sixth type is a compile error rather than a key that iterates in its byte order.
-Your port cannot hit that: upstream's own ceiling is these five `db_idx*` families, so a contract
-that compiled there uses nothing else.
+Secondary key types carried over: `uint64_t`, `uint128_t`, `double`, `long double` and
+`checksum256` — the same five upstream supports, and the same five `multi_index` enforces. A sixth
+is a compile error rather than a key that iterates in its byte order, which your port cannot hit:
+upstream's own ceiling is these five `db_idx*` families.
 
 Iteration order is `memcmp` order over a big-endian encoding — with an additional sign-flip
 transform for `double` and `long double`, so negatives order correctly — and the **integer** types
@@ -738,10 +703,7 @@ Antelope; what changed is only *who* the payment lands on by default.
 | `add_security_group_participants`, `remove_security_group_participants`, `in_active_security_group`, `get_active_security_group` | No equivalent. Wire does not implement security groups. |
 | `set_kv_parameters_packed` | No equivalent. Wire's KV parameters are not settable from a contract. |
 
-The last two rows behave differently from the rest of this table. Wire's chain never exported them,
-but CDT went on *declaring* them, so a contract calling one compiled, linked, and only failed at
-deploy. [wire-cdt#112](https://github.com/Wire-Network/wire-cdt/pull/112) deleted the declarations,
-so on a current CDT you find out at compile time instead:
+The last two rows fail at compile time rather than deploy, because CDT no longer declares them:
 
 - `#include <sysio/security_group.h>` → `fatal error: 'sysio/security_group.h' file not found`; the
   header is gone entirely.
@@ -803,10 +765,9 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 
 ## Porting checklist
 
-1. Install Wire CDT from source at `7f756bbf` or newer ([BUILD.md](../BUILD.md)) — the published
-   `v1.0.0` predates the fixes this guide assumes. Add CMake and a build tool, and confirm
-   `cdt-cpp --version` resolves to the binary you meant. When a release lands, install the **base
-   and `-dev` packages both**.
+1. Build Wire CDT from `master` ([BUILD.md](../BUILD.md)) — the published `v1.0.0` is missing
+   fixes this guide assumes. Add CMake and a build tool, and confirm `cdt-cpp --version` resolves
+   to the binary you meant. When a release lands, install the **base and `-dev` packages both**.
 2. Rename `eosio` → `sysio` across sources and headers, including the `eosio_assert` /
    `eosio_exit` C API that a `\beosio\b` pass skips. Review the diff for string literals. **CMake
    is not a substitution**: `find_package(eosio.cdt)` becomes `find_package(cdt)` and
@@ -820,10 +781,9 @@ None of this is required to ship. Do it after the contract builds, deploys and p
    declarations carry over; what needs touching is step 4, and the default-constructibility shape
    above if your row is nested in the contract, carries member initializers, *and* the table is
    held as a data member.
-6. Secondary-index keys must be one of `uint64_t`, `uint128_t`, `double`, `long double` or
-   `checksum256` — the same five upstream allows, so a port already satisfies this, and anything
-   else is now a compile error at `get_index<...>()`. Give a `std::string` or `std::vector` key a
-   fixed-width surrogate. For new Wire code wanting a wider key, use `kv::table` with `kv::index`.
+6. Secondary-index keys must be `uint64_t`, `uint128_t`, `double`, `long double` or
+   `checksum256` — the five upstream allows, so a port already satisfies it. Give a `std::string`
+   or `std::vector` key a fixed-width surrogate; for a wider key in new code, use `kv::table`.
 7. **Find every storage mutator that names a user as payer** — `emplace` and `modify` on a table,
    and `singleton::set(value, user)` / `get_or_create(user, ...)`, which forward that payer
    straight into `kv_multi_index::emplace` / `modify` and so hit the same rejection. Decide, per

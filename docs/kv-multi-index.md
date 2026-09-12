@@ -36,32 +36,20 @@ are:
   upstream because `PK` cannot be deduced — so that one is not a Wire-only incompatibility. A named
   `static_cast<table_type::const_iterator (table_type::*)(uint64_t) const>(&table_type::lower_bound)`
   resolves one on Wire.)
-- secondary key types are limited to the five upstream supports — `uint64_t`, `uint128_t`,
-  `double`, `long double` and `checksum256` — and a sixth is a `static_assert`, not a silent
-  misorder. Upstream's ceiling is its five `db_idx*` intrinsic families; `multi_index` keeps the
-  same ceiling because it exists to carry a ported contract over unchanged, and a port cannot
-  arrive with a key outside that set.
-
-  The reason it is refused rather than encoded: a secondary index is a byte-ordered map, so
-  `kv_idx_lower_bound` compares the *encoded* key with `memcmp`. Each of the five has an
-  order-preserving encoder. Anything else would reach a generic `pack()`, which writes integers
-  little-endian — under which `0x00000100` sorts below `0x00000001` — so a `uint32_t` key would
-  iterate in byte order while `find` still matched, because equality does not depend on the
-  encoding. That was the behaviour before
-  [wire-cdt#118](https://github.com/Wire-Network/wire-cdt/pull/118).
+- secondary key types are limited to five: `uint64_t`, `uint128_t`, `double`, `long double` and
+  `checksum256`. A sixth is a `static_assert`, not a silent misorder — a secondary index is a
+  byte-ordered map, so `kv_idx_lower_bound` compares the *encoded* key with `memcmp`, and only
+  these five have an order-preserving encoder. The same five upstream supports, so a ported
+  contract already satisfies it.
 
   **For a wider key — a narrow integer, a `name`, or a composite struct — use `kv::table` with
-  `kv::index`**, which encodes through `be_key_stream`. That is also what the chain's
-  `be_key_codec` builds `get_table_rows` bounds with, so such an index is queryable by name over
-  RPC; [wire-sysio#608](https://github.com/Wire-Network/wire-sysio/pull/608) covers `uint32_t`,
-  `int64_t` and a composite key end to end. Enums are not on that list — `be_key_stream` has no
-  enum overload — so give an enum key an explicit integer member.
+  `kv::index`**, which encodes through `be_key_stream`. That is what the chain uses to build
+  `get_table_rows` bounds, so such an index stays queryable by name over RPC. Not enums:
+  `be_key_stream` has no enum overload, so give an enum key an explicit integer member.
 
-  Both checks sit in `secondary_index_view`, so they fire when you first call `get_index<...>()`
-  rather than at the declaration — or at the first `emplace` for a table you write but never
-  query, where the encoder asserts the same thing. The other check is
-  `std::is_trivially_copyable`, which is why a `std::string` or `std::vector` key is rejected even
-  though CDT can serialize it.
+  Both checks — this one and `std::is_trivially_copyable`, which is why `std::string` and
+  `std::vector` keys are rejected — sit in `secondary_index_view`, so they fire at the first
+  `get_index<...>()`, or at the first `emplace` for a table you write but never query.
 
 Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*`
 intrinsics.
