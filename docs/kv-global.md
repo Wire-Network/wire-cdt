@@ -32,10 +32,12 @@ instead. `"app_config"_n` is a *compile* error for that reason, not a style pref
 
 **ABI requirement.** Annotate the value struct with `[[sysio::table("...")]]` so the ABI carries a
 readable name — with `_i` that is the only place the readable name exists, since the literal is a
-hash. The annotation alone is not enough: the struct must also be **reachable from the contract**,
-either declared inside the contract class (as below) or carrying `sysio::contract("...")` beside
-the table attribute. A namespace-scope struct with only `[[sysio::table]]` compiles and runs, but
-emits **no** ABI table entry at all, so `get_table_rows` has nothing to describe it.
+hash. The annotation alone is not enough: the table has to be **associated with the contract**,
+by either route. Either the row belongs to the contract — declared inside the contract class (as
+below) or carrying `sysio::contract("...")` beside the table attribute — or the `kv::global`
+specialization itself is declared as a contract data member or a contract-local alias. A
+namespace-scope row is omitted only when neither route applies, and then `get_table_rows` has
+nothing to describe it.
 
 ## API
 

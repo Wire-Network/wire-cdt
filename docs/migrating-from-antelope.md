@@ -45,9 +45,32 @@ libc and libc++, the WASM contract library, and the CMake package.
 > assumes, and reports the same version string as `master`, so a version check cannot tell them
 > apart. Build from `master` and follow [BUILD.md](../BUILD.md). Everything below assumes that.
 
-`sudo cmake --install build` puts the toolchain under `/usr/local`, where `find_package(cdt)`
-finds it with no further configuration. Once a release carrying the fixes is published, the
-packages install with:
+Install it somewhere of its own:
+
+```bash
+sudo cmake --install build --prefix /opt/wire-cdt
+```
+
+**Not `/usr/local`.** A source install puts everything directly under the prefix, and that
+includes the bundled unprefixed `clang`, `clang++`, `lld`, `ld.lld`, `wasm-ld`, `opt`, `llc` and
+`llvm-*`. From `/usr/local/bin` — which usually precedes `/usr/bin` — those shadow your distro's
+compiler. For the same reason, do not put `/opt/wire-cdt/bin` on `PATH`: invoke it by absolute
+path (`/opt/wire-cdt/bin/cdt-cpp`), alias the `cdt-*` names, or symlink just the public entry
+points into a directory of your own.
+
+CMake then needs pointing at it, since `find_package(cdt)` derives its search prefixes from `PATH`
+with a trailing `bin` stripped — exactly what the above avoids doing:
+
+```bash
+cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt
+# or: cmake .. -Dcdt_DIR=/opt/wire-cdt/lib/cmake/cdt
+```
+
+Watch for collisions if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
+`cdt-cc`, `cdt-ld` and `cdt-init`. Check `which cdt-cpp`.
+
+Once a release carrying the fixes is published, it installs as packages or as a portable tarball
+extracted to `/opt`, either of which coexists with the other:
 
 ```bash
 version=X.Y.Z     # the release you downloaded
@@ -57,44 +80,18 @@ sudo apt install "./wire-cdt_${version}_amd64.deb" "./wire-cdt-dev_${version}_am
 Install **both** packages. The base package carries the compiler drivers and the WASM libraries;
 `wire-cdt-dev` carries `libnative*`, `scripts/gen_native_dispatch.py` and
 `share/cdt/native-contract-src`, which is what the [native-testing path](#test-without-a-chain)
-below needs. Neither package pulls in CMake or a build tool, so on a clean machine also:
+below needs. Neither pulls in CMake or a build tool, so on a clean machine also
+`sudo apt install cmake build-essential jq` — `build-essential` for the `make` the generated
+project uses, `jq` for the ABI diff in [Step 1](#step-1--rename-eosio-to-sysio).
 
-```bash
-sudo apt install cmake build-essential jq
-```
-
-`build-essential` for the `make` the generated project uses, and `jq` for the ABI diff in
-[Step 1](#step-1--rename-eosio-to-sysio).
-
-Under the deb/rpm layout the toolchain lives in `/usr/lib/cdt`, and only an enumerated list of
-public entry points is symlinked into `/usr/bin`: `cdt-cc`, `cdt-cpp`, `cdt-ld`, `cdt-abidiff`,
-`cdt-init`, `cdt-codegen`, `cdt-protoc`, `cdt-protoc-gen-zpp`, `cdt-pp`, `cdt-wast2wasm`,
-`cdt-wasm2wast`. Only three carry a `sysio-*` alias — `sysio-pp`, `sysio-wast2wasm` and
-`sysio-wasm2wast`; there is no `sysio-cc`, `sysio-cpp`, `sysio-ld`, `sysio-abidiff`, `sysio-init`,
-`sysio-codegen` or `sysio-protoc`, so reach for the `cdt-` name. The bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc`
-and `llvm-*` binaries stay in `/usr/lib/cdt/bin`, off `PATH`, so nothing shadows your distro's
-compiler — and so do the eight binutils aliases `cdt-ar`, `cdt-ranlib`, `cdt-nm`, `cdt-objcopy`,
-`cdt-objdump`, `cdt-readobj`, `cdt-readelf` and `cdt-strip`, which are build-system plumbing
-addressed by absolute path. Invoke those as `/usr/lib/cdt/bin/cdt-ar`, not off `PATH`.
-
-Or extract the portable tarball to `/opt` (`/opt/wire-cdt`), which coexists with a deb install.
-Building from source is documented in [BUILD.md](../BUILD.md).
-
-> **The tarball has no such separation.** Its `bin/` holds every binary, the unprefixed `clang`,
-> `clang++`, `lld`, `ld.lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` included, so putting
-> `/opt/wire-cdt/bin` on `PATH` *does* shadow the distro toolchain. Invoke it by absolute path
-> (`/opt/wire-cdt/bin/cdt-cpp`), alias the `cdt-*` names, or symlink just the public entry points
-> into a directory of your own that is on `PATH`.
->
-> The same applies if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
-> `cdt-cc`, `cdt-ld` and `cdt-init`, so those names collide. Check `which cdt-cpp`, or invoke the
-> one you want by absolute path.
->
-> CMake will not find it either. `find_package(cdt)` derives its search prefixes from `PATH` with
-> a trailing `bin` stripped — which is exactly what the workarounds above avoid doing — so point it
-> at the root explicitly: `cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt`, or
-> `-Dcdt_DIR=/opt/wire-cdt/lib/cmake/cdt`. The same applies to a source install under a custom
-> `-DCMAKE_INSTALL_PREFIX`.
+The deb/rpm layout is the one that needs no `PATH` care: the toolchain lives in `/usr/lib/cdt` and
+only an enumerated list of public entry points is symlinked into `/usr/bin` — `cdt-cc`, `cdt-cpp`,
+`cdt-ld`, `cdt-abidiff`, `cdt-init`, `cdt-codegen`, `cdt-protoc`, `cdt-protoc-gen-zpp`, `cdt-pp`,
+`cdt-wast2wasm`, `cdt-wasm2wast`. Only three carry a `sysio-*` alias — `sysio-pp`,
+`sysio-wast2wasm`, `sysio-wasm2wast` — so otherwise reach for the `cdt-` name. The bundled LLVM
+binaries stay in `/usr/lib/cdt/bin`, off `PATH`, as do the eight binutils aliases `cdt-ar`,
+`cdt-ranlib`, `cdt-nm`, `cdt-objcopy`, `cdt-objdump`, `cdt-readobj`, `cdt-readelf` and
+`cdt-strip`; invoke those by absolute path.
 
 Verify:
 
@@ -206,7 +203,7 @@ issuer appears in that generation's `nodeowners`:
 
 ```bash
 clio get table sysio.roa roastate                          # network_gen
-clio get table sysio.roa nodeowners --limit 100            # issuer must be listed here
+clio get table sysio.roa nodeowners --limit 100            # first page; follow next_key
 ```
 
 `nodeowners` is scoped by generation and keyed by owner, but **do not pass `-S <gen>`**. CDT declares
@@ -440,12 +437,12 @@ and `lower_bound` / `upper_bound` results can differ from Antelope. Ordinary fin
 are unaffected.
 
 A second constraint is **`std::is_trivially_copyable`**, not "has a serializer" — so `std::string`
-and `std::vector` secondary keys are rejected even though CDT can serialize them. Both
-`static_assert`s sit in `secondary_index_view`, so they fire when you first call
-`get_index<...>()`, not at the declaration: a variable-length secondary index compiles, and can
-even be written through `emplace`, until something reads it back. A variable-length secondary key
-needs a fixed-width surrogate: hash it into a `checksum256`, or truncate to a `uint64_t` and
-disambiguate collisions against the primary row.
+and `std::vector` secondary keys are rejected even though CDT can serialize them. Both are checked
+in `secondary_index_view` when `get_index<...>()` is instantiated, and the supported-type check
+again on the write path, which `emplace` / `modify` / `erase` reach while maintaining secondary
+entries — so an unsupported key is refused at the first query *or* mutator, and is never stored. A
+variable-length key needs a fixed-width surrogate: hash it into a `checksum256`, or truncate to a
+`uint64_t` and disambiguate collisions against the primary row.
 
 What changed underneath, and where it shows:
 

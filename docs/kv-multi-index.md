@@ -48,8 +48,10 @@ are:
   `be_key_stream` has no enum overload, so give an enum key an explicit integer member.
 
   Both checks — this one and `std::is_trivially_copyable`, which is why `std::string` and
-  `std::vector` keys are rejected — sit in `secondary_index_view`, so they fire at the first
-  `get_index<...>()`, or at the first `emplace` for a table you write but never query.
+  `std::vector` keys are rejected — run in `secondary_index_view` when `get_index<...>()` is
+  instantiated. The encoder checks the supported set again on the write path, reached by `emplace`
+  / `modify` / `erase` maintaining secondary entries, so an unsupported key is refused at the first
+  query or mutator and is never stored.
 
 Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*`
 intrinsics.
