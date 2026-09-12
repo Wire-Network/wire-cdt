@@ -375,14 +375,30 @@ stays the logical prefix the files will be read from.
 
 ### Use from the Build Directory
 
+The build tree carries the same `lib/cmake/cdt/` subtree an install does, so another project can
+consume it in place — no install step at all:
+
 ```bash
-export PATH=/path/to/wire-cdt/build/bin:$PATH
+cmake -DCDT_ROOT=/path/to/wire-cdt/build ...
 ```
 
-For CMake projects, use the generated CDT Wasm toolchain file:
+That is what wire-sysio expects: `cmake/contract-tools.cmake` resolves
+`$CDT_ROOT/lib/cmake/cdt/cdt-config.cmake` and passes
+`$CDT_ROOT/lib/cmake/cdt/CDTWasmToolchain.cmake` as the toolchain file, so building contracts
+against an uninstalled CDT is a matter of pointing `CDT_ROOT` at the build directory.
+
+For a project that takes the toolchain file directly:
 
 ```bash
--DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/CDTWasmToolchain.cmake
+-DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/cdt/CDTWasmToolchain.cmake
+```
+
+Putting `build/bin` on `PATH` also works for invoking the drivers, but note it holds the bundled
+unprefixed `clang`, `clang++`, `lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` — unlike the packaged
+layout, which keeps them private — so it will shadow the host toolchain:
+
+```bash
+export PATH=/path/to/wire-cdt/build/bin:$PATH
 ```
 
 ## Installed Tools

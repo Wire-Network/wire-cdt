@@ -41,67 +41,38 @@ permission intrinsics. See [Features with no Wire equivalent](#features-with-no-
 Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its own LLVM 18, its own
 libc and libc++, the WASM contract library, and the CMake package.
 
-> **Build it from source.** The published `v1.0.0` is missing ABI and storage fixes this guide
-> assumes, and reports the same version string as `master`, so a version check cannot tell them
-> apart. Build from `master` and follow [BUILD.md](../BUILD.md). Everything below assumes that.
+> **There is no usable release yet.** The published `v1.0.0` is missing ABI and storage fixes this
+> guide assumes, and reports the same version string as `master`, so a version check cannot tell
+> them apart. Build the packages yourself from `master` until a release carries the fixes.
 
-Install it somewhere of its own:
-
-```bash
-sudo cmake --install build --prefix /opt/wire-cdt
-```
-
-**Not `/usr/local`.** A source install puts everything directly under the prefix, and that
-includes the bundled unprefixed `clang`, `clang++`, `lld`, `ld.lld`, `wasm-ld`, `opt`, `llc` and
-`llvm-*`. From `/usr/local/bin` — which usually precedes `/usr/bin` — those shadow your distro's
-compiler. For the same reason, do not put `/opt/wire-cdt/bin` on `PATH` wholesale; symlink just
-the public entry points, as below.
-
-CMake then needs pointing at it, since `find_package(cdt)` derives its search prefixes from `PATH`
-with a trailing `bin` stripped — exactly what the above avoids doing:
+Build per [BUILD.md](../BUILD.md), then package and install:
 
 ```bash
-cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt
-# or: cmake .. -Dcdt_DIR=/opt/wire-cdt/lib/cmake/cdt
+cd build
+cpack -G DEB                                    # or -G RPM
+sudo apt install ./wire-cdt_*_amd64.deb ./wire-cdt-dev_*_amd64.deb
 ```
 
-Then put the public entry points — and only those — on `PATH`, which is what the deb layout does
-for you. **Every `cdt-*` command below assumes this**; `cmake` still needs the prefix above.
-
-```bash
-mkdir -p ~/.local/bin        # already on PATH on most distros
-for t in cdt-cc cdt-cpp cdt-ld cdt-abidiff cdt-init cdt-codegen cdt-pp \
-         cdt-protoc cdt-protoc-gen-zpp cdt-wast2wasm cdt-wasm2wast; do
-   ln -sf "/opt/wire-cdt/bin/$t" ~/.local/bin/"$t"
-done
-```
-
-Watch for collisions if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
-`cdt-cc`, `cdt-ld` and `cdt-init`. Check `which cdt-cpp`.
-
-Once a release carrying the fixes is published, it installs as packages or as a portable tarball
-extracted to `/opt`, either of which coexists with the other:
-
-```bash
-version=X.Y.Z     # the release you downloaded
-sudo apt install "./wire-cdt_${version}_amd64.deb" "./wire-cdt-dev_${version}_amd64.deb"
-```
-
-Install **both** packages. The base package carries the compiler drivers and the WASM libraries;
+Install **both**. The base package carries the compiler drivers and the WASM libraries;
 `wire-cdt-dev` carries `libnative*`, `scripts/gen_native_dispatch.py` and
-`share/cdt/native-contract-src`, which is what the [native-testing path](#test-without-a-chain)
-below needs. Neither pulls in CMake or a build tool, so on a clean machine also
+`share/cdt/native-contract-src`, which the [native-testing path](#test-without-a-chain) needs.
+Neither pulls in CMake or a build tool, so on a clean machine also
 `sudo apt install cmake build-essential jq` — `build-essential` for the `make` the generated
 project uses, `jq` for the ABI diff in [Step 1](#step-1--rename-eosio-to-sysio).
 
-The deb/rpm layout is the one that needs no `PATH` care: the toolchain lives in `/usr/lib/cdt` and
-only an enumerated list of public entry points is symlinked into `/usr/bin` — `cdt-cc`, `cdt-cpp`,
+That layout is why nothing below needs `PATH` or CMake configuration. The toolchain lives in
+`/usr/lib/cdt`, and only public entry points are symlinked into `/usr/bin` — `cdt-cc`, `cdt-cpp`,
 `cdt-ld`, `cdt-abidiff`, `cdt-init`, `cdt-codegen`, `cdt-protoc`, `cdt-protoc-gen-zpp`, `cdt-pp`,
-`cdt-wast2wasm`, `cdt-wasm2wast`. Only three carry a `sysio-*` alias — `sysio-pp`,
-`sysio-wast2wasm`, `sysio-wasm2wast` — so otherwise reach for the `cdt-` name. The bundled LLVM
-binaries stay in `/usr/lib/cdt/bin`, off `PATH`, as do the eight binutils aliases `cdt-ar`,
-`cdt-ranlib`, `cdt-nm`, `cdt-objcopy`, `cdt-objdump`, `cdt-readobj`, `cdt-readelf` and
-`cdt-strip`; invoke those by absolute path.
+`cdt-wast2wasm`, `cdt-wasm2wast`, plus `sysio-pp`, `sysio-wast2wasm` and `sysio-wasm2wast`. The
+bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` stay private, so they cannot shadow
+your distro's compiler, and `find_package(cdt)` resolves with no prefix argument.
+
+On macOS, `cpack -G DEB` does not apply — build the portable tarball instead (`cpack -G TGZ`) and
+see [BUILD.md](../BUILD.md), which also covers pointing another project at a CDT build tree
+directly with `-DCDT_ROOT=<build dir>` rather than installing at all.
+
+Watch for collisions if **AntelopeIO CDT 3.0+** is installed: both projects publish `cdt-cpp`,
+`cdt-cc`, `cdt-ld` and `cdt-init`. Check `which cdt-cpp`.
 
 Verify:
 
@@ -129,7 +100,7 @@ Tool-name mapping, if you have scripts to update:
 
 ```bash
 cdt-init -project=mycontract          # add -path=<dir> to place it elsewhere
-cd mycontract/build && cmake .. -DCMAKE_PREFIX_PATH=/opt/wire-cdt && make
+cd mycontract/build && cmake .. && make
 ```
 
 `cdt-init` scaffolds `src/`, `include/`, `ricardian/`, `build/` and a CMake project that already
