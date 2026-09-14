@@ -233,14 +233,27 @@ After building and testing, install using one of these methods.
 Packaging is driven by CPack. Debian and RPM packages are only produced for
 Linux builds; the portable tarball builds on Linux and macOS:
 
+> **Before installing: the packages supersede a package named `cdt`** — the deb declares
+> `Conflicts`/`Replaces`/`Provides: cdt`, the rpm `Obsoletes`/`Provides: cdt`. Installing can
+> therefore *remove* a package-managed AntelopeIO CDT rather than sit beside it. A manually
+> installed copy is not removed and will still collide on `cdt-cpp`, `cdt-cc`, `cdt-ld` and
+> `cdt-init`; `type -a cdt-cpp` shows every candidate.
+
+Every generator below runs from the build directory:
+
 ```bash
 cd build
+```
+
+Debian/Ubuntu:
+
+```bash
 cpack -G DEB                      # wire-cdt_<version>_amd64.deb + wire-cdt-dev_…
 sudo apt install ./wire-cdt_*_amd64.deb ./wire-cdt-dev_*_amd64.deb
 ```
 
-For RPM-based destinations. `cpack -G RPM` needs `rpmbuild`, which the Ubuntu builder does not
-have by default:
+RPM-based destinations. `cpack -G RPM` needs `rpmbuild`, which the Ubuntu builder does not have
+by default:
 
 ```bash
 sudo apt install rpm                        # on the Ubuntu builder
@@ -261,11 +274,6 @@ libraries; `wire-cdt-dev` carries `lib/libnative*.a`, `scripts/gen_native_dispat
 CMake or a build tool, so on a clean machine also install those — `cmake build-essential` on
 Debian/Ubuntu, `cmake gcc-c++ make` on RPM-based systems.
 
-**The packages supersede a package named `cdt`**: the deb declares
-`Conflicts`/`Replaces`/`Provides: cdt`, the rpm `Obsoletes`/`Provides: cdt`. Installing can
-therefore *remove* a package-managed AntelopeIO CDT rather than sit beside it. A manually
-installed copy is not removed and will still collide on `cdt-cpp`, `cdt-cc`, `cdt-ld` and
-`cdt-init`; `type -a cdt-cpp` shows every candidate.
 
 The deb and the rpm use the **distro-toolchain layout** — the same shape
 Debian and Fedora use for a bundled compiler (`/usr/lib/llvm-18/…`):
@@ -324,7 +332,7 @@ it coexists with a deb/rpm install (which lives at `/usr`, a different prefix):
 
 ```bash
 sudo mkdir -p /opt
-sudo tar xzf wire-cdt-<version>-x86_64.tar.gz -C /opt   # -> /opt/wire-cdt/
+sudo tar xzf wire-cdt-<version>-<arch>.tar.gz -C /opt   # -> /opt/wire-cdt/
 export CMAKE_PREFIX_PATH=/opt/wire-cdt
 /opt/wire-cdt/bin/cdt-cpp --version
 ```

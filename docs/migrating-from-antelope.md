@@ -462,15 +462,15 @@ purpose-built types:
 identical key bytes, less overhead. The full comparison and a step-by-step conversion are in the
 [KV Storage Guide](kv-storage-guide.md).
 
-Table names are no longer confined to what `sysio::name` holds — 13 characters of `a-z1-5.`. The
-`_i` literal hashes the identifier instead, so longer names work, and the readable name then comes
-from the row's `[[sysio::table("…")]]`. The naming rules and their diagnostics are in
+Table names are no longer confined to what `sysio::name` holds. The `_i` literal hashes the
+identifier instead, so longer names work, and the readable name then comes from the row's
+`[[sysio::table("…")]]`. The alphabet, the length limits and their diagnostics are in
 [What abigen describes, and what it refuses](abi-tables.md); the `_i` literal itself is in the
 [KV Storage Guide](kv-storage-guide.md).
 
-The part that catches a port: `_n` is not a fallback for a name it cannot spell. Its alphabet has
-no `_`, so `"user_table"_n` is a *compile* error rather than a rename — `_i` is the answer, at any
-length.
+The part that catches a port: `_n` is not a fallback for a name it cannot spell. `"user_table"_n`
+is a *compile* error rather than a rename, because `_` is not in the `_n` alphabet — `_i` is the
+answer, at any length.
 
 ---
 
