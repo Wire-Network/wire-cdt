@@ -46,7 +46,9 @@ A table's name comes from its template parameter:
 sysio::multi_index<"accounts"_n, account>       // -> table "accounts"
 ```
 
-`_n` names are at most 13 characters from `.12345a-z`. For anything longer, use `_i`, which
+`_n` names are at most 13 characters from `.12345a-z`, with the 13th position restricted to
+`.12345a-j` — it is 4 bits rather than 5, so a 13-character name ending `k`-`z` is a compile
+error. For anything longer, use `_i`, which
 DJB2-hashes its argument — and because a hash is not reversible, **the readable name has to come
 from the row's annotation**:
 

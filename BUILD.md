@@ -233,15 +233,49 @@ After building and testing, install using one of these methods.
 Packaging is driven by CPack. Debian and RPM packages are only produced for
 Linux builds; the portable tarball builds on Linux and macOS:
 
+> **Before installing: the packages supersede a package named `cdt`** — the deb declares
+> `Conflicts`/`Replaces`/`Provides: cdt`, the rpm `Obsoletes`/`Provides: cdt`. Installing can
+> therefore *remove* a package-managed AntelopeIO CDT rather than sit beside it. A manually
+> installed copy is not removed and will still collide on `cdt-cpp`, `cdt-cc`, `cdt-ld` and
+> `cdt-init`; `type -a cdt-cpp` shows every candidate.
+
+Every generator below runs from the build directory:
+
 ```bash
 cd build
-cpack -G DEB                      # wire-cdt_<version>_amd64.deb + wire-cdt-dev_…
-cpack -G RPM                      # wire-cdt-<version>-x86_64.rpm + wire-cdt-dev-…
-cpack -G TGZ                      # wire-cdt-<version>-<arch>.tar.gz
-cmake --build . --target package-tgz   # same tarball, convenience alias
-
-sudo apt install ./wire-cdt_*_amd64.deb
 ```
+
+Debian/Ubuntu:
+
+```bash
+cpack -G DEB                      # wire-cdt_<version>_amd64.deb + wire-cdt-dev_…
+sudo apt install ./wire-cdt_*_amd64.deb ./wire-cdt-dev_*_amd64.deb
+```
+
+RPM-based destinations. `cpack -G RPM` needs `rpmbuild`, which the Ubuntu builder does not have
+by default:
+
+```bash
+sudo apt install rpm                        # on the Ubuntu builder
+cpack -G RPM                                # wire-cdt-<version>-x86_64.rpm + wire-cdt-dev-…
+sudo dnf install ./wire-cdt-*.rpm           # on the RPM-based destination
+```
+
+The tarball builds on Linux and macOS alike:
+
+```bash
+cpack -G TGZ                           # wire-cdt-<version>-<arch>.tar.gz
+cmake --build . --target package-tgz   # same tarball, convenience alias
+```
+
+**Install both components.** The base package carries the compiler drivers and the WASM
+libraries; `wire-cdt-dev` carries `lib/libnative*.a`, `scripts/gen_native_dispatch.py` and
+`share/cdt/native-contract-src/`, which native (host) contract testing needs. Neither pulls in
+Python, CMake or a build tool, so on a clean machine also install those — `python3 cmake
+build-essential` on Debian/Ubuntu, `python3 cmake gcc-c++ make` on RPM-based systems. Python is
+not optional for native testing: `add_native_contract()` generates the contract's dispatcher by
+running `gen_native_dispatch.py` under `python3`.
+
 
 The deb and the rpm use the **distro-toolchain layout** — the same shape
 Debian and Fedora use for a bundled compiler (`/usr/lib/llvm-18/…`):
@@ -299,10 +333,16 @@ CMake files bake. No root beyond write access to `/opt`, no package manager, and
 it coexists with a deb/rpm install (which lives at `/usr`, a different prefix):
 
 ```bash
-tar xzf wire-cdt-<version>-x86_64.tar.gz -C /opt      # -> /opt/wire-cdt/
-export PATH=/opt/wire-cdt/bin:$PATH
-cdt-cpp --version
+sudo mkdir -p /opt
+sudo tar xzf wire-cdt-<version>-<arch>.tar.gz -C /opt   # -> /opt/wire-cdt/
+export CMAKE_PREFIX_PATH=/opt/wire-cdt
+/opt/wire-cdt/bin/cdt-cpp --version
 ```
+
+Note what is **not** here: `export PATH=/opt/wire-cdt/bin:$PATH`. Unlike the deb/rpm layout, the
+tarball's `bin/` holds the bundled unprefixed `clang`, `clang++`, `lld`, `wasm-ld`, `opt`, `llc`
+and `llvm-*`, so putting it on `PATH` shadows the host toolchain. Invoke the drivers by absolute
+path, or symlink just the public entry points into a directory of your own.
 
 The tarball carries **both** packaged components, `base` **and** `dev` — so it
 includes the native (host) contract-testing payload: `lib/libnative*.a`,
@@ -375,14 +415,37 @@ stays the logical prefix the files will be read from.
 
 ### Use from the Build Directory
 
+The build tree carries the same `lib/cmake/cdt/` subtree an install does, so another project can
+consume it in place — no install step at all. Two variables are needed, not one:
+
 ```bash
-export PATH=/path/to/wire-cdt/build/bin:$PATH
+cmake ... \
+  -DCMAKE_PREFIX_PATH=/path/to/wire-cdt/build \
+  -DCDT_ROOT=/path/to/wire-cdt/build
 ```
 
-For CMake projects, use the generated CDT Wasm toolchain file:
+`CMAKE_PREFIX_PATH` is what actually locates `cdt-config.cmake`. `CDT_ROOT` is **not** a
+package-root hint for `find_package(cdt)` — CMP0074 spells that `cdt_ROOT`, matching the package
+name's case — so on its own it fails with *"Could not find a package configuration file provided
+by cdt"*. `-Dcdt_DIR=/path/to/wire-cdt/build/lib/cmake/cdt` works as an alternative to the prefix
+path.
+
+Once the config is loaded, `CDT_ROOT` is what selects the in-tree tools: wire-sysio's
+`cmake/contract-tools.cmake` calls `find_package(cdt REQUIRED)` first and then uses
+`$CDT_ROOT/lib/cmake/cdt/CDTWasmToolchain.cmake` as the contract toolchain file.
+
+For a project that takes the toolchain file directly:
 
 ```bash
--DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/CDTWasmToolchain.cmake
+-DCMAKE_TOOLCHAIN_FILE=/path/to/wire-cdt/build/lib/cmake/cdt/CDTWasmToolchain.cmake
+```
+
+Putting `build/bin` on `PATH` also works for invoking the drivers, but note it holds the bundled
+unprefixed `clang`, `clang++`, `lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` — unlike the packaged
+layout, which keeps them private — so it will shadow the host toolchain:
+
+```bash
+export PATH=/path/to/wire-cdt/build/bin:$PATH
 ```
 
 ## Installed Tools
@@ -392,7 +455,7 @@ Where the command-line tools land, per install method:
 | Install method | Real binaries | On `PATH` |
 |---|---|---|
 | deb / rpm | `/usr/lib/cdt/bin` | `/usr/bin` symlinks, public entry points only |
-| portable tarball (default `/opt`) | `/opt/wire-cdt/bin` | add it to `PATH` yourself |
+| portable tarball (default `/opt`) | `/opt/wire-cdt/bin` | use absolute `cdt-*` paths, or symlink only the public entry points — do **not** add the directory, it holds the bundled `clang`/`lld`/`llvm-*` |
 | `cmake --install` (default prefix) | `/usr/local/bin` | already on `PATH` |
 
 Primary CDT tools:
