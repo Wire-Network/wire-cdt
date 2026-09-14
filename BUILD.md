@@ -236,12 +236,36 @@ Linux builds; the portable tarball builds on Linux and macOS:
 ```bash
 cd build
 cpack -G DEB                      # wire-cdt_<version>_amd64.deb + wire-cdt-dev_…
-cpack -G RPM                      # wire-cdt-<version>-x86_64.rpm + wire-cdt-dev-…
-cpack -G TGZ                      # wire-cdt-<version>-<arch>.tar.gz
-cmake --build . --target package-tgz   # same tarball, convenience alias
-
-sudo apt install ./wire-cdt_*_amd64.deb
+sudo apt install ./wire-cdt_*_amd64.deb ./wire-cdt-dev_*_amd64.deb
 ```
+
+For RPM-based destinations. `cpack -G RPM` needs `rpmbuild`, which the Ubuntu builder does not
+have by default:
+
+```bash
+sudo apt install rpm                        # on the Ubuntu builder
+cpack -G RPM                                # wire-cdt-<version>-x86_64.rpm + wire-cdt-dev-…
+sudo dnf install ./wire-cdt-*.rpm           # on the RPM-based destination
+```
+
+The tarball builds on Linux and macOS alike:
+
+```bash
+cpack -G TGZ                           # wire-cdt-<version>-<arch>.tar.gz
+cmake --build . --target package-tgz   # same tarball, convenience alias
+```
+
+**Install both components.** The base package carries the compiler drivers and the WASM
+libraries; `wire-cdt-dev` carries `lib/libnative*.a`, `scripts/gen_native_dispatch.py` and
+`share/cdt/native-contract-src/`, which native (host) contract testing needs. Neither pulls in
+CMake or a build tool, so on a clean machine also install those — `cmake build-essential` on
+Debian/Ubuntu, `cmake gcc-c++ make` on RPM-based systems.
+
+**The packages supersede a package named `cdt`**: the deb declares
+`Conflicts`/`Replaces`/`Provides: cdt`, the rpm `Obsoletes`/`Provides: cdt`. Installing can
+therefore *remove* a package-managed AntelopeIO CDT rather than sit beside it. A manually
+installed copy is not removed and will still collide on `cdt-cpp`, `cdt-cc`, `cdt-ld` and
+`cdt-init`; `type -a cdt-cpp` shows every candidate.
 
 The deb and the rpm use the **distro-toolchain layout** — the same shape
 Debian and Fedora use for a bundled compiler (`/usr/lib/llvm-18/…`):
@@ -299,7 +323,8 @@ CMake files bake. No root beyond write access to `/opt`, no package manager, and
 it coexists with a deb/rpm install (which lives at `/usr`, a different prefix):
 
 ```bash
-tar xzf wire-cdt-<version>-x86_64.tar.gz -C /opt      # -> /opt/wire-cdt/
+sudo mkdir -p /opt
+sudo tar xzf wire-cdt-<version>-x86_64.tar.gz -C /opt   # -> /opt/wire-cdt/
 export CMAKE_PREFIX_PATH=/opt/wire-cdt
 /opt/wire-cdt/bin/cdt-cpp --version
 ```
@@ -420,7 +445,7 @@ Where the command-line tools land, per install method:
 | Install method | Real binaries | On `PATH` |
 |---|---|---|
 | deb / rpm | `/usr/lib/cdt/bin` | `/usr/bin` symlinks, public entry points only |
-| portable tarball (default `/opt`) | `/opt/wire-cdt/bin` | add it to `PATH` yourself |
+| portable tarball (default `/opt`) | `/opt/wire-cdt/bin` | use absolute `cdt-*` paths, or symlink only the public entry points — do **not** add the directory, it holds the bundled `clang`/`lld`/`llvm-*` |
 | `cmake --install` (default prefix) | `/usr/local/bin` | already on `PATH` |
 
 Primary CDT tools:

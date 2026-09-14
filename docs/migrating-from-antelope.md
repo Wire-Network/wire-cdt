@@ -41,57 +41,23 @@ permission intrinsics. See [Features with no Wire equivalent](#features-with-no-
 Wire CDT replaces `eosio.cdt` / `cdt`. It is a self-contained toolchain — its own LLVM 18, its own
 libc and libc++, the WASM contract library, and the CMake package.
 
-> **There is no usable release yet.** The published `v1.0.0` is missing ABI and storage fixes this
-> guide assumes, and reports the same version string as `master`, so a version check cannot tell
-> them apart. Build the packages yourself from `master` until a release carries the fixes.
+> **Before you install:** the Wire CDT packages deliberately supersede a package named `cdt`, so
+> installing one can *remove* a package-managed AntelopeIO CDT rather than sit beside it. A
+> manually installed copy is not removed and will still collide on `cdt-cpp`, `cdt-cc`, `cdt-ld`
+> and `cdt-init` — `type -a cdt-cpp` shows every candidate.
 
-Build per [BUILD.md](../BUILD.md), then package and install:
+There is no usable release yet: the published `v1.0.0` is missing ABI and storage fixes this guide
+assumes, and reports the same version string as `master`, so a version check cannot tell them
+apart. Build and install from `master` per [BUILD.md](../BUILD.md), which covers the packages, the
+portable tarball, and consuming a build tree directly without installing.
 
-```bash
-cd build
+Install **both** components — the guide's [native-testing path](#test-without-a-chain) needs what
+`wire-cdt-dev` carries — and add `jq`, which [Step 1](#step-1--rename-eosio-to-sysio) uses for the
+ABI diff.
 
-# Debian / Ubuntu
-cpack -G DEB
-sudo apt install ./wire-cdt_*_amd64.deb ./wire-cdt-dev_*_amd64.deb
-
-# RPM-based
-cpack -G RPM
-sudo dnf install ./wire-cdt-*.rpm ./wire-cdt-dev-*.rpm
-```
-
-Install **both**. The base package carries the compiler drivers and the WASM libraries;
-`wire-cdt-dev` carries `libnative*`, `scripts/gen_native_dispatch.py` and
-`share/cdt/native-contract-src`, which the [native-testing path](#test-without-a-chain) needs.
-Neither pulls in CMake or a build tool, so on a clean machine also
-`sudo apt install cmake build-essential jq` — `build-essential` for the `make` the generated
-project uses, `jq` for the ABI diff in [Step 1](#step-1--rename-eosio-to-sysio).
-
-That layout is why nothing below needs `PATH` or CMake configuration. The toolchain lives in
-`/usr/lib/cdt`, and only public entry points are symlinked into `/usr/bin` — `cdt-cc`, `cdt-cpp`,
-`cdt-ld`, `cdt-abidiff`, `cdt-init`, `cdt-codegen`, `cdt-protoc`, `cdt-protoc-gen-zpp`, `cdt-pp`,
-`cdt-wast2wasm`, `cdt-wasm2wast`, plus `sysio-pp`, `sysio-wast2wasm` and `sysio-wasm2wast`. The
-bundled `clang`, `lld`, `wasm-ld`, `opt`, `llc` and `llvm-*` stay private, so they cannot shadow
-your distro's compiler, and `find_package(cdt)` resolves with no prefix argument.
-
-On macOS there is no deb or rpm — build the portable tarball instead:
-
-```bash
-cpack -G TGZ
-sudo tar xzf wire-cdt-*-macos-arm64.tar.gz -C /opt    # -> /opt/wire-cdt
-export CMAKE_PREFIX_PATH=/opt/wire-cdt
-/opt/wire-cdt/bin/cdt-cpp --version
-```
-
-The tarball has no `/usr/bin` split, so its `bin/` holds the bundled `clang`, `lld`, `llvm-*` and
-the rest — do **not** put it on `PATH`. Either write `/opt/wire-cdt/bin/` in front of the `cdt-*`
-commands below, or symlink just the public entry points listed above into a directory of your own.
-[BUILD.md](../BUILD.md) also covers consuming a CDT build tree directly, without installing.
-
-**If you have Antelope CDT installed, read this first.** The packages deliberately supersede a
-package named `cdt` — the deb declares `Conflicts`/`Replaces`/`Provides: cdt`, the rpm
-`Obsoletes`/`Provides: cdt` — so installing `wire-cdt` can *remove* a package-managed Antelope CDT
-rather than sit beside it. A manually installed copy is not removed and will still collide on
-`cdt-cpp`, `cdt-cc`, `cdt-ld` and `cdt-init`; `type -a cdt-cpp` shows every candidate.
+Everything below assumes the deb/rpm layout, where the `cdt-*` entry points are on `PATH` and
+`find_package(cdt)` resolves with no configuration. On the portable tarball neither is true; see
+BUILD.md for what to do instead.
 
 Verify:
 
@@ -496,27 +462,15 @@ purpose-built types:
 identical key bytes, less overhead. The full comparison and a step-by-step conversion are in the
 [KV Storage Guide](kv-storage-guide.md).
 
-Table names are also no longer confined to what `sysio::name` can hold — 13 characters of
-`a-z1-5.`. The `_i` literal hashes the identifier instead, so longer names are usable. The name a
-`[[sysio::table("…")]]` publishes is checked against `a-zA-Z0-9_.` and must be written as a single
-plain string literal — it reaches the ABI verbatim and is read from there by wire-sysio, SHiP and
-Hyperion. Length is not checked (`hash_id::max_length` is 128, a convention rather than a limit).
-[What abigen describes, and what it refuses](abi-tables.md) has the rules and their diagnostics.
+Table names are no longer confined to what `sysio::name` holds — 13 characters of `a-z1-5.`. The
+`_i` literal hashes the identifier instead, so longer names work, and the readable name then comes
+from the row's `[[sysio::table("…")]]`. The naming rules and their diagnostics are in
+[What abigen describes, and what it refuses](abi-tables.md); the `_i` literal itself is in the
+[KV Storage Guide](kv-storage-guide.md).
 
-```cpp
-#include <sysio/hash_id.hpp>
-#include <sysio/kv_table.hpp>
-
-kv::table<"user_balance_history"_i, my_key, my_val> users(get_self());
-```
-
-Annotate the value struct with `[[sysio::table("user_balance_history")]]` so the ABI carries the
-readable name.
-
-> **`_n` is not always a way out.** Its alphabet is `.12345a-z` — with the 13th position limited to
-> `.12345a-j`, being 4 bits rather than 5 — so a name containing any other character cannot be
-> expressed at all: `"user_table"_n` is a *compile* error, because `_` is not in the alphabet. For
-> such a name `_i` is the answer, at any length.
+The part that catches a port: `_n` is not a fallback for a name it cannot spell. Its alphabet has
+no `_`, so `"user_table"_n` is a *compile* error rather than a rename — `_i` is the answer, at any
+length.
 
 ---
 
