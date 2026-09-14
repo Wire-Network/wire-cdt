@@ -271,8 +271,10 @@ cmake --build . --target package-tgz   # same tarball, convenience alias
 **Install both components.** The base package carries the compiler drivers and the WASM
 libraries; `wire-cdt-dev` carries `lib/libnative*.a`, `scripts/gen_native_dispatch.py` and
 `share/cdt/native-contract-src/`, which native (host) contract testing needs. Neither pulls in
-CMake or a build tool, so on a clean machine also install those — `cmake build-essential` on
-Debian/Ubuntu, `cmake gcc-c++ make` on RPM-based systems.
+Python, CMake or a build tool, so on a clean machine also install those — `python3 cmake
+build-essential` on Debian/Ubuntu, `python3 cmake gcc-c++ make` on RPM-based systems. Python is
+not optional for native testing: `add_native_contract()` generates the contract's dispatcher by
+running `gen_native_dispatch.py` under `python3`.
 
 
 The deb and the rpm use the **distro-toolchain layout** — the same shape
