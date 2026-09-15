@@ -33,7 +33,10 @@ def main():
         help="Number of threads to use for parallel execution (defaults to half of the system max)",
     )
     parser.add_argument(
-        "-t", "--tests", default="all", help="Test/Testsuite to run (defaults to all)"
+        "-t",
+        "--tests",
+        default="all",
+        help="Suite (<suite>) or single case (<suite>/<case>_<index>) to run (defaults to all)",
     )
     parser.add_argument(
         "--format",
@@ -53,11 +56,15 @@ def main():
 
     abs_test_directory = os.path.abspath(args.test_directory)
 
-    temp_dir = tempfile.mkdtemp()
+    # One scratch root per run; each case compiles in its own subdirectory of it
+    # (see tests.Test). Kept after the run so failures can be inspected.
+    work_root = tempfile.mkdtemp(prefix="toolchain-tester-")
 
-    P.print(f"Temp files will be written to {temp_dir}", verbose=True)
+    P.print(f"Temp files will be written to {work_root}", verbose=True)
 
-    os.chdir(temp_dir)
+    # The cases never rely on the process cwd, but anything that did would land
+    # here rather than in the caller's directory.
+    os.chdir(work_root)
 
     test_directories: List[str] = []
 
@@ -67,7 +74,9 @@ def main():
         if os.path.isdir(abs_f):
             test_directories.append(abs_f)
 
-    test_suites = list(map(lambda d: TestSuite(d, args.cdt), test_directories))
+    test_suites = list(
+        map(lambda d: TestSuite(d, args.cdt, work_root), test_directories)
+    )
 
     start = timer()
     test_runner = TestRunner(test_suites, args.tests, args.jobs)

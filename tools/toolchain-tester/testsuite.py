@@ -27,11 +27,17 @@ class TestSuite:
     """
     This class represents a collection of test files. The collection is determined
     by the directory structure.
+
+    :param directory: the suite's source directory (``tests/toolchain/<suite>``)
+    :param cdt_path: the ``bin/`` directory of the CDT under test
+    :param work_root: the run's scratch root; every case of this suite compiles
+        in its own ``<work_root>/<suite>/<case>`` directory (see ``tests.Test``)
     """
 
-    def __init__(self, directory: str, cdt_path: str):
+    def __init__(self, directory: str, cdt_path: str, work_root: str):
         self.directory = directory
         self.cdt_path = cdt_path
+        self.work_root = work_root
         self.tests: List[tests.Test] = []
         self.name = self._get_name()
         self.test_type = self._get_test_type()
