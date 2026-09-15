@@ -230,10 +230,15 @@ A few unit tests are shell scripts registered directly in `tests/CMakeLists.txt`
 ```bash
 ctest --test-dir $BUILD_DIR -R toolchain_tests --output-on-failure
 
-# Run one test or one suite directly — much faster than the ctest meta-test
+# Run one suite (-t <suite>) or one case (-t <suite>/<case>_<index>) directly —
+# much faster than the ctest meta-test
 $BUILD_DIR/tools/toolchain-tester/toolchain-tester tests/toolchain \
-    --cdt $BUILD_DIR/bin --verbose -t <test_name>
+    --cdt $BUILD_DIR/bin --verbose -t abigen-pass/named_table_rename_chain_0
 ```
+
+Each case compiles in its own `<work root>/<suite>/<case>` scratch directory (printed
+under `--verbose`, and under every failure as `artifacts:`); the `.abi`, `.desc` and
+`.actions.cpp` it produced stay there for inspection.
 
 Start every toolchain test file with a comment saying what it exercises and, where relevant, which bug it pins and the issue/PR number. Regenerate an expected WASM blob with `xxd -p <file>`. See `tools/toolchain-tester/README.md`.
 

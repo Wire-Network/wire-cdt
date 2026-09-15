@@ -67,10 +67,11 @@ class TestRunner:
         self.test_suites_map = tst_suites_map
 
     def build_test_map(self):
+        """Index every case by its ``<suite>/<case>`` name, the form ``-t`` selects by."""
         test_map = {}
 
         for ts in self.test_suites:
             for t in ts.tests:
-                test_map[t.name] = t
+                test_map[t.fullname] = t
 
         self.test_map = test_map

@@ -102,7 +102,8 @@ optional arguments:
   -j JOBS, --jobs JOBS  Number of threads to use for parallel execution
                         (defaults to half of the system max)
   -t TESTS, --tests TESTS
-                        Test/Testsuite to run (defaults to all)
+                        Suite (<suite>) or single case (<suite>/<case>_<index>)
+                        to run (defaults to all)
   --format {human,xunit}
                         Format of the test output (defaults to human)
   --cdt CDT             Path to CDT (defaults to built CDT in this repo)

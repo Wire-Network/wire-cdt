@@ -33,7 +33,10 @@ def main():
         help="Number of threads to use for parallel execution (defaults to half of the system max)",
     )
     parser.add_argument(
-        "-t", "--tests", default="all", help="Test/Testsuite to run (defaults to all)"
+        "-t",
+        "--tests",
+        default="all",
+        help="Suite (<suite>) or single case (<suite>/<case>_<index>) to run (defaults to all)",
     )
     parser.add_argument(
         "--format",
