@@ -32,6 +32,7 @@
  */
 
 #include "check.hpp"
+#include "reflect.hpp"
 #include "serialize.hpp"
 
 #include <compare>
@@ -150,6 +151,12 @@ struct basic_name {
    friend constexpr bool                 operator==( basic_name a, basic_name b ) = default;
 
    SYSLIB_SERIALIZE( basic_name, (value) )
+   // Bluegrass reflection, needed by CDT's to_key: its generic dispatches on
+   // is_floating_point / is_integral / is_enum and otherwise reflects, never
+   // consulting operator<<. Without this a basic_name reaching to_key reflects
+   // as invalid_fields and silently encodes a ZERO-BYTE key. Declared here
+   // rather than per-instantiation so every traits specialisation is covered.
+   CDT_REFLECT(value);
 
 private:
    // --- symbol width: minimal bits to index the alphabet ---

@@ -859,6 +859,7 @@ struct generation_utils {
          "signature",
          "symbol",
          "symbol_code",
+         "slug_name",
          "asset",
          "extended_asset"
       };
