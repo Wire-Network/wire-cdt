@@ -42,6 +42,7 @@ def print_test_results(
             Printer.red("Failure: ", newline=False)
             Printer.print(f"{f.failing_test.fullname} failed with message: ")
             Printer.red(f"\t{f}")
+            Printer.print(f"\tartifacts: {f.failing_test.work_dir}")
         Printer.print()
 
         for s in successes:
