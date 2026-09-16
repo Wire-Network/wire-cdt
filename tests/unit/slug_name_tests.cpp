@@ -19,6 +19,7 @@
 #include <string_view>
 
 #include <sysio/sysio.hpp>
+#include <sysio/key_utils.hpp>
 #include <sysio/slug_name.hpp>
 #include <sysio/tester.hpp>
 
@@ -91,11 +92,38 @@ SYSIO_TEST_BEGIN(slug_name_groups_shared_prefixes_in_the_high_bits)
    CHECK_EQUAL(shared_high_bits("ETH"_s, "WIRE"_s) < 6, true)
 SYSIO_TEST_END
 
+SYSIO_TEST_BEGIN(slug_name_to_key_writes_eight_bytes)
+   // Guards CDT_REFLECT(value) on basic_name. to_key's generic arm dispatches
+   // floating-point / integral / enum and otherwise REFLECTS (key_utils.hpp:302-325)
+   // -- it never consults operator<<, so SYSLIB_SERIALIZE does not help it. An
+   // unreflected basic_name yields field_count 0 and writes a ZERO-BYTE key,
+   // silently. Every other case in this file exercises the TYPE (packing, literals,
+   // the 2^42 floor, prefix grouping) and would still pass with the reflection
+   // deleted; this one would not.
+   //
+   // to_key has no callers today -- key_utils.hpp is included by nothing, and both
+   // kv::table and multi_index encode through kv_utils.hpp's be_key_stream -- so the
+   // reflection is defensive. This test is what keeps it correct for the day
+   // something does reach it.
+   sysio::slug_name code{"LIQSOL"};
+   char buf[16] = {};
+   sysio::datastream<char*> ds(buf, sizeof(buf));
+   sysio::to_key(code, ds);
+   CHECK_EQUAL( ds.tellp(), 8 )
+
+   // Big-endian, so byte order matches value order -- the property prefix
+   // grouping depends on.
+   uint64_t be = 0;
+   for (int i = 0; i < 8; ++i) be = (be << 8) | static_cast<unsigned char>(buf[i]);
+   CHECK_EQUAL( be, code.value )
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    SYSIO_TEST(slug_name_byte_identity_with_the_host)
    SYSIO_TEST(slug_name_round_trips_canonical_spellings)
    SYSIO_TEST(slug_name_literals_are_compile_time)
    SYSIO_TEST(slug_name_canonical_values_are_at_or_above_the_2_42_floor)
    SYSIO_TEST(slug_name_groups_shared_prefixes_in_the_high_bits)
+   SYSIO_TEST(slug_name_to_key_writes_eight_bytes)
    return has_failed();
 }
