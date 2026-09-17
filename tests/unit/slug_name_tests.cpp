@@ -40,15 +40,35 @@ SYSIO_TEST_BEGIN(slug_name_byte_identity_with_the_host)
    CHECK_EQUAL(slug_name{"WIRE"}.value,   101792956284928ull)
    CHECK_EQUAL(slug_name{"SOLANA"}.value,  84606581215232ull)
    CHECK_EQUAL(slug_name{"LIQSOL"}.value,  53413609783296ull)
-   CHECK_EQUAL(slug_name{"12345678"}.value, 125170908010659ull)
-   CHECK_EQUAL(slug_name{"_"}.value,      162727720910848ull)
+   CHECK_EQUAL(slug_name{"Z1234567"}.value, 116305004726370ull)
+   CHECK_EQUAL(slug_name{"Z_______"}.value, 116932188985701ull)
 SYSIO_TEST_END
 
 SYSIO_TEST_BEGIN(slug_name_round_trips_canonical_spellings)
-   for (const char* s : {"A", "ETH", "WIRE", "SOLANA", "LIQSOL", "12345678", "_"}) {
+   for (const char* s : {"A", "ETH", "WIRE", "SOLANA", "LIQSOL", "Z1234567", "Z_______"}) {
       CHECK_EQUAL(slug_name{std::string_view{s}}.to_string(), std::string{s})
    }
    CHECK_EQUAL(slug_name{}.to_string(), std::string{})
+   CHECK_EQUAL(slug_name{std::string_view{""}}.value, 0ull)
+SYSIO_TEST_END
+
+SYSIO_TEST_BEGIN(slug_name_must_start_with_a_letter)
+   // The rule that makes the host's string carrier unambiguous: no legal code
+   // can be spelled like a number. Byte-identical with the host-side rule in
+   // fc::slug_name_traits::leading_alphabet — keep the two diffable.
+   CHECK_ASSERT("slug_name must start with a letter ([A-Z])",
+                []() { slug_name{std::string_view{"7"}}; })
+   CHECK_ASSERT("slug_name must start with a letter ([A-Z])",
+                []() { slug_name{std::string_view{"0"}}; })
+   CHECK_ASSERT("slug_name must start with a letter ([A-Z])",
+                []() { slug_name{std::string_view{"1E3"}}; })
+   CHECK_ASSERT("slug_name must start with a letter ([A-Z])",
+                []() { slug_name{std::string_view{"12345678"}}; })
+   CHECK_ASSERT("slug_name must start with a letter ([A-Z])",
+                []() { slug_name{std::string_view{"_"}}; })
+   // Digits and '_' stay legal after the first symbol, and "" is the sentinel.
+   CHECK_EQUAL(slug_name{std::string_view{"V1"}}.to_string(), std::string{"V1"})
+   CHECK_EQUAL(slug_name{std::string_view{"TRAIL_"}}.to_string(), std::string{"TRAIL_"})
    CHECK_EQUAL(slug_name{std::string_view{""}}.value, 0ull)
 SYSIO_TEST_END
 
@@ -112,6 +132,7 @@ SYSIO_TEST_END
 int main(int argc, char* argv[]) {
    SYSIO_TEST(slug_name_byte_identity_with_the_host)
    SYSIO_TEST(slug_name_round_trips_canonical_spellings)
+   SYSIO_TEST(slug_name_must_start_with_a_letter)
    SYSIO_TEST(slug_name_literals_are_compile_time)
    SYSIO_TEST(slug_name_canonical_values_are_at_or_above_the_2_42_floor)
    SYSIO_TEST(slug_name_groups_shared_prefixes_in_the_high_bits)

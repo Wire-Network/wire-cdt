@@ -32,6 +32,15 @@ namespace sysio {
       static constexpr char alphabet_storage[] = "\0ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
       static constexpr std::string_view alphabet{ alphabet_storage, sizeof(alphabet_storage) - 1 };
 
+      /// A code must START with a letter. This is what makes the host's string
+      /// carrier unambiguous: no legal code can be spelled like a number, so a
+      /// bare JSON string is always a code and never a decimal. Without it the
+      /// alphabet's digits make "7" both a valid code and a valid decimal, and
+      /// "1E3" / "0X10" additionally collide with JS numeric syntax. Digits and
+      /// '_' remain legal in every position after the first ("V1", "TRAIL_").
+      /// The empty string is unaffected - it is the zero sentinel.
+      static constexpr std::string_view leading_alphabet{ "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
+
       /// A symbol-0 slot TERMINATES the string, unlike name's '.' which is an ordinary interior character.
       /// This is why a slug_name is not total over uint64: every value below 2^42 has a zero in the char[0]
       /// slot and so decodes to the empty string.
@@ -45,6 +54,8 @@ namespace sysio {
       static constexpr const char* bad_char_message =
          "character is not in allowed character set for slug_names ([A-Z0-9_])";
       static constexpr const char* too_long_message = "string is too long to be a valid slug_name";
+      static constexpr const char* bad_leading_char_message =
+         "slug_name must start with a letter ([A-Z])";
       static constexpr const char* bad_final_symbol_message =
          "final character in slug_name does not fit its packed slot";
    };
