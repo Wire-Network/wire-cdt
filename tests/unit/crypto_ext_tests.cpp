@@ -106,37 +106,56 @@ SYSIO_TEST_BEGIN(bls_verify_pairing_contract_test)
    intrinsics::set_intrinsic<intrinsics::bls_g2_add>(
       []( const char*, uint32_t, const char*, uint32_t, char*, uint32_t ) -> int32_t { return 0; } );
 
-   const sysio::bls_g1 pubkey{};
-   const sysio::bls_g2 proof{};
+   // Distinctive, distinct fill so the operands can be told apart by content. Lengths
+   // alone would not pin the defect: forwarding the G1 pointer with the G2 length
+   // satisfies every length assertion while handing the host a 384-byte span over a
+   // 192-byte object.
+   sysio::bls_g1 pubkey{};
+   sysio::bls_g2 proof{};
+   pubkey.fill( '\xa5' );
+   proof.fill( '\x5c' );
+
+   constexpr uint32_t g1_size = static_cast<uint32_t>( std::tuple_size<sysio::bls_g1>::value );
+   constexpr uint32_t g2_size = static_cast<uint32_t>( std::tuple_size<sysio::bls_g2>::value );
+   constexpr uint32_t expected_g1_len = 2 * g1_size;
+   constexpr uint32_t expected_g2_len = 2 * g2_size;
 
    uint32_t g1_len = 0;
    uint32_t g2_len = 0;
    uint32_t pairs  = 0;
+   bool     g1_carries_pubkey = false;   // second G1 point is the public key
+   bool     g2_carries_proof  = false;   // first G2 point is the signature proof
 
    // --- success: the host reports GT_ONE, so both helpers must verify ---
    intrinsics::set_intrinsic<intrinsics::bls_pairing>(
-      [&]( const char*, uint32_t g1l, const char*, uint32_t g2l, uint32_t n, char* res, uint32_t res_len ) -> int32_t {
+      [&]( const char* g1, uint32_t g1l, const char* g2, uint32_t g2l, uint32_t n, char* res, uint32_t res_len ) -> int32_t {
          g1_len = g1l;
          g2_len = g2l;
          pairs  = n;
+         g1_carries_pubkey = g1 != nullptr && g1l == expected_g1_len
+                             && std::memcmp( g1 + g1_size, pubkey.data(), g1_size ) == 0;
+         g2_carries_proof  = g2 != nullptr && g2l == expected_g2_len
+                             && std::memcmp( g2, proof.data(), g2_size ) == 0;
          if ( res != nullptr && res_len >= sysio::detail::GT_ONE.size() )
             std::memcpy( res, sysio::detail::GT_ONE.data(), sysio::detail::GT_ONE.size() );
          return 0;
       } );
 
-   const uint32_t expected_g1_len = static_cast<uint32_t>( 2 * std::tuple_size<sysio::bls_g1>::value );
-   const uint32_t expected_g2_len = static_cast<uint32_t>( 2 * std::tuple_size<sysio::bls_g2>::value );
-
    CHECK_EQUAL( sysio::bls_pop_verify( pubkey, proof ), true )
    CHECK_EQUAL( pairs, 2u )
    CHECK_EQUAL( g1_len, expected_g1_len )
    CHECK_EQUAL( g2_len, expected_g2_len )
+   CHECK_EQUAL( g1_carries_pubkey, true )
+   CHECK_EQUAL( g2_carries_proof, true )
 
    g1_len = g2_len = pairs = 0;
+   g1_carries_pubkey = g2_carries_proof = false;
    CHECK_EQUAL( sysio::bls_signature_verify( pubkey, proof, "message" ), true )
    CHECK_EQUAL( pairs, 2u )
    CHECK_EQUAL( g1_len, expected_g1_len )
    CHECK_EQUAL( g2_len, expected_g2_len )
+   CHECK_EQUAL( g1_carries_pubkey, true )
+   CHECK_EQUAL( g2_carries_proof, true )
 
    // --- failure: the host rejects an operand. It deliberately writes a result that
    // WOULD compare equal, so these only pass if the return code is actually read.
