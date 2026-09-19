@@ -32,6 +32,7 @@
  */
 
 #include "check.hpp"
+#include "reflect.hpp"
 #include "serialize.hpp"
 
 #include <compare>
@@ -67,6 +68,18 @@ concept basic_name_traits =
    && Traits::max_len > 0
    && std::string_view{ Traits::alphabet }.size() > 0;
 
+/// OPTIONAL traits members: the symbols a spelling may START with, and the
+/// message to report when it does not. Traits that omit them accept any
+/// alphabet character in the leading position, which is what `sysio::name`
+/// wants. `slug_name` supplies them so that no legal code can be confused with
+/// a decimal number - see `slug_name_traits::leading_alphabet`. Byte-identical
+/// with the host-side fc::basic_name.
+template <typename Traits>
+concept basic_name_has_leading_alphabet = requires {
+   { Traits::leading_alphabet }         -> std::convertible_to<std::string_view>;
+   { Traits::bad_leading_char_message } -> std::convertible_to<const char*>;
+};
+
 template <basic_name_traits Traits>
 struct basic_name {
    uint64_t value = 0;
@@ -87,6 +100,12 @@ struct basic_name {
       // reaches check and is therefore a compile error).
       if ( str.size() > static_cast<std::size_t>(Traits::max_len) )
          sysio::check( false, Traits::too_long_message );
+      if constexpr ( basic_name_has_leading_alphabet<Traits> ) {
+         if ( !str.empty()
+              && std::string_view{ Traits::leading_alphabet }.find( str[0] )
+                    == std::string_view::npos )
+            sysio::check( false, Traits::bad_leading_char_message );
+      }
       const int n = static_cast<int>(str.size());
       for ( int i = 0; i < Traits::max_len && i < n; ++i ) {
          const uint64_t sym = symbol( str[i] );
@@ -150,6 +169,11 @@ struct basic_name {
    friend constexpr bool                 operator==( basic_name a, basic_name b ) = default;
 
    SYSLIB_SERIALIZE( basic_name, (value) )
+   // Bluegrass reflection, needed by CDT's to_key: its generic dispatches on is_floating_point /
+   // is_integral / is_enum and otherwise reflects, never consulting operator<<. Without this a basic_name
+   // reaching to_key reflects as invalid_fields and silently encodes a ZERO-BYTE key. Declared here rather
+   // than per-instantiation so every traits specialisation is covered.
+   CDT_REFLECT(value);
 
 private:
    // --- symbol width: minimal bits to index the alphabet ---
