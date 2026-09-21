@@ -5,6 +5,9 @@
 
 #include <sysio/tester.hpp>
 #include <sysio/crypto_ext.hpp>
+#include <sysio/crypto_bls_ext.hpp>
+
+#include <cstring>
 
 using namespace sysio::native;
 
@@ -82,6 +85,91 @@ SYSIO_TEST_BEGIN(bigint_test)
    CHECK_EQUAL( (sysio::bigint{chars_256}.size()), 256 );
 SYSIO_TEST_END
 
+// Exercises bls_pop_verify / bls_signature_verify end to end against stubbed host
+// intrinsics (set_intrinsic): helper -> ::bls_pairing -> the native intrinsic
+// table. Two contracts are pinned.
+//
+// The operand spans the native trampoline forwards. Both helpers pair two points,
+// so the host must see 2*96 bytes of G1 against 2*192 bytes of G2. The trampoline
+// used to pass the G1 span for both operands, which any real host rejects on size.
+//
+// The return-code contract. bls_pairing leaves res untouched when it rejects an
+// operand, so a non-zero result must short-circuit rather than fall through to
+// comparing the buffer -- which is what made the trampoline bug invisible.
+SYSIO_TEST_BEGIN(bls_verify_pairing_contract_test)
+   // g2_fromMessage hashes the input into a G2 point through these three before the
+   // pairing. Their outputs are irrelevant here; they only have to be reachable.
+   intrinsics::set_intrinsic<intrinsics::bls_fp_mod>(
+      []( const char*, uint32_t, char*, uint32_t ) -> int32_t { return 0; } );
+   intrinsics::set_intrinsic<intrinsics::bls_g2_map>(
+      []( const char*, uint32_t, char*, uint32_t ) -> int32_t { return 0; } );
+   intrinsics::set_intrinsic<intrinsics::bls_g2_add>(
+      []( const char*, uint32_t, const char*, uint32_t, char*, uint32_t ) -> int32_t { return 0; } );
+
+   // Distinctive, distinct fill so the operands can be told apart by content. Lengths
+   // alone would not pin the defect: forwarding the G1 pointer with the G2 length
+   // satisfies every length assertion while handing the host a 384-byte span over a
+   // 192-byte object.
+   sysio::bls_g1 pubkey{};
+   sysio::bls_g2 proof{};
+   pubkey.fill( '\xa5' );
+   proof.fill( '\x5c' );
+
+   constexpr uint32_t g1_size = static_cast<uint32_t>( std::tuple_size<sysio::bls_g1>::value );
+   constexpr uint32_t g2_size = static_cast<uint32_t>( std::tuple_size<sysio::bls_g2>::value );
+   constexpr uint32_t expected_g1_len = 2 * g1_size;
+   constexpr uint32_t expected_g2_len = 2 * g2_size;
+
+   uint32_t g1_len = 0;
+   uint32_t g2_len = 0;
+   uint32_t pairs  = 0;
+   bool     g1_carries_pubkey = false;   // second G1 point is the public key
+   bool     g2_carries_proof  = false;   // first G2 point is the signature proof
+
+   // --- success: the host reports GT_ONE, so both helpers must verify ---
+   intrinsics::set_intrinsic<intrinsics::bls_pairing>(
+      [&]( const char* g1, uint32_t g1l, const char* g2, uint32_t g2l, uint32_t n, char* res, uint32_t res_len ) -> int32_t {
+         g1_len = g1l;
+         g2_len = g2l;
+         pairs  = n;
+         g1_carries_pubkey = g1 != nullptr && g1l == expected_g1_len
+                             && std::memcmp( g1 + g1_size, pubkey.data(), g1_size ) == 0;
+         g2_carries_proof  = g2 != nullptr && g2l == expected_g2_len
+                             && std::memcmp( g2, proof.data(), g2_size ) == 0;
+         if ( res != nullptr && res_len >= sysio::detail::GT_ONE.size() )
+            std::memcpy( res, sysio::detail::GT_ONE.data(), sysio::detail::GT_ONE.size() );
+         return 0;
+      } );
+
+   CHECK_EQUAL( sysio::bls_pop_verify( pubkey, proof ), true )
+   CHECK_EQUAL( pairs, 2u )
+   CHECK_EQUAL( g1_len, expected_g1_len )
+   CHECK_EQUAL( g2_len, expected_g2_len )
+   CHECK_EQUAL( g1_carries_pubkey, true )
+   CHECK_EQUAL( g2_carries_proof, true )
+
+   g1_len = g2_len = pairs = 0;
+   g1_carries_pubkey = g2_carries_proof = false;
+   CHECK_EQUAL( sysio::bls_signature_verify( pubkey, proof, "message" ), true )
+   CHECK_EQUAL( pairs, 2u )
+   CHECK_EQUAL( g1_len, expected_g1_len )
+   CHECK_EQUAL( g2_len, expected_g2_len )
+   CHECK_EQUAL( g1_carries_pubkey, true )
+   CHECK_EQUAL( g2_carries_proof, true )
+
+   // --- failure: the host rejects an operand. It deliberately writes a result that
+   // WOULD compare equal, so these only pass if the return code is actually read.
+   intrinsics::set_intrinsic<intrinsics::bls_pairing>(
+      []( const char*, uint32_t, const char*, uint32_t, uint32_t, char* res, uint32_t res_len ) -> int32_t {
+         if ( res != nullptr && res_len >= sysio::detail::GT_ONE.size() )
+            std::memcpy( res, sysio::detail::GT_ONE.data(), sysio::detail::GT_ONE.size() );
+         return -1;
+      } );
+
+   CHECK_EQUAL( sysio::bls_pop_verify( pubkey, proof ), false )
+   CHECK_EQUAL( sysio::bls_signature_verify( pubkey, proof, "message" ), false )
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    bool verbose = false;
    if( argc >= 2 && std::strcmp( argv[1], "-v" ) == 0 ) {
@@ -93,6 +181,7 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(g1_point_test)
    SYSIO_TEST(g2_point_test)
    SYSIO_TEST(bigint_test)
+   SYSIO_TEST(bls_verify_pairing_contract_test)
 
    return has_failed();
 }

@@ -18,7 +18,19 @@ if TYPE_CHECKING:
 
 class Test(ABC):
     """
-    This class represents a singular test file.
+    This class represents a singular test case: one entry of a test file's JSON.
+
+    Every case compiles inside its own working directory,
+    ``<work root>/<suite>/<case>`` (``work_dir``), so the objects, ``.desc``
+    descriptors, ``.abi`` and ``.wasm`` it produces can never be read or
+    overwritten by another case running at the same time. The toolchain names
+    those artifacts after the SOURCE basename, so without this isolation two
+    cases that compile an ``other.cpp`` -- or the three cases of one JSON file,
+    which all compile the same ``.cpp`` -- race each other in a shared directory
+    and fail nondeterministically under parallel execution.
+
+    The directory is kept after the run so a failing case can be inspected; its
+    path is printed with the failure.
     """
 
     def __init__(
@@ -33,7 +45,12 @@ class Test(ABC):
 
         self.fullname: str = f"{test_suite.name}/{self.name}"
 
-        self.out_wasm: str = f"{self._name}.wasm"
+        self.work_dir: str = os.path.join(
+            test_suite.work_root, test_suite.name, self.name
+        )
+
+        self.out_abi: str = os.path.join(self.work_dir, f"{self._name}.abi")
+        self.out_wasm: str = os.path.join(self.work_dir, f"{self._name}.wasm")
 
         self.success: bool = False
 
@@ -47,7 +64,33 @@ class Test(ABC):
         args = [arg.replace("{cwd}", self.test_suite.directory) for arg in args]
 
         cdt_cpp = os.path.join(self.test_suite.cdt_path, "cdt-cpp")
+
+        os.makedirs(self.work_dir, exist_ok=True)
         self._run(cdt_cpp, args)
+
+    def _run_cdt_cpp(
+        self,
+        cdt_cpp: str,
+        leading_args: List[str],
+        args: List[str],
+        expected_pass: bool = True,
+    ) -> subprocess.CompletedProcess:
+        """
+        Invoke ``cdt-cpp`` on this case's source inside ``work_dir`` and check
+        the result.
+
+        :param cdt_cpp: path to the ``cdt-cpp`` driver
+        :param leading_args: driver flags that define the test kind, placed
+            before the source file (``-c`` for compile-only,
+            ``-abigen_output=''`` for ABI generation)
+        :param args: the case's ``compile_flags`` from its JSON
+        :param expected_pass: whether the driver is expected to succeed
+        """
+        command = [cdt_cpp, *leading_args, self.cpp_file, *args]
+        res = subprocess.run(command, capture_output=True, cwd=self.work_dir)
+        self.handle_test_result(res, expected_pass=expected_pass)
+
+        return res
 
     def handle_test_result(self, res: subprocess.CompletedProcess, expected_pass=True):
         stdout = res.stdout.decode("utf-8").strip()
@@ -109,7 +152,7 @@ class Test(ABC):
                 expected_abi = expected_abi_file.read()
                 expected_abi_file.close()
 
-            with open(f"{self._name}.abi") as f:
+            with open(self.out_abi) as f:
                 actual_abi = f.read()
 
                 expected_abi_str = json.dumps(json.loads(expected_abi), indent=2)
@@ -150,60 +193,47 @@ class Test(ABC):
         return self.fullname
 
 
-class BuildPassTest(Test):
-    def _run(self, cdt_cpp, args):
-        command = [cdt_cpp, self.cpp_file]
-        command.extend(args)
-        res = subprocess.run(command, capture_output=True)
-        self.handle_test_result(res)
+COMPILE_ONLY_FLAGS = ["-c"]
+ABIGEN_FLAGS = ["-abigen_output=''"]
 
-        return res
+
+class BuildPassTest(Test):
+    """Compiles and links; expected to succeed."""
+
+    def _run(self, cdt_cpp, args):
+        return self._run_cdt_cpp(cdt_cpp, [], args)
 
 
 class CompilePassTest(Test):
-    def _run(self, cdt_cpp, args):
-        command = [cdt_cpp, "-c", self.cpp_file]
-        command.extend(args)
-        res = subprocess.run(command, capture_output=True)
-        self.handle_test_result(res)
+    """Compiles only; expected to succeed."""
 
-        return res
+    def _run(self, cdt_cpp, args):
+        return self._run_cdt_cpp(cdt_cpp, COMPILE_ONLY_FLAGS, args)
 
 
 class AbigenPassTest(Test):
-    def _run(self, cdt_cpp, args):
-        command = [cdt_cpp, self.cpp_file, "-abigen_output=''"]
-        command.extend(args)
-        res = subprocess.run(command, capture_output=True)
-        self.handle_test_result(res)
+    """Generates the ABI; expected to succeed."""
 
-        return res
+    def _run(self, cdt_cpp, args):
+        return self._run_cdt_cpp(cdt_cpp, ABIGEN_FLAGS, args)
 
 
 class BuildFailTest(Test):
-    def _run(self, cdt_cpp, args):
-        command = [cdt_cpp, self.cpp_file]
-        command.extend(args)
-        res = subprocess.run(command, capture_output=True)
-        self.handle_test_result(res, expected_pass=False)
+    """Compiles and links; expected to fail."""
 
-        return res
+    def _run(self, cdt_cpp, args):
+        return self._run_cdt_cpp(cdt_cpp, [], args, expected_pass=False)
 
 
 class CompileFailTest(Test):
-    def _run(self, cdt_cpp, args):
-        command = [cdt_cpp, "-c", self.cpp_file]
-        command.extend(args)
-        res = subprocess.run(command, capture_output=True)
-        self.handle_test_result(res, expected_pass=False)
+    """Compiles only; expected to fail."""
 
-        return res
+    def _run(self, cdt_cpp, args):
+        return self._run_cdt_cpp(cdt_cpp, COMPILE_ONLY_FLAGS, args, expected_pass=False)
+
 
 class AbigenFailTest(Test):
-    def _run(self, cdt_cpp, args):
-        command = [cdt_cpp, self.cpp_file, "-abigen_output=''"]
-        command.extend(args)
-        res = subprocess.run(command, capture_output=True)
-        self.handle_test_result(res, expected_pass=False)
+    """Generates the ABI; expected to fail."""
 
-        return res
+    def _run(self, cdt_cpp, args):
+        return self._run_cdt_cpp(cdt_cpp, ABIGEN_FLAGS, args, expected_pass=False)
