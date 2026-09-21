@@ -49,9 +49,9 @@ SYSIO_TEST_BEGIN(name_type_test_ctr_str_lit)
 
    CHECK_EQUAL( name{".abc"}.value,          112167778219196416ULL )
    CHECK_EQUAL( name{".........abc"}.value,  102016ULL )
-   CHECK_EQUAL( name{"123."}.value,          614178399182651392ULL )
-   CHECK_EQUAL( name{"123........."}.value,  614178399182651392ULL )
-   CHECK_EQUAL( name{".a.b.c.1.2.3."}.value, 108209673814966320ULL )
+   CHECK_EQUAL( name{name::pack("123.")}.value,          614178399182651392ULL )
+   CHECK_EQUAL( name{name::pack("123.........")}.value,  614178399182651392ULL )
+   CHECK_EQUAL( name{name::pack(".a.b.c.1.2.3.")}.value, 108209673814966320ULL )
    CHECK_EQUAL( name{"abc.123"}.value, 3589369488740450304ULL )
    CHECK_EQUAL( name{"123.abc"}.value, 614181822271586304ULL )
 
@@ -167,7 +167,7 @@ SYSIO_TEST_BEGIN(name_type_test_prefix)
    CHECK_EQUAL( name{"sysioacco.unj"}.prefix(), name{"sysioacco"} )
    CHECK_EQUAL( name{"sysioaccou.nj"}.prefix(), name{"sysioaccou"} )
    CHECK_EQUAL( name{"sysioaccoun.j"}.prefix(), name{"sysioaccoun"} )
-   CHECK_EQUAL( name{"sysioaccounj."}.prefix(), name{"sysioaccounj"} )
+   CHECK_EQUAL( name{name::pack("sysioaccounj.")}.prefix(), name{"sysioaccounj"} )
    CHECK_EQUAL( name{"sysioaccountj"}.prefix(), name{"sysioaccountj"} )
 
    CHECK_EQUAL( name{"e.o.s.i.o.a.c"}.prefix(), name{"e.o.s.i.o.a"} )
@@ -192,9 +192,9 @@ SYSIO_TEST_BEGIN(name_type_test_raw)
 
    CHECK_EQUAL( name{".abc"}.operator name::raw(), static_cast<name::raw>(112167778219196416ULL) )
    CHECK_EQUAL( name{".........abc"}.operator name::raw(), static_cast<name::raw>(102016ULL) )
-   CHECK_EQUAL( name{"123."}.operator name::raw(), static_cast<name::raw>(614178399182651392ULL) )
-   CHECK_EQUAL( name{"123........."}.operator name::raw(), static_cast<name::raw>(614178399182651392ULL) )
-   CHECK_EQUAL( name{".a.b.c.1.2.3."}.operator name::raw(), static_cast<name::raw>(108209673814966320ULL) )
+   CHECK_EQUAL( name{name::pack("123.")}.operator name::raw(), static_cast<name::raw>(614178399182651392ULL) )
+   CHECK_EQUAL( name{name::pack("123.........")}.operator name::raw(), static_cast<name::raw>(614178399182651392ULL) )
+   CHECK_EQUAL( name{name::pack(".a.b.c.1.2.3.")}.operator name::raw(), static_cast<name::raw>(108209673814966320ULL) )
 
    CHECK_EQUAL( name{"abc.123"}.operator name::raw(), static_cast<name::raw>(3589369488740450304ULL) )
    CHECK_EQUAL( name{"123.abc"}.operator name::raw(), static_cast<name::raw>(614181822271586304ULL) )
@@ -255,11 +255,11 @@ SYSIO_TEST_BEGIN(name_type_test_memcmp)
    CHECK_EQUAL( memcmp(str.c_str(), buffer, strlen(str.c_str())), 0 )
    name{str = ".........abc"}.write_as_string( buffer, buffer + sizeof(buffer) );
    CHECK_EQUAL( memcmp(str.c_str(), buffer, strlen(str.c_str())), 0 )
-   name{str = "123."}.write_as_string( buffer, buffer + sizeof(buffer) );
+   name{name::pack(str = "123.")}.write_as_string( buffer, buffer + sizeof(buffer) );
    CHECK_EQUAL( memcmp("123", buffer, 3), 0 )
-   name{str = "123........."}.write_as_string( buffer, buffer + sizeof(buffer) );
+   name{name::pack(str = "123.........")}.write_as_string( buffer, buffer + sizeof(buffer) );
    CHECK_EQUAL( memcmp("123", buffer, 3), 0 )
-   name{str = ".a.b.c.1.2.3."}.write_as_string( buffer, buffer + sizeof(buffer) );
+   name{name::pack(str = ".a.b.c.1.2.3.")}.write_as_string( buffer, buffer + sizeof(buffer) );
    CHECK_EQUAL( memcmp(".a.b.c.1.2.3", buffer, 12), 0 )
 
    name{str = "abc.123"}.write_as_string( buffer, buffer + sizeof(buffer) );
@@ -298,9 +298,9 @@ SYSIO_TEST_BEGIN(name_type_test_to_str)
 
    CHECK_EQUAL( name{".abc"}.to_string(), ".abc" )
    CHECK_EQUAL( name{".........abc"}.to_string(), ".........abc" )
-   CHECK_EQUAL( name{"123."}.to_string(), "123" )
-   CHECK_EQUAL( name{"123........."}.to_string(), "123" )
-   CHECK_EQUAL( name{".a.b.c.1.2.3."}.to_string(), ".a.b.c.1.2.3" )
+   CHECK_EQUAL( name{name::pack("123.")}.to_string(), "123" )
+   CHECK_EQUAL( name{name::pack("123.........")}.to_string(), "123" )
+   CHECK_EQUAL( name{name::pack(".a.b.c.1.2.3.")}.to_string(), ".a.b.c.1.2.3" )
 
    CHECK_EQUAL( name{"abc.123"}.to_string(), "abc.123" )
    CHECK_EQUAL( name{"123.abc"}.to_string(), "123.abc" )
@@ -329,9 +329,9 @@ SYSIO_TEST_BEGIN(name_type_test_equal)
 
    CHECK_EQUAL( name{".abc"} == name{".abc"}, true )
    CHECK_EQUAL( name{".........abc"} == name{".........abc"}, true )
-   CHECK_EQUAL( name{"123."} == name{"123"}, true )
-   CHECK_EQUAL( name{"123........."} == name{"123"}, true )
-   CHECK_EQUAL( name{".a.b.c.1.2.3."} == name{".a.b.c.1.2.3"}, true )
+   CHECK_EQUAL( name{name::pack("123.")} == name{"123"}, true )
+   CHECK_EQUAL( name{name::pack("123.........")} == name{"123"}, true )
+   CHECK_EQUAL( name{name::pack(".a.b.c.1.2.3.")} == name{".a.b.c.1.2.3"}, true )
 
    CHECK_EQUAL( name{"abc.123"} == name{"abc.123"}, true )
    CHECK_EQUAL( name{"123.abc"} == name{"123.abc"}, true )
@@ -362,9 +362,9 @@ SYSIO_TEST_BEGIN(name_type_test_not_equal)
 
    CHECK_EQUAL( name{".abc"} != name{}, true )
    CHECK_EQUAL( name{".........abc"} != name{}, true )
-   CHECK_EQUAL( name{"123."} != name{}, true )
-   CHECK_EQUAL( name{"123........."} != name{}, true )
-   CHECK_EQUAL( name{".a.b.c.1.2.3."} != name{}, true )
+   CHECK_EQUAL( name{name::pack("123.")} != name{}, true )
+   CHECK_EQUAL( name{name::pack("123.........")} != name{}, true )
+   CHECK_EQUAL( name{name::pack(".a.b.c.1.2.3.")} != name{}, true )
 
    CHECK_EQUAL( name{"abc.123"} != name{}, true )
    CHECK_EQUAL( name{"123.abc"} != name{}, true )
@@ -395,9 +395,9 @@ SYSIO_TEST_BEGIN(name_type_test_less_than)
 
    CHECK_EQUAL( name{} < name{".abc"}, true )
    CHECK_EQUAL( name{} < name{".........abc"}, true )
-   CHECK_EQUAL( name{} < name{"123."}, true )
-   CHECK_EQUAL( name{} < name{"123........."}, true )
-   CHECK_EQUAL( name{} < name{".a.b.c.1.2.3."}, true )
+   CHECK_EQUAL( name{} < name{name::pack("123.")}, true )
+   CHECK_EQUAL( name{} < name{name::pack("123.........")}, true )
+   CHECK_EQUAL( name{} < name{name::pack(".a.b.c.1.2.3.")}, true )
 
    CHECK_EQUAL( name{} < name{"abc.123"}, true )
    CHECK_EQUAL( name{} < name{"123.abc"}, true )
@@ -431,9 +431,14 @@ SYSIO_TEST_BEGIN(name_type_test_op_n)
 
    CHECK_EQUAL( name{".abc"}, ".abc"_n )
    CHECK_EQUAL( name{".........abc"}, ".........abc"_n )
-   CHECK_EQUAL( name{"123."}, "123."_n )
-   CHECK_EQUAL( name{"123........."}, "123........."_n )
-   CHECK_EQUAL( name{".a.b.c.1.2.3."}, ".a.b.c.1.2.3."_n )
+   // A TRAILING pad is a legal character in an illegal position: to_string()
+   // strips it, so the spelling does not round-trip and both the literal and the
+   // runtime constructor now reject it. Interior pads stay legal (".abc" above).
+   CHECK_ASSERT( "name is not properly normalized", []() { name{"123."}; } )
+   CHECK_ASSERT( "name is not properly normalized", []() { name{"123........."}; } )
+   CHECK_ASSERT( "name is not properly normalized", []() { name{".a.b.c.1.2.3."}; } )
+   // ...but they still PACK the way they always did - the encoding is unchanged.
+   CHECK_EQUAL( name{name::pack("123.")}, "123"_n )
 
    CHECK_EQUAL( name{"abc.123"}, "abc.123"_n )
    CHECK_EQUAL( name{"123.abc"}, "123.abc"_n )

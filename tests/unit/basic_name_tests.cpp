@@ -39,6 +39,8 @@ struct test_slug_traits {
       "slug: string is longer than 8 characters";
    static constexpr const char* bad_final_symbol_message =
       "slug: final symbol does not fit its slot";
+   static constexpr const char* not_normalized_message =
+      "slug: spelling is not properly normalized";
 };
 using test_slug = basic_name<test_slug_traits>;
 
@@ -59,6 +61,8 @@ struct test_slug_lsb_traits {
       "slug-lsb: string is longer than 8 characters";
    static constexpr const char* bad_final_symbol_message =
       "slug-lsb: final symbol does not fit its slot";
+   static constexpr const char* not_normalized_message =
+      "slug-lsb: spelling is not properly normalized";
 };
 using test_slug_lsb = basic_name<test_slug_lsb_traits>;
 
@@ -70,6 +74,7 @@ struct incomplete_traits {
    static constexpr const char* bad_char_message         = "x";
    static constexpr const char* too_long_message         = "x";
    static constexpr const char* bad_final_symbol_message = "x";
+   static constexpr const char* not_normalized_message   = "x";
 };
 
 } // namespace

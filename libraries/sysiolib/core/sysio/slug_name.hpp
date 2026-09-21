@@ -58,16 +58,27 @@ namespace sysio {
          "slug_name must start with a letter ([A-Z])";
       static constexpr const char* bad_final_symbol_message =
          "final character in slug_name does not fit its packed slot";
+      static constexpr const char* not_normalized_message =
+         "slug_name is not properly normalized";
    };
 
    /// Packed registry-code identifier — up to 8 symbols over [A-Z0-9_].
    ///
-   /// Declared as an alias rather than a derived struct on purpose. abigen matches builtins on the
-   /// namespace-stripped written spelling, and `slug_name` is in that set (plugins/sysio/gen.hpp), so no
-   /// typedef and no struct_def is emitted and a field declared `sysio::slug_name` carries the bare ABI
-   /// type name. A derived struct would reflect as a base with zero declared fields the moment it stopped
-   /// being a builtin.
-   using slug_name = basic_name<slug_name_traits>;
+   /// A DERIVED STRUCT, not an alias -- the same shape as sysio::name, and for the same reason.
+   ///
+   /// abigen matches builtins on the namespace-stripped written spelling, and `slug_name` is in that
+   /// set (plugins/sysio/gen.hpp) -- but an ALIAS never reaches that match: abigen resolves it through
+   /// to the underlying template first and then emits BOTH a typedef
+   /// (`slug_name` -> `basic_name_slug_name_traits`) AND a struct_def for the instantiation. The host,
+   /// which knows `slug_name` intrinsically, then rejects the ABI outright:
+   ///   duplicate_abi_type_def_exception: type already exists 'slug_name'
+   /// `sysio::name` avoids this only because it is a derived struct, so the builtin match applies to
+   /// the written name. slug_name follows it.
+   struct slug_name : basic_name<slug_name_traits> {
+      using base = basic_name<slug_name_traits>;
+      using base::base;                  // slug_name(uint64_t), slug_name(std::string_view)
+      constexpr slug_name() = default;
+   };
 
 } // namespace sysio
 

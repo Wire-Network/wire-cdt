@@ -287,6 +287,18 @@ namespace sysio { namespace cdt {
       }
 
       void add_struct( const clang::CXXRecordDecl* decl, const std::string& rname="" ) {
+         // A type the ABI knows INTRINSICALLY is never described -- and neither is
+         // its base. `struct slug_name : basic_name<slug_name_traits>` (the same
+         // shape as `name`) would otherwise leak an orphan
+         // `basic_name_slug_name_traits` struct_def that no field references,
+         // because the base walk below runs unconditionally, before any builtin
+         // check applies to the derived type. add_type() already skips builtins, so
+         // this is only reachable where a caller force-adds a struct: the kv-key
+         // path adds a table's key struct so clients can reference it, which is
+         // right for a composite key and wrong for one that is already a builtin.
+         const std::string emitted_name = rname.empty() ? decl->getName().str() : rname;
+         if ( is_builtin_type(emitted_name) )
+            return;
          abi_struct ret;
          if ( decl->getNumBases() == 1 ) {
             ret.base = get_type(decl->bases_begin()->getType());

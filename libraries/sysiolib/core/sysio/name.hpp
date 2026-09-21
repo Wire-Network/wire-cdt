@@ -41,6 +41,9 @@ namespace sysio {
          "string is too long to be a valid name";
       static constexpr const char* bad_final_symbol_message =
          "thirteenth character in name cannot be a letter that comes after j";
+      // A legal character in an illegal position (a trailing pad) leaves a
+      // spelling that does not round-trip through to_string(). Host wording.
+      static constexpr const char* not_normalized_message = "name is not properly normalized";
    };
 
    /**

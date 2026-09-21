@@ -64,6 +64,7 @@ concept basic_name_traits =
       { Traits::bad_char_message }         -> std::convertible_to<const char*>;
       { Traits::too_long_message }         -> std::convertible_to<const char*>;
       { Traits::bad_final_symbol_message } -> std::convertible_to<const char*>;
+   { Traits::not_normalized_message }   -> std::convertible_to<const char*>;
    }
    && Traits::max_len > 0
    && std::string_view{ Traits::alphabet }.size() > 0;
@@ -87,45 +88,101 @@ struct basic_name {
    constexpr basic_name() = default;
    constexpr explicit basic_name( uint64_t v ) : value(v) {}
 
-   /// Per-character validated string constructor. sysio::check-throws on an
-   /// over-long string, an out-of-alphabet character, a final symbol too
-   /// wide for its (possibly narrowed) slot, or - for zero_terminates traits
-   /// only - the pad symbol embedded anywhere in the string (such a literal
-   /// would silently decode to just its prefix; rejecting it keeps the
-   /// literal and the canonical decoding in agreement). constexpr - so an
-   /// invalid `_n` / `_s` literal is a compile error.
+   /// Construct from a string. sysio::check-throws unless the input is the
+   /// canonical spelling of its own encoding - see validity_error(), the
+   /// SINGLE validation algorithm this type has, shared with
+   /// is_valid_literal() and byte-for-byte the same rules, in the same order,
+   /// as the host-side fc::basic_name. The two are meant to be diffable.
+   ///
+   /// constexpr - sysio::check is not, so it is reached only on the failure
+   /// path: a valid `_n` / `_s` literal constant-evaluates, and an invalid one
+   /// is a compile error rather than a silent mis-encoding.
    constexpr explicit basic_name( std::string_view str ) : value(0) {
-      // sysio::check is not constexpr - invoke it only on the failure path so
-      // a valid `_n` / `_s` literal still constant-evaluates (a bad one
-      // reaches check and is therefore a compile error).
+      if ( const char* why = validity_error(str) )
+         sysio::check( false, why );
+      value = pack(str);
+   }
+
+   /// Non-validating encode - the constexpr path used by literals. Characters
+   /// outside the alphabet pack as symbol 0.
+   static constexpr uint64_t pack( std::string_view str ) {
+      uint64_t v = 0;
+      const int n = static_cast<int>(str.size());
+      for ( int i = 0; i < Traits::max_len && i < n; ++i )
+         v |= (sym_of(str[i]) & width_mask(i)) << shift(i);
+      return v;
+   }
+
+   /// Is `str` a valid, canonical spelling? Delegates to validity_error so the
+   /// literal path and the throwing constructor can never disagree.
+   static constexpr bool is_valid_literal( std::string_view str ) {
+      return validity_error(str) == nullptr;
+   }
+
+   /// THE validation algorithm. Returns nullptr when `str` is a valid,
+   /// canonical spelling; otherwise the traits' message for the FIRST rule it
+   /// breaks. Rules 4-6 make pack() lossless, so to_string(pack(str)) IS str.
+   /// Identical to fc::basic_name::validity_error - keep the two in lock-step.
+   static constexpr const char* validity_error( std::string_view str ) {
+      // 1. length
       if ( str.size() > static_cast<std::size_t>(Traits::max_len) )
-         sysio::check( false, Traits::too_long_message );
+         return Traits::too_long_message;
+
+      // 2. leading symbol, for traits that restrict it
       if constexpr ( basic_name_has_leading_alphabet<Traits> ) {
          if ( !str.empty()
               && std::string_view{ Traits::leading_alphabet }.find( str[0] )
                     == std::string_view::npos )
-            sysio::check( false, Traits::bad_leading_char_message );
+            return Traits::bad_leading_char_message;
       }
-      const int n = static_cast<int>(str.size());
-      for ( int i = 0; i < Traits::max_len && i < n; ++i ) {
-         const uint64_t sym = symbol( str[i] );
+
+      for ( std::size_t i = 0; i < str.size(); ++i ) {
+         const std::size_t sym = Traits::alphabet.find( str[i] );
+
+         // 3. in the alphabet
+         if ( sym == std::string_view::npos )
+            return Traits::bad_char_message;
+
+         // 4. a zero-terminated alphabet has no INTERIOR pad: to_string() stops
+         //    at the first symbol-0 slot, so such a spelling cannot round-trip.
          if constexpr ( Traits::zero_terminates ) {
-            // sym == 0 is the pad/terminator slot. For zero_terminates traits,
-            // an interior pad would make to_string() truncate (e.g. "A\0B"
-            // decodes to "A"), so the input would not round-trip. Reject.
             if ( sym == 0 )
-               sysio::check( false, Traits::bad_char_message );
+               return Traits::bad_char_message;
          }
-         if ( sym > width_mask(i) )
-            sysio::check( false, Traits::bad_final_symbol_message );
-         value |= sym << shift(i);
+
+         // 5. the final slot may be narrower than `bits` (13 x 5 > 64 for name,
+         //    leaving 4 bits), and pack() would silently truncate a symbol too
+         //    wide for it.
+         if ( static_cast<uint64_t>(sym) > width_mask( static_cast<int>(i) ) )
+            return Traits::bad_final_symbol_message;
       }
+
+      // 6. a non-zero-terminated alphabet strips TRAILING pads in to_string(),
+      //    so a trailing pad cannot round-trip either.
+      if constexpr ( !Traits::zero_terminates ) {
+         if ( !str.empty() && str.back() == Traits::alphabet[0] )
+            return Traits::not_normalized_message;
+      }
+
+      return nullptr;
    }
 
    constexpr uint64_t to_uint64_t() const { return value; }
    constexpr bool     empty()      const { return value == 0; }
    constexpr bool     good()       const { return value != 0; }
    constexpr explicit operator bool() const { return value != 0; }
+
+   /// Does this value have a canonical spelling? A basic_name built from a RAW
+   /// uint64 bypasses the validating constructor, so it can hold a value no
+   /// spelling produces — for zero_terminates traits, anything whose leading
+   /// symbol slot is empty. Such a value cannot round-trip: to_string() yields a
+   /// text that packs to something else. Persisting one makes every later render
+   /// of that row throw, so writers that accept a raw uint64 off the wire gate on
+   /// this before storing it.
+   bool is_canonical() const {
+      const std::string text = to_string();
+      return is_valid_literal(text) && pack(text) == value;
+   }
 
    std::string to_string() const {
       std::string s;
@@ -135,10 +192,10 @@ struct basic_name {
          // slot; for name, symbol 0 ('.') is an ordinary interior character.
          if ( Traits::zero_terminates && sym == 0 )
             break;
-         s.push_back( character( sym ) );
+         s.push_back( char_of( sym ) );
       }
       if ( !Traits::zero_terminates ) {
-         const char pad = character(0);
+         const char pad = char_of(0);
          while ( !s.empty() && s.back() == pad )
             s.pop_back();
       }
@@ -187,6 +244,25 @@ private:
                                    ? Traits::max_len * bits : 64;
    static_assert( (Traits::max_len - 1) * bits < 64,
                   "basic_name: symbol layout does not fit in 64 bits" );
+
+   /// symbol -> character; out-of-range symbols decode as the pad (alphabet[0]).
+   /// The private counterpart to sym_of, matching the host-side fc::basic_name.
+   /// symbol()/character() below stay as this type's PUBLIC surface, which
+   /// sysio::name re-exposes as char_to_value.
+   static constexpr char char_of( uint64_t s ) {
+      const std::string_view a = Traits::alphabet;
+      return s < a.size() ? a[s] : a[0];
+   }
+
+   /// character -> symbol, NON-throwing: any character outside the alphabet
+   /// maps to 0. Used by pack(), which is non-validating by contract; callers
+   /// that need rejection go through validity_error(). Mirrors fc's sym_of.
+   static constexpr uint64_t sym_of( char c ) {
+      const std::string_view a = Traits::alphabet;
+      for ( std::size_t s = 0; s < a.size(); ++s )
+         if ( a[s] == c ) return static_cast<uint64_t>(s);
+      return 0;
+   }
 
    // --- Bit layout. Direction is set by Traits::packing. The final symbol
    //     absorbs any shortfall when max_len * bits > 64. ---
