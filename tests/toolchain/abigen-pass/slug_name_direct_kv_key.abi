@@ -1,0 +1,51 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "code_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "amount",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "reg",
+            "base": "",
+            "fields": [
+                {
+                    "name": "code",
+                    "type": "slug_name"
+                },
+                {
+                    "name": "amount",
+                    "type": "uint64"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "reg",
+            "type": "reg",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "codes",
+            "type": "code_row",
+            "index_type": "i64",
+            "key_names": ["slug_name"],
+            "key_types": ["slug_name"],
+            "table_id": 15464
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

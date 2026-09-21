@@ -78,6 +78,17 @@ namespace sysio {
       using base = basic_name<slug_name_traits>;
       using base::base;                  // slug_name(uint64_t), slug_name(std::string_view)
       constexpr slug_name() = default;
+
+      /// slug_name's own serialization, for the same reason sysio::name carries one: a DERIVED type
+      /// needs an EXACT-match operator on itself. The base's hidden friend takes `const basic_name&`,
+      /// so reaching it from a `slug_name` requires a derived-to-base conversion -- and the generic
+      /// class-template overload, which matches exactly, wins instead. That overload hands the type to
+      /// the bluegrass::meta field iterator, which rejects anything with a user-declared constructor:
+      ///   "Types with user specified constructors are not supported"
+      /// Clang happens to tolerate it; GCC 13 does not, which matters because add_native_contract()
+      /// builds with the HOST compiler and its generated dispatcher deserializes action arguments
+      /// through this path. Forwarding to the base keeps the bytes identical to basic_name's.
+      SYSLIB_SERIALIZE_DERIVED_EMPTY( slug_name, base )
    };
 
 } // namespace sysio

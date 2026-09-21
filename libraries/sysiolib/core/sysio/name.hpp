@@ -216,8 +216,10 @@ namespace sysio {
       CDT_REFLECT(value);
       // name's own serialization: an exact-match operator<<(ds, const name&)
       // must exist, else the generic bluegrass::meta field-iterator is chosen
-      // and rejects name as a non-aggregate. (basic_name has its own, used by
-      // slug_name, which is the alias type itself rather than a derived type.)
+      // and rejects name as a non-aggregate. The base's hidden friend does not
+      // serve a derived type -- reaching it needs a conversion, which loses to
+      // the exact-matching generic overload. Every derived basic_name needs its
+      // own; slug_name carries SYSLIB_SERIALIZE_DERIVED_EMPTY for this reason.
       SYSLIB_SERIALIZE( name, (value) )
    };
 

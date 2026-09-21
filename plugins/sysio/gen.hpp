@@ -827,6 +827,13 @@ struct generation_utils {
    }
 
    // --- Builtin / reserved checks ---
+
+   /// Namespace every builtin that is a real CDT type (`name`, `slug_name`, `asset`, ...) is
+   /// declared in. A record whose qualified name is this prefix + a builtin spelling IS that
+   /// builtin; one that merely shares the unqualified spelling is a contract author's own type
+   /// colliding with it, which abigen must diagnose rather than silently drop.
+   static constexpr auto builtin_namespace_prefix = "sysio::";
+
    inline bool is_builtin_type( const std::string& t ) {
       static const std::set<std::string> builtins =
       {

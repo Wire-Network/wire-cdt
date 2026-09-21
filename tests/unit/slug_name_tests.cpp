@@ -14,6 +14,7 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <sysio/sysio.hpp>
 #include <sysio/key_utils.hpp>
@@ -129,6 +130,32 @@ SYSIO_TEST_BEGIN(slug_name_to_key_writes_eight_bytes)
    CHECK_EQUAL( be, code.value )
 SYSIO_TEST_END
 
+SYSIO_TEST_BEGIN(slug_name_datastream_round_trip)
+   // A DERIVED basic_name needs its OWN exact-match operator<</>>. The base's hidden friend takes
+   // `const basic_name&`, so reaching it from a slug_name requires a derived-to-base conversion --
+   // and the generic class-template overload, matching exactly, wins instead. That overload hands
+   // the type to the bluegrass::meta field iterator, which refuses anything with a user-declared
+   // constructor ("Types with user specified constructors are not supported"). Clang tolerates it;
+   // GCC 13 does not, and add_native_contract() builds with the HOST compiler -- so a GCC-native
+   // contract taking a slug_name action parameter would not compile. SYSLIB_SERIALIZE_DERIVED_EMPTY
+   // supplies the exact match; this test is what keeps it present.
+   //
+   // The bytes must also stay identical to the base's, since the host decodes them as one uint64.
+   const sysio::slug_name code{"LIQSOL"};
+   const std::vector<char> packed = sysio::pack(code);
+   CHECK_EQUAL( packed.size(), 8 )
+   CHECK_EQUAL( packed, sysio::pack(code.value) )
+
+   const auto decoded = sysio::unpack<sysio::slug_name>(packed.data(), packed.size());
+   CHECK_EQUAL( decoded.value, code.value )
+   CHECK_EQUAL( decoded.to_string(), std::string{"LIQSOL"} )
+
+   // The zero sentinel round-trips too -- it is a legal, renderable value ("").
+   const sysio::slug_name zero{};
+   const std::vector<char> zero_packed = sysio::pack(zero);
+   CHECK_EQUAL( sysio::unpack<sysio::slug_name>(zero_packed.data(), zero_packed.size()).value, 0ull )
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    SYSIO_TEST(slug_name_byte_identity_with_the_host)
    SYSIO_TEST(slug_name_round_trips_canonical_spellings)
@@ -137,5 +164,6 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(slug_name_canonical_values_are_at_or_above_the_2_42_floor)
    SYSIO_TEST(slug_name_groups_shared_prefixes_in_the_high_bits)
    SYSIO_TEST(slug_name_to_key_writes_eight_bytes)
+   SYSIO_TEST(slug_name_datastream_round_trip)
    return has_failed();
 }
