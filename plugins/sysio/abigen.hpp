@@ -912,6 +912,43 @@ namespace sysio { namespace cdt {
          return ret;
       }
 
+      /// Refuse a contract-declared record or enum whose ABI spelling collides with a builtin.
+      ///
+      /// This has to run BEFORE the builtin short-circuit below, which is what makes the
+      /// collision invisible: `add_type` returns for any type whose translated spelling is
+      /// builtin, so such a declaration is never described and never reaches `add_struct`'s own
+      /// guard. The ABI then names the field with the builtin's spelling while the generated
+      /// dispatcher still reads the declaration's real layout -- the host consumes 8 bytes for
+      /// `slug_name` where the contract wrote 12, with nothing failing at build or deploy time.
+      ///
+      /// Only a record or enum can collide this way: a primitive has no declaration to check,
+      /// and an alias goes through `is_aliasing`. `sysio::` is where CDT declares the builtins
+      /// that are real types, and `std::` is where `string` comes from; a colliding spelling
+      /// outside both is the author's own.
+      void check_no_builtin_collision( const clang::QualType& type ) {
+         const std::string spelling = translate_type(type);
+         if (!is_builtin_type(spelling))
+            return;
+
+         const clang::NamedDecl* decl = type.getTypePtr()->getAsCXXRecordDecl();
+         if (!decl && type.getTypePtr()->isEnumeralType()) {
+            if (const auto* et = llvm::dyn_cast<clang::EnumType>(type.getCanonicalType().getTypePtr()))
+               decl = et->getDecl();
+         }
+         if (!decl)
+            return;   // a primitive: no declaration can collide
+
+         const std::string qualified = decl->getQualifiedNameAsString();
+         if (qualified.rfind(builtin_namespace_prefix, 0) == 0 ||
+             qualified.rfind(std_namespace_prefix, 0) == 0)
+            return;
+
+         CDT_CHECK_ERROR(false, "abigen_error", decl->getLocation(),
+            "'" + qualified + "' collides with the built-in ABI type '" + spelling + "'; the ABI "
+            "cannot describe it, and the host would resolve the builtin's layout in its place -- "
+            "rename this type");
+      }
+
       void add_type( const clang::QualType& t ) {
          if (evaluated.count(t.getTypePtr()))
             return;
@@ -921,6 +958,7 @@ namespace sysio { namespace cdt {
             add_explicit_nested_type(t.getNonReferenceType());
             return;
          }
+         check_no_builtin_collision(type);
          if (!is_builtin_type(translate_type(type))) {
             // Handle C++ enums (both scoped `enum class` and unscoped `enum`)
             // by creating an enum_def with member names and values.
