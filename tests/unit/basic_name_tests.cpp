@@ -77,6 +77,32 @@ struct incomplete_traits {
    static constexpr const char* not_normalized_message   = "x";
 };
 
+// An alphabet member that is only CONVERTIBLE to std::string_view: it has no
+// find(), no size(), no operator[] of its own. basic_name_traits asks for
+// exactly this much, so basic_name must bind a view before using it -- a direct
+// member call on the traits' alphabet would not compile against this policy.
+struct convertible_alphabet {
+   static constexpr char storage[] = ".12345abcdefghijklmnopqrstuvwxyz";
+   constexpr operator std::string_view() const {
+      return { storage, sizeof(storage) - 1 };
+   }
+};
+
+// Name-style (zero_terminates = false) so ONE instantiation reaches all three
+// sites: the alphabet scan in validity_error, rule 6's trailing-pad test (which
+// indexes alphabet[0]), and the symbol-width derivation (which takes size()).
+struct convertible_alphabet_traits {
+   static constexpr int                   max_len         = 13;
+   static constexpr convertible_alphabet  alphabet{};
+   static constexpr bool                  zero_terminates = false;
+   static constexpr basic_name_endianness packing = basic_name_endianness::MSB;
+   static constexpr const char* bad_char_message         = "conv: character is not in the alphabet";
+   static constexpr const char* too_long_message         = "conv: string is too long";
+   static constexpr const char* bad_final_symbol_message = "conv: final symbol does not fit its slot";
+   static constexpr const char* not_normalized_message   = "conv: spelling is not properly normalized";
+};
+using test_conv = basic_name<convertible_alphabet_traits>;
+
 } // namespace
 
 // basic_name_traits concept: real policies satisfy it, an incomplete one does not.
@@ -86,6 +112,22 @@ SYSIO_TEST_BEGIN(basic_name_test_concept)
    static_assert( !basic_name_traits<incomplete_traits> );
    CHECK_EQUAL( basic_name_traits<test_slug_traits>,  true )
    CHECK_EQUAL( basic_name_traits<incomplete_traits>, false )
+SYSIO_TEST_END
+
+// A policy whose alphabet is only CONVERTIBLE to string_view is usable. The
+// concept promises no more than that, so the implementation must not demand
+// more; this whole test is a compile-time assertion as much as a runtime one.
+SYSIO_TEST_BEGIN(basic_name_test_convertible_alphabet)
+   static_assert( basic_name_traits<convertible_alphabet_traits> );
+   // Round trip: the alphabet scan and the symbol-width derivation both ran.
+   CHECK_EQUAL( test_conv{"sysio"}.to_string(), "sysio" )
+   CHECK_EQUAL( test_conv{"a.b"}.to_string(),   "a.b" )
+   // Rule 6 (!zero_terminates): a trailing pad is not normalized. This is the
+   // check that indexes alphabet[0].
+   CHECK_ASSERT( "conv: spelling is not properly normalized",
+                 ([]() { test_conv{"a."}; }) )
+   CHECK_ASSERT( "conv: character is not in the alphabet",
+                 ([]() { test_conv{"A"}; }) )
 SYSIO_TEST_END
 
 // A slug round-trips: string -> packed uint64 -> string.
@@ -243,6 +285,7 @@ int main(int argc, char* argv[]) {
    silence_output(!verbose);
 
    SYSIO_TEST(basic_name_test_concept)
+   SYSIO_TEST(basic_name_test_convertible_alphabet)
    SYSIO_TEST(basic_name_test_slug_roundtrip)
    SYSIO_TEST(basic_name_test_slug_zero_terminates)
    SYSIO_TEST(basic_name_test_slug_compare)

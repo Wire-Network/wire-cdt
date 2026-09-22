@@ -137,7 +137,7 @@ struct basic_name {
       }
 
       for ( std::size_t i = 0; i < str.size(); ++i ) {
-         const std::size_t sym = Traits::alphabet.find( str[i] );
+         const std::size_t sym = alphabet.find( str[i] );
 
          // 3. in the alphabet
          if ( sym == std::string_view::npos )
@@ -160,7 +160,7 @@ struct basic_name {
       // 6. a non-zero-terminated alphabet strips TRAILING pads in to_string(),
       //    so a trailing pad cannot round-trip either.
       if constexpr ( !Traits::zero_terminates ) {
-         if ( !str.empty() && str.back() == Traits::alphabet[0] )
+         if ( !str.empty() && str.back() == alphabet[0] )
             return Traits::not_normalized_message;
       }
 
@@ -205,16 +205,14 @@ struct basic_name {
    /// character -> symbol; sysio::check-throws on a character outside the
    /// alphabet. (sysio::name re-exposes this as char_to_value.)
    static constexpr uint64_t symbol( char c ) {
-      const std::string_view a = Traits::alphabet;
-      for ( std::size_t s = 0; s < a.size(); ++s )
-         if ( a[s] == c ) return static_cast<uint64_t>(s);
+      for ( std::size_t s = 0; s < alphabet.size(); ++s )
+         if ( alphabet[s] == c ) return static_cast<uint64_t>(s);
       sysio::check( false, Traits::bad_char_message );
       return 0; // unreachable
    }
    /// symbol -> character; out-of-range symbols decode as the pad (alphabet[0]).
    static constexpr char character( uint64_t s ) {
-      const std::string_view a = Traits::alphabet;
-      return s < a.size() ? a[s] : a[0];
+      return s < alphabet.size() ? alphabet[s] : alphabet[0];
    }
 
    // Total order on the packed value. With MSB packing this matches the
@@ -233,13 +231,19 @@ struct basic_name {
    CDT_REFLECT(value);
 
 private:
+   /// `Traits::alphabet` as a view. The traits concept requires only that the
+   /// member be CONVERTIBLE to string_view, so every use binds here rather than
+   /// calling find/size/operator[] on the traits member and silently demanding
+   /// more of a policy than the concept declares. Mirrors fc::basic_name.
+   static constexpr std::string_view alphabet = Traits::alphabet;
+
    // --- symbol width: minimal bits to index the alphabet ---
    static constexpr int symbol_bits( std::size_t alphabet_size ) {
       int b = 0;
       while ( (std::size_t{1} << b) < alphabet_size ) ++b;
       return b;
    }
-   static constexpr int bits       = symbol_bits( Traits::alphabet.size() );
+   static constexpr int bits       = symbol_bits( alphabet.size() );
    static constexpr int total_bits = Traits::max_len * bits < 64
                                    ? Traits::max_len * bits : 64;
    static_assert( (Traits::max_len - 1) * bits < 64,
@@ -250,17 +254,15 @@ private:
    /// symbol()/character() below stay as this type's PUBLIC surface, which
    /// sysio::name re-exposes as char_to_value.
    static constexpr char char_of( uint64_t s ) {
-      const std::string_view a = Traits::alphabet;
-      return s < a.size() ? a[s] : a[0];
+      return s < alphabet.size() ? alphabet[s] : alphabet[0];
    }
 
    /// character -> symbol, NON-throwing: any character outside the alphabet
    /// maps to 0. Used by pack(), which is non-validating by contract; callers
    /// that need rejection go through validity_error(). Mirrors fc's sym_of.
    static constexpr uint64_t sym_of( char c ) {
-      const std::string_view a = Traits::alphabet;
-      for ( std::size_t s = 0; s < a.size(); ++s )
-         if ( a[s] == c ) return static_cast<uint64_t>(s);
+      for ( std::size_t s = 0; s < alphabet.size(); ++s )
+         if ( alphabet[s] == c ) return static_cast<uint64_t>(s);
       return 0;
    }
 
