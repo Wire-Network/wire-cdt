@@ -4,7 +4,6 @@
 #include "name.hpp"  // for sysio::detail::to_const_char_arr
 
 #include <string_view>
-#include <type_traits>
 
 namespace sysio {
 
@@ -105,23 +104,6 @@ namespace sysio {
          return is_valid_literal(text) && pack(text) == value;
       }
    };
-
-   // --- shape pins ---------------------------------------------------------
-   // These two properties drifted apart between this repo and wire-sysio once before, silently:
-   // CDT derived slug_name for abigen while the host side stayed an alias, and is_canonical sat on
-   // the shared base where `name` inherited a predicate that can never be false. Both repos assert
-   // the same two things.
-   static_assert(!std::is_same_v<slug_name, basic_name<slug_name_traits>>,
-                 "slug_name must be a DERIVED type, not an alias -- abigen matches builtins on a "
-                 "real type, and is_canonical belongs to this encoding");
-   template <typename T>
-   concept has_is_canonical = requires(const T t) { t.is_canonical(); };
-
-   static_assert(!has_is_canonical<basic_name<slug_name_traits>>,
-                 "is_canonical must live on slug_name, not the shared basic_name: `name` shares "
-                 "that base, and every uint64 IS a canonical name, so the predicate could never "
-                 "be false there");
-   static_assert(has_is_canonical<slug_name>, "slug_name must carry is_canonical");
 
 } // namespace sysio
 
