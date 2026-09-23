@@ -4,6 +4,7 @@
 #include "name.hpp"  // for sysio::detail::to_const_char_arr
 
 #include <string_view>
+#include <type_traits>
 
 namespace sysio {
 
@@ -89,7 +90,38 @@ namespace sysio {
       /// builds with the HOST compiler and its generated dispatcher deserializes action arguments
       /// through this path. Forwarding to the base keeps the bytes identical to basic_name's.
       SYSLIB_SERIALIZE_DERIVED_EMPTY( slug_name, base )
+
+      /// Does this value have a canonical spelling? A slug_name built from a RAW uint64 bypasses the
+      /// validating constructor -- and nothing validates on deserialization either, since the
+      /// reflected member is written directly -- so it can hold a value no spelling produces:
+      /// anything whose leading symbol slot is empty, or that uses one of the 26 unused symbol
+      /// values, or that sets any of bits 48-63. Such a value cannot round-trip.
+      ///
+      /// This lives on slug_name and NOT on basic_name because it is meaningless for `name`: that
+      /// alphabet is exactly 2^5 with no gaps and its 13 symbols consume all 64 bits, so every
+      /// uint64 IS a canonical name and the predicate could never be false.
+      bool is_canonical() const {
+         const std::string text = to_string();
+         return is_valid_literal(text) && pack(text) == value;
+      }
    };
+
+   // --- shape pins ---------------------------------------------------------
+   // These two properties drifted apart between this repo and wire-sysio once before, silently:
+   // CDT derived slug_name for abigen while the host side stayed an alias, and is_canonical sat on
+   // the shared base where `name` inherited a predicate that can never be false. Both repos assert
+   // the same two things.
+   static_assert(!std::is_same_v<slug_name, basic_name<slug_name_traits>>,
+                 "slug_name must be a DERIVED type, not an alias -- abigen matches builtins on a "
+                 "real type, and is_canonical belongs to this encoding");
+   template <typename T>
+   concept has_is_canonical = requires(const T t) { t.is_canonical(); };
+
+   static_assert(!has_is_canonical<basic_name<slug_name_traits>>,
+                 "is_canonical must live on slug_name, not the shared basic_name: `name` shares "
+                 "that base, and every uint64 IS a canonical name, so the predicate could never "
+                 "be false there");
+   static_assert(has_is_canonical<slug_name>, "slug_name must carry is_canonical");
 
 } // namespace sysio
 
