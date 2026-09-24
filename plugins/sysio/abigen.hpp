@@ -344,6 +344,14 @@ namespace sysio { namespace cdt {
          }
          abi_struct new_struct;
          new_struct.name = decl->getNameAsString();
+         // The wrapper is named after the METHOD, so an action method named after a builtin
+         // produces a struct the ABI cannot carry: `validate_struct` drops it, leaving an action
+         // whose `type` names the builtin. The host then resolves the builtin's shape -- one
+         // 8-byte slug for `slug_name` -- while the generated dispatcher still deserializes the
+         // real parameter list, so the action is silently unusable. Refuse at compile time.
+         CDT_CHECK_ERROR(!is_builtin_type(new_struct.name), "abigen_error", decl->getLocation(),
+            "action method '" + new_struct.name + "' collides with the built-in ABI type of the "
+            "same name; rename the method (the [[sysio::action(\"...\")]] name may stay)");
          for (auto param : decl->parameters() ) {
             auto param_type = param->getType().getNonReferenceType().getUnqualifiedType();
             new_struct.fields.push_back({param->getNameAsString(), get_type(param_type)});
