@@ -287,6 +287,18 @@ namespace sysio { namespace cdt {
       }
 
       void add_struct( const clang::CXXRecordDecl* decl, const std::string& rname="" ) {
+         // A type the ABI knows INTRINSICALLY is never described -- and neither is
+         // its base. `struct slug_name : basic_name<slug_name_traits>` (the same
+         // shape as `name`) would otherwise leak an orphan
+         // `basic_name_slug_name_traits` struct_def that no field references,
+         // because the base walk below runs unconditionally, before any builtin
+         // check applies to the derived type. add_type() already skips builtins, so
+         // this is only reachable where a caller force-adds a struct: the kv-key
+         // path adds a table's key struct so clients can reference it, which is
+         // right for a composite key and wrong for one that is already a builtin.
+         const std::string emitted_name = rname.empty() ? decl->getName().str() : rname;
+         if ( is_builtin_type(emitted_name) )
+            return;
          abi_struct ret;
          if ( decl->getNumBases() == 1 ) {
             ret.base = get_type(decl->bases_begin()->getType());
@@ -332,6 +344,14 @@ namespace sysio { namespace cdt {
          }
          abi_struct new_struct;
          new_struct.name = decl->getNameAsString();
+         // The wrapper is named after the METHOD, so an action method named after a builtin
+         // produces a struct the ABI cannot carry: `validate_struct` drops it, leaving an action
+         // whose `type` names the builtin. The host then resolves the builtin's shape -- one
+         // 8-byte slug for `slug_name` -- while the generated dispatcher still deserializes the
+         // real parameter list, so the action is silently unusable. Refuse at compile time.
+         CDT_CHECK_ERROR(!is_builtin_type(new_struct.name), "abigen_error", decl->getLocation(),
+            "action method '" + new_struct.name + "' collides with the built-in ABI type of the "
+            "same name; rename the method (the [[sysio::action(\"...\")]] name may stay)");
          for (auto param : decl->parameters() ) {
             auto param_type = param->getType().getNonReferenceType().getUnqualifiedType();
             new_struct.fields.push_back({param->getNameAsString(), get_type(param_type)});
@@ -534,9 +554,21 @@ namespace sysio { namespace cdt {
             t.key_names.push_back("scope");
             t.key_types.push_back("name");
          }
-         for (auto* field : key_source->fields()) {
-            t.key_names.push_back(field->getName().str());
-            t.key_types.push_back(translate_type(field->getType()));
+         if (key_source->field_empty() && is_builtin_type(key_source->getNameAsString())) {
+            // A key that IS a builtin -- `kv::table<"codes"_n, sysio::slug_name, row>` -- is a
+            // single packed scalar, not a composite, so there are no fields to walk and the loop
+            // below would leave key_names/key_types EMPTY. A host cannot decode a next_key or
+            // encode a bound from an empty shape, and nothing downstream can recover what the
+            // key was. Publish the one leaf it actually is, in the same single-leaf shape
+            // kv::global already emits (name/name).
+            const std::string leaf = key_source->getNameAsString();
+            t.key_names.push_back(leaf);
+            t.key_types.push_back(leaf);
+         } else {
+            for (auto* field : key_source->fields()) {
+               t.key_names.push_back(field->getName().str());
+               t.key_types.push_back(translate_type(field->getType()));
+            }
          }
          t.secondary_indexes = std::move(sec_indexes);
          kv_key_structs.insert(key_decl->getNameAsString());

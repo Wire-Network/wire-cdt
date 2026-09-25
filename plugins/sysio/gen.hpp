@@ -827,6 +827,7 @@ struct generation_utils {
    }
 
    // --- Builtin / reserved checks ---
+
    inline bool is_builtin_type( const std::string& t ) {
       static const std::set<std::string> builtins =
       {
@@ -859,6 +860,7 @@ struct generation_utils {
          "signature",
          "symbol",
          "symbol_code",
+         "slug_name",
          "asset",
          "extended_asset"
       };
