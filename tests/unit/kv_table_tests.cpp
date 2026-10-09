@@ -2,20 +2,18 @@
  *  @file
  *  @copyright defined in sysio.cdt/LICENSE.txt
  *
- *  Native-compile regression test for be_key_reader in kv_table.hpp.
+ *  Native unit tests for be_key_reader in kv_table.hpp.
  *
- *  Background: add_native_contract() defines uint128_t and int128_t as
- *  preprocessor macros that expand to two-token type names
- *  (unsigned __int128 / __int128). Functional-cast syntax like uint128_t(x)
- *  then becomes "unsigned __int128(x)", which is a parse error because
- *  functional-cast requires a single type-id token. be_key_reader had two
- *  such casts on lines 186/191; native-compiled consumers (sysio.system,
- *  sysio.bios, etc.) failed to build with "type-id cannot have a name".
- *  Fixed by switching to static_cast<uint128_t>(x).
+ *  Background: add_native_contract() formerly defined uint128_t and int128_t
+ *  as preprocessor macros expanding to unsigned __int128 and __int128.
+ *  Functional casts such as uint128_t(x) became "unsigned __int128(x)",
+ *  which is invalid C++. be_key_reader used two such casts, so native module
+ *  consumers (sysio.system, sysio.bios, etc.) failed to build. Those casts
+ *  were changed to static_cast<uint128_t>(x); native modules now use typedefs.
  *
- *  This test builds natively with the same macro definitions a native
- *  contract gets, so any future regression in that header will fail to
- *  compile here first.
+ *  These tests use add_native_executable (cdt-cpp -fnative), which provides
+ *  the sysroot typedefs, and check key decoding behavior. Coverage of
+ *  add_native_contract's host compiler flags lives in tests/native_contract_types.
  */
 
 #include <sysio/tester.hpp>

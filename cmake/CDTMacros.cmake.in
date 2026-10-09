@@ -265,15 +265,16 @@ function(add_native_contract)
   target_compile_definitions(${ARG_TARGET} PRIVATE
     __sysio_cdt_native__
     SYSIO_NATIVE
-    "uint128_t=unsigned __int128"
-    "int128_t=__int128"
   )
 
   # Suppress unknown-attribute warnings from __attribute__((sysio_wasm_import))
   # Force-include standard headers since CDT headers expect standard integer types
+  # Match the WASM sysroot's 128-bit typedefs without macros that break brace
+  # initialization and qualified type names in otherwise valid contract code.
   target_compile_options(${ARG_TARGET} PRIVATE
     -Wno-unknown-attributes
     -fPIC
+    "SHELL:-include \"${CDT_ROOT}/include/sysiolib/core/sysio/native_types.hpp\""
     "SHELL:-include cstdint"
     "SHELL:-include cstdlib"
     "SHELL:-include cstring"
