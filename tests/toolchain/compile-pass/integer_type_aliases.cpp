@@ -9,8 +9,12 @@
 #error "Extended integer names must be types, not preprocessor macros"
 #endif
 
-static_assert(std::is_same_v<uint128_t, unsigned __int128>);
-static_assert(std::is_same_v<int128_t, __int128>);
+/// Suppress extension diagnostics only for the reference types; the native
+/// build must still reject unsuppressed extensions in the force-included header.
+__extension__ typedef unsigned __int128 expected_uint128_t;
+__extension__ typedef __int128 expected_int128_t;
+static_assert(std::is_same_v<uint128_t, expected_uint128_t>);
+static_assert(std::is_same_v<int128_t, expected_int128_t>);
 static_assert(sizeof(uint128_t) == 16 && sizeof(int128_t) == 16);
 
 constexpr uint128_t max_debt = ~uint128_t{0};

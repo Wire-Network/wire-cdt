@@ -31,20 +31,27 @@ add_unit_test( kv_secondary_key_tests )
 add_test( NAME toolchain_tests COMMAND ${CMAKE_BINARY_DIR}/tools/toolchain-tester/toolchain-tester ${CMAKE_SOURCE_DIR}/tests/toolchain --cdt ${CMAKE_BINARY_DIR}/bin --verbose )
 set_property(TEST toolchain_tests PROPERTY LABELS toolchain_tests)
 
-# Exercise add_native_contract with the host compiler, independent of WASM tests.
-if(ENABLE_NATIVE_COMPILER)
-   add_test(NAME native_contract_types_tests
-      COMMAND ${CMAKE_CTEST_COMMAND} --build-and-test
-         ${CMAKE_CURRENT_SOURCE_DIR}/native_contract_types
-         ${CMAKE_CURRENT_BINARY_DIR}/native_contract_types
-         --build-generator "${CMAKE_GENERATOR}"
-         --build-options
-            -Dcdt_DIR=${CMAKE_BINARY_DIR}/lib/cmake/cdt
-            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-            -DCDT_CONTRACT_INCLUDE_PATH=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
-   )
-   set_property(TEST native_contract_types_tests PROPERTY LABELS toolchain_tests)
-endif()
+# Native modules use the host compiler and do not need ENABLE_NATIVE_COMPILER's
+# native archives. Reset the nested cache so compiler/generator changes cannot
+# discard the selected CDT package or reuse an incompatible build directory.
+add_test(NAME native_contract_types_setup
+   COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_CURRENT_BINARY_DIR}/native_contract_types)
+set_tests_properties(native_contract_types_setup PROPERTIES
+   FIXTURES_SETUP native_contract_types
+   LABELS toolchain_tests)
+add_test(NAME native_contract_types_tests
+   COMMAND ${CMAKE_CTEST_COMMAND} --build-and-test
+      ${CMAKE_CURRENT_SOURCE_DIR}/native_contract_types
+      ${CMAKE_CURRENT_BINARY_DIR}/native_contract_types
+      --build-generator "${CMAKE_GENERATOR}"
+      --build-options
+         -Dcdt_DIR=${CMAKE_BINARY_DIR}/lib/cmake/cdt
+         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+         -DCDT_CONTRACT_INCLUDE_PATH=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
+)
+set_tests_properties(native_contract_types_tests PROPERTIES
+   FIXTURES_REQUIRED native_contract_types
+   LABELS toolchain_tests)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/version_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/version_tests.sh COPYONLY)
 add_test(NAME version_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/version_tests.sh "${VERSION_FULL}" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

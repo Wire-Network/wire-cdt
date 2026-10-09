@@ -13,3 +13,8 @@ add_native_contract(
    TARGET integer_type_aliases_native
    SOURCES ../toolchain/compile-pass/integer_type_aliases.cpp
 )
+
+# A forced header must not introduce pedantic errors in consumers. Limit these
+# diagnostics to the regression source, leaving unrelated sysiolib sources alone.
+set_source_files_properties(../toolchain/compile-pass/integer_type_aliases.cpp
+   PROPERTIES COMPILE_OPTIONS "-Wpedantic;-Werror=pedantic")
