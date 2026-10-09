@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import difflib
 import json
 import os
+import signal
 import subprocess
 import re
 
@@ -14,6 +15,22 @@ from errors import TestFailure
 
 if TYPE_CHECKING:
     from testsuite import TestSuite
+
+
+def describe_signal(signum: int) -> str:
+    """
+    Describe a signal for a failure message.
+
+    :param signum: the signal's number
+    :return: the number with Python's name for it, e.g. ``signal 11 (SIGSEGV)``;
+        the number alone, e.g. ``signal 35``, where :class:`signal.Signals` has
+        no name for it, as for a Linux real-time signal between ``SIGRTMIN``
+        and ``SIGRTMAX``
+    """
+    try:
+        return f"signal {signum} ({signal.Signals(signum).name})"
+    except ValueError:
+        return f"signal {signum}"
 
 
 class Test(ABC):
@@ -93,13 +110,40 @@ class Test(ABC):
         return res
 
     def handle_test_result(self, res: subprocess.CompletedProcess, expected_pass=True):
+        """
+        Judge a finished ``cdt-cpp`` run: against the test kind first, then
+        against the case's ``expected`` block (see :meth:`handle_expecteds`).
+
+        A driver killed by a signal fails the case whatever its kind: a crash
+        is not the failure a ``*-fail`` case asks for, and a ``*-pass`` case
+        cannot have succeeded. Only the driver's own death is visible here. It
+        reports a subprogram (``clang++``, ``cdt-codegen``, ``cdt-ld``) that
+        crashed with the same exit status as one that diagnosed an error, so a
+        ``*-fail`` case tells those two apart through its ``stderr``
+        expectation.
+
+        :param res: the completed ``cdt-cpp`` process
+        :param expected_pass: whether the driver is expected to succeed
+        :raises TestFailure: if the driver was killed by a signal, exited
+            non-zero in a ``*-pass`` case, exited zero in a ``*-fail`` case, or
+            missed one of the case's expectations
+        """
         stdout = res.stdout.decode("utf-8").strip()
         stderr = res.stderr.decode("utf-8").strip()
 
         P.print(stdout, verbose=True)
         P.print(stderr, verbose=True)
 
-        if expected_pass and res.returncode > 0:
+        # subprocess reports a child killed by signal N as returncode -N.
+        if res.returncode < 0:
+            self.success = False
+            raise TestFailure(
+                f"cdt-cpp was killed by {describe_signal(-res.returncode)}"
+                f" with the following stderr {stderr}",
+                failing_test=self,
+            )
+
+        if expected_pass and res.returncode != 0:
             self.success = False
             raise TestFailure(
                 f"{self.fullname} failed with the following stderr {stderr}",
@@ -118,9 +162,19 @@ class Test(ABC):
             self.handle_expecteds(res)
 
     def handle_expecteds(self, res: subprocess.CompletedProcess):
+        """
+        Compare a ``cdt-cpp`` run with the case's ``expected`` block.
+
+        ``exit-code`` is compared whenever the key is present, ``0`` included.
+        ``stderr``, ``abi`` / ``abi-file`` and ``wasm`` are compared when they
+        hold a non-empty value.
+
+        :param res: the completed ``cdt-cpp`` process
+        :raises TestFailure: on the first expectation the run does not meet
+        """
         expected = self.test_json["expected"]
 
-        if expected.get("exit-code"):
+        if "exit-code" in expected:
             exit_code = expected["exit-code"]
 
             if res.returncode != exit_code:

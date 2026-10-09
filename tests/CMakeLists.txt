@@ -69,6 +69,19 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/postpass_tests.sh ${CMAKE_BINARY
 add_test(NAME postpass_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/postpass_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST postpass_tests PROPERTY LABELS unit_tests)
 
+# toolchain-tester verdicts — a cdt-cpp killed by a signal must fail the case in every kind,
+# and "exit-code": 0 must be compared. Drives the real runner against a fake cdt-cpp.
+configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/unit/toolchain_tester_tests.sh
+   ${CMAKE_BINARY_DIR}/tests/unit/toolchain_tester_tests.sh
+   COPYONLY)
+add_test(
+   NAME toolchain_tester_tests
+   COMMAND ${CMAKE_BINARY_DIR}/tests/unit/toolchain_tester_tests.sh
+      "${CMAKE_BINARY_DIR}/tools/toolchain-tester/toolchain-tester"
+   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TEST toolchain_tester_tests PROPERTY LABELS unit_tests)
+
 configure_file(
    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_preprocessor/run_test.sh
    ${CMAKE_BINARY_DIR}/tests/compiler_preprocessor/run_test.sh

@@ -35,10 +35,14 @@ The tests are managed by a JSON file placed next to the test file. It can define
 
 #### Expected Output
 Allowable type of expected output are:
-- "exit-code": Checks that it exited with a given code.
+- "exit-code": Checks that it exited with a given code. Compared whenever the key is present, `0` included.
 - "stderr": Checks for matching stderr. Currently a non-exact match.
 - "wasm": A compressed version of the hex array representing the expected WASM.
 - "abi": A stringified version of the abi that is expected.
+
+A test of any type fails when `cdt-cpp` is killed by a signal, and the failure names the signal: a crash is never the failure a `*-fail` test is after.
+
+That covers `cdt-cpp` itself only. A crash inside one of its subprograms (`clang++`, `cdt-codegen`, `cdt-ld`) surfaces as `cdt-cpp`'s ordinary failure status, so a `*-fail` test relies on its "stderr" expectation to tell a diagnosis from a crash.
 
 #### Example files:
 ```json
