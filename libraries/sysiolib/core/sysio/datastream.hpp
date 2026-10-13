@@ -767,6 +767,7 @@ datastream<Stream>& operator >> ( datastream<Stream>& ds, std::vector<T>& v ) {
 
 /**
  *  Serialize a basic_string<T>
+ *  Includes byte strings on standard libraries that provide their character traits.
  *
  *  @param ds - The stream to write
  *  @param s - The value to serialize
@@ -799,42 +800,6 @@ datastream<Stream>& operator >> ( datastream<Stream>& ds, std::basic_string<T>& 
    ds.read(s.data(), s.size()*sizeof(T));
    return ds;
 }
-
-/**
- *  Serialize a basic_string<uint8_t>
- *
- *  @param ds - The stream to write
- *  @param s - The value to serialize
- *  @tparam Stream - Type of datastream buffer
- *  @tparam T - Type of the object contained in the basic_string
- *  @return datastream<Stream>& - Reference to the datastream
- */
-template<typename Stream>
-datastream<Stream>& operator << ( datastream<Stream>& ds, const std::basic_string<uint8_t>& s ) {
-   ds << unsigned_int(s.size());
-   if (s.size())
-      ds.write(s.data(), s.size());
-   return ds;
-}
-
-/**
- *  Deserialize a basic_string<uint8_t>
- *
- *  @param ds - The stream to read
- *  @param s - The destination for deserialized value
- *  @tparam Stream - Type of datastream buffer
- *  @tparam T - Type of the object contained in the basic_string
- *  @return datastream<Stream>& - Reference to the datastream
- */
-template<typename Stream>
-datastream<Stream>& operator >> ( datastream<Stream>& ds, std::basic_string<uint8_t>& s ) {
-   unsigned_int v;
-   ds >> v;
-   s.resize(v.value);
-   ds.read(s.data(), s.size());
-   return ds;
-}
-
 
 /**
  *  Serialize a set
