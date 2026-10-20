@@ -12,7 +12,11 @@ find_package(cdt REQUIRED)
 add_native_contract(
    TARGET integer_type_aliases_native
    SOURCES ../toolchain/compile-pass/integer_type_aliases.cpp
-           ../toolchain/compile-pass/datastream_header.cpp
+)
+
+add_native_contract(
+   TARGET datastream_header_native
+   SOURCES ../toolchain/compile-pass/datastream_header.cpp
 )
 
 # A forced header must not introduce pedantic errors in consumers. Limit these

@@ -766,8 +766,8 @@ datastream<Stream>& operator >> ( datastream<Stream>& ds, std::vector<T>& v ) {
 }
 
 /**
- *  Serialize a basic_string<T>
- *  Includes byte strings on standard libraries that provide their character traits.
+ *  Serialize a basic_string<T>, including byte strings where the standard library
+ *  provides their character traits.
  *
  *  @param ds - The stream to write
  *  @param s - The value to serialize
