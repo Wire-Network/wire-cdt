@@ -33,6 +33,21 @@ def describe_signal(signum: int) -> str:
         return f"signal {signum}"
 
 
+def decode_output(output: bytes) -> str:
+    """
+    Decode captured ``cdt-cpp`` output without raising.
+
+    A crash can stop a write partway through a multibyte character. A strict
+    decode raises :class:`UnicodeDecodeError` on that, which no caller catches,
+    and the run ends without a verdict. So each invalid byte is kept as a
+    ``\\xNN`` escape instead.
+
+    :param output: the bytes ``cdt-cpp`` wrote to stdout or stderr
+    :return: the bytes as UTF-8 text
+    """
+    return output.decode("utf-8", errors="backslashreplace")
+
+
 class Test(ABC):
     """
     This class represents a singular test case: one entry of a test file's JSON.
@@ -128,8 +143,8 @@ class Test(ABC):
             non-zero in a ``*-pass`` case, exited zero in a ``*-fail`` case, or
             missed one of the case's expectations
         """
-        stdout = res.stdout.decode("utf-8").strip()
-        stderr = res.stderr.decode("utf-8").strip()
+        stdout = decode_output(res.stdout).strip()
+        stderr = decode_output(res.stderr).strip()
 
         P.print(stdout, verbose=True)
         P.print(stderr, verbose=True)
@@ -186,7 +201,7 @@ class Test(ABC):
 
         if expected.get("stderr"):
             expected_stderr = expected["stderr"]
-            actual_stderr = res.stderr.decode("utf-8")
+            actual_stderr = decode_output(res.stderr)
             patterns = expected_stderr if isinstance(expected_stderr, list) else [expected_stderr]
 
             for pat in patterns:

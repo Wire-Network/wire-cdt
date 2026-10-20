@@ -14,6 +14,10 @@
 # naming the signal; a *-pass case fails on any non-zero status; and "exit-code" is compared
 # whenever the key is present.
 #
+# The runner also decoded cdt-cpp's output as strict UTF-8, so a crash that cut a write off
+# mid-character ended the whole run in a UnicodeDecodeError. Such bytes are now kept as \xNN
+# escapes.
+#
 # The REAL runner is driven end to end, one case per run, against a FAKE cdt-cpp -- a script
 # that compiles nothing and ends the way the case's compile_flags tell it to. The cases live in
 # a temporary tree laid out like tests/toolchain, because the runner takes a case's kind from
@@ -52,18 +56,21 @@ mkdir -p "$FAKE_BIN" "$TESTS" "$RUNNER_TMP"
 # The stand-in for cdt-cpp. It ignores the kind's own flags and the source path the runner
 # passes it; the flags a case adds through its compile_flags decide how it ends:
 #
-#   --fake-stderr=TEXT   print TEXT on stderr
-#   --fake-exit=N        exit with status N (0 when not given)
-#   --fake-signal=NAME   die of signal NAME, spelled the way `kill -s` takes it
+#   --fake-stderr=TEXT          print TEXT on stderr
+#   --fake-stderr-escaped=TEXT  print TEXT on stderr through `printf %b`, without a newline, so a
+#                               case can write bytes that are not UTF-8 (\0377 is the byte 0xff)
+#   --fake-exit=N               exit with status N (0 when not given)
+#   --fake-signal=NAME          die of signal NAME, spelled the way `kill -s` takes it
 cat > "${FAKE_BIN}/cdt-cpp" <<'EOF'
 #!/bin/bash
 exit_status=0
 signal=""
 for arg in "$@"; do
     case "$arg" in
-        --fake-stderr=*) printf '%s\n' "${arg#--fake-stderr=}" >&2 ;;
-        --fake-exit=*)   exit_status="${arg#--fake-exit=}" ;;
-        --fake-signal=*) signal="${arg#--fake-signal=}" ;;
+        --fake-stderr=*)         printf '%s\n' "${arg#--fake-stderr=}" >&2 ;;
+        --fake-stderr-escaped=*) printf '%b' "${arg#--fake-stderr-escaped=}" >&2 ;;
+        --fake-exit=*)           exit_status="${arg#--fake-exit=}" ;;
+        --fake-signal=*)         signal="${arg#--fake-signal=}" ;;
     esac
 done
 if [ -n "$signal" ]; then
@@ -254,6 +261,29 @@ expect_fail "a *-fail case's stderr expectation rejects an exit 255 without the 
     '{ "compile_flags": ["--fake-stderr=cdt: failed to execute subprogram", "--fake-exit=255"],
        "expected": { "stderr": "error: diagnosed" } }' \
     "expected error: diagnosed stderr but got cdt: failed to execute subprogram"
+
+echo ""
+echo "Output that is not UTF-8"
+
+# Each invalid byte reaches the verdict as a \xNN escape. \0377 writes 0xff, which is never
+# valid UTF-8; \0342\0224 writes the first two of the three bytes of U+2500.
+expect_fail "a case killed by SIGSEGV after an invalid byte names the signal and shows the byte" \
+    compile-pass segv_invalid_byte \
+    '{ "compile_flags": ["--fake-stderr-escaped=crash-prefix:\\0377", "--fake-signal=SEGV"] }' \
+    "killed by signal ${SIGSEGV_NUM} (SIGSEGV)" \
+    'with the following stderr crash-prefix:\xff'
+
+# The stderr expectation reads the same output. A subprogram cut off mid-character leaves
+# cdt-cpp's ordinary failure status, so the expectation is what must reject the case.
+expect_fail "a *-fail case's stderr expectation rejects output cut off mid-character" \
+    compile-fail cut_mid_character \
+    '{ "compile_flags": ["--fake-stderr-escaped=partial output \\0342\\0224", "--fake-exit=255"],
+       "expected": { "stderr": "error: diagnosed" } }' \
+    'expected error: diagnosed stderr but got partial output \xe2\x94'
+expect_pass "...and still matches a diagnostic that an invalid byte follows" \
+    compile-fail diagnosed_then_invalid_byte \
+    '{ "compile_flags": ["--fake-stderr-escaped=error: diagnosed \\0377", "--fake-exit=1"],
+       "expected": { "stderr": "error: diagnosed" } }'
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

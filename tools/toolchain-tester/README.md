@@ -44,6 +44,8 @@ A test of any type fails when `cdt-cpp` is killed by a signal, and the failure n
 
 That covers `cdt-cpp` itself only. A crash inside one of its subprograms (`clang++`, `cdt-codegen`, `cdt-ld`) surfaces as `cdt-cpp`'s ordinary failure status, so a `*-fail` test relies on its "stderr" expectation to tell a diagnosis from a crash.
 
+Bytes of `cdt-cpp`'s output that are not valid UTF-8, such as a character a crash cut off partway, appear as `\xNN` escapes, both in failure messages and in the text a "stderr" expectation is matched against.
+
 #### Example files:
 ```json
 {
