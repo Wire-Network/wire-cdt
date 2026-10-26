@@ -8,6 +8,7 @@
 
 #include <cstring>
 #include <optional>
+#include <type_traits>
 
 using sysio::public_key;
 using sysio::signature;
@@ -117,6 +118,44 @@ SYSIO_TEST_BEGIN(try_recover_key_test)
    }
 SYSIO_TEST_END
 
+/// Pin the C/C++ signatures and preserve raw arguments, boolean failures, and host aborts through native dispatch.
+SYSIO_TEST_BEGIN(ed25519_verify_test)
+   using verify_function = bool (*)(const char*, uint32_t, uint32_t);
+   static_assert(std::is_same_v<decltype(&::ed25519_verify), verify_function>);
+   static_assert(std::is_same_v<decltype(&sysio::ed25519_verify), verify_function>);
+   constexpr uint32_t record_count = 24;
+   constexpr char abort_message[] = "Ed25519 host deadline";
+   const char binary[] = {'a', '\0', static_cast<char>(0xff)};
+   const auto previous = intrinsics::get_intrinsic<intrinsics::ed25519_verify>();
+   uint32_t calls = 0;
+   bool result = true;
+   intrinsics::set_intrinsic<intrinsics::ed25519_verify>(
+      [&](const char* data, uint32_t length, uint32_t count) {
+         CHECK_EQUAL(data == binary, true)
+         CHECK_EQUAL(length, sizeof(binary))
+         CHECK_EQUAL(count, record_count)
+         ++calls;
+         return result;
+      });
+   CHECK_EQUAL(sysio::ed25519_verify(binary, sizeof(binary), record_count), true)
+   result = false;
+   CHECK_EQUAL(sysio::ed25519_verify(binary, sizeof(binary), record_count), false)
+   CHECK_EQUAL(::ed25519_verify(binary, sizeof(binary), record_count), false)
+   CHECK_EQUAL(calls, 3u)
+
+   // The wrapper must reach the host even for an empty batch, so its entry checktime still runs.
+   intrinsics::set_intrinsic<intrinsics::ed25519_verify>(
+      [&](const char* data, uint32_t length, uint32_t count) -> bool {
+         CHECK_EQUAL(data == nullptr, true)
+         CHECK_EQUAL(length, 0u)
+         CHECK_EQUAL(count, 0u)
+         sysio::check(false, abort_message);
+         return false;
+      });
+   CHECK_ASSERT(abort_message, ([]() { sysio::ed25519_verify(nullptr, 0, 0); }))
+   intrinsics::set_intrinsic<intrinsics::ed25519_verify>(previous);
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    bool verbose = false;
    if( argc >= 2 && std::strcmp( argv[1], "-v" ) == 0 ) {
@@ -128,5 +167,6 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(public_key_ordering_test)
    SYSIO_TEST(signature_type_test)
    SYSIO_TEST(try_recover_key_test)
+   SYSIO_TEST(ed25519_verify_test)
    return has_failed();
 }

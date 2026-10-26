@@ -457,6 +457,28 @@ namespace sysio {
    sysio::checksum160 ripemd160( const char* data, uint32_t length );
 
    /**
+    *  Verify a packed batch of standard Ed25519 signatures over unchanged message bytes.
+    *
+    *  Each record is [u32 little-endian message length][64-byte signature][32-byte public key][message],
+    *  without padding. Use count = 1 for a single signature. Messages may be empty or repeated and are
+    *  limited to 65,536 bytes each. This API does not use sysio::signature/public_key serialization,
+    *  hex encoding, or Ed25519ph prehashing.
+    *
+    *  @ingroup crypto
+    *  @param entries - Packed records in readable WASM memory
+    *  @param entries_len - Total number of bytes in entries
+    *  @param count - Exact number of records
+    *  @return true if all records verify and consume the entire buffer; false for empty batches,
+    *          invalid signatures or keys, oversized messages, malformed records, or count mismatches.
+    *
+    *  @note Forwards one host call without copying or parsing the batch. Requires env.ed25519_verify
+    *        on the chain; context-free use is supported. The host stops at the first invalid record.
+    *        Deadline/resource exhaustion and invalid WASM memory still abort the transaction.
+    *        Validator membership, uniqueness, quorum, and replay checks remain caller responsibilities.
+    */
+   bool ed25519_verify( const char* entries, uint32_t entries_len, uint32_t count );
+
+   /**
     *  Calculates the public key used for a given signature on a given digest.
     *
     *  Aborts the transaction if the signature is malformed or cannot be

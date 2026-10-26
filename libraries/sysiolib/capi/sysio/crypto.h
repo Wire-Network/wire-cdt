@@ -4,6 +4,7 @@
  */
 #pragma once
 #include "types.h"
+#include <stdbool.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -185,6 +186,26 @@ void sha512( const char* data, uint32_t length, struct capi_checksum512* hash );
  */
 __attribute__((sysio_wasm_import))
 void ripemd160( const char* data, uint32_t length, struct capi_checksum160* hash );
+
+/**
+ *  Verify a packed batch of standard Ed25519 signatures over unchanged message bytes.
+ *
+ *  Each record is [u32 little-endian message length][64-byte signature][32-byte public key][message],
+ *  without padding. A single signature uses count = 1. Each message may contain at most 65,536 bytes;
+ *  signed empty messages and repeated messages or keys are allowed. No hex encoding or prehash is applied.
+ *
+ *  @param entries - Packed records in readable WASM memory
+ *  @param entries_len - Total number of bytes in entries
+ *  @param count - Exact number of records
+ *  @return true only if every record verifies and consumes the entire buffer; false for an empty batch,
+ *          invalid signatures or keys, oversized messages, malformed records, or count/length mismatches.
+ *
+ *  @note Requires a chain providing env.ed25519_verify. Context-free use is supported. Verification stops
+ *        at the first invalid record. Deadline/resource exhaustion and invalid WASM memory still abort
+ *        the transaction. Validator membership, uniqueness, quorum, and replay checks belong to the caller.
+ */
+__attribute__((sysio_wasm_import))
+bool ed25519_verify( const char* entries, uint32_t entries_len, uint32_t count );
 
 /**
  *  Calculates the public key used for a given signature and hash used to create a message.

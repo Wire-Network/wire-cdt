@@ -38,6 +38,9 @@ extern "C" {
    void ripemd160( const char* data, uint32_t length, capi_checksum160* hash );
 
    __attribute__((sysio_wasm_import))
+   bool ed25519_verify( const char* entries, uint32_t entries_len, uint32_t count );
+
+   __attribute__((sysio_wasm_import))
    int recover_key( const capi_checksum256* digest, const char* sig,
                     size_t siglen, char* pub, size_t publen );
 
@@ -90,6 +93,10 @@ namespace sysio {
       ::capi_checksum160 hash;
       ::ripemd160( data, length, &hash );
       return {hash.hash};
+   }
+
+   bool ed25519_verify( const char* entries, uint32_t entries_len, uint32_t count ) {
+      return ::ed25519_verify( entries, entries_len, count );
    }
 
    namespace {

@@ -142,7 +142,8 @@ intrinsic_macro(kv_idx_next) \
 intrinsic_macro(kv_idx_prev) \
 intrinsic_macro(kv_idx_key) \
 intrinsic_macro(kv_idx_primary_key) \
-intrinsic_macro(kv_idx_destroy)
+intrinsic_macro(kv_idx_destroy) \
+intrinsic_macro(ed25519_verify)
 
 #define CREATE_ENUM(name) \
    name,
