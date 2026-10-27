@@ -241,11 +241,15 @@ class Test(ABC):
         if expected.get("wasm"):
             expected_wasm = expected["wasm"]
 
-            xxd = subprocess.Popen(("xxd", "-p", self.out_wasm), stdout=subprocess.PIPE)
-            tr = subprocess.check_output(("tr", "-d", "\n"), stdin=xxd.stdout)
-            xxd.wait()
-
-            actual_wasm = tr.decode("utf-8")
+            # Keep the exact byte comparison independent of host utilities such as xxd.
+            try:
+                with open(self.out_wasm, "rb") as wasm:
+                    actual_wasm = wasm.read().hex()
+            except OSError as error:
+                self.success = False
+                raise TestFailure(
+                    f"could not read wasm: {error}", failing_test=self
+                ) from error
 
             if expected_wasm != actual_wasm:
                 self.success = False

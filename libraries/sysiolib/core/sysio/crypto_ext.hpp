@@ -10,11 +10,18 @@
 #include "serialize.hpp"
 
 #include <array>
+#include <limits>
+#include <span>
 
 namespace sysio {
 
    namespace internal_use_do_not_use {
       extern "C" {
+
+         /// Raw single-signature host import; public callers use the span wrappers below.
+         __attribute__((sysio_wasm_import))
+         int32_t ed25519_verify(const char* sig, uint32_t sig_len, const char* pub, uint32_t pub_len,
+                               const char* msg, uint32_t msg_len);
 
          struct __attribute__((aligned (16))) capi_checksum256_ext { uint8_t hash[32]; };
 
@@ -60,6 +67,60 @@ namespace sysio {
     *  @brief Defines API for calculating and checking hashes which
     *  require activating crypto protocol feature
     */
+
+   /**
+    * Verify one standard Ed25519 signature over unchanged bytes, without hex encoding or prehashing.
+    * @param signature Exactly 64 signature bytes, without an embedded public key.
+    * @param public_key Exactly 32 public-key bytes.
+    * @param message Message bytes; correctly signed empty messages and up to 65,536 bytes are supported.
+    * @return 0 on success, -1 for invalid lengths, signatures, or keys.
+    * @note Requires env.ed25519_verify on the chain; context-free use is supported.
+    *       Deadline/resource exhaustion and invalid WASM memory still abort the transaction.
+    *       Validator membership, uniqueness, quorum, and replay checks remain caller responsibilities.
+    * @ingroup crypto
+    */
+   inline int32_t ed25519_verify(std::span<const char> signature, std::span<const char> public_key,
+                                 std::span<const char> message) {
+      constexpr auto max_host_size = std::numeric_limits<uint32_t>::max();
+      constexpr int32_t failure = -1;
+      // Native spans may exceed the host ABI's 32-bit lengths; never silently truncate them.
+      if (signature.size() > max_host_size || public_key.size() > max_host_size || message.size() > max_host_size)
+         return failure;
+      return internal_use_do_not_use::ed25519_verify(
+         signature.data(), static_cast<uint32_t>(signature.size()),
+         public_key.data(), static_cast<uint32_t>(public_key.size()),
+         message.data(), static_cast<uint32_t>(message.size()));
+   }
+
+   /**
+    * Borrowed buffers for one independent Ed25519 verification. No packing or allocation is required.
+    * All buffers must remain readable until ed25519_verify_batch returns; messages and keys may repeat.
+    */
+   struct ed25519_signature_view {
+      std::span<const char> signature;
+      std::span<const char> public_key;
+      std::span<const char> message;
+   };
+
+   /**
+    * Verify independent signatures in a WASM loop, stopping at the first failure.
+    * This is not randomized or cofactored batch verification: each entry uses ed25519_verify's rules.
+    * @param entries Borrowed signature, key, and message views. An empty span returns -1.
+    * @return 0 if every signature verifies, otherwise -1. Transaction aborts propagate unchanged.
+    * @note Does not copy messages, signatures, or keys. The runtime can enforce deadlines between calls.
+    * @ingroup crypto
+    */
+   inline int32_t ed25519_verify_batch(std::span<const ed25519_signature_view> entries) {
+      constexpr int32_t success = 0;
+      constexpr int32_t failure = -1;
+      if (entries.empty())
+         return failure;
+      for (const auto& entry : entries) {
+         if (ed25519_verify(entry.signature, entry.public_key, entry.message) != success)
+            return failure;
+      }
+      return success;
+   }
 
    /**
     * Abstracts mutable G1 and G2 points

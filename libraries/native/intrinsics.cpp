@@ -55,6 +55,10 @@ extern "C" {
    void assert_recover_key( const capi_checksum256* digest, const char* sig, size_t siglen, const char* pub, size_t publen ) {
       return intrinsics::get().call<intrinsics::assert_recover_key>(digest, sig, siglen, pub, publen);
    }
+   int32_t ed25519_verify( const char* sig, uint32_t sig_len, const char* pub, uint32_t pub_len,
+                           const char* msg, uint32_t msg_len ) {
+      return intrinsics::get().call<intrinsics::ed25519_verify>(sig, sig_len, pub, pub_len, msg, msg_len);
+   }
    int recover_key( const capi_checksum256* digest, const char* sig, size_t siglen, char* pub, size_t publen ) {
       return intrinsics::get().call<intrinsics::recover_key>(digest, sig, siglen, pub, publen);
    }

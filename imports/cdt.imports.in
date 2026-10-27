@@ -85,3 +85,4 @@ sysio_exit
 tapos_block_num
 tapos_block_prefix
 transaction_size
+ed25519_verify

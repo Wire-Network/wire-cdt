@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "expected": {
+        "exit-code": 0
+      },
+      "compile_flags": [
+        "-I{cwd}/../../../libraries/sysiolib/capi"
+      ]
+    }
+  ]
+}

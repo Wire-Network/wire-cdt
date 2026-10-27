@@ -5,9 +5,11 @@
 
 #include <sysio/tester.hpp>
 #include <sysio/crypto.hpp>
+#include <sysio/crypto_ext.hpp>
 
 #include <cstring>
 #include <optional>
+#include <type_traits>
 
 using sysio::public_key;
 using sysio::signature;
@@ -117,6 +119,64 @@ SYSIO_TEST_BEGIN(try_recover_key_test)
    }
 SYSIO_TEST_END
 
+/// Pin six-argument forwarding, borrowed-buffer identity, early exit, and abort propagation.
+SYSIO_TEST_BEGIN(ed25519_verify_test)
+   using namespace sysio; // Including both C and C++ crypto headers must leave this call unambiguous.
+   using verify_function = int32_t (*)(std::span<const char>, std::span<const char>, std::span<const char>);
+   static_assert(std::is_same_v<decltype(&sysio::ed25519_verify), verify_function>);
+   constexpr int32_t success = 0;
+   constexpr int32_t failure = -1;
+   constexpr uint32_t signature_size = 64;
+   constexpr uint32_t key_size = 32;
+   constexpr char abort_message[] = "Ed25519 host abort";
+   const std::array<char, signature_size> signature{};
+   const std::array<char, key_size> key{};
+   const char binary[] = {'a', '\0', static_cast<char>(0xff)};
+   const sysio::ed25519_signature_view entry{signature, key, binary};
+   const auto previous = intrinsics::get_intrinsic<intrinsics::ed25519_verify>();
+   uint32_t calls = 0;
+   uint32_t fail_at = 0;
+   intrinsics::set_intrinsic<intrinsics::ed25519_verify>(
+      [&](const char* sig, uint32_t sig_len, const char* pub, uint32_t pub_len,
+          const char* msg, uint32_t msg_len) -> int32_t {
+         CHECK_EQUAL(sig == signature.data(), true)
+         CHECK_EQUAL(sig_len, signature.size())
+         CHECK_EQUAL(pub == key.data(), true)
+         CHECK_EQUAL(pub_len, key.size())
+         CHECK_EQUAL(msg == binary, true)
+         CHECK_EQUAL(msg_len, sizeof(binary))
+         ++calls;
+         return calls == fail_at ? failure : success;
+      });
+   CHECK_EQUAL(ed25519_verify(signature, key, binary), success)
+   fail_at = calls + 1;
+   CHECK_EQUAL(sysio::ed25519_verify(signature, key, binary), failure)
+   CHECK_EQUAL(calls, 2u)
+   calls = 0;
+   CHECK_EQUAL(sysio::ed25519_verify_batch({}), failure)
+   CHECK_EQUAL(calls, 0u)
+   for (uint32_t count : {1u, 24u, 68u}) {
+      const std::vector<sysio::ed25519_signature_view> entries(count, entry);
+      calls = fail_at = 0;
+      CHECK_EQUAL(sysio::ed25519_verify_batch(entries), success)
+      CHECK_EQUAL(calls, count)
+      for (uint32_t position : {1u, count / 2 + 1, count}) {
+         calls = 0;
+         fail_at = position;
+         CHECK_EQUAL(sysio::ed25519_verify_batch(entries), failure)
+         CHECK_EQUAL(calls, position)
+      }
+   }
+   intrinsics::set_intrinsic<intrinsics::ed25519_verify>(
+      [&](const char*, uint32_t, const char*, uint32_t, const char*, uint32_t) -> int32_t {
+         sysio::check(false, abort_message);
+         return failure;
+      });
+   CHECK_ASSERT(abort_message, ([&]() { sysio::ed25519_verify_batch({&entry, 1}); }))
+   CHECK_ASSERT(abort_message, ([]() { sysio::ed25519_verify({}, {}, {}); }))
+   intrinsics::set_intrinsic<intrinsics::ed25519_verify>(previous);
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    bool verbose = false;
    if( argc >= 2 && std::strcmp( argv[1], "-v" ) == 0 ) {
@@ -128,5 +188,6 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(public_key_ordering_test)
    SYSIO_TEST(signature_type_test)
    SYSIO_TEST(try_recover_key_test)
+   SYSIO_TEST(ed25519_verify_test)
    return has_failed();
 }

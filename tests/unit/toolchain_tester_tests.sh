@@ -61,18 +61,26 @@ mkdir -p "$FAKE_BIN" "$TESTS" "$RUNNER_TMP"
 #                               case can write bytes that are not UTF-8 (\0377 is the byte 0xff)
 #   --fake-exit=N               exit with status N (0 when not given)
 #   --fake-signal=NAME          die of signal NAME, spelled the way `kill -s` takes it
+#   --fake-wasm=BYTES           write printf %b bytes to the source-named WASM artifact
 cat > "${FAKE_BIN}/cdt-cpp" <<'EOF'
 #!/bin/bash
 exit_status=0
 signal=""
+wasm_bytes=""
+wasm_name=""
 for arg in "$@"; do
     case "$arg" in
         --fake-stderr=*)         printf '%s\n' "${arg#--fake-stderr=}" >&2 ;;
         --fake-stderr-escaped=*) printf '%b' "${arg#--fake-stderr-escaped=}" >&2 ;;
         --fake-exit=*)           exit_status="${arg#--fake-exit=}" ;;
         --fake-signal=*)         signal="${arg#--fake-signal=}" ;;
+        --fake-wasm=*)           wasm_bytes="${arg#--fake-wasm=}" ;;
+        *.cpp)                  wasm_name="${arg##*/}"; wasm_name="${wasm_name%.cpp}.wasm" ;;
     esac
 done
+if [ -n "$wasm_bytes" ]; then
+    printf '%b' "$wasm_bytes" > "$wasm_name"
+fi
 if [ -n "$signal" ]; then
     # No core file: where core dumps are enabled, dying of SIGSEGV would leave one behind.
     ulimit -c 0
@@ -284,6 +292,38 @@ expect_pass "...and still matches a diagnostic that an invalid byte follows" \
     compile-fail diagnosed_then_invalid_byte \
     '{ "compile_flags": ["--fake-stderr-escaped=error: diagnosed \\0377", "--fake-exit=1"],
        "expected": { "stderr": "error: diagnosed" } }'
+
+echo ""
+echo "WASM byte comparisons"
+
+# The Ubuntu CI image lacks xxd, so the old pipeline crashed before comparing the bytes.
+# Make both helpers fail even on hosts that install them: only Python should read the file.
+NO_HEX_TOOLS="${WORK}/no-hex-tools"
+mkdir -p "$NO_HEX_TOOLS"
+for tool in xxd tr; do
+    cat > "${NO_HEX_TOOLS}/${tool}" <<'EOF'
+#!/bin/bash
+echo "unexpected external hex conversion" >&2
+exit 1
+EOF
+    chmod +x "${NO_HEX_TOOLS}/${tool}"
+done
+
+# Include NUL, newline, and high-bit bytes to pin binary reading and lowercase hex encoding.
+readonly WASM_BYTES='--fake-wasm=\\000\\141\\163\\155\\001\\000\\000\\000\\012\\200\\377'
+readonly WASM_HEX='0061736d010000000a80ff'
+
+PATH="${NO_HEX_TOOLS}:$PATH" expect_pass "WASM bytes match without external hex tools" \
+    build-pass wasm_match \
+    "{ \"compile_flags\": [\"${WASM_BYTES}\"], \"expected\": { \"wasm\": \"${WASM_HEX}\" } }"
+PATH="${NO_HEX_TOOLS}:$PATH" expect_fail "different WASM bytes fail the expectation" \
+    build-pass wasm_mismatch \
+    "{ \"compile_flags\": [\"${WASM_BYTES}\"], \"expected\": { \"wasm\": \"00\" } }" \
+    "actual wasm did not match expected wasm"
+PATH="${NO_HEX_TOOLS}:$PATH" expect_fail "a missing WASM artifact is a test failure" \
+    build-pass wasm_missing \
+    "{ \"expected\": { \"wasm\": \"${WASM_HEX}\" } }" \
+    "could not read wasm"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
