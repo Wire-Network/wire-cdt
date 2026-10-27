@@ -23,6 +23,15 @@ namespace sysio::testing {
       static std::vector<uint8_t> crypto_primitives_test_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/crypto_primitives_tests.wasm"); }
       static std::vector<char>    crypto_primitives_test_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/crypto_primitives_tests.abi"); }
 
+      /// Read the fixture compiled against the Ed25519 C++ span API and WASM batch helper.
+      static std::vector<uint8_t> ed25519_verify_wasm() {
+         return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/ed25519_verify_tests.wasm");
+      }
+      /// Read the Ed25519 fixture's generated action ABI.
+      static std::vector<char> ed25519_verify_abi() {
+         return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/ed25519_verify_tests.abi");
+      }
+
       static std::vector<uint8_t> bls_primitives_test_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/bls_primitives_tests.wasm"); }
       static std::vector<char>    bls_primitives_test_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/bls_primitives_tests.abi"); }
       

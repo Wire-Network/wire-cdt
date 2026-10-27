@@ -78,6 +78,23 @@ int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t h
 int32_t k1_recover( const char* sig, uint32_t sig_len, const char* dig, uint32_t dig_len, char* pub, uint32_t pub_len);
 
 /**
+ * Verify one standard Ed25519 signature over unchanged bytes, without hex encoding or prehashing.
+ * @param sig Exactly 64 signature bytes, without an embedded public key.
+ * @param sig_len Signature length in bytes; must be 64.
+ * @param pub Exactly 32 public-key bytes.
+ * @param pub_len Public-key length in bytes; must be 32.
+ * @param msg Message bytes; correctly signed empty messages are supported.
+ * @param msg_len Message length in bytes; at most 65,536.
+ * @return 0 on success, -1 for invalid lengths, signatures, or keys.
+ * @note Requires env.ed25519_verify on the chain; context-free use is supported.
+ *       Deadline/resource exhaustion and invalid WASM memory still abort the transaction.
+ *       Validator membership, uniqueness, quorum, and replay checks remain caller responsibilities.
+ */
+__attribute__((sysio_wasm_import))
+int32_t ed25519_verify(const char* sig, uint32_t sig_len, const char* pub, uint32_t pub_len,
+                      const char* msg, uint32_t msg_len);
+
+/**
  *  Addition operation on the elliptic curve `alt_bn128` 
  *
  *  @param op1 - operand 1
