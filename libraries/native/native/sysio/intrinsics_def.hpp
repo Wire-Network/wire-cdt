@@ -18,10 +18,6 @@
 #include <type_traits>
 #include <functional>
 
-/// Native dispatch declaration; the contract-facing API is the C++ span wrapper.
-extern "C" int32_t ed25519_verify(const char* sig, uint32_t sig_len, const char* pub, uint32_t pub_len,
-                                 const char* msg, uint32_t msg_len);
-
 namespace sysio { namespace native {
    template <typename... Args, size_t... Is>
    auto get_args_full(std::index_sequence<Is...>) {

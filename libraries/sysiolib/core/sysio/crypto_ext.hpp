@@ -18,7 +18,7 @@ namespace sysio {
    namespace internal_use_do_not_use {
       extern "C" {
 
-         /// Raw single-signature host import; public callers use the span wrappers below.
+         /// Raw single-signature host import used by the C++ span wrappers below.
          __attribute__((sysio_wasm_import))
          int32_t ed25519_verify(const char* sig, uint32_t sig_len, const char* pub, uint32_t pub_len,
                                const char* msg, uint32_t msg_len);

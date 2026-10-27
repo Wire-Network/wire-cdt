@@ -51,7 +51,7 @@ ed25519_input signed_input(const bytes& message) {
    return {bytes(signature.begin(), signature.end()), bytes(key.begin(), key.end()), message};
 }
 
-/// Deploy the installed CDT's fixture and execute both language APIs in real transactions.
+/// Deploy the CDT fixture and execute the C++ span API and batch helper in real transactions.
 struct ed25519_tester : tester {
    ed25519_tester() {
       create_accounts({contract_account});
@@ -86,7 +86,7 @@ struct ed25519_tester : tester {
 
 BOOST_AUTO_TEST_SUITE(ed25519_verify_tests)
 
-/// Published empty-message and binary-message signatures pass through both public language APIs.
+/// Published empty-message and binary-message signatures pass through the public C++ span API.
 BOOST_FIXTURE_TEST_CASE(raw_messages, ed25519_tester) {
    verify(known_input(), verification_success);
    const auto good = signed_input({'a', '\0', static_cast<char>(byte_mask)});
@@ -112,7 +112,7 @@ BOOST_FIXTURE_TEST_CASE(batches, ed25519_tester) {
    }
 }
 
-/// Size checks occur in the host and return -1 through either language API.
+/// Size checks occur in the host and return -1 through the C++ span API.
 BOOST_FIXTURE_TEST_CASE(invalid_lengths, ed25519_tester) {
    for (auto member : {&ed25519_input::signature, &ed25519_input::public_key}) {
       const auto good = known_input();

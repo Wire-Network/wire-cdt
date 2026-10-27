@@ -121,9 +121,11 @@ SYSIO_TEST_END
 
 /// Pin six-argument forwarding, borrowed-buffer identity, early exit, and abort propagation.
 SYSIO_TEST_BEGIN(ed25519_verify_test)
-   using namespace sysio; // Including both C and C++ crypto headers must leave this call unambiguous.
+   using namespace sysio; // Both extension headers must leave the three- and six-argument calls unambiguous.
    using verify_function = int32_t (*)(std::span<const char>, std::span<const char>, std::span<const char>);
    static_assert(std::is_same_v<decltype(&sysio::ed25519_verify), verify_function>);
+   using c_verify_function = int32_t (*)(const char*, uint32_t, const char*, uint32_t, const char*, uint32_t);
+   static_assert(std::is_same_v<decltype(&::ed25519_verify), c_verify_function>);
    constexpr int32_t success = 0;
    constexpr int32_t failure = -1;
    constexpr uint32_t signature_size = 64;
@@ -152,6 +154,10 @@ SYSIO_TEST_BEGIN(ed25519_verify_test)
    fail_at = calls + 1;
    CHECK_EQUAL(sysio::ed25519_verify(signature, key, binary), failure)
    CHECK_EQUAL(calls, 2u)
+   CHECK_EQUAL(ed25519_verify(signature.data(), signature_size, key.data(), key_size, binary, sizeof(binary)), success)
+   fail_at = calls + 1;
+   CHECK_EQUAL(ed25519_verify(signature.data(), signature_size, key.data(), key_size, binary, sizeof(binary)), failure)
+   CHECK_EQUAL(calls, 4u)
    calls = 0;
    CHECK_EQUAL(sysio::ed25519_verify_batch({}), failure)
    CHECK_EQUAL(calls, 0u)

@@ -8,7 +8,15 @@ int32_t sysio::ed25519_verify(std::span<const char> signature,
                              std::span<const char> message);
 ```
 
-The wrapper calls `env.ed25519_verify` once. Pass a **64-byte detached signature**,
+Include `<sysio/crypto_ext.h>` for the C pointer/length API:
+
+```c
+int32_t ed25519_verify(const char* sig, uint32_t sig_len,
+                       const char* pub, uint32_t pub_len,
+                       const char* msg, uint32_t msg_len);
+```
+
+Both APIs call `env.ed25519_verify` once. Pass a **64-byte detached signature**,
 a **32-byte public key**, and **0–65,536 unchanged message bytes**. There is no packed
 record, hex encoding, prehash, or `sysio::signature` / `sysio::public_key` variant
 prefix. Correctly signed empty messages are supported.
@@ -85,10 +93,11 @@ digest-recovery APIs retain their behavior.
 
 ## Tests
 
-`crypto_tests` checks C++ span function types, borrowed-buffer forwarding, batches of
-1/24/68 entries, early exit, empty batches, return codes, and abort propagation.
-`build-pass/ed25519_verify_0` compiles and links an unqualified call with both C
-and C++ crypto headers included, and pins the C++ function type.
+`crypto_tests` checks C and C++ function types and borrowed-buffer forwarding, plus
+C++ batches of 1/24/68 entries, early exit, empty batches, return codes, and abort propagation.
+`build-pass/ed25519_verify_0` includes both `<sysio/crypto_ext.h>` and
+`<sysio/crypto_ext.hpp>`, compiles and links unqualified calls to both APIs, and pins
+their function types.
 `ed25519_verify_tests` deploys a contract and exercises the single-message API and
 the actual WASM batch helper against wire-sysio. The node validates the host import
 signature when deploying the contract.
