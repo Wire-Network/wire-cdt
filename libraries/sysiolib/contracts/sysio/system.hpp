@@ -51,14 +51,11 @@ namespace sysio {
        </b></p></html>
     *  @ingroup system
     *
-    *  @param code - the exit code
+    *  @param code - must be 0. Any other value fails the action. The chain gives the code no meaning.
     *    Example:
     *
     *      @code
     *      sysio_exit(0);
-    *      sysio_exit(1);
-    *      sysio_exit(2);
-    *      sysio_exit(3);
     *      @endcode
    */
    inline void sysio_exit( int32_t code ) {

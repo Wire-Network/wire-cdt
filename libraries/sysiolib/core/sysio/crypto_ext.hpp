@@ -427,7 +427,7 @@ namespace sysio {
     *  @param t0_len - size of t0_offset
     *  @param t1_offset - offset counters 
     *  @param t1_len - size of t1_offset
-    *  @param final - final block flag
+    *  @param final - final block flag: 1 or 0. Any other value fails the action.
     *  @param result - the result of the compression
     *  @param result_len - size of result 
     *  @return -1 if there is an error otherwise 0
@@ -442,7 +442,6 @@ namespace sysio {
     *
     *  @param data - data you want to hash
     *  @param length - size of data
-    *  @param keccak - whether to use `keccak` or NIST variant; keccak = 1 and NIST == 0
     *  @return sysio::checksum256 - Computed digest
     *
     */
