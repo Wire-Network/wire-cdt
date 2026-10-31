@@ -678,6 +678,22 @@ and `keccak` with theirs (`assert_sha3`, `assert_keccak`, both in `<sysio/crypto
 `recover_key`, `assert_recover_key`, `k1_recover`, `blake2_f`, `alt_bn128_add`/`_mul`/`_pair`,
 `mod_exp`, and the ten `bls_*` functions.
 
+### Stricter arguments
+
+Wire rejects argument values that Antelope accepted and ignored, so that a protocol feature can give those values a
+meaning later. `check()` and the other wrappers already pass valid values. These matter for raw intrinsic calls:
+
+| Argument | Wire accepts | Otherwise |
+|---|---|---|
+| `test` on `sysio_assert`, `sysio_assert_message`, `sysio_assert_code` | 0 or 1, so pass a comparison, not `flags & 8` | the action fails |
+| `code` on `sysio_exit` | 0 only | the action fails |
+| `keccak` on `sha3`, `final` on `blake2_f` | 0 or 1 | the action fails |
+| `hash_len` on `sha3` | 32 only | the action fails |
+| `struct_version` on `get_code_hash`, `max_version` on `get_wasm_parameters_packed` | 0 only | the action fails |
+| error code on `sysio_assert_code` | a value below the reserved range, even when the assert passes | the action fails |
+| Packed arguments such as `send_inline` data | exactly the packed value, with no trailing bytes | the action fails, or `recover_key` returns -1 |
+| Packed transaction for `check_transaction_authorization` | no transaction extensions | the action fails |
+
 ---
 
 ## Features with no Wire equivalent
