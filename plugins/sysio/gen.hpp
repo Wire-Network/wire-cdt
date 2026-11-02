@@ -975,7 +975,7 @@ struct generation_utils {
          "kv_set",
          "kv_erase",
          "kv_idx_store",
-         "kv_idx_remove",
+         "kv_idx_erase",
          "kv_idx_update",
          "send_inline",
          "send_context_free_inline",

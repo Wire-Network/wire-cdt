@@ -23,18 +23,21 @@
  *      kv::index<"bybal"_n,   sysio::const_mem_fun<my_val, uint64_t, &my_val::get_balance>>
  *   >;
  *
+ *   sysio::const_mem_fun comes from <sysio/multi_index.hpp>, which this header does not include.
+ *
  *   my_table tbl;
  *   tbl.emplace(get_self(), {1}, {1000, "alice"_n});
  *   auto idx = tbl.get_index<"byowner"_n>();
  *   auto it  = idx.find("alice"_n);
  */
 
-#include <sysio/kv_utils.hpp>                   // primary KV + iterator intrinsics
-#include <sysio/detail/kv_idx_intrinsics.hpp>   // secondary-index intrinsics
+#include <sysio/kv_utils.hpp>   // the KV host functions, through <sysio/kv.h>
 #include <sysio/check.hpp>
 
 #include <cstring>
+#include <limits>
 #include <optional>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -50,8 +53,10 @@ class be_key_reader {
    size_t      _size;
    size_t      _pos = 0;
 
+   void require(size_t bytes) const { sysio::check(_pos + bytes <= _size, msg::reader_underflow); }
+
    uint16_t read_be16() {
-      sysio::check(_pos + sizeof(uint16_t) <= _size, "be_key_reader underflow");
+      require(sizeof(uint16_t));
       uint16_t v = (static_cast<uint16_t>(static_cast<uint8_t>(_data[_pos])) << 8)
                  |  static_cast<uint16_t>(static_cast<uint8_t>(_data[_pos + 1]));
       _pos += sizeof(uint16_t);
@@ -59,7 +64,7 @@ class be_key_reader {
    }
 
    uint32_t read_be32() {
-      sysio::check(_pos + sizeof(uint32_t) <= _size, "be_key_reader underflow");
+      require(sizeof(uint32_t));
       uint32_t v = 0;
       for (size_t i = 0; i < sizeof(uint32_t); ++i)
          v = (v << 8) | static_cast<uint8_t>(_data[_pos++]);
@@ -67,55 +72,42 @@ class be_key_reader {
    }
 
    uint64_t read_be64() {
-      sysio::check(_pos + sizeof(uint64_t) <= _size, "be_key_reader underflow");
-      uint64_t v = 0;
-      for (size_t i = 0; i < sizeof(uint64_t); ++i)
-         v = (v << 8) | static_cast<uint8_t>(_data[_pos++]);
+      require(sizeof(uint64_t));
+      const uint64_t v = decode_be64(_data + _pos);
+      _pos += sizeof(uint64_t);
       return v;
    }
 
-   void read_escaped(std::vector<char>& out) {
-      out.clear();
+   /// Decode a NUL-escaped field through its terminator, handing each byte to \p push.
+   template<typename Push>
+   void read_escaped(Push&& push) {
       while (_pos < _size) {
-         char c = _data[_pos++];
-         if (c == '\0') {
-            sysio::check(_pos < _size, "be_key_reader: truncated NUL-escape");
-            char next = _data[_pos++];
-            if (next == '\0') return;            // terminator
-            sysio::check(next == '\x01', "be_key_reader: invalid NUL-escape byte");
-            out.push_back('\0'); // escaped NUL
-         } else {
-            out.push_back(c);
+         const char c = _data[_pos++];
+         if (c != '\0') {
+            push(c);
+            continue;
          }
+         sysio::check(_pos < _size, msg::reader_truncated);
+         const char next = _data[_pos++];
+         if (next == '\0') return;            // terminator
+         sysio::check(next == '\x01', msg::reader_bad_escape);
+         push('\0'); // escaped NUL
       }
-      sysio::check(false, "be_key_reader: unterminated NUL-escape string");
-   }
-
-   void read_escaped(key_buf& out) {
-      char tmp[be_key_stream::buf_cap];
-      uint32_t n = 0;
-      while (_pos < _size) {
-         char c = _data[_pos++];
-         if (c == '\0') {
-            sysio::check(_pos < _size, "be_key_reader: truncated NUL-escape");
-            char next = _data[_pos++];
-            if (next == '\0') { out.assign(tmp, n); return; }
-            sysio::check(next == '\x01', "be_key_reader: invalid NUL-escape byte");
-            sysio::check(n < be_key_stream::buf_cap, "be_key_reader: string too large");
-            tmp[n++] = '\0';
-         } else {
-            sysio::check(n < be_key_stream::buf_cap, "be_key_reader: string too large");
-            tmp[n++] = c;
-         }
-      }
-      sysio::check(false, "be_key_reader: unterminated NUL-escape string");
+      sysio::check(false, msg::reader_unterminated);
    }
 
 public:
    be_key_reader(const char* data, size_t size) : _data(data), _size(size) {}
 
+   /// Raw bytes, which fixed_bytes keys read through. The reverse of be_key_stream::write.
+   void read(char* out, size_t size) {
+      require(size);
+      std::memcpy(out, _data + _pos, size);
+      _pos += size;
+   }
+
    be_key_reader& operator>>(uint8_t& v) {
-      sysio::check(_pos + sizeof(uint8_t) <= _size, "be_key_reader underflow");
+      require(sizeof(uint8_t));
       v = static_cast<uint8_t>(_data[_pos++]);
       return *this;
    }
@@ -166,7 +158,7 @@ public:
 
    be_key_reader& operator>>(bool& v) {
       static_assert(sizeof(bool) == 1);
-      sysio::check(_pos + sizeof(bool) <= _size, "be_key_reader underflow");
+      require(sizeof(bool));
       v = (_data[_pos++] != 0);
       return *this;
    }
@@ -174,12 +166,7 @@ public:
    be_key_reader& operator>>(float& v) {
       static_assert(sizeof(float) == sizeof(uint32_t));
       static_assert(std::numeric_limits<float>::is_iec559);
-      uint32_t bits = read_be32();
-      // Reverse sign-magnitude transform
-      if (bits & (uint32_t(1) << 31))
-         bits ^= (uint32_t(1) << 31);  // was positive: flip sign bit
-      else
-         bits = ~bits;                  // was negative: flip all bits
+      const uint32_t bits = detail::float_bits_from_sortable(read_be32());
       std::memcpy(&v, &bits, sizeof(float));
       return *this;
    }
@@ -187,24 +174,25 @@ public:
    be_key_reader& operator>>(double& v) {
       static_assert(sizeof(double) == sizeof(uint64_t));
       static_assert(std::numeric_limits<double>::is_iec559);
-      uint64_t bits = read_be64();
-      if (bits & (uint64_t(1) << 63))
-         bits ^= (uint64_t(1) << 63);
-      else
-         bits = ~bits;
+      const uint64_t bits = detail::float_bits_from_sortable(read_be64());
       std::memcpy(&v, &bits, sizeof(double));
       return *this;
    }
 
    be_key_reader& operator>>(std::string& v) {
-      key_buf tmp;
-      read_escaped(tmp);
-      v.assign(tmp.data(), tmp.size());
+      char     tmp[be_key_stream::buf_cap];
+      uint32_t n = 0;
+      read_escaped([&](char c) {
+         sysio::check(n < be_key_stream::buf_cap, msg::reader_too_large);
+         tmp[n++] = c;
+      });
+      v.assign(tmp, n);
       return *this;
    }
 
    be_key_reader& operator>>(std::vector<char>& v) {
-      read_escaped(v);
+      v.clear();
+      read_escaped([&](char c) { v.push_back(c); });
       return *this;
    }
 };
@@ -255,7 +243,33 @@ class table_impl {
    );
 
    uint64_t _code = 0;
-   uint64_t code() const { return _code ? _code : sysio::current_receiver().value; }
+   uint64_t code() const { return _code ? _code : kv::detail::receiving_account().value; }
+
+   /// Stack bytes a read offers a value before falling back to the heap.
+   static constexpr uint32_t value_stack_capacity = is_fixed_serializable_v<V> ? sizeof(V) : kv_value_stack_size;
+
+   /// Read the value stored at an encoded key. Costs one kv_get, or two when the value overflows
+   /// the stack buffer.
+   /// @return false, leaving \p out untouched, when no row exists
+   bool read_value(const char* key, uint32_t key_size, V& out) const {
+      return detail::read_row<value_stack_capacity>(_table_id, code(), key, key_size,
+                                                    [&](const char* data, uint32_t size) {
+                                                       out = deserialize_value(data, size);
+                                                    });
+   }
+
+   /// Write a value at an encoded key. One kv_set.
+   /// @return the status kv_set returned, which the caller turns into its own message
+   int32_t write_value(uint64_t payer, const char* key, uint32_t key_size, const V& value, kv_set_mode mode) const {
+      if constexpr (is_fixed_serializable_v<V>) {
+         char vbuf[sizeof(V)];
+         std::memcpy(vbuf, &value, sizeof(V));
+         return ::kv_set(_table_id, payer, key, key_size, vbuf, sizeof(V), mode);
+      } else {
+         auto v = serialize_value(value);
+         return ::kv_set(_table_id, payer, key, key_size, v.data(), v.size(), mode);
+      }
+   }
 
 protected:
    uint64_t _scope = 0;
@@ -295,33 +309,8 @@ public:
       return key;
    }
 
-   static ser_buf serialize_value(const V& value) {
-      if constexpr (std::is_trivially_copyable<V>::value) {
-         if (sizeof(V) == sysio::pack_size(value)) {
-            ser_buf buf(sizeof(V));
-            std::memcpy(buf.data(), &value, sizeof(V));
-            return buf;
-         }
-      }
-      uint32_t sz = sysio::pack_size(value);
-      ser_buf buf(sz);
-      sysio::datastream<char*> ds(buf.data(), buf.size());
-      ds << value;
-      return buf;
-   }
-
-   static V deserialize_value(const char* data, size_t size) {
-      V value;
-      if constexpr (std::is_trivially_copyable<V>::value) {
-         if (size == sizeof(V)) {
-            std::memcpy(&value, data, sizeof(V));
-            return value;
-         }
-      }
-      sysio::datastream<const char*> ds(data, size);
-      ds >> value;
-      return value;
-   }
+   static ser_buf serialize_value(const V& value) { return kv::serialize_value(value); }
+   static V deserialize_value(const char* data, size_t size) { return kv::deserialize_value<V>(data, size); }
 
    template<typename SecKey>
    be_key_stream encode_sec_key(const SecKey& key) const {
@@ -340,16 +329,12 @@ public:
       return key;
    }
 
-   // --- Scoped primary iterator creation ---
+   // --- Scoped iterator creation ---
 
-   uint32_t create_primary_it() const {
-      if constexpr (Scoped) {
-         char prefix[kv_scope_size];
-         encode_be64(prefix, _scope);
-         return ::kv_it_create(_table_id, code(), prefix, kv_scope_size);
-      } else {
-         return ::kv_it_create(_table_id, code(), nullptr, 0);
-      }
+   /// Open a primary handle at the first row at or after \p seek, bounded by this table's scope.
+   int32_t create_primary_it(const char* seek = nullptr, uint32_t seek_size = 0) const {
+      const auto prefix = make_prefix();
+      return ::kv_it_create(_table_id, code(), prefix.data, prefix.size, seek, seek_size);
    }
 
    /// Build the full scoped key from unscoped pri_key bytes (for secondary index lookups).
@@ -360,103 +345,111 @@ public:
       return bs;
    }
 
-   // --- Secondary index management (recursive template) ---
+   // --- Secondary index management ---
+   //
+   // One step per index, folded over the pack, so that each index's key streams are gone before the
+   // next one starts. Nested calls would hold them all at once, and 16 indices would outgrow the
+   // default stack.
 
-   template<size_t N, typename Index, typename... Rest>
-   struct secondary_ops {
-      static constexpr uint32_t _sec_tid = sysio::kv::compute_sec_table_id(
-         static_cast<uint64_t>(TableName), Index::index_name);
+   template<typename Index>
+   static constexpr uint32_t sec_table_id = sysio::kv::compute_sec_table_id(
+      static_cast<uint64_t>(TableName), Index::index_name);
 
-      static void store_all(const table_impl& tbl, uint64_t payer,
-                            const char* pri_data, uint32_t pri_size, const V& value) {
-         using ext_t = typename Index::secondary_extractor_type;
-         ext_t ext;
-         auto sec = tbl.encode_sec_key(ext(value));
-         ::kv_idx_store(payer, _sec_tid,
-                        pri_data, pri_size, sec.data(), sec.size());
-         if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::store_all(tbl, payer, pri_data, pri_size, value);
+   template<typename Index>
+   void store_secondary(uint64_t payer, const be_key_stream& pri, const V& value) const {
+      typename Index::secondary_extractor_type ext;
+      auto sec = encode_sec_key(ext(value));
+      detail::idx_store(sec_table_id<Index>, payer, pri.data(), pri.size(), sec.data(), sec.size());
+   }
+
+   template<typename Index>
+   void remove_secondary(const be_key_stream& pri, const V& value) const {
+      typename Index::secondary_extractor_type ext;
+      auto sec = encode_sec_key(ext(value));
+      detail::idx_erase(sec_table_id<Index>, pri.data(), pri.size(), sec.data(), sec.size());
+   }
+
+   template<typename Index>
+   void update_secondary(uint64_t payer, const be_key_stream& pri, const V& old_val, const V& new_val) const {
+      typename Index::secondary_extractor_type ext;
+      auto old_sec = encode_sec_key(ext(old_val));
+      auto new_sec = encode_sec_key(ext(new_val));
+      bool same = (old_sec.size() == new_sec.size()) &&
+                  (old_sec.size() == 0 || std::memcmp(old_sec.data(), new_sec.data(), old_sec.size()) == 0);
+      if (!same) {
+         detail::idx_update(sec_table_id<Index>, payer, pri.data(), pri.size(),
+                            old_sec.data(), old_sec.size(), new_sec.data(), new_sec.size());
       }
-
-      static void remove_all(const table_impl& tbl,
-                             const char* pri_data, uint32_t pri_size, const V& value) {
-         using ext_t = typename Index::secondary_extractor_type;
-         ext_t ext;
-         auto sec = tbl.encode_sec_key(ext(value));
-         ::kv_idx_remove(_sec_tid,
-                         pri_data, pri_size, sec.data(), sec.size());
-         if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::remove_all(tbl, pri_data, pri_size, value);
-      }
-
-      static void update_all(const table_impl& tbl, uint64_t payer,
-                              const char* pri_data, uint32_t pri_size,
-                              const V& old_val, const V& new_val) {
-         using ext_t = typename Index::secondary_extractor_type;
-         ext_t ext;
-         auto old_sec = tbl.encode_sec_key(ext(old_val));
-         auto new_sec = tbl.encode_sec_key(ext(new_val));
-         bool same = (old_sec.size() == new_sec.size()) &&
-                     (old_sec.size() == 0 || std::memcmp(old_sec.data(), new_sec.data(), old_sec.size()) == 0);
-         if (!same) {
-            ::kv_idx_update(payer, _sec_tid,
-                            pri_data, pri_size,
-                            old_sec.data(), old_sec.size(),
-                            new_sec.data(), new_sec.size());
-         }
-         if constexpr (sizeof...(Rest) > 0)
-            secondary_ops<N+1, Rest...>::update_all(tbl, payer, pri_data, pri_size, old_val, new_val);
-      }
-   };
-
-   struct no_secondary_ops {
-      static void store_all(const table_impl&, uint64_t, const char*, uint32_t, const V&) {}
-      static void remove_all(const table_impl&, const char*, uint32_t, const V&) {}
-      static void update_all(const table_impl&, uint64_t, const char*, uint32_t, const V&, const V&) {}
-   };
-
-   template<typename... Is>
-   struct sec_ops_selector { using type = secondary_ops<0, Is...>; };
-   template<>
-   struct sec_ops_selector<> { using type = no_secondary_ops; };
-   using sec_ops = typename sec_ops_selector<Indices...>::type;
+   }
 
    /// Secondary ops use unscoped pri_key — saves 8B/row vs storing scoped key.
    void store_secondaries(uint64_t payer, const K& key, const V& value) {
       auto pri = make_unscoped_key(key);
-      sec_ops::store_all(*this, payer, pri.data(), pri.size(), value);
+      (store_secondary<Indices>(payer, pri, value), ...);
    }
    void remove_secondaries(const K& key, const V& value) {
       auto pri = make_unscoped_key(key);
-      sec_ops::remove_all(*this, pri.data(), pri.size(), value);
+      (remove_secondary<Indices>(pri, value), ...);
    }
    void update_secondaries(uint64_t payer, const K& key, const V& old_val, const V& new_val) {
       auto pri = make_unscoped_key(key);
-      sec_ops::update_all(*this, payer, pri.data(), pri.size(), old_val, new_val);
+      (update_secondary<Indices>(payer, pri, old_val, new_val), ...);
    }
 
+   // store_secondaries, remove_secondaries, update_secondaries and do_erase are public but internal:
+   // calling store_secondaries directly strands a (sec_key -> pri_key) mapping, because nothing ties
+   // it to a primary row.
+
 private:
-   // Internal insert (no duplicate check — caller must verify).
-   //
-   // Private deliberately. Inserting over an existing key here silently overwrites the row
-   // and, because store_secondaries is an unconditional kv_idx_store, either strands the old
-   // (sec_key -> pri_key) mapping (when the secondary value changed) or trips the host's
-   // ordered_unique constraint on (code, table_id, sec_key, pri_key). emplace() pays one
-   // kv_contains so no PUBLIC path reaches an unguarded insert.
-   //
-   // Only do_insert is sealed. store_secondaries, remove_secondaries, update_secondaries and
-   // do_erase below are public, and calling store_secondaries directly strands a mapping the
-   // same way -- treat them as internal.
-   void do_insert(uint64_t payer, const be_key_stream& k, const K& key, const V& value) {
-      if constexpr (is_fixed_serializable_v<V>) {
-         char vbuf[sizeof(V)];
-         std::memcpy(vbuf, &value, sizeof(V));
-         ::kv_set(_table_id, payer, k.data(), k.size(), vbuf, sizeof(V));
-      } else {
-         auto v = serialize_value(value);
-         ::kv_set(_table_id, payer, k.data(), k.size(), v.data(), v.size());
+   /// The scope as a key prefix. Empty on an unscoped table.
+   struct key_prefix {
+      char     data[kv_scope_size];
+      uint32_t size = 0;
+   };
+
+   /// This table's scope as a key_prefix.
+   key_prefix make_prefix() const {
+      key_prefix prefix;
+      if constexpr (Scoped) {
+         encode_be64(prefix.data, _scope);
+         prefix.size = kv_scope_size;
       }
-      store_secondaries(payer, key, value);
+      return prefix;
+   }
+
+   /// Open a secondary handle at the first entry at or after \p seek. The scope leads every secondary
+   /// key of a scoped table, so passing it as the prefix bounds each step without the wrapper reading
+   /// a key to check.
+   int32_t create_index_it(uint32_t sec_table_id, const char* seek = nullptr, uint32_t seek_size = 0) const {
+      const auto prefix = make_prefix();
+      return ::kv_idx_create(sec_table_id, code(), prefix.data, prefix.size, seek, seek_size);
+   }
+
+   /// Replace a row's value and move its index entries.
+   /// @param not_found_msg raised when the row is gone
+   void update_row(uint64_t payer, const K& key, const V& old_value, const V& new_value,
+                   const char* not_found_msg) {
+      auto k = make_key(key);
+      update_secondaries(payer, key, old_value, new_value);
+      sysio::check(write_value(payer, k.data(), k.size(), new_value, kv_set_update) == kv_status_ok, not_found_msg);
+   }
+
+   /// Replace a row an iterator holds. A table with secondary indices moves their entries from the
+   /// stored row, not from \p held: writing back a key an index no longer holds would otherwise look
+   /// like no move at all, and leave the row and its index apart for good.
+   ///
+   /// The write goes to the receiver, whatever account the iterator read from. It misses when the row
+   /// has gone, or when a handle on another account read a row the receiver never held, and
+   /// msg::row_not_held has to be true of both.
+   void modify_held_row(uint64_t payer, const K& key, const V& held, const V& new_value) {
+      if constexpr (sizeof...(Indices) > 0) {
+         auto k = make_key(key);
+         V stored;
+         sysio::check(read_value(k.data(), k.size(), stored), msg::row_not_modified);
+         update_row(payer, key, stored, new_value, msg::row_not_held);
+      } else {
+         update_row(payer, key, held, new_value, msg::row_not_held);
+      }
    }
 
 public:
@@ -464,14 +457,14 @@ public:
    void do_erase(const K& key, const V& value) {
       remove_secondaries(key, value);
       auto pri = make_key(key);
-      ::kv_erase(_table_id, pri.data(), pri.size());
+      detail::erase_row(_table_id, pri.data(), pri.size());
    }
 
 public:
    /// Construct a table. Reads/iterates against \p code's data (default: current contract).
    table_impl(sysio::name code = sysio::name{}) : _code(code.value) {}
 
-   name get_code() const { return name(_code ? _code : sysio::current_receiver().value); }
+   name get_code() const { return name(code()); }
 
    // --- Row type ---
    struct row {
@@ -480,6 +473,21 @@ public:
    };
 
    // --- Primary const_iterator ---
+   //
+   // An iterator holds a copy of its row, so reading it never reaches the host. It takes a host
+   // handle only once it has to step, because a handle costs a create, a seek and a destroy that a
+   // point lookup never needs:
+   //
+   //   - find() and a copy start with no handle. The first ++ or -- opens one, by key.
+   //   - erase() returns an iterator that still owes its step. Nothing reaches the host until that
+   //     iterator is first used, so a caller that ignores it pays nothing.
+   //
+   // Being a copy, the row does not follow the table. modify() through an iterator updates that one
+   // iterator. Any other iterator on the row keeps what it read, so find the row again to write
+   // through it.
+   //
+   // The table must outlive its iterators, as with multi_index: opening a handle reads the table's
+   // code and scope.
    struct const_iterator {
       using iterator_category = std::bidirectional_iterator_tag;
       using value_type        = V;
@@ -490,159 +498,189 @@ public:
       const_iterator() = default;
 
       /// Dereference returns the value (like multi_index). Use key() for the key.
-      const V& operator*()  const { sysio::check(_valid, "deref end iterator"); return _row.value; }
-      const V* operator->() const { sysio::check(_valid, "deref end iterator"); return &_row.value; }
+      const V& operator*()  const { sysio::check(valid(), "deref end iterator"); return _row.value; }
+      const V* operator->() const { sysio::check(valid(), "deref end iterator"); return &_row.value; }
 
       /// Access the key at the current position.
-      const K& key()  const { sysio::check(_valid, "key() on end iterator"); return _row.key; }
+      const K& key()  const { sysio::check(valid(), "key() on end iterator"); return _row.key; }
 
       const_iterator& operator++() {
-         if (!_valid) return *this;
-         if (::kv_it_next(_handle) != 0) _valid = false;
-         else load();
+         if (valid()) step_next();
          return *this;
       }
 
       const_iterator& operator--() {
+         settle();
          if (_handle < 0) {
-            ensure_handle();
-            char max_key[kv_key_max_bytes];
-            memset(max_key, 0xFF, sizeof(max_key));
-            ::kv_it_lower_bound(_handle, max_key, sizeof(max_key));
-            if (::kv_it_prev(_handle) == 0) { _valid = true; load(); }
-            else _valid = false;
-         } else {
-            if (::kv_it_prev(_handle) == 0) { _valid = true; load(); }
-            else _valid = false;
+            if (_valid) {
+               // Lands on this row, or on the one after it if this row is gone, and prev is the
+               // row before this position either way.
+               open_handle(_raw_key.data(), _raw_key.size());
+            } else {
+               detail::end_seek seek;
+               open_handle(seek.data, seek.size);
+            }
          }
+         take_row<::kv_it_prev>();
          return *this;
       }
 
-      // Post-increment/decrement deleted: the underlying KV iterator handle is
-      // a unique resource — returning a copy of the old position would require
-      // cloning the handle, which is expensive. Use ++it / --it instead.
+      // Post-increment/decrement deleted: returning a copy of the old position
+      // would make every step in a loop re-open a host handle by key.
+      // Use ++it / --it instead.
       const_iterator operator++(int) = delete;
       const_iterator operator--(int) = delete;
 
       friend bool operator==(const const_iterator& a, const const_iterator& b) {
+         a.settle();
+         b.settle();
          return a._valid == b._valid && (!a._valid || a._raw_key == b._raw_key);
       }
 
       const_iterator(const_iterator&& o) noexcept
-         : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid),
+         : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid), _next_owed(o._next_owed),
            _row(std::move(o._row)), _raw_key(std::move(o._raw_key))
-      { o._valid = false; }
+      { o._valid = false; o._next_owed = false; }
 
       const_iterator& operator=(const_iterator&& o) noexcept {
          if (this != &o) {
-            _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid;
+            _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid; _next_owed = o._next_owed;
             _row = std::move(o._row); _raw_key = std::move(o._raw_key);
-            o._valid = false;
+            o._valid = false; o._next_owed = false;
          }
          return *this;
       }
 
-      /// Copy constructor: re-creates an iterator at the same position.
-      /// Required for std::reverse_iterator (CopyConstructible).
+      /// Copy: the same position with no handle of its own, so copying makes no host call. The
+      /// copy opens a handle by key on its first ++ or --.
       const_iterator(const const_iterator& o)
-         : _tbl(o._tbl), _valid(o._valid), _row(o._row)
-      {
-         if (o._valid && !o._raw_key.empty()) {
-            _raw_key.assign(o._raw_key.data(), o._raw_key.size());
-            _handle.reset(_tbl->create_primary_it());
-            ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
-         }
-      }
+         : _tbl(o._tbl), _valid(o._valid), _next_owed(o._next_owed), _row(o._row), _raw_key(o._raw_key) {}
+
       const_iterator& operator=(const const_iterator& o) {
          if (this != &o) {
-            _tbl = o._tbl; _valid = o._valid; _row = o._row;
-            if (o._valid && !o._raw_key.empty()) {
-               _raw_key.assign(o._raw_key.data(), o._raw_key.size());
-               _handle.reset(_tbl->create_primary_it());
-               ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
-            }
+            _tbl = o._tbl; _handle.reset(); _valid = o._valid; _next_owed = o._next_owed;
+            _row = o._row; _raw_key = o._raw_key;
          }
          return *this;
       }
 
    private:
       friend class table_impl;
+      friend class detail::reverse_cursor<const_iterator>;
       const table_impl* _tbl = nullptr;
-      kv::detail::it_handle _handle;
-      bool                 _valid = false;
-      row                  _row;
-      key_buf              _raw_key;
+      // Mutable because a const read settles an owed step, the one thing a read can trigger.
+      mutable kv::detail::it_handle _handle;
+      mutable bool         _valid = false;
+      mutable bool         _next_owed = false;   ///< erase() deferred the step to the next row
+      mutable row          _row;
+      mutable key_buf      _raw_key;
 
-      const_iterator(const table_impl* t, int32_t h, bool valid)
-         : _tbl(t), _handle(h), _valid(valid) {
-         if (_valid) load();
-      }
+      /// Take over a handle and read the row it was opened on.
+      const_iterator(const table_impl* t, int32_t h) : _tbl(t), _handle(h) { take_row<read_here>(); }
 
       static const_iterator make_end(const table_impl* t) {
          const_iterator it; it._tbl = t; return it;
       }
 
-      void load() {
-         char key_stack[key_buf::inline_cap];
-         uint32_t key_size = 0;
-         if (::kv_it_key(_handle, 0, key_stack, key_buf::inline_cap, &key_size) != 0) {
-            _valid = false; return;
-         }
-         if (key_size <= key_buf::inline_cap) {
-            _raw_key.assign(key_stack, key_size);
-         } else {
-            char* kh = new char[key_size];
-            ::kv_it_key(_handle, 0, kh, key_size, &key_size);
-            _raw_key.assign(kh, key_size);
-            delete[] kh;
-         }
-         _row.key = _tbl->decode_key(_raw_key.data(), _raw_key.size());
+      /// Take the step erase() deferred, if there is one.
+      void settle() const {
+         if (!_next_owed) return;
+         _next_owed = false;
+         step_next();
+      }
 
-         if constexpr (is_fixed_serializable_v<V>) {
-            char vbuf[sizeof(V)];
-            uint32_t val_size = 0;
-            ::kv_it_value(_handle, 0, vbuf, sizeof(V), &val_size);
-            std::memcpy(&_row.value, vbuf, sizeof(V));
+      /// True when positioned on a row, after settling.
+      bool valid() const {
+         settle();
+         return _valid;
+      }
+
+      /// reverse_cursor's test for a row here: false at end.
+      bool positioned() const { return valid(); }
+
+      /// reverse_cursor's move to the previous row, landing on end past the first one.
+      void step_back() { --*this; }
+
+      /// reverse_cursor's move to the first row, or to end on an empty table. Aborts on a
+      /// default-constructed iterator.
+      void to_first() {
+         sysio::check(_tbl != nullptr, msg::no_table);
+         *this = _tbl->begin();
+      }
+
+      /// Move to the next row. By key when there is no handle yet: seeking the key itself and
+      /// stepping would skip a row after an erase, and would land back on a row erased and written
+      /// again at the same key.
+      void step_next() const {
+         if (_handle < 0) {
+            detail::successor_key seek(_raw_key.data(), _raw_key.size());
+            open_handle(seek.data(), seek.size());
+            take_row<read_here>();
          } else {
-            char val_stack[kv_value_stack_size];
-            uint32_t val_size = 0;
-            ::kv_it_value(_handle, 0, val_stack, kv_value_stack_size, &val_size);
-            if (val_size <= kv_value_stack_size) {
-               _row.value = deserialize_value(val_stack, val_size);
-            } else {
-               char* heap = new char[val_size];
-               ::kv_it_value(_handle, 0, heap, val_size, &val_size);
-               _row.value = deserialize_value(heap, val_size);
-               delete[] heap;
-            }
+            take_row<::kv_it_next>();
          }
       }
 
-      void ensure_handle() {
-         if (_handle >= 0) return;
-         if (!_tbl) return;
-         _handle.reset(_tbl->create_primary_it());
-         if (_valid && !_raw_key.empty())
-            ::kv_it_lower_bound(_handle, _raw_key.data(), _raw_key.size());
+      /// Open a handle at the first row at or after a seek key.
+      void open_handle(const char* seek, uint32_t seek_size) const {
+         sysio::check(_tbl != nullptr, msg::no_table);
+         _handle.reset(_tbl->create_primary_it(seek, seek_size));
+      }
+
+      /// kv_it_read in the shape of the moves, for take_row.
+      static int32_t read_here(int32_t handle, void* key, uint32_t key_capacity, void* value, uint32_t value_capacity,
+                               uint32_t* key_size, uint32_t* value_size) {
+         return ::kv_it_read(handle, 0, key, key_capacity, value, value_capacity, key_size, value_size);
+      }
+
+      /// Run one host call that lands the handle on a row, and hold that row. The call fills stack
+      /// buffers, so a scan is one host call per row. A row larger than those buffers is read
+      /// again at its full size.
+      template<auto HostCall>
+      void take_row() const {
+         char     key_stack[key_buf::inline_cap];
+         char     value_stack[value_stack_capacity];
+         uint32_t key_size = 0;
+         uint32_t value_size = 0;
+         _valid = HostCall(_handle, key_stack, key_buf::inline_cap, value_stack, value_stack_capacity,
+                           &key_size, &value_size) == kv_status_ok;
+         if (!_valid) return;
+         if (key_size <= key_buf::inline_cap && value_size <= value_stack_capacity) {
+            hold_row(key_stack, key_size, value_stack, value_size);
+         } else {
+            ser_buf key_heap(key_size);
+            ser_buf value_heap(value_size);
+            sysio::check(read_here(_handle, key_heap.data(), key_size, value_heap.data(), value_size,
+                                   &key_size, &value_size) == kv_status_ok, msg::row_lost);
+            hold_row(key_heap.data(), key_size, value_heap.data(), value_size);
+         }
+      }
+
+      void hold_row(const char* key, uint32_t key_size, const char* value, uint32_t value_size) const {
+         _raw_key.assign(key, key_size);
+         _row.key = _tbl->decode_key(key, key_size);
+         _row.value = deserialize_value(value, value_size);
       }
    };
 
    // --- Primary key operations ---
 
-   const_iterator begin() const {
-      uint32_t h = create_primary_it();
-      return const_iterator(this, h, ::kv_it_status(h) == 0);
-   }
+   /// Two host calls: kv_it_create, then kv_it_read.
+   const_iterator begin() const { return const_iterator(this, create_primary_it()); }
 
    const_iterator end() const { return const_iterator::make_end(this); }
 
+   /// Find the row at \p key. One kv_get, or two when the value overflows the stack buffer. The
+   /// iterator holds the row and opens no host handle until its first ++ or --.
    const_iterator find(const K& key) const {
       auto k = make_key(key);
-      if (!::kv_contains(_table_id, code(), k.data(), k.size()))
-         return end();
-      uint32_t h = create_primary_it();
-      ::kv_it_lower_bound(h, k.data(), k.size());
-      return const_iterator(this, h, true);
+      auto it = end();
+      if (read_value(k.data(), k.size(), it._row.value)) {
+         it._row.key = key;
+         it._raw_key.assign(k.data(), k.size());
+         it._valid = true;
+      }
+      return it;
    }
 
    const_iterator require_find(const K& key, const char* msg = "unable to find key") const {
@@ -654,50 +692,35 @@ public:
    /// Returns the value for key, or nullopt if not found.
    std::optional<V> try_get(const K& key) const {
       auto k = make_key(key);
-      if constexpr (is_fixed_serializable_v<V>) {
-         char vbuf[sizeof(V)];
-         int32_t sz = ::kv_get(_table_id, code(), k.data(), k.size(), vbuf, sizeof(V));
-         if (sz < 0) return {};
-         V val; std::memcpy(&val, vbuf, sizeof(V));
-         return val;
-      } else {
-         char stack[kv_value_stack_size];
-         int32_t sz = ::kv_get(_table_id, code(), k.data(), k.size(), stack, kv_value_stack_size);
-         if (sz < 0) return {};
-         if (sz <= static_cast<int32_t>(kv_value_stack_size))
-            return deserialize_value(stack, sz);
-         char* heap = new char[sz];
-         ::kv_get(_table_id, code(), k.data(), k.size(), heap, sz);
-         V result = deserialize_value(heap, sz);
-         delete[] heap;
-         return result;
-      }
+      V value;
+      if (!read_value(k.data(), k.size(), value)) return {};
+      return value;
    }
 
    /// Returns the value for key. Asserts if not found.
    V get(const K& key, const char* msg = "key not found") const {
       auto val = try_get(key);
       sysio::check(val.has_value(), msg);
-      return *val;
+      return *std::move(val);
    }
 
+   /// One kv_get with an empty buffer, which reads nothing and reports whether the row exists.
    bool contains(const K& key) const {
       auto k = make_key(key);
-      return ::kv_contains(_table_id, code(), k.data(), k.size()) != 0;
+      return ::kv_get(_table_id, code(), k.data(), k.size(), 0, nullptr, 0) >= 0;
    }
 
+   /// Two host calls: kv_it_create at the key, then kv_it_read.
    const_iterator lower_bound(const K& key) const {
       auto k = make_key(key);
-      uint32_t h = create_primary_it();
-      int32_t status = ::kv_it_lower_bound(h, k.data(), k.size());
-      return const_iterator(this, h, status == 0);
+      return const_iterator(this, create_primary_it(k.data(), k.size()));
    }
 
+   /// Two host calls, like lower_bound.
    const_iterator upper_bound(const K& key) const {
-      auto it = lower_bound(key);
-      auto encoded = make_key(key);
-      if (it != end() && it._raw_key.equals(encoded.data(), encoded.size())) ++it;
-      return it;
+      auto k = make_key(key);
+      detail::successor_key seek(k.data(), k.size());
+      return const_iterator(this, create_primary_it(seek.data(), seek.size()));
    }
 
    // --- Mutation ---
@@ -705,23 +728,22 @@ public:
    // payer 0 (same_payer) on insert, since a new row has no existing payer to keep. same_payer stays
    // valid for modify (update), where it keeps the row's current payer.
 
-   /// Insert a new row. Asserts if the key already exists. Use upsert()/set()
-   /// for insert-or-update semantics.
+   /// Insert a new row, in one kv_set when the table has no secondary index. Asserts \p exists_msg
+   /// if the key already exists. Use upsert()/set() for insert-or-update semantics.
    ///
-   /// WRITES IGNORE code(), as they do in kv::global. kv_get and kv_contains take a code
-   /// argument, so reads honour whatever account this handle was constructed with; kv_set,
-   /// kv_erase and kv_idx_store have no such parameter and always land on the current
-   /// receiver. A handle opened on a FOREIGN account is therefore read-only in practice --
-   /// mutating through one probes their table and writes your own, and because table_id is
-   /// derived from the table name alone, that write lands on your row of the same name.
-   /// Nothing detects it at compile time. Construct foreign-code handles for reading only.
+   /// WRITES IGNORE code(), as they do in kv::global. kv_get takes a code argument, so reads honour
+   /// whatever account this handle was constructed with; kv_set, kv_erase and kv_idx_store have no
+   /// such parameter and always land on the current receiver. A handle opened on a FOREIGN account
+   /// is therefore read-only in practice -- because table_id is derived from the table name alone,
+   /// mutating through one lands on your row of the same name. Nothing detects it at compile time.
+   /// Construct foreign-code handles for reading only.
    ///
    /// (sysio::multi_index does guard this, because upstream does and ported contracts rely
    /// on the abort; these wrappers have no such compatibility obligation.)
    void emplace(name payer, const K& key, const V& value, const char* exists_msg = "key already exists") {
       auto k = make_key(key);
-      sysio::check(!::kv_contains(_table_id, code(), k.data(), k.size()), exists_msg);
-      do_insert(payer.value, k, key, value);
+      sysio::check(write_value(payer.value, k.data(), k.size(), value, kv_set_insert) == kv_status_ok, exists_msg);
+      store_secondaries(payer.value, key, value);
    }
 
    /// Lambda emplace: construct the value in-place.
@@ -735,44 +757,17 @@ public:
    /// Upsert convenience alias.
    void set(name payer, const K& key, const V& value) { upsert(payer, key, value); }
 
-   /// Insert or update a row. If the key already exists, the old value is read
-   /// and secondary indexes are updated correctly (like modify). If the key is
-   /// new, it is inserted (like emplace). Costs one extra kv_get on the insert
-   /// path to check for existence.
+   /// Insert or update a row. One kv_set when the table has no secondary index. With one, the old
+   /// value is read first so its entries can be stored or moved, which adds one kv_get.
    void upsert(name payer, const K& key, const V& value) {
       auto k = make_key(key);
-      if constexpr (is_fixed_serializable_v<V>) {
-         char old_vbuf[sizeof(V)];
-         int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), old_vbuf, sizeof(V));
-         if (old_sz >= 0) {
-            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
-            update_secondaries(payer.value, key, old_value, value);
-         } else {
-            store_secondaries(payer.value, key, value);
-         }
-         char vbuf[sizeof(V)];
-         std::memcpy(vbuf, &value, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
-      } else {
-         char stack[kv_value_stack_size];
-         int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), stack, kv_value_stack_size);
-         if (old_sz >= 0) {
-            const char* old_data = stack;
-            char* heap = nullptr;
-            if (old_sz > static_cast<int32_t>(kv_value_stack_size)) {
-               heap = new char[old_sz];
-               ::kv_get(_table_id, code(), k.data(), k.size(), heap, old_sz);
-               old_data = heap;
-            }
-            V old_value = deserialize_value(old_data, old_sz);
-            delete[] heap;
-            update_secondaries(payer.value, key, old_value, value);
-         } else {
-            store_secondaries(payer.value, key, value);
-         }
-         auto v = serialize_value(value);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+      if constexpr (sizeof...(Indices) > 0) {
+         V old_value;
+         if (read_value(k.data(), k.size(), old_value)) update_secondaries(payer.value, key, old_value, value);
+         else store_secondaries(payer.value, key, value);
       }
+      sysio::check(write_value(payer.value, k.data(), k.size(), value, kv_set_upsert) == kv_status_ok,
+                   msg::write_refused);
    }
 
    /// Insert with a default value, or update with a lambda.
@@ -788,60 +783,27 @@ public:
    template<typename Lambda, typename = std::enable_if_t<std::is_invocable_v<Lambda, V&>>>
    void upsert(name payer, const K& key, const V& default_value, Lambda&& updater) {
       auto k = make_key(key);
-      if constexpr (is_fixed_serializable_v<V>) {
-         char old_vbuf[sizeof(V)];
-         int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), old_vbuf, sizeof(V));
-         V new_value;
-         if (old_sz >= 0) {
-            V old_value; std::memcpy(&old_value, old_vbuf, sizeof(V));
-            new_value = old_value;
-            updater(new_value);
-            update_secondaries(payer.value, key, old_value, new_value);
-         } else {
-            new_value = default_value;
-            store_secondaries(payer.value, key, new_value);
-         }
-         char vbuf[sizeof(V)];
-         std::memcpy(vbuf, &new_value, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
+      V old_value;
+      V new_value;
+      if (read_value(k.data(), k.size(), old_value)) {
+         new_value = old_value;
+         updater(new_value);
+         update_secondaries(payer.value, key, old_value, new_value);
       } else {
-         char stack[kv_value_stack_size];
-         int32_t old_sz = ::kv_get(_table_id, code(), k.data(), k.size(), stack, kv_value_stack_size);
-         V new_value;
-         if (old_sz >= 0) {
-            const char* old_data = stack;
-            char* heap = nullptr;
-            if (old_sz > static_cast<int32_t>(kv_value_stack_size)) {
-               heap = new char[old_sz];
-               ::kv_get(_table_id, code(), k.data(), k.size(), heap, old_sz);
-               old_data = heap;
-            }
-            V old_value = deserialize_value(old_data, old_sz);
-            delete[] heap;
-            new_value = old_value;
-            updater(new_value);
-            update_secondaries(payer.value, key, old_value, new_value);
-         } else {
-            new_value = default_value;
-            store_secondaries(payer.value, key, new_value);
-         }
-         auto v = serialize_value(new_value);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
+         new_value = default_value;
+         store_secondaries(payer.value, key, new_value);
       }
+      sysio::check(write_value(payer.value, k.data(), k.size(), new_value, kv_set_upsert) == kv_status_ok,
+                   msg::write_refused);
    }
 
+   /// Replace the row at \p it. On a table with secondary indices this reads the row first, for one
+   /// more kv_get, and moves its index entries from what is stored, because \p it holds a copy that
+   /// another iterator's write can have left behind. \p it reads the new value afterwards.
    void modify(name payer, const const_iterator& it, const V& new_value) {
-      sysio::check(it._valid, "cannot modify end iterator");
-      auto k = make_key(it._row.key);
-      update_secondaries(payer.value, it._row.key, it._row.value, new_value);
-      if constexpr (is_fixed_serializable_v<V>) {
-         char vbuf[sizeof(V)];
-         std::memcpy(vbuf, &new_value, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
-      } else {
-         auto v = serialize_value(new_value);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
-      }
+      sysio::check(it.valid(), msg::modify_end);
+      modify_held_row(payer.value, it._row.key, it._row.value, new_value);
+      it._row.value = new_value;
    }
 
    void modify(const const_iterator& it, const V& new_value) {
@@ -854,16 +816,7 @@ public:
       V old_val = get(key, not_found_msg);
       V new_val = old_val;
       updater(new_val);
-      auto k = make_key(key);
-      update_secondaries(payer.value, key, old_val, new_val);
-      if constexpr (is_fixed_serializable_v<V>) {
-         char vbuf[sizeof(V)];
-         std::memcpy(vbuf, &new_val, sizeof(V));
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
-      } else {
-         auto v = serialize_value(new_val);
-         ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
-      }
+      update_row(payer.value, key, old_val, new_val, not_found_msg);
    }
 
    template<typename Lambda>
@@ -871,19 +824,50 @@ public:
       modify(name{}, key, std::forward<Lambda>(updater));
    }
 
-   const_iterator erase(const_iterator it) {
-      sysio::check(it._valid, "cannot erase end iterator");
-      K saved_key = it._row.key;
-      V saved_value = it._row.value;
-      ++it;
-      do_erase(saved_key, saved_value);
-      return it;
+private:
+   /// Erase the row at \p it and leave it owing its step to the next row.
+   const_iterator erase_and_owe(const_iterator&& it) {
+      sysio::check(it.valid(), msg::erase_end);
+      do_erase(it._row.key, it._row.value);
+      it._next_owed = true;
+      return std::move(it);
    }
 
-   /// Erase by key. Asserts if key not found.
+public:
+   /// Erase the row at \p it and return an iterator to the row after it.
+   ///
+   /// The returned iterator owes its step, so ignoring it makes no further host call. It takes the
+   /// step when first used: it lands on the first row past the erased key at that moment, so a row
+   /// written between this call and that use is seen.
+   ///
+   /// The result takes over \p it's host handle, so `it = tbl.erase(it)` and
+   /// `it = tbl.erase(std::move(it))` make the same host calls, though the lvalue form also copies
+   /// the key and value. An lvalue stays on the erased row, holding that row's copy and no handle:
+   /// stepping it opens one by key. If it still owed a step from an earlier erase it keeps owing
+   /// that one, and takes it by key at first use.
+   const_iterator erase(const_iterator& it) {
+      const_iterator next(std::as_const(it));
+      next._handle = std::move(it._handle);
+      return erase_and_owe(std::move(next));
+   }
+
+   const_iterator erase(const_iterator&& it) { return erase_and_owe(std::move(it)); }
+   const_iterator erase(const const_iterator& it) { return erase_and_owe(const_iterator(it)); }
+
+   /// Erase by key. Asserts \p not_found_msg if the key is not found. One kv_erase when the table
+   /// has no secondary index. With one, the row is read first to find its entries.
+   ///
+   /// On a handle built for a foreign account, as with every write here, the row erased is the
+   /// receiver's. A table with no index never looks at that account, so \p not_found_msg then reports
+   /// the receiver's row. With an index, the read goes to the foreign account first.
    void erase(const K& key, const char* not_found_msg = "key not found") {
-      V val = get(key, not_found_msg);
-      do_erase(key, val);
+      if constexpr (sizeof...(Indices) == 0) {
+         auto k = make_key(key);
+         sysio::check(::kv_erase(_table_id, k.data(), k.size()) == kv_status_ok, not_found_msg);
+      } else {
+         V val = get(key, not_found_msg);
+         do_erase(key, val);
+      }
    }
 
    // --- Iterator aliases ---
@@ -891,9 +875,13 @@ public:
    const_iterator cbegin() const { return begin(); }
    const_iterator cend() const { return end(); }
 
-   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+   using const_reverse_iterator = detail::reverse_cursor<const_iterator>;
+
+   /// Two host calls: kv_it_create past the last row, then kv_it_prev. Each step after that is one.
    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-   const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+
+   /// No host call.
+   const_reverse_iterator rend() const { return const_reverse_iterator::rend(end()); }
    const_reverse_iterator crbegin() const { return rbegin(); }
    const_reverse_iterator crend() const { return rend(); }
 
@@ -912,11 +900,10 @@ public:
    template<typename KK = K, std::enable_if_t<has_primary_key<KK>::value, int> = 0>
    uint64_t available_primary_key() const {
       auto it = end();
-      if (begin() == it) return 0;
       --it;
+      if (it == end()) return 0;
       auto pk = it.key().primary_key();
-      sysio::check(pk < std::numeric_limits<uint64_t>::max(),
-                   "next primary key in table is at autoincrement limit");
+      sysio::check(pk < std::numeric_limits<uint64_t>::max(), msg::pk_limit);
       return pk + 1;
    }
 
@@ -949,22 +936,6 @@ public:
       table_impl* _tbl;
       secondary_index_view(table_impl& tbl) : _tbl(&tbl) {}
 
-      /// Check that the secondary index handle points to an entry within the current scope.
-      /// For unscoped tables (Scoped=false), always returns true (compiles away).
-      static bool idx_check_scope(int32_t handle, uint64_t scope) {
-         if constexpr (!Scoped) return true;
-         else {
-            if (handle < 0) return false;
-            char scope_buf[kv_scope_size];
-            uint32_t actual = 0;
-            if (::kv_idx_key(handle, 0, scope_buf, kv_scope_size, &actual) != 0 || actual < kv_scope_size)
-               return false;
-            char expected[kv_scope_size];
-            encode_be64(expected, scope);
-            return memcmp(scope_buf, expected, kv_scope_size) == 0;
-         }
-      }
-
       // --- key_row for key-only iteration ---
       struct key_row {
          K              key;
@@ -974,48 +945,30 @@ public:
       // --- Secondary const_iterator ---
       struct const_iterator {
          using iterator_category = std::bidirectional_iterator_tag;
-         using value_type        = row;
+         using value_type        = V;
          using difference_type   = std::ptrdiff_t;
-         using pointer           = const row*;
-         using reference         = const row&;
+         using pointer           = const V*;
+         using reference         = const V&;
 
          const_iterator() = default;
 
-         const V& operator*()  const { sysio::check(_valid, "deref invalid sec iter"); return _row.value; }
-         const V* operator->() const { sysio::check(_valid, "deref invalid sec iter"); return &_row.value; }
-         const K& key()  const { sysio::check(_valid, "key() on invalid sec iter"); return _row.key; }
+         const V& operator*()  const { sysio::check(valid(), "deref invalid sec iter"); return _row.value; }
+         const V* operator->() const { sysio::check(valid(), "deref invalid sec iter"); return &_row.value; }
+         const K& key()  const { sysio::check(valid(), "key() on invalid sec iter"); return _row.key; }
 
          const_iterator& operator++() {
-            if (!_valid || _handle < 0) return *this;
-            if (::kv_idx_next(_handle) == 0 && check_scope()) load_current();
-            else _valid = false;
+            if (valid()) step_next();
             return *this;
          }
 
          const_iterator& operator--() {
+            settle();
             if (_handle < 0) {
-               if constexpr (Scoped) {
-                  // Max sec key for this scope: [scope:8B][0xFF...]
-                  char max_sec[kv_key_max_bytes];
-                  encode_be64(max_sec, _tbl->_scope);
-                  memset(max_sec + kv_scope_size, 0xFF, sizeof(max_sec) - kv_scope_size);
-                  _handle.reset(::kv_idx_lower_bound(
-                     _tbl->code(), _sec_table_id,
-                     max_sec, sizeof(max_sec)));
-               } else {
-                  char max_sec[kv_key_max_bytes];
-                  memset(max_sec, 0xFF, sizeof(max_sec));
-                  _handle.reset(::kv_idx_lower_bound(
-                     _tbl->code(), _sec_table_id,
-                     max_sec, sizeof(max_sec)));
-               }
-               if (_handle < 0) { _valid = false; }
-               else if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_current(); }
-               else { _valid = false; }
-            } else {
-               if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_current(); }
-               else { _valid = false; }
+               sysio::check(_tbl != nullptr, msg::no_table);
+               detail::end_seek seek;
+               _handle.reset(_tbl->create_index_it(_sec_table_id, seek.data, seek.size));
             }
+            take_entry<::kv_idx_prev>();
             return *this;
          }
 
@@ -1024,20 +977,22 @@ public:
          const_iterator operator--(int) = delete;
 
          friend bool operator==(const const_iterator& a, const const_iterator& b) {
+            a.settle();
+            b.settle();
             if (!a._valid && !b._valid) return true;
             if (!a._valid || !b._valid) return false;
             return a._pri_bytes == b._pri_bytes;
          }
 
          const_iterator(const_iterator&& o) noexcept
-            : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid),
+            : _tbl(o._tbl), _handle(std::move(o._handle)), _valid(o._valid), _next_owed(o._next_owed),
               _row(std::move(o._row)), _pri_bytes(std::move(o._pri_bytes))
-         { o._valid = false; }
+         { o._valid = false; o._next_owed = false; }
          const_iterator& operator=(const_iterator&& o) noexcept {
             if (this != &o) {
-               _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid;
+               _tbl = o._tbl; _handle = std::move(o._handle); _valid = o._valid; _next_owed = o._next_owed;
                _row = std::move(o._row); _pri_bytes = std::move(o._pri_bytes);
-               o._valid = false;
+               o._valid = false; o._next_owed = false;
             }
             return *this;
          }
@@ -1047,67 +1002,62 @@ public:
       private:
          friend struct secondary_index_view;
 
-         bool check_scope() const { return idx_check_scope(_handle, _tbl->_scope); }
-
          table_impl* _tbl = nullptr;
          kv::detail::idx_handle _handle;
-         bool           _valid = false;
-         row            _row;
-         key_buf        _pri_bytes;
+         // Mutable because a const read settles an owed step, the one thing a read can trigger.
+         mutable bool    _valid = false;
+         mutable bool    _next_owed = false;   ///< erase() deferred the step to the next entry
+         mutable row     _row;
+         mutable key_buf _pri_bytes;
 
-         const_iterator(table_impl* tbl, int32_t handle, bool valid)
-            : _tbl(tbl), _handle(handle), _valid(valid) {
-            if (_valid) load_current();
+         /// Take over a handle and read the entry it was opened on.
+         const_iterator(table_impl* tbl, int32_t handle) : _tbl(tbl), _handle(handle) {
+            take_entry<::kv_idx_read>();
          }
 
          static const_iterator make_end(table_impl* tbl) {
             const_iterator it; it._tbl = tbl; return it;
          }
 
-         void load_current() {
-            if (_handle < 0) { _valid = false; return; }
-            char pri_stack[key_buf::inline_cap];
+         /// Take the step erase() deferred, if there is one.
+         void settle() const {
+            if (!_next_owed) return;
+            _next_owed = false;
+            step_next();
+         }
+
+         /// True when positioned on an entry, after settling.
+         bool valid() const {
+            settle();
+            return _valid;
+         }
+
+         void step_next() const { take_entry<::kv_idx_next>(); }
+
+         /// Run one host call that lands the handle on an entry, then read its row: two host calls
+         /// per entry. The secondary key is skipped, since nothing here needs it.
+         template<auto HostCall>
+         void take_entry() const {
+            char     pri_stack[key_buf::inline_cap];
+            uint32_t sec_size = 0;
             uint32_t pri_size = 0;
-            if (::kv_idx_primary_key(_handle, 0, pri_stack, key_buf::inline_cap, &pri_size) != 0) {
-               _valid = false; return;
-            }
+            _valid = HostCall(_handle, nullptr, 0, pri_stack, key_buf::inline_cap,
+                              &sec_size, &pri_size) == kv_status_ok;
+            if (!_valid) return;
             if (pri_size <= key_buf::inline_cap) {
                _pri_bytes.assign(pri_stack, pri_size);
             } else {
-               char* ph = new char[pri_size];
-               ::kv_idx_primary_key(_handle, 0, ph, pri_size, &pri_size);
-               _pri_bytes.assign(ph, pri_size);
-               delete[] ph;
+               ser_buf pri_heap(pri_size);
+               sysio::check(::kv_idx_read(_handle, nullptr, 0, pri_heap.data(), pri_size,
+                                          &sec_size, &pri_size) == kv_status_ok, msg::row_lost);
+               _pri_bytes.assign(pri_heap.data(), pri_size);
             }
-            // pri_bytes is unscoped [K] — decode directly
+            // pri_bytes is unscoped [K] -- decode directly
             _row.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
 
             // Reconstruct full scoped key for kv_get
             auto full = _tbl->make_full_key_from_pri(_pri_bytes.data(), _pri_bytes.size());
-
-            if constexpr (is_fixed_serializable_v<V>) {
-               char vbuf[sizeof(V)];
-               int32_t val_sz = ::kv_get(_table_id, _tbl->code(),
-                                         full.data(), full.size(),
-                                         vbuf, sizeof(V));
-               if (val_sz < 0) { _valid = false; return; }
-               std::memcpy(&_row.value, vbuf, sizeof(V));
-            } else {
-               char val_stack[kv_value_stack_size];
-               int32_t val_sz = ::kv_get(_table_id, _tbl->code(),
-                                         full.data(), full.size(),
-                                         val_stack, kv_value_stack_size);
-               if (val_sz < 0) { _valid = false; return; }
-               if (val_sz <= static_cast<int32_t>(kv_value_stack_size)) {
-                  _row.value = deserialize_value(val_stack, val_sz);
-               } else {
-                  char* heap = new char[val_sz];
-                  ::kv_get(_table_id, _tbl->code(),
-                           full.data(), full.size(), heap, val_sz);
-                  _row.value = deserialize_value(heap, val_sz);
-                  delete[] heap;
-               }
-            }
+            _valid = _tbl->read_value(full.data(), full.size(), _row.value);
          }
       };
 
@@ -1125,35 +1075,17 @@ public:
          const key_row* operator->() const { sysio::check(_valid, "deref invalid key_iterator"); return &_kr; }
 
          key_iterator& operator++() {
-            if (!_valid || _handle < 0) return *this;
-            if (::kv_idx_next(_handle) == 0 && check_scope()) load_keys();
-            else _valid = false;
+            if (_valid) take_keys<::kv_idx_next>();
             return *this;
          }
 
          key_iterator& operator--() {
             if (_handle < 0) {
-               if constexpr (Scoped) {
-                  char max_sec[kv_key_max_bytes];
-                  encode_be64(max_sec, _tbl->_scope);
-                  memset(max_sec + kv_scope_size, 0xFF, sizeof(max_sec) - kv_scope_size);
-                  _handle.reset(::kv_idx_lower_bound(
-                     _tbl->code(), _sec_table_id,
-                     max_sec, sizeof(max_sec)));
-               } else {
-                  char max_sec[kv_key_max_bytes];
-                  memset(max_sec, 0xFF, sizeof(max_sec));
-                  _handle.reset(::kv_idx_lower_bound(
-                     _tbl->code(), _sec_table_id,
-                     max_sec, sizeof(max_sec)));
-               }
-               if (_handle < 0) { _valid = false; }
-               else if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_keys(); }
-               else { _valid = false; }
-            } else {
-               if (::kv_idx_prev(_handle) == 0 && check_scope()) { _valid = true; load_keys(); }
-               else { _valid = false; }
+               sysio::check(_tbl != nullptr, msg::no_table);
+               detail::end_seek seek;
+               _handle.reset(_tbl->create_index_it(_sec_table_id, seek.data, seek.size));
             }
+            take_keys<::kv_idx_prev>();
             return *this;
          }
 
@@ -1185,74 +1117,55 @@ public:
       private:
          friend struct secondary_index_view;
 
-         bool check_scope() const { return idx_check_scope(_handle, _tbl->_scope); }
-
          table_impl* _tbl = nullptr;
          kv::detail::idx_handle _handle;
          bool           _valid = false;
          key_row        _kr;
          key_buf        _pri_bytes;
 
-         key_iterator(table_impl* tbl, int32_t handle, bool valid)
-            : _tbl(tbl), _handle(handle), _valid(valid) {
-            if (_valid) load_keys();
+         /// Take over a handle and read the entry it was opened on.
+         key_iterator(table_impl* tbl, int32_t handle) : _tbl(tbl), _handle(handle) {
+            take_keys<::kv_idx_read>();
          }
 
          static key_iterator make_end(table_impl* tbl) {
             key_iterator it; it._tbl = tbl; return it;
          }
 
-         void load_keys() {
-            if (_handle < 0) { _valid = false; return; }
-            char pri_stack[key_buf::inline_cap];
-            uint32_t pri_size = 0;
-            if (::kv_idx_primary_key(_handle, 0, pri_stack, key_buf::inline_cap, &pri_size) != 0) {
-               _valid = false; return;
-            }
-            if (pri_size <= key_buf::inline_cap) {
-               _pri_bytes.assign(pri_stack, pri_size);
-            } else {
-               char* ph = new char[pri_size];
-               ::kv_idx_primary_key(_handle, 0, ph, pri_size, &pri_size);
-               _pri_bytes.assign(ph, pri_size);
-               delete[] ph;
-            }
-            // pri_bytes is unscoped [K] — decode directly
-            _kr.key = decode_unscoped_key(_pri_bytes.data(), _pri_bytes.size());
-
-            char sec_stack[64];
+         /// Run one host call that lands the handle on an entry and hold both of its keys: one host
+         /// call per entry, read again at full size if a key outgrows the stack buffers.
+         template<auto HostCall>
+         void take_keys() {
+            char     sec_stack[key_buf::inline_cap];
+            char     pri_stack[key_buf::inline_cap];
             uint32_t sec_size = 0;
-            ::kv_idx_key(_handle, 0, sec_stack, 64, &sec_size);
-            if (sec_size <= 64) {
-               _kr.sec_key = _tbl->template decode_sec_key<secondary_key_type>(sec_stack, sec_size);
+            uint32_t pri_size = 0;
+            _valid = HostCall(_handle, sec_stack, key_buf::inline_cap, pri_stack, key_buf::inline_cap,
+                              &sec_size, &pri_size) == kv_status_ok;
+            if (!_valid) return;
+            if (sec_size <= key_buf::inline_cap && pri_size <= key_buf::inline_cap) {
+               hold_keys(sec_stack, sec_size, pri_stack, pri_size);
             } else {
-               char* heap = new char[sec_size];
-               ::kv_idx_key(_handle, 0, heap, sec_size, &sec_size);
-               _kr.sec_key = _tbl->template decode_sec_key<secondary_key_type>(heap, sec_size);
-               delete[] heap;
+               ser_buf sec_heap(sec_size);
+               ser_buf pri_heap(pri_size);
+               sysio::check(::kv_idx_read(_handle, sec_heap.data(), sec_size, pri_heap.data(), pri_size,
+                                          &sec_size, &pri_size) == kv_status_ok, msg::row_lost);
+               hold_keys(sec_heap.data(), sec_size, pri_heap.data(), pri_size);
             }
+         }
+
+         void hold_keys(const char* sec, uint32_t sec_size, const char* pri, uint32_t pri_size) {
+            _pri_bytes.assign(pri, pri_size);
+            // pri_bytes is unscoped [K] -- decode directly
+            _kr.key = decode_unscoped_key(pri, pri_size);
+            _kr.sec_key = _tbl->template decode_sec_key<secondary_key_type>(sec, sec_size);
          }
       };
 
       // --- Secondary index view API ---
 
       const_iterator begin() const {
-         int32_t handle;
-         if constexpr (Scoped) {
-            char scope_prefix[kv_scope_size];
-            encode_be64(scope_prefix, _tbl->_scope);
-            handle = ::kv_idx_lower_bound(
-               _tbl->code(), _sec_table_id, scope_prefix, kv_scope_size);
-         } else {
-            handle = ::kv_idx_lower_bound(
-               _tbl->code(), _sec_table_id, nullptr, 0);
-         }
-         if (handle < 0) return end();
-         const_iterator it(_tbl, handle, true);
-         if constexpr (Scoped) {
-            if (!it.check_scope()) return end();
-         }
-         return it;
+         return const_iterator(_tbl, _tbl->create_index_it(_sec_table_id));
       }
 
       const_iterator end() const { return const_iterator::make_end(_tbl); }
@@ -1262,46 +1175,26 @@ public:
       template<typename SecKey>
       const_iterator find(const SecKey& sec_key) const {
          auto sec = _tbl->encode_sec_key(secondary_key_type(sec_key));
-         int32_t handle = ::kv_idx_find_secondary(
-            _tbl->code(), _sec_table_id,
-            sec.data(), sec.size());
+         const auto prefix = _tbl->make_prefix();
+         int32_t handle = ::kv_idx_find(_sec_table_id, _tbl->code(), prefix.data, prefix.size,
+                                        sec.data(), sec.size());
          if (handle < 0) return end();
-         return const_iterator(_tbl, handle, true);
+         return const_iterator(_tbl, handle);
       }
 
       template<typename SecKey>
       const_iterator lower_bound(const SecKey& sec_key) const {
          auto sec = _tbl->encode_sec_key(secondary_key_type(sec_key));
-         int32_t handle = ::kv_idx_lower_bound(
-            _tbl->code(), _sec_table_id,
-            sec.data(), sec.size());
-         if (handle < 0) return end();
-         const_iterator it(_tbl, handle, true);
-         if constexpr (Scoped) {
-            if (it._valid && !it.check_scope()) return end();
-         }
-         return it;
+         return const_iterator(_tbl, _tbl->create_index_it(_sec_table_id, sec.data(), sec.size()));
       }
 
       template<typename SecKey>
       const_iterator upper_bound(const SecKey& sec_key) const {
          auto sec = _tbl->encode_sec_key(secondary_key_type(sec_key));
-         // Append a NUL byte to make the query strictly greater than the encoded
-         // key under byte comparison, so kv_idx_lower_bound returns the first
-         // entry past the target.  Works for both fixed-size BE keys (extra byte
-         // extends length) and NUL-escape encoded strings (0x00 is the escape
-         // sentinel, so the extended key cannot collide with a valid encoding).
-         char nul = '\0';
-         sec.write(&nul, 1);
-         int32_t handle = ::kv_idx_lower_bound(
-            _tbl->code(), _sec_table_id,
-            sec.data(), sec.size());
-         if (handle < 0) return end();
-         const_iterator it(_tbl, handle, true);
-         if constexpr (Scoped) {
-            if (it._valid && !it.check_scope()) return end();
-         }
-         return it;
+         // Past every entry with this secondary key, whatever its primary key: NUL-escaped strings
+         // use 0x00 as their sentinel, so the seek cannot collide with a valid encoding.
+         detail::successor_key seek(sec.data(), sec.size());
+         return const_iterator(_tbl, _tbl->create_index_it(_sec_table_id, seek.data(), seek.size()));
       }
 
       template<typename SecKey>
@@ -1312,58 +1205,34 @@ public:
          return itr;
       }
 
-      /// Modify the primary row referenced by a secondary iterator.
-      /// The iterator is invalidated after this call — both the cached value
-      /// and the iterator's position in the secondary index may be stale
-      /// (if the secondary key changed, the underlying index entry was moved).
-      /// Do not dereference or advance the iterator after modify; re-find instead.
+      /// Modify the primary row referenced by a secondary iterator. It reads the row first, for one
+      /// more kv_get, and moves the index entries from what is stored.
+      /// The iterator reads the new value afterwards, so a further modify or erase through it is
+      /// safe. Its position stays old: if the secondary key changed, it still steps from the old key,
+      /// so find the row again to step from the new one.
       void modify(name payer, const const_iterator& itr, const V& new_value) {
-         sysio::check(itr._valid, "cannot modify end iterator");
-         auto k = _tbl->make_key(itr._row.key);
-         _tbl->update_secondaries(
-            payer.value, itr._row.key, itr._row.value, new_value);
-         if constexpr (is_fixed_serializable_v<V>) {
-            char vbuf[sizeof(V)];
-            std::memcpy(vbuf, &new_value, sizeof(V));
-            ::kv_set(_table_id, payer.value, k.data(), k.size(), vbuf, sizeof(V));
-         } else {
-            auto v = serialize_value(new_value);
-            ::kv_set(_table_id, payer.value, k.data(), k.size(), v.data(), v.size());
-         }
+         sysio::check(itr.valid(), msg::modify_end);
+         _tbl->modify_held_row(payer.value, itr._row.key, itr._row.value, new_value);
+         itr._row.value = new_value;
       }
 
       void modify(const const_iterator& itr, const V& new_value) {
          modify(name{}, itr, new_value);
       }
 
-      // Erase the primary row referenced by a secondary iterator. Returns next.
+      /// Erase the primary row referenced by a secondary iterator and return an iterator to the
+      /// next entry. As with table_impl::erase, the step is deferred to the result's first use, so
+      /// ignoring the result makes no further host call.
       const_iterator erase(const_iterator itr) {
-         sysio::check(itr._valid, "cannot erase end iterator");
-         K saved_key = itr._row.key;
-         V saved_value = itr._row.value;
-         ++itr;
-         _tbl->do_erase(saved_key, saved_value);
+         sysio::check(itr.valid(), msg::erase_end);
+         _tbl->do_erase(itr._row.key, itr._row.value);
+         itr._next_owed = true;
          return itr;
       }
 
       // Key-only iteration
       key_iterator key_begin() const {
-         int32_t handle;
-         if constexpr (Scoped) {
-            char scope_prefix[kv_scope_size];
-            encode_be64(scope_prefix, _tbl->_scope);
-            handle = ::kv_idx_lower_bound(
-               _tbl->code(), _sec_table_id, scope_prefix, kv_scope_size);
-         } else {
-            handle = ::kv_idx_lower_bound(
-               _tbl->code(), _sec_table_id, nullptr, 0);
-         }
-         if (handle < 0) return key_end();
-         key_iterator it(_tbl, handle, true);
-         if constexpr (Scoped) {
-            if (!it.check_scope()) return key_end();
-         }
-         return it;
+         return key_iterator(_tbl, _tbl->create_index_it(_sec_table_id));
       }
 
       key_iterator key_end() const { return key_iterator::make_end(_tbl); }

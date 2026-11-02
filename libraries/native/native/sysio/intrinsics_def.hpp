@@ -122,27 +122,24 @@ intrinsic_macro(bls_fp_exp) \
 intrinsic_macro(set_finalizers) \
 intrinsic_macro(get_ram_usage) \
 intrinsic_macro(kv_set) \
-intrinsic_macro(kv_get) \
 intrinsic_macro(kv_erase) \
-intrinsic_macro(kv_contains) \
+intrinsic_macro(kv_get) \
+intrinsic_macro(kv_idx_store) \
+intrinsic_macro(kv_idx_update) \
+intrinsic_macro(kv_idx_erase) \
 intrinsic_macro(kv_it_create) \
-intrinsic_macro(kv_it_destroy) \
-intrinsic_macro(kv_it_status) \
 intrinsic_macro(kv_it_next) \
 intrinsic_macro(kv_it_prev) \
 intrinsic_macro(kv_it_lower_bound) \
-intrinsic_macro(kv_it_key) \
-intrinsic_macro(kv_it_value) \
-intrinsic_macro(kv_idx_store) \
-intrinsic_macro(kv_idx_remove) \
-intrinsic_macro(kv_idx_update) \
-intrinsic_macro(kv_idx_find_secondary) \
-intrinsic_macro(kv_idx_lower_bound) \
+intrinsic_macro(kv_it_read) \
+intrinsic_macro(kv_it_destroy) \
+intrinsic_macro(kv_idx_create) \
 intrinsic_macro(kv_idx_next) \
 intrinsic_macro(kv_idx_prev) \
-intrinsic_macro(kv_idx_key) \
-intrinsic_macro(kv_idx_primary_key) \
+intrinsic_macro(kv_idx_lower_bound) \
+intrinsic_macro(kv_idx_read) \
 intrinsic_macro(kv_idx_destroy) \
+intrinsic_macro(kv_idx_find) \
 intrinsic_macro(ed25519_verify)
 
 #define CREATE_ENUM(name) \

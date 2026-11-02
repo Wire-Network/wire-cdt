@@ -13,13 +13,13 @@ namespace sysio {
    namespace internal_use_do_not_use {
       extern "C" {
          __attribute__((sysio_wasm_import))
-         void sysio_assert( uint32_t test, const char* msg );
+         void sysio_assert( bool test, const char* msg );
 
          __attribute__((sysio_wasm_import))
-         void sysio_assert_message( uint32_t test, const char* msg, uint32_t msg_len );
+         void sysio_assert_message( bool test, const char* msg, uint32_t msg_len );
 
          __attribute__((sysio_wasm_import))
-         void sysio_assert_code( uint32_t test, uint64_t code );
+         void sysio_assert_code( bool test, uint64_t code );
       }
    }
 

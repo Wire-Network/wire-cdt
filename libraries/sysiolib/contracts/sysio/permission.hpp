@@ -7,12 +7,10 @@
 #include "transaction.hpp"
 #include "../../core/sysio/crypto.hpp"
 #include "../../core/sysio/name.hpp"
-#include "../../core/sysio/time.hpp"
 
 #include <cstring>
 #include <optional>
 #include <set>
-#include <limits>
 #include <vector>
 
 namespace sysio {
@@ -25,8 +23,7 @@ namespace sysio {
          __attribute__((sysio_wasm_import))
          int32_t check_permission_authorization( uint64_t, uint64_t,
                                                  const char*, uint32_t,
-                                                 const char*, uint32_t,
-                                                 uint64_t);
+                                                 const char*, uint32_t);
          __attribute__((sysio_wasm_import))
          int32_t get_permission_lower_bound(uint64_t account, uint64_t permission, char* buffer, uint32_t buffer_size);
       }
@@ -53,7 +50,7 @@ namespace sysio {
    }
 
    /**
-   *  Checks if a permission is authorized by a provided delay and a provided set of keys and permissions
+   *  Checks if a permission is authorized by a provided set of keys and permissions
    *  @ingroup permission
    *
    *  @param account - the account owner of the permission
@@ -62,7 +59,6 @@ namespace sysio {
    *  @param pubkeys_size  - size (in bytes) of serialized vector of provided public keys (can be 0 if no public keys are to be provided)
    *  @param perms_data - pointer to the start of the serialized vector of provided permissions (empty permission name acts as wildcard)
    *  @param perms_size - size (in bytes) of the serialized vector of provided permissions
-   *  @param delay - the provided delay in microseconds (cannot exceed INT64_MAX)
    *
    *  @return 1 if the permission is authorized, 0 otherwise
    */
@@ -70,11 +66,8 @@ namespace sysio {
    check_permission_authorization( name account,
                                    name permission,
                                    const char* pubkeys_data, uint32_t pubkeys_size,
-                                   const char* perms_data,   uint32_t perms_size,
-                                   microseconds delay ) {
-      int64_t delay_us = delay.count();
-      check(delay_us >= 0, "negative delay is not allowed");
-      return internal_use_do_not_use::check_permission_authorization( account.value, permission.value, pubkeys_data, pubkeys_size, perms_data, perms_size,  static_cast<uint64_t>(delay_us) );
+                                   const char* perms_data,   uint32_t perms_size ) {
+      return internal_use_do_not_use::check_permission_authorization( account.value, permission.value, pubkeys_data, pubkeys_size, perms_data, perms_size );
    }
 
 
@@ -127,7 +120,7 @@ namespace sysio {
    }
 
    /**
-    *  Checks if a permission is authorized by a provided delay and a provided set of keys and permissions
+    *  Checks if a permission is authorized by a provided set of keys and permissions
     *
     *  @ingroup permission
     *
@@ -135,20 +128,16 @@ namespace sysio {
     *  @param permission - the permission name to check for authorization
     *  @param provided_keys - the set of public keys which have authorized the transaction
     *  @param provided_permissions - the set of permissions which have authorized the transaction (empty permission name acts as wildcard)
-    *  @param provided_delay_us - the provided delay in microseconds (cannot exceed INT64_MAX)
     *
-    *  @return whether the permission was authorized by provided delay, keys, and permissions
+    *  @return whether the permission was authorized by provided keys and permissions
     */
    bool
    check_permission_authorization( name                               account,
                                    name                               permission,
                                    const std::set<public_key>&        provided_keys,
-                                   const std::set<permission_level>&  provided_permissions = std::set<permission_level>(),
-                                   microseconds                       provided_delay = microseconds{std::numeric_limits<int64_t>::max()}
+                                   const std::set<permission_level>&  provided_permissions = std::set<permission_level>()
                                  )
    {
-      int64_t provided_delay_us = provided_delay.count();
-      check(provided_delay_us >= 0, "negative delay is not allowed");
       std::vector<char> packed_keys;
       auto nkeys = provided_keys.size();
       if( nkeys > 0 ) {
@@ -166,8 +155,7 @@ namespace sysio {
                                                    (nkeys > 0)  ? packed_keys.data()  : (const char*)0,
                                                    (nkeys > 0)  ? packed_keys.size()  : 0,
                                                    (nperms > 0) ? packed_perms.data() : (const char*)0,
-                                                   (nperms > 0) ? packed_perms.size() : 0,
-                                                   static_cast<uint64_t>(provided_delay_us)
+                                                   (nperms > 0) ? packed_perms.size() : 0
                                                  );
 
       return (res > 0);

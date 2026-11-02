@@ -12,7 +12,7 @@ extern "C" {
 * @defgroup permission_c Permissions C API
 * @ingroup c_api
 *
-* @brief Methods for testing against transactions, delays, keys and permissions
+* @brief Methods for testing against transactions, keys and permissions
 * @{
 */
 
@@ -36,7 +36,7 @@ check_transaction_authorization( const char* trx_data,     uint32_t trx_size,
                                );
 
 /**
- *  Checks if a permission is authorized by a provided delay and a provided set of keys and permissions
+ *  Checks if a permission is authorized by a provided set of keys and permissions
  *
  *  @param account - the account owner of the permission
  *  @param permission - the name of the permission to check for authorization
@@ -44,7 +44,6 @@ check_transaction_authorization( const char* trx_data,     uint32_t trx_size,
  *  @param pubkeys_size  - size (in bytes) of serialized vector of provided public keys (can be 0 if no public keys are to be provided)
  *  @param perms_data - pointer to the start of the serialized vector of provided permissions (empty permission name acts as wildcard)
  *  @param perms_size - size (in bytes) of the serialized vector of provided permissions
- *  @param delay_us - the provided delay in microseconds (cannot exceed INT64_MAX)
  *
  *  @return 1 if the permission is authorized, 0 otherwise
  */
@@ -53,8 +52,7 @@ int32_t
 check_permission_authorization( capi_name account,
                                 capi_name permission,
                                 const char* pubkeys_data, uint32_t pubkeys_size,
-                                const char* perms_data,   uint32_t perms_size,
-                                uint64_t delay_us
+                                const char* perms_data,   uint32_t perms_size
                               );
 
 /**

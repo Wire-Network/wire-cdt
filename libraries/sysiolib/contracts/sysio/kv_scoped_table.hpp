@@ -57,9 +57,11 @@ public:
          uint64_t next = _scope + 1;
          char next_key[kv_scope_size];
          kv::encode_be64(next_key, next);
-         int32_t status = ::kv_it_lower_bound(_handle, next_key, kv_scope_size);
-         if (status != 0) { _valid = false; return *this; }
-         load_scope();
+         char     key[kv_scope_size];
+         uint32_t key_size = 0;
+         uint32_t value_size = 0;
+         hold_scope(::kv_it_lower_bound(_handle, next_key, kv_scope_size, key, kv_scope_size, nullptr, 0,
+                                        &key_size, &value_size), key, key_size);
          return *this;
       }
 
@@ -89,28 +91,27 @@ public:
       bool     _valid = false;
       uint64_t _scope = 0;
 
-      scope_iterator(uint32_t h, bool valid) : _handle(h), _valid(valid) {
-         if (_valid) load_scope();
+      /// Take over a handle and read the scope of the row it was opened on. A short buffer takes
+      /// the leading bytes of the key, which are the scope, and the value is skipped.
+      explicit scope_iterator(int32_t h) : _handle(h) {
+         char     key[kv_scope_size];
+         uint32_t key_size = 0;
+         uint32_t value_size = 0;
+         hold_scope(::kv_it_read(_handle, 0, key, kv_scope_size, nullptr, 0, &key_size, &value_size), key, key_size);
       }
 
-      void load_scope() {
-         char key_buf[kv_scope_size];
-         uint32_t actual = 0;
-         if (::kv_it_key(_handle, 0, key_buf, kv_scope_size, &actual) != 0 || actual < kv_scope_size) {
-            _valid = false; return;
-         }
-         _scope = kv::decode_be64(key_buf);
+      void hold_scope(int32_t status, const char* key, uint32_t key_size) {
+         _valid = status == kv_status_ok && key_size >= kv_scope_size;
+         if (_valid) _scope = kv::decode_be64(key);
       }
    };
 
    /// Lower-bound scope iteration: finds the first scope >= \p scope.
    static scope_iterator scope_lower_bound(sysio::name code, uint64_t scope) {
-      uint64_t c = code.value ? code.value : sysio::current_receiver().value;
-      uint32_t h = ::kv_it_create(_table_id, c, nullptr, 0);
+      uint64_t c = code.value ? code.value : kv::detail::receiving_account().value;
       char scope_key[kv_scope_size];
       kv::encode_be64(scope_key, scope);
-      int32_t status = ::kv_it_lower_bound(h, scope_key, kv_scope_size);
-      return scope_iterator(h, status == 0);
+      return scope_iterator(::kv_it_create(_table_id, c, nullptr, 0, scope_key, kv_scope_size));
    }
 
    static scope_iterator scope_end() {

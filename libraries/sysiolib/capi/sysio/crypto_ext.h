@@ -22,11 +22,11 @@ extern "C" {
  *  @param data_len - size of data
  *  @param hash - hash result
  *  @param hash_len - size of hash result
- *  @param keccak - whether to use `keccak` or NIST variant; keccak = 1 and NIST == 0. Any other value fails the action.
+ *  @param keccak - true to use `keccak`, false to use the NIST variant
  *
  */
 __attribute__((sysio_wasm_import))
-void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, int32_t keccak );
+void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, bool keccak );
 
 /**
  *  BLAKE2 compression function "F"
@@ -41,14 +41,14 @@ void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, i
  *  @param t0_len - size of t0_offset
  *  @param t1_offset - offset counters 
  *  @param t1_len - size of t1_offset
- *  @param final - final block flag: 1 or 0. Any other value fails the action.
+ *  @param final - final block flag
  *  @param result - the result of the compression
- *  @param result_len - size of result 
+ *  @param result_len - size of result, which must be exactly 64, or the call returns -1
  *  @return -1 if there is an error otherwise 0
  */
 __attribute__((sysio_wasm_import))
 int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len,
-                  const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, int32_t final, char* result, uint32_t result_len);
+                  const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, bool final, char* result, uint32_t result_len);
 
 /**
  *  BLAKE2b-256 hash function.
@@ -71,7 +71,7 @@ int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t h
  * @param dig - digest of the message that was signed.
  * @param dig_len - size of digest
  * @param pub - public key result
- * @param pub_len - size of public key result
+ * @param pub_len - size of public key result, which must be exactly 65, or the call returns -1
  *
  * @return -1 if there was an error 0 otherwise.
 */
@@ -102,7 +102,7 @@ int32_t ed25519_verify(const char* sig, uint32_t sig_len, const char* pub, uint3
  *  @param op2 - operand 2
  *  @param op2_len - size of operand 2
  *  @param result - result of the addition operation
- *  @param result_len - size of result
+ *  @param result_len - size of result, which must be exactly 64, or the call returns -1
  *  @return -1 if there is an error otherwise 0
  */
 __attribute__((sysio_wasm_import))
@@ -116,7 +116,7 @@ int32_t alt_bn128_add( const char* op1, uint32_t op1_len, const char* op2, uint3
  *  @param scalar - scalar factor
  *  @param scalar_len - size of scalar
  *  @param result - result of the scalar multiplication operation
- *  @param result_len - size of result
+ *  @param result_len - size of result, which must be exactly 64, or the call returns -1
  *  @return -1 if there is an error otherwise 0
  */
 __attribute__((sysio_wasm_import))
@@ -144,7 +144,7 @@ int32_t alt_bn128_pair( const char* pairs, uint32_t pairs_len);
  *  @param mod - modulus (MOD)
  *  @param mod_len - size of mod
  *  @param result - result of the modular exponentiation
- *  @param result_len - size of result
+ *  @param result_len - size of result, which must equal mod_len, or the call returns -1
  *  @return -1 if there is an error otherwise 0
  */
 __attribute__((sysio_wasm_import))

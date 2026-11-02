@@ -124,7 +124,7 @@ namespace {
 }
 
 extern "C" {
-void sysio_assert(int32_t, const char*);
+void sysio_assert(bool, const char*);
 
 // Left shift -- arithmetic and logical share the bit pattern.
 void __ashlti3(__int128& ret, uint64_t lo, uint64_t hi, uint32_t shift) {

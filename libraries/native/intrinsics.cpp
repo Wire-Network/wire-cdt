@@ -94,9 +94,9 @@ extern "C" {
    }
    int32_t check_permission_authorization( capi_name account, capi_name permission,
                                     const char* pubkeys_data, uint32_t pubkeys_size,
-                                    const char* perms_data,   uint32_t perms_size, uint64_t delay_us
+                                    const char* perms_data,   uint32_t perms_size
                                   ) {
-      return intrinsics::get().call<intrinsics::check_permission_authorization>(account, permission, pubkeys_data, pubkeys_size, perms_data, perms_size, delay_us);
+      return intrinsics::get().call<intrinsics::check_permission_authorization>(account, permission, pubkeys_data, pubkeys_size, perms_data, perms_size);
    }
    int32_t get_permission_lower_bound( capi_name account, capi_name permission, char* buffer, uint32_t buffer_size ) {
       return intrinsics::get().call<intrinsics::get_permission_lower_bound>(account, permission, buffer, buffer_size);
@@ -675,24 +675,24 @@ extern "C" {
       return (void*)dest;
    }
 
-   void sysio_assert(uint32_t test, const char* msg) {
-      if (test == 0) {
+   void sysio_assert(bool test, const char* msg) {
+      if (!test) {
          _prints(msg, sysio::cdt::output_stream_kind::std_err);
          _prints_l("\n", 1, sysio::cdt::output_stream_kind::none);
          longjmp(*___env_ptr, 1);
       }
    }
 
-   void sysio_assert_message(uint32_t test, const char* msg, uint32_t len) {
-      if (test == 0) {
+   void sysio_assert_message(bool test, const char* msg, uint32_t len) {
+      if (!test) {
          _prints_l(msg, len, sysio::cdt::output_stream_kind::std_err);
          _prints_l("\n", 1, sysio::cdt::output_stream_kind::none);
          longjmp(*___env_ptr, 1);
       }
    }
 
-   void sysio_assert_code(uint32_t test, uint64_t code) {
-      if (test == 0) {
+   void sysio_assert_code(bool test, uint64_t code) {
+      if (!test) {
          char buff[32];
          snprintf(buff, 32, "%llu", code);
          _prints(buff, sysio::cdt::output_stream_kind::std_err);
@@ -715,7 +715,7 @@ extern "C" {
 } // extern "C"
 
 int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len, 
-                  const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, int32_t final, char* result, uint32_t result_len) {
+                  const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, bool final, char* result, uint32_t result_len) {
    return intrinsics::get().call<intrinsics::blake2_f>(rounds, state, state_len, msg, msg_len, t0_offset, t0_len, t1_offset, t1_len, final, result, result_len);
 }
 
@@ -739,7 +739,7 @@ int32_t mod_exp( const char* base, uint32_t base_len, const char* exp, uint32_t 
    return intrinsics::get().call<intrinsics::mod_exp>(base, base_len, exp, exp_len, mod, mod_len, result, result_len);
 }
 
-void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, int32_t keccak ) {
+void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, bool keccak ) {
    intrinsics::get().call<intrinsics::sha3>(data, data_len, hash, hash_len, keccak);
 }
 
@@ -795,99 +795,107 @@ int32_t bls_fp_exp(const char* base, uint32_t base_len, const char* exp, uint32_
 
 // --- KV Database intrinsics ---
 
-int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size) {
-   return intrinsics::get().call<intrinsics::kv_set>(key_format, payer, key, key_size, value, value_size);
+int32_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size,
+               const void* value, uint32_t value_size, uint32_t mode) {
+   return intrinsics::get().call<intrinsics::kv_set>(table_id, payer, key, key_size, value, value_size, mode);
 }
 
-int32_t kv_get(uint32_t key_format, capi_name code, const void* key, uint32_t key_size, void* value, uint32_t value_size) {
-   return intrinsics::get().call<intrinsics::kv_get>(key_format, code, key, key_size, value, value_size);
+int32_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size) {
+   return intrinsics::get().call<intrinsics::kv_erase>(table_id, key, key_size);
 }
 
-int64_t kv_erase(uint32_t key_format, const void* key, uint32_t key_size) {
-   return intrinsics::get().call<intrinsics::kv_erase>(key_format, key, key_size);
+int32_t kv_get(uint32_t table_id, capi_name code, const void* key, uint32_t key_size, uint32_t offset,
+               void* value, uint32_t value_size) {
+   return intrinsics::get().call<intrinsics::kv_get>(table_id, code, key, key_size, offset, value, value_size);
 }
 
-int32_t kv_contains(uint32_t key_format, capi_name code, const void* key, uint32_t key_size) {
-   return intrinsics::get().call<intrinsics::kv_contains>(key_format, code, key, key_size);
+int32_t kv_idx_store(uint32_t table_id, uint64_t payer, const void* pri_key, uint32_t pri_key_size,
+                     const void* sec_key, uint32_t sec_key_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_store>(table_id, payer, pri_key, pri_key_size, sec_key,
+                                                           sec_key_size);
 }
 
-uint32_t kv_it_create(uint32_t key_format, capi_name code, const void* prefix, uint32_t prefix_size) {
-   return intrinsics::get().call<intrinsics::kv_it_create>(key_format, code, prefix, prefix_size);
+int32_t kv_idx_update(uint32_t table_id, uint64_t payer, const void* pri_key, uint32_t pri_key_size,
+                      const void* old_sec_key, uint32_t old_sec_key_size,
+                      const void* new_sec_key, uint32_t new_sec_key_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_update>(table_id, payer, pri_key, pri_key_size,
+                                                            old_sec_key, old_sec_key_size,
+                                                            new_sec_key, new_sec_key_size);
 }
 
-void kv_it_destroy(uint32_t handle) {
+int32_t kv_idx_erase(uint32_t table_id, const void* pri_key, uint32_t pri_key_size,
+                     const void* sec_key, uint32_t sec_key_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_erase>(table_id, pri_key, pri_key_size, sec_key, sec_key_size);
+}
+
+int32_t kv_it_create(uint32_t table_id, capi_name code, const void* prefix, uint32_t prefix_size,
+                     const void* seek, uint32_t seek_size) {
+   return intrinsics::get().call<intrinsics::kv_it_create>(table_id, code, prefix, prefix_size, seek, seek_size);
+}
+
+int32_t kv_it_next(int32_t handle, void* key, uint32_t key_capacity, void* value, uint32_t value_capacity,
+                   uint32_t* key_size, uint32_t* value_size) {
+   return intrinsics::get().call<intrinsics::kv_it_next>(handle, key, key_capacity, value, value_capacity,
+                                                         key_size, value_size);
+}
+
+int32_t kv_it_prev(int32_t handle, void* key, uint32_t key_capacity, void* value, uint32_t value_capacity,
+                   uint32_t* key_size, uint32_t* value_size) {
+   return intrinsics::get().call<intrinsics::kv_it_prev>(handle, key, key_capacity, value, value_capacity,
+                                                         key_size, value_size);
+}
+
+int32_t kv_it_lower_bound(int32_t handle, const void* seek, uint32_t seek_size, void* key, uint32_t key_capacity,
+                          void* value, uint32_t value_capacity, uint32_t* key_size, uint32_t* value_size) {
+   return intrinsics::get().call<intrinsics::kv_it_lower_bound>(handle, seek, seek_size, key, key_capacity, value,
+                                                                value_capacity, key_size, value_size);
+}
+
+int32_t kv_it_read(int32_t handle, uint32_t offset, void* key, uint32_t key_capacity, void* value,
+                   uint32_t value_capacity, uint32_t* key_size, uint32_t* value_size) {
+   return intrinsics::get().call<intrinsics::kv_it_read>(handle, offset, key, key_capacity, value, value_capacity,
+                                                         key_size, value_size);
+}
+
+void kv_it_destroy(int32_t handle) {
    intrinsics::get().call<intrinsics::kv_it_destroy>(handle);
 }
 
-int32_t kv_it_status(uint32_t handle) {
-   return intrinsics::get().call<intrinsics::kv_it_status>(handle);
+int32_t kv_idx_create(uint32_t table_id, capi_name code, const void* prefix, uint32_t prefix_size,
+                      const void* seek, uint32_t seek_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_create>(table_id, code, prefix, prefix_size, seek, seek_size);
 }
 
-int32_t kv_it_next(uint32_t handle) {
-   return intrinsics::get().call<intrinsics::kv_it_next>(handle);
+int32_t kv_idx_next(int32_t handle, void* sec_key, uint32_t sec_capacity, void* pri_key, uint32_t pri_capacity,
+                    uint32_t* sec_size, uint32_t* pri_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_next>(handle, sec_key, sec_capacity, pri_key, pri_capacity,
+                                                          sec_size, pri_size);
 }
 
-int32_t kv_it_prev(uint32_t handle) {
-   return intrinsics::get().call<intrinsics::kv_it_prev>(handle);
+int32_t kv_idx_prev(int32_t handle, void* sec_key, uint32_t sec_capacity, void* pri_key, uint32_t pri_capacity,
+                    uint32_t* sec_size, uint32_t* pri_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_prev>(handle, sec_key, sec_capacity, pri_key, pri_capacity,
+                                                          sec_size, pri_size);
 }
 
-int32_t kv_it_lower_bound(uint32_t handle, const void* key, uint32_t key_size) {
-   return intrinsics::get().call<intrinsics::kv_it_lower_bound>(handle, key, key_size);
+int32_t kv_idx_lower_bound(int32_t handle, const void* seek, uint32_t seek_size, void* sec_key,
+                           uint32_t sec_capacity, void* pri_key, uint32_t pri_capacity,
+                           uint32_t* sec_size, uint32_t* pri_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_lower_bound>(handle, seek, seek_size, sec_key, sec_capacity,
+                                                                 pri_key, pri_capacity, sec_size, pri_size);
 }
 
-int32_t kv_it_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
-   return intrinsics::get().call<intrinsics::kv_it_key>(handle, offset, dest, dest_size, actual_size);
+int32_t kv_idx_read(int32_t handle, void* sec_key, uint32_t sec_capacity, void* pri_key, uint32_t pri_capacity,
+                    uint32_t* sec_size, uint32_t* pri_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_read>(handle, sec_key, sec_capacity, pri_key, pri_capacity,
+                                                          sec_size, pri_size);
 }
 
-int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
-   return intrinsics::get().call<intrinsics::kv_it_value>(handle, offset, dest, dest_size, actual_size);
-}
-
-void kv_idx_store(uint64_t payer, uint32_t table_id,
-                  const void* pri_key, uint32_t pri_key_size,
-                  const void* sec_key, uint32_t sec_key_size) {
-   intrinsics::get().call<intrinsics::kv_idx_store>(payer, table_id, pri_key, pri_key_size, sec_key, sec_key_size);
-}
-
-void kv_idx_remove(uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
-                   const void* sec_key, uint32_t sec_key_size) {
-   intrinsics::get().call<intrinsics::kv_idx_remove>(table_id, pri_key, pri_key_size, sec_key, sec_key_size);
-}
-
-void kv_idx_update(uint64_t payer, uint32_t table_id,
-                   const void* pri_key, uint32_t pri_key_size,
-                   const void* old_sec_key, uint32_t old_sec_key_size,
-                   const void* new_sec_key, uint32_t new_sec_key_size) {
-   intrinsics::get().call<intrinsics::kv_idx_update>(payer, table_id, pri_key, pri_key_size, old_sec_key, old_sec_key_size, new_sec_key, new_sec_key_size);
-}
-
-int32_t kv_idx_find_secondary(capi_name code, uint32_t table_id,
-                              const void* sec_key, uint32_t sec_key_size) {
-   return intrinsics::get().call<intrinsics::kv_idx_find_secondary>(code, table_id, sec_key, sec_key_size);
-}
-
-int32_t kv_idx_lower_bound(capi_name code, uint32_t table_id,
-                           const void* sec_key, uint32_t sec_key_size) {
-   return intrinsics::get().call<intrinsics::kv_idx_lower_bound>(code, table_id, sec_key, sec_key_size);
-}
-
-int32_t kv_idx_next(uint32_t handle) {
-   return intrinsics::get().call<intrinsics::kv_idx_next>(handle);
-}
-
-int32_t kv_idx_prev(uint32_t handle) {
-   return intrinsics::get().call<intrinsics::kv_idx_prev>(handle);
-}
-
-int32_t kv_idx_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
-   return intrinsics::get().call<intrinsics::kv_idx_key>(handle, offset, dest, dest_size, actual_size);
-}
-
-int32_t kv_idx_primary_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size) {
-   return intrinsics::get().call<intrinsics::kv_idx_primary_key>(handle, offset, dest, dest_size, actual_size);
-}
-
-void kv_idx_destroy(uint32_t handle) {
+void kv_idx_destroy(int32_t handle) {
    intrinsics::get().call<intrinsics::kv_idx_destroy>(handle);
+}
+
+int32_t kv_idx_find(uint32_t table_id, capi_name code, const void* prefix, uint32_t prefix_size,
+                    const void* sec_key, uint32_t sec_key_size) {
+   return intrinsics::get().call<intrinsics::kv_idx_find>(table_id, code, prefix, prefix_size, sec_key, sec_key_size);
 }

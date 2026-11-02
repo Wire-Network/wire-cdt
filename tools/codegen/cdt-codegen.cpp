@@ -279,7 +279,7 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
                                  const std::set<wasm_notify>& wasm_notifies,
                                  bool has_pre_dispatch, bool has_post_dispatch) {
    ofs << "extern \"C\" {\n";
-   ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(uint32_t, uint64_t);";
+   ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(bool, uint64_t);";
    ofs << "  void sysio_set_contract_name(uint64_t n);\n";
    ofs << "}\n"; // close extern "C" for intrinsic declarations
    if (has_pre_dispatch)

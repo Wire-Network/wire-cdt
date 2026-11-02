@@ -18,7 +18,7 @@ extern "C" {
 /**
  *  Aborts processing of this action and unwinds all pending changes if the test condition is true
  *
- *  @param test - 0 to abort, 1 to ignore. The host rejects any other value, so pass a comparison, not a bitmask.
+ *  @param test - false to abort, true to ignore. It is a bool, so a non-zero value such as `flags & 8` converts to true.
  *
  *  Example:
  *
@@ -30,27 +30,27 @@ extern "C" {
  *  @param msg - a null terminated string explaining the reason for failure
  */
 __attribute__((sysio_wasm_import))
-void  sysio_assert( uint32_t test, const char* msg );
+void  sysio_assert( bool test, const char* msg );
 
 /**
  *  Aborts processing of this action and unwinds all pending changes if the test condition is true
  *
- *  @param test - 0 to abort, 1 to ignore. The host rejects any other value, so pass a comparison, not a bitmask.
+ *  @param test - false to abort, true to ignore. It is a bool, so a non-zero value such as `flags & 8` converts to true.
  *  @param msg - a pointer to the start of string explaining the reason for failure
  *  @param msg_len - length of the string
  */
 __attribute__((sysio_wasm_import))
-void  sysio_assert_message( uint32_t test, const char* msg, uint32_t msg_len );
+void  sysio_assert_message( bool test, const char* msg, uint32_t msg_len );
 
 /**
  *  Aborts processing of this action and unwinds all pending changes if the test condition is true
  *
  *  @brief Aborts processing of this action and unwinds all pending changes
- *  @param test - 0 to abort, 1 to ignore. The host rejects any other value, so pass a comparison, not a bitmask.
+ *  @param test - false to abort, true to ignore. It is a bool, so a non-zero value such as `flags & 8` converts to true.
  *  @param code - the error code
  */
 __attribute__((sysio_wasm_import))
-void  sysio_assert_code( uint32_t test, uint64_t code );
+void  sysio_assert_code( bool test, uint64_t code );
 
  /**
  *  This method will abort execution of wasm without failing the contract. This is used to bypass all cleanup / destructors that would normally be called.

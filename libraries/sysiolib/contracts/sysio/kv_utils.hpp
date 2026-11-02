@@ -5,43 +5,38 @@
 #include <sysio/serialize.hpp>
 #include <sysio/datastream.hpp>
 #include <sysio/action.hpp>
+#include <sysio/context.hpp>
 
-// KV intrinsic declarations
-extern "C" {
-   __attribute__((sysio_wasm_import))
-   int64_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_get(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size, void* value, uint32_t value_size);
-   __attribute__((sysio_wasm_import))
-   int64_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_contains(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   uint32_t kv_it_create(uint32_t table_id, uint64_t code, const void* prefix, uint32_t prefix_size);
-   __attribute__((sysio_wasm_import))
-   void kv_it_destroy(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_status(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_next(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_prev(uint32_t handle);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_lower_bound(uint32_t handle, const void* key, uint32_t key_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_key(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-   __attribute__((sysio_wasm_import))
-   int32_t kv_it_value(uint32_t handle, uint32_t offset, void* dest, uint32_t dest_size, uint32_t* actual_size);
-}
+#include "../../capi/sysio/kv.h"
+
 #include <vector>
 #include <optional>
 #include <cstring>
+#include <iterator>
+#include <limits>
 #include <utility>
 
-#include <sysio/kv_constants.hpp>
 #include <sysio/kv_it_handle.hpp>
 
 namespace sysio { namespace kv {
+
+namespace detail {
+
+/// The receiving account, avoiding a host call where possible.
+///
+/// The generated dispatcher stores the receiver in sysio_contract_name at the top of apply() --
+/// and apply() is re-entered per receiver, so it is correct under notification too -- making this
+/// a plain global read. SYSIO_DISPATCH emits its own strong apply() and the native dispatch sets
+/// nothing, leaving the global 0, which is not a valid account name and so is a safe "unset"
+/// sentinel; there we pay the intrinsic. Deliberately not cached on a table object: a contract
+/// may hold a `static` table, and the receiver differs between the initial action and a
+/// notification handler.
+inline name receiving_account() {
+   const name ctx = current_context_contract();
+   return ctx.value ? ctx : current_receiver();
+}
+
+} // namespace detail
 
 // ---------------------------------------------------------------------------
 // key_buf — small-buffer key storage (64B inline, heap fallback for large keys)
@@ -57,7 +52,6 @@ struct key_buf {
    }
 
    uint32_t size() const { return len; }
-   bool empty() const { return len == 0; }
 
    void assign(const char* d, uint32_t s) {
       if (s <= inline_cap) {
@@ -135,6 +129,149 @@ struct ser_buf {
    uint32_t size() const { return size_; }
 };
 
+namespace detail {
+
+/// The smallest key above a key: the same bytes followed by a NUL. Keys sort as unsigned bytes,
+/// shorter prefix first, so nothing sorts between the two. Seeking this lands strictly past a key
+/// whether or not a row is stored there, which is what upper_bound and a step without a handle need.
+class successor_key {
+   ser_buf _bytes;
+public:
+   successor_key(const char* key, uint32_t key_size) : _bytes(key_size + 1) {
+      if (key_size > 0) std::memcpy(_bytes.data(), key, key_size);
+      _bytes.data()[key_size] = '\0';
+   }
+   const char* data() const { return _bytes.data(); }
+   uint32_t size() const { return _bytes.size(); }
+};
+
+/// A seek above every key the chain can store, whatever the scope. It opens a handle at the end of
+/// its prefix range, the position prev() walks back from to reach the last row. One byte longer than
+/// the largest key, so a key of all 0xFF at that size sorts below it. The host puts no limit on a seek.
+struct end_seek {
+   static constexpr uint32_t size = kv_key_max_bytes + 1;
+   char data[size];
+   end_seek() { std::memset(data, 0xFF, size); }
+};
+
+/// Reverse iteration over a table or an index, held as one forward iterator on the row this position
+/// reads, stepped in place.
+///
+/// std::reverse_iterator does not suit these iterators. It keeps the position one row past the one it
+/// reads and steps a temporary copy on every dereference. An iterator here holds its row, so `*rit`
+/// would refer into that temporary, and each read would pay for a stepping copy of its own.
+///
+/// A reverse scan therefore costs what a forward scan costs, and a reference from `*rit` lasts as
+/// long as one from the forward iterator does. A forward iterator at end means rend(), so rend()
+/// makes no host call.
+///
+/// The price is that a position does not follow the table after a write, which one worked out on
+/// every read does. Code relying on that compiles unchanged and behaves differently:
+///
+///   - `while (rit != t.rend()) t.erase(*rit);` never moves rit. On multi_index its second pass aborts
+///     with msg::iterator_erased. On kv::table `*rit` is not a key, so the loop does not compile, and
+///     `t.erase(rit.key())` in its place aborts with erase's not-found text.
+///   - Reading through rit after an erase aborts the same way on multi_index, and on kv::table returns
+///     the iterator's own copy of the erased row.
+///   - A row written past the position is not seen.
+///
+/// `++rit` after an erase reaches the row before. To read that row at once, rebuild the iterator from
+/// the result of erase: `rit = const_reverse_iterator(t.erase(--rit.base()));`
+///
+/// \tparam Forward a const_iterator that befriends this class and gives it positioned(), step_back(),
+///         which lands on end past the first row instead of aborting, and to_first()
+template<typename Forward>
+class reverse_cursor {
+   Forward _position;
+
+public:
+   using iterator_category = std::bidirectional_iterator_tag;
+   using value_type        = typename Forward::value_type;
+   using difference_type   = typename Forward::difference_type;
+   using pointer           = typename Forward::pointer;
+   using reference         = typename Forward::reference;
+
+   reverse_cursor() = default;
+
+   /// The row before \p base, as with std::reverse_iterator.
+   explicit reverse_cursor(Forward base) : _position(std::move(base)) { _position.step_back(); }
+
+   /// Lets the result of std::make_reverse_iterator compare against rend(), as ported code does.
+   /// Each comparison pays for a copy and a step. Dereferencing that std adaptor on a kv::table refers
+   /// into a temporary, so it is for comparing only; rbegin() is the form to read through.
+   reverse_cursor(const std::reverse_iterator<Forward>& other) : reverse_cursor(other.base()) {}
+
+   /// The position past the first row. Takes the container's end(), which reaches no host.
+   static reverse_cursor rend(Forward end) {
+      reverse_cursor it;
+      it._position = std::move(end);
+      return it;
+   }
+
+   reference operator*()  const { return *_position; }
+   pointer   operator->() const { return _position.operator->(); }
+
+   /// The row's key, on a container whose iterator has one.
+   decltype(auto) key() const { return _position.key(); }
+
+   reverse_cursor& operator++() {
+      sysio::check(_position.positioned(), msg::past_rend);
+      _position.step_back();
+      return *this;
+   }
+
+   reverse_cursor& operator--() {
+      if (_position.positioned()) ++_position;
+      else _position.to_first();
+      sysio::check(_position.positioned(), msg::before_rbegin);
+      return *this;
+   }
+
+   // Postfix copies the iterator, which on multi_index opens a host handle. Prefer the prefix form.
+   reverse_cursor operator++(int) { reverse_cursor old = *this; ++*this; return old; }
+   reverse_cursor operator--(int) { reverse_cursor old = *this; --*this; return old; }
+
+   /// The forward iterator one row past this position, as with std::reverse_iterator. Pays for a
+   /// copy and a step, unlike the std adaptor, which held it already.
+   Forward base() const {
+      Forward next = _position;
+      if (next.positioned()) ++next;
+      else next.to_first();
+      return next;
+   }
+
+   friend bool operator==(const reverse_cursor& a, const reverse_cursor& b) { return a._position == b._position; }
+   friend bool operator!=(const reverse_cursor& a, const reverse_cursor& b) { return !(a == b); }
+};
+
+/// Store an index entry. The entry for a row is unique, so `exists` means the index and its table
+/// have come apart: a wrapper has no way forward and no contract-supplied text for it.
+inline void idx_store(uint32_t table_id, uint64_t payer, const void* pri, uint32_t pri_size,
+                      const void* sec, uint32_t sec_size) {
+   sysio::check(::kv_idx_store(table_id, payer, pri, pri_size, sec, sec_size) == kv_status_ok, msg::entry_exists);
+}
+
+/// Erase an index entry. As with idx_store, a miss means the index and its table have come apart.
+inline void idx_erase(uint32_t table_id, const void* pri, uint32_t pri_size, const void* sec, uint32_t sec_size) {
+   sysio::check(::kv_idx_erase(table_id, pri, pri_size, sec, sec_size) == kv_status_ok, msg::entry_not_erased);
+}
+
+/// Move an index entry to a new secondary key, telling a missing entry from a taken key.
+inline void idx_update(uint32_t table_id, uint64_t payer, const void* pri, uint32_t pri_size,
+                       const void* old_sec, uint32_t old_sec_size, const void* new_sec, uint32_t new_sec_size) {
+   const int32_t status = ::kv_idx_update(table_id, payer, pri, pri_size, old_sec, old_sec_size,
+                                          new_sec, new_sec_size);
+   sysio::check(status != kv_status_no_row, msg::entry_not_moved);
+   sysio::check(status == kv_status_ok, msg::entry_exists);
+}
+
+/// Erase a row a wrapper knows exists, reached by a stale iterator otherwise.
+inline void erase_row(uint32_t table_id, const void* key, uint32_t key_size) {
+   sysio::check(::kv_erase(table_id, key, key_size) == kv_status_ok, msg::row_not_found);
+}
+
+} // namespace detail
+
 // ---------------------------------------------------------------------------
 // Compile-time check: is T trivially copyable with sizeof == pack_size?
 // When true, serialization is just memcpy of sizeof(T) bytes — no dynamic sizing.
@@ -169,6 +306,80 @@ inline uint64_t decode_be64(const char* buf) {
       v = (v << 8) | static_cast<uint8_t>(buf[i]);
    return v;
 }
+
+/// A value's stored bytes: a plain copy when that is what it packs to, its packed form otherwise.
+template<typename T>
+ser_buf serialize_value(const T& value) {
+   if constexpr (std::is_trivially_copyable<T>::value) {
+      if (sizeof(T) == sysio::pack_size(value)) {
+         ser_buf buf(sizeof(T));
+         std::memcpy(buf.data(), &value, sizeof(T));
+         return buf;
+      }
+   }
+   uint32_t sz = sysio::pack_size(value);
+   ser_buf buf(sz);
+   sysio::datastream<char*> ds(buf.data(), buf.size());
+   ds << value;
+   return buf;
+}
+
+/// The value serialize_value stored as \p data.
+///
+/// A row of exactly sizeof(T) bytes of a trivially copyable \p T is copied. Any other row goes through the
+/// datastream, which traps when \p data runs out and ignores whatever \p data holds after the last field, so a
+/// row longer than \p T reads its leading fields. Contracts may read rows a wider struct wrote, so this stays.
+template<typename T>
+T deserialize_value(const char* data, size_t size) {
+   T value;
+   if constexpr (std::is_trivially_copyable<T>::value) {
+      if (size == sizeof(T)) {
+         std::memcpy(&value, data, sizeof(T));
+         return value;
+      }
+   }
+   sysio::datastream<const char*> ds(data, size);
+   ds >> value;
+   return value;
+}
+
+namespace detail {
+
+/// Read the value stored at a key: one kv_get into a stack buffer of \p StackCapacity bytes, and a
+/// second at full size when the value overflows it.
+/// @param decode called with the value's bytes and size
+/// @return false, with \p decode not called, when no row exists
+template<uint32_t StackCapacity, typename Decode>
+bool read_row(uint32_t table_id, uint64_t code, const void* key, uint32_t key_size, Decode&& decode) {
+   char stack[StackCapacity];
+   const int32_t size = ::kv_get(table_id, code, key, key_size, 0, stack, StackCapacity);
+   if (size < 0) return false;
+   if (static_cast<uint32_t>(size) <= StackCapacity) {
+      decode(stack, static_cast<uint32_t>(size));
+   } else {
+      ser_buf heap(static_cast<uint32_t>(size));
+      sysio::check(::kv_get(table_id, code, key, key_size, 0, heap.data(), size) == size, msg::row_lost);
+      decode(heap.data(), static_cast<uint32_t>(size));
+   }
+   return true;
+}
+
+/// A float's bits as an unsigned value in numeric order: a negative number flips every bit, and any
+/// other gains the top bit.
+template<typename Bits>
+constexpr Bits sortable_float_bits(Bits bits) {
+   constexpr Bits top_bit = Bits(1) << (std::numeric_limits<Bits>::digits - 1);
+   return (bits & top_bit) ? ~bits : bits ^ top_bit;
+}
+
+/// The reverse of sortable_float_bits.
+template<typename Bits>
+constexpr Bits float_bits_from_sortable(Bits bits) {
+   constexpr Bits top_bit = Bits(1) << (std::numeric_limits<Bits>::digits - 1);
+   return (bits & top_bit) ? bits ^ top_bit : ~bits;
+}
+
+} // namespace detail
 
 // ---------------------------------------------------------------------------
 // be_key_stream — Big-endian key encoder (fixed buffer, no heap allocation)
@@ -208,20 +419,18 @@ private:
 
    void write_be64(uint64_t v) {
       check_capacity(sizeof(uint64_t));
-      for (int i = sizeof(uint64_t) - 1; i >= 0; --i) { buf_[size_ + i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      encode_be64(buf_ + size_, v);
       size_ += sizeof(uint64_t);
    }
 
    void write_escaped(const char* data, size_t len) {
-      // Upfront: data bytes + 2-byte terminator (no NUL escapes)
-      check_capacity(len + terminator_size);
+      // Each NUL takes an extra byte, so the check has to count them before writing anything.
+      size_t escapes = 0;
+      for (size_t i = 0; i < len; ++i) escapes += data[i] == '\0';
+      check_capacity(len + escapes + terminator_size);
       for (size_t i = 0; i < len; ++i) {
          buf_[size_++] = data[i];
-         if (data[i] == '\0') {
-            // NUL adds 1 extra byte; still need room for terminator
-            check_capacity(1 + terminator_size);
-            buf_[size_++] = '\x01';
-         }
+         if (data[i] == '\0') buf_[size_++] = '\x01';
       }
       buf_[size_++] = '\0';
       buf_[size_++] = '\0';
@@ -271,9 +480,7 @@ public:
       static_assert(std::numeric_limits<float>::is_iec559);
       uint32_t bits;
       std::memcpy(&bits, &v, sizeof(float));
-      if (bits >> 31) bits = ~bits;
-      else            bits ^= (uint32_t(1) << 31);
-      write_be32(bits);
+      write_be32(detail::sortable_float_bits(bits));
       return *this;
    }
 
@@ -282,9 +489,7 @@ public:
       static_assert(std::numeric_limits<double>::is_iec559);
       uint64_t bits;
       std::memcpy(&bits, &v, sizeof(double));
-      if (bits >> 63) bits = ~bits;
-      else            bits ^= (uint64_t(1) << 63);
-      write_be64(bits);
+      write_be64(detail::sortable_float_bits(bits));
       return *this;
    }
 

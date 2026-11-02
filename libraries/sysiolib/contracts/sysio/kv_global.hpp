@@ -42,7 +42,7 @@ private:
    static constexpr uint32_t _table_id = sysio::kv::compute_table_id(static_cast<uint64_t>(Name));
    uint64_t _code = 0;
 
-   uint64_t code() const { return _code ? _code : sysio::current_receiver().value; }
+   uint64_t code() const { return _code ? _code : kv::detail::receiving_account().value; }
 
    // Fixed key: big-endian encoding of the Name.
    // 8 bytes, deterministic, no scope.
@@ -53,8 +53,7 @@ private:
 
    static key_t make_key() {
       key_t k;
-      uint64_t v = static_cast<uint64_t>(Name);
-      for (int i = key_size - 1; i >= 0; --i) { k.data[i] = static_cast<char>(v & 0xFF); v >>= 8; }
+      encode_be64(k.data, static_cast<uint64_t>(Name));
       return k;
    }
 
@@ -62,10 +61,11 @@ public:
    /// Construct a global. Reads/writes against \p code's KV data (default: current contract).
    global(sysio::name code = sysio::name{}) : _code(code.value) {}
 
-   /// Returns true if a value has been stored.
+   /// Returns true if a value has been stored. One kv_get with an empty buffer, which reads
+   /// nothing and reports whether the row exists.
    bool exists() const {
       auto k = make_key();
-      return ::kv_contains(_table_id, code(), k.data, key_size) != 0;
+      return ::kv_get(_table_id, code(), k.data, key_size, 0, nullptr, 0) >= 0;
    }
 
    /// Returns the stored value. Asserts if not set.
@@ -92,12 +92,12 @@ public:
 
    /// Single kv_get call — returns true if found, populates \p out.
    /// Public so generic wrappers (kv::cached_value) load through this single-kv_get path
-   /// instead of paying kv_contains followed by kv_get.
+   /// instead of paying exists() followed by a read.
    bool try_get(T& out) const {
       auto k = make_key();
       if constexpr (is_fixed_serializable_v<T>) {
          char vbuf[sizeof(T)];
-         int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, vbuf, sizeof(T));
+         int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, 0, vbuf, sizeof(T));
          if (sz < 0) return false;
          // kv_get fills min(buffer, stored) bytes but returns the FULL stored size, so a row that is
          // not exactly sizeof(T) must be rejected rather than memcpy'd. Copying sizeof(T) out of a
@@ -111,28 +111,20 @@ public:
          sysio::check(sz == static_cast<int32_t>(sizeof(T)),
                       "kv::global: stored value size does not match the fixed-serializable payload");
          std::memcpy(&out, vbuf, sizeof(T));
+         return true;
       } else {
-         char stack[kv_value_stack_size];
-         int32_t sz = ::kv_get(_table_id, code(), k.data, key_size, stack, kv_value_stack_size);
-         if (sz < 0) return false;
-         if (sz <= static_cast<int32_t>(kv_value_stack_size)) {
-            sysio::datastream<const char*> ds(stack, sz);
-            ds >> out;
-         } else {
-            char* heap = new char[sz];
-            ::kv_get(_table_id, code(), k.data, key_size, heap, sz);
-            sysio::datastream<const char*> ds(heap, sz);
-            ds >> out;
-            delete[] heap;
-         }
+         return detail::read_row<kv_value_stack_size>(_table_id, code(), k.data, key_size,
+                                                      [&](const char* data, uint32_t size) {
+                                                         sysio::datastream<const char*> ds(data, size);
+                                                         ds >> out;
+                                                      });
       }
-      return true;
    }
 
    /**
     * Stores or overwrites the value.
     *
-    * WRITES IGNORE code(). kv_get and kv_contains take a code parameter, so reads honour whatever
+    * WRITES IGNORE code(). kv_get takes a code parameter, so reads honour whatever
     * account this handle was constructed with; kv_set and kv_erase have no such parameter and
     * always land on the current receiver. A handle opened on a FOREIGN account is therefore
     * read-only in practice -- calling this on one reads their row and writes your own. Nothing
@@ -144,22 +136,25 @@ public:
       if constexpr (is_fixed_serializable_v<T>) {
          char vbuf[sizeof(T)];
          std::memcpy(vbuf, &val, sizeof(T));
-         ::kv_set(_table_id, payer.value, k.data, key_size, vbuf, sizeof(T));
+         sysio::check(::kv_set(_table_id, payer.value, k.data, key_size, vbuf, sizeof(T),
+                               kv_set_upsert) == kv_status_ok, msg::write_refused);
       } else {
          uint32_t sz = sysio::pack_size(val);
          ser_buf buf(sz);
          sysio::datastream<char*> ds(buf.data(), sz);
          ds << val;
-         ::kv_set(_table_id, payer.value, k.data, key_size, buf.data(), sz);
+         sysio::check(::kv_set(_table_id, payer.value, k.data, key_size, buf.data(), sz,
+                               kv_set_upsert) == kv_status_ok, msg::write_refused);
       }
    }
 
-   /// Removes the stored value. Safe to call even if not set.
+   /// Removes the stored value, in one kv_erase. A silent no-op if not set: a missing row is the
+   /// one state this call accepts, so it is the one status that passes. kv_erase is a write whether
+   /// or not it finds a row, so in a read-only transaction this aborts even when nothing is set.
    void remove() {
       auto k = make_key();
-      // kv_erase always operates on current_receiver, so check receiver's data
-      if (!::kv_contains(_table_id, sysio::current_receiver().value, k.data, key_size)) return;
-      ::kv_erase(_table_id, k.data, key_size);
+      const int32_t status = ::kv_erase(_table_id, k.data, key_size);
+      sysio::check(status == kv_status_ok || status == kv_status_no_row, msg::write_refused);
    }
 };
 
