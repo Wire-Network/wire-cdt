@@ -18,10 +18,10 @@ are:
 
 - the postfix iterator operators `it++` / `it--` are deleted, because copying a KV iterator
   duplicates a host-side handle. Rewrite those to `++it` / `--it`. The compiler finds every
-  *direct* use, but **not the reverse ones**: `rbegin()` / `rend()` hand back a
-  `std::reverse_iterator`, whose postfix operators belong to the adaptor and are not deleted, so
-  `for (auto rit = t.rbegin(); rit != t.rend(); rit++)` compiles clean and performs exactly the
-  handle-duplicating copy the deletion exists to prevent. Sweep reverse loops by hand;
+  *direct* use, but **not the reverse ones**: the iterator from `rbegin()` keeps its postfix
+  operators so upstream's reverse loops still compile, and
+  `for (auto rit = t.rbegin(); rit != t.rend(); rit++)` performs exactly the handle-duplicating
+  copy the deletion exists to prevent. Sweep reverse loops by hand;
 - the five primary lookups — `find`, `require_find`, `get`, `lower_bound`, `upper_bound` — take a
   `name` as well as a `uint64_t`, where upstream declares each as a member template. That is a real
   source break in two shapes, and it applies to all five:
@@ -52,9 +52,34 @@ are:
   instantiated. The encoder checks the supported set again on the write path, reached by `emplace`
   / `modify` / `erase` maintaining secondary entries, so an unsupported key is refused at the first
   query or mutator and is never stored.
+- `const_reverse_iterator` is its own class rather than a `std::reverse_iterator`, so
+  `std::reverse_iterator<table_type::const_iterator> r = t.rbegin();` fails with `no viable
+  conversion`, and `iterator_type` is gone. Declare it `auto` or `table_type::const_reverse_iterator`.
+  `std::make_reverse_iterator(it)` still compiles and compares against `rend()`.
+
+Two more compile unchanged and behave differently, so the compiler finds neither:
+
+- **A reverse iterator does not follow the table after a write.** `std::reverse_iterator` holds the
+  row past the one it reads and works the row out on every read. This one holds the row it reads,
+  and stays there:
+  - `while (rit != t.rend()) t.erase(*rit);` never moves `rit`, so its second pass aborts with
+    `cannot use an iterator after erasing its row`.
+  - Reading through `rit` after an erase, as in `t.erase(*rit); rit->id`, aborts the same way. So
+    does copying it, which `rit.base()` and `rit++` do.
+  - A row emplaced past the position is not seen.
+  - `t.erase(*rit); ++rit;` reaches the row before, which upstream skips.
+
+  To carry on from an erase, step with `++rit` or rebuild the iterator from the result of `erase`:
+  `rit = table_type::const_reverse_iterator(t.erase(--rit.base()));`. A secondary index takes the
+  same form through `idx.erase`.
+- **A secondary iterator steps from its old key after a `modify` moves that key.** It reads the new
+  value, but `++` and `--` start from the old position, because the host keeps a handle on the key
+  it was on. Upstream's iterator moves with the entry. Rows at 10, 20 and 30 with `it` on 10, moved
+  to 25: `++it` gives 20. A copy of `it`, or a new `find`, starts from 25 and gives 30.
 
 Under the hood, primary rows are stored as 16-byte KV keys and secondary indices use `kv_idx_*`
-intrinsics.
+intrinsics. `multi_index` is the compatibility shim: performance work targets `kv::table`, so its
+`find` costs 4 host calls where `kv::table::find` costs 1, and a scan row 2 where `kv::table` pays 1.
 
 Each table gets a `table_id` (uint16) computed via `compute_table_id(name::raw)` from the template parameter.
 
@@ -76,8 +101,23 @@ The table name is conveyed by `table_id`, not embedded in the key.
 - Object caching for repeated access
 - `payer` parameter honored for RAM billing
 - `rbegin/rend`, `cbegin/cend` support
-- Upstream's mutation guards: `emplace` rejects a duplicate primary key, and `emplace` / `modify` /
-  `erase` reject a handle whose code is not the receiving account.
+- Upstream's mutation guards: `emplace` rejects a duplicate primary key, `emplace` / `modify` /
+  `erase` reject a handle whose code is not the receiving account, and `modify` / `erase` reject an
+  object that is not a row of this handle, such as a copy, with
+  `object passed to modify is not in multi_index`.
+- Upstream's key limit: `available_primary_key()` never hands out the top two keys and aborts past
+  them. `emplace` can still store any key.
+- `--end()` on an empty table or index aborts, as upstream's does. `rbegin()` there is `rend()`.
+- Upstream's row cache: iterators and references point at one cached object per row, which `modify`
+  updates in place, so they stay good across a `modify` and see the new value, with the step noted
+  above for a secondary key that moved. A `modify` of a row that has gone aborts with
+  `cannot modify a row that no longer exists`.
+- An `erase` ends every iterator and reference on the row, secondary iterators included, since they
+  point at the same object. Reading through one, copying it, or passing it to `modify` or `erase`
+  aborts with `cannot use an iterator after erasing its row`. Comparing it and stepping it stay good,
+  and `++` and `--` reach the rows either side. This covers an erase through the same table object:
+  another object holding the same table has a row cache of its own.
+- The table must outlive its iterators.
 
 ## Singleton
 

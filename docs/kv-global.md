@@ -48,7 +48,7 @@ nothing to describe it.
 | `get_or_default(def)` | Returns stored value or `def` |
 | `get_or_create(payer, def)` | Returns stored value, or stores and returns `def` |
 | `set(value, payer)` | Stores or overwrites the value |
-| `remove()` | Deletes the stored value (safe to call if not set) |
+| `remove()` | Deletes the stored value, and does nothing if it is not set. `kv_erase` is a write, so this aborts in a read-only transaction even when nothing is set |
 
 ## Example
 

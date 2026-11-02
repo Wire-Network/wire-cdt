@@ -65,7 +65,7 @@ for (auto it = accounts::scope_lower_bound(get_self(), 0);
 }
 ```
 
-`scope_iterator` is input-only (forward, no `--`). Uses no new intrinsics — walks primary keys and skips to the next scope prefix on each `++`.
+`scope_iterator` is input-only (forward, no `--`). It walks primary keys and skips to the next scope prefix on each `++`: 2 host calls to open, then 1 per scope.
 
 ## Migrating from multi_index
 
@@ -87,7 +87,7 @@ Key compatibility: if `K` is `{uint64_t id}`, the on-chain key bytes are identic
 
 ### API differences from multi_index
 
-**Payer is always the first parameter** across all mutations (`emplace`, `upsert`, `modify`, `erase`). multi_index put it second in `modify(it, payer, lambda)`.
+**Payer is always the first parameter** on the mutations that take one (`emplace`, `upsert`, `modify`). `erase` takes none. multi_index put it second in `modify(it, payer, lambda)`.
 
 **`modify` has two forms** with different trade-offs:
 
