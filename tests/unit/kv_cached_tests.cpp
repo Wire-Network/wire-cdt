@@ -183,9 +183,9 @@ static_assert(!takes_modify_or_create<defaulted_cache>);
 // Mocked KV intrinsics -- faithful stand-in for the chain's KV store
 // ---------------------------------------------------------------------------
 
-/// Mirrors apply_context's kv_get / kv_set / kv_erase / kv_contains semantics, including the
-/// asymmetry that matters here: reads take a `code` parameter, writes have none and always
-/// land on the current receiver.
+/// Mirrors apply_context's kv_get / kv_set / kv_erase semantics, including the asymmetry that
+/// matters here: reads take a `code` parameter, writes have none and always land on the current
+/// receiver.
 struct mock_kv {
    using row_key = std::tuple<uint64_t, uint32_t, std::string>;   // code, table_id, key
 
@@ -195,13 +195,12 @@ struct mock_kv {
    uint32_t gets     = 0;
    uint32_t sets     = 0;
    uint32_t erases   = 0;
-   uint32_t contains = 0;
    uint64_t last_payer = 0;
 
    void reset(uint64_t who) {
       rows.clear();
       receiver   = who;
-      gets = sets = erases = contains = 0;
+      gets = sets = erases = 0;
       last_payer = 0;
    }
 };
@@ -220,13 +219,15 @@ void install_kv_intrinsics() {
    intrinsics::set_intrinsic<intrinsics::current_receiver>(
       []() -> capi_name { return mock_store().receiver; });
 
-   // No code parameter: writes always target the current receiver.
+   // No code parameter: writes always target the current receiver. The cached stores write through
+   // upsert, so the insert and update modes never reach this mock.
    intrinsics::set_intrinsic<intrinsics::kv_set>(
       [](uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size,
-         const void* value, uint32_t value_size) -> int64_t {
+         const void* value, uint32_t value_size, uint32_t mode) -> int32_t {
          auto& m = mock_store();
          ++m.sets;
          m.last_payer = payer;
+         sysio::check(mode == kv_set_upsert, "mock: kv_set mode this suite does not expect");
          auto k = mock_kv::row_key{m.receiver, table_id, as_key(key, key_size)};
          // apply_context::kv_set asserts a valid payer on the CREATE branch; an update may legally
          // carry payer 0 (kv::same_payer), which means "keep billing whoever owns the row". Without
@@ -234,42 +235,34 @@ void install_kv_intrinsics() {
          if (m.rows.find(k) == m.rows.end())
             sysio::check(payer != 0, "must specify a valid account to pay for new record");
          m.rows[k] = std::string(static_cast<const char*>(value), value_size);
-         return 0;
+         return kv_status_ok;
       });
 
    // Returns the FULL stored size even when the caller's buffer is smaller, which is what
    // drives kv::global's heap re-read branch. -1 when absent.
    intrinsics::set_intrinsic<intrinsics::kv_get>(
-      [](uint32_t table_id, capi_name code, const void* key, uint32_t key_size,
+      [](uint32_t table_id, capi_name code, const void* key, uint32_t key_size, uint32_t offset,
          void* value, uint32_t value_size) -> int32_t {
          auto& m = mock_store();
          ++m.gets;
          auto itr = m.rows.find(mock_kv::row_key{code, table_id, as_key(key, key_size)});
          if (itr == m.rows.end()) return -1;
          const auto sz = static_cast<uint32_t>(itr->second.size());
-         if (value_size == 0) return static_cast<int32_t>(sz);
-         const auto copy_size = std::min(value_size, sz);
-         if (copy_size > 0) std::memcpy(value, itr->second.data(), copy_size);
+         if (value_size == 0 || offset >= sz) return static_cast<int32_t>(sz);
+         std::memcpy(value, itr->second.data() + offset, std::min(value_size, sz - offset));
          return static_cast<int32_t>(sz);
       });
 
+   // A miss is returned, not thrown. kv::global::remove() lets it pass, so erases counts every
+   // kv_erase issued, including one for an absent row.
    intrinsics::set_intrinsic<intrinsics::kv_erase>(
-      [](uint32_t table_id, const void* key, uint32_t key_size) -> int64_t {
+      [](uint32_t table_id, const void* key, uint32_t key_size) -> int32_t {
          auto& m = mock_store();
          ++m.erases;
          auto k = mock_kv::row_key{m.receiver, table_id, as_key(key, key_size)};
-         // apply_context::kv_erase asserts the row exists. Issuing an erase for an absent row is a
-         // real defect -- it aborts the transaction on chain -- so the mock must not absorb it.
-         sysio::check(m.rows.find(k) != m.rows.end(), "Key not found in `kv_erase`");
+         if (m.rows.find(k) == m.rows.end()) return kv_status_no_row;
          m.rows.erase(k);
-         return 0;
-      });
-
-   intrinsics::set_intrinsic<intrinsics::kv_contains>(
-      [](uint32_t table_id, capi_name code, const void* key, uint32_t key_size) -> int32_t {
-         auto& m = mock_store();
-         ++m.contains;
-         return m.rows.count(mock_kv::row_key{code, table_id, as_key(key, key_size)}) ? 1 : 0;
+         return kv_status_ok;
       });
 }
 
@@ -995,8 +988,8 @@ SYSIO_TEST_BEGIN(cached_global_read_issues_no_write)
    }
    CHECK_EQUAL(mock_store().sets, sets_after_seed)    // no write at destruction
    CHECK_EQUAL(mock_store().erases, 0u)
-   // cached_value loads via try_get, so it never pays for a separate kv_contains probe.
-   CHECK_EQUAL(mock_store().contains, 0u)
+   // cached_value loads via try_get, so one kv_get is all a read of the singleton costs.
+   CHECK_EQUAL(mock_store().gets, 1u)
 SYSIO_TEST_END
 
 /// A deferred write lands exactly once and is visible to an independent kv::global handle.
@@ -1080,12 +1073,8 @@ SYSIO_TEST_END
 
 /// The defaulted remove-absent case driven through the real kv::global and the mocked host.
 ///
-/// Sharper than the counting_store form, and for a specific reason: kv::global::remove() probes with
-/// kv_contains before kv_erase, so a Store::remove() that should never have been issued is absorbed
-/// there and leaves the erase counter at zero either way. The kv_contains it costs is what makes the
-/// wrong call visible at all -- which is also the whole point about store conformance, since the
-/// documented Store contract promises no such probe and the chain's own kv_erase aborts on a missing
-/// key.
+/// Sharper than the counting_store form: kv::global::remove() issues its kv_erase unconditionally,
+/// so a Store::remove() that should never have been reached shows up in the erase counter.
 SYSIO_TEST_BEGIN(cached_global_defaults_remove_absent_touches_no_store)
    begin_kv_case();
    default_probe::reset();
@@ -1095,17 +1084,15 @@ SYSIO_TEST_BEGIN(cached_global_defaults_remove_absent_touches_no_store)
       c.remove();
       CHECK_EQUAL(c.dirty(), false)
    }
-   CHECK_EQUAL(mock_store().contains, 0u)     // Store::remove() was never called
-   CHECK_EQUAL(mock_store().erases, 0u)
+   CHECK_EQUAL(mock_store().erases, 0u)       // Store::remove() was never called
    CHECK_EQUAL(mock_store().sets, 0u)
    CHECK_EQUAL(pod_global(test_code).exists(), false)
 SYSIO_TEST_END
 
 /// The set-then-remove resolution through the real kv::global, on an empty table.
 ///
-/// Store::remove() must never be reached, and kv_contains is what proves it: kv::global::remove()
-/// probes before erasing, so an erase that should not have been issued is absorbed there and leaves
-/// the erase counter at zero either way.
+/// Store::remove() must never be reached, and the erase counter proves it: kv::global::remove()
+/// issues its kv_erase unconditionally.
 SYSIO_TEST_BEGIN(cached_global_set_then_remove_on_empty_table_issues_no_erase)
    begin_kv_case();
    {
@@ -1114,8 +1101,7 @@ SYSIO_TEST_BEGIN(cached_global_set_then_remove_on_empty_table_issues_no_erase)
       c.remove();
       CHECK_EQUAL(c.dirty(), false)
    }
-   CHECK_EQUAL(mock_store().contains, 0u)   // Store::remove() was never called
-   CHECK_EQUAL(mock_store().erases, 0u)
+   CHECK_EQUAL(mock_store().erases, 0u)     // Store::remove() was never called
    CHECK_EQUAL(mock_store().sets, 0u)
 SYSIO_TEST_END
 
@@ -1233,7 +1219,7 @@ static_assert(!std::is_copy_constructible_v<pod_cached>,
 // and drives sysio::singleton.
 //
 // It is not covered here because kv_singleton is backed by kv_multi_index, whose find() needs the
-// kv_it_* iterator intrinsics on top of the four this file mocks. (Including the header natively is
+// kv_it_* iterator intrinsics on top of the three this file mocks. (Including the header natively is
 // no longer the obstacle: kv_singleton.hpp used to pull in contracts/sysio/system.hpp, whose
 // is_feature_activated declaration collides with the C-API one the native tester declares, and that
 // include has been removed as unused.) Extending the mock with a positioned iterator would bring

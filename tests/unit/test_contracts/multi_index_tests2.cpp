@@ -408,6 +408,38 @@ public:
         sysio::check(idx.get_scope() == "myscope"_n.value, "codescope: sec get_scope should be myscope");
     }
 
+    // ── References into the row cache stay good, across other work ──────────
+    [[sysio::action("refstable")]] void references_stay_good() {
+        using namespace _test_multi_index;
+        typedef record_idx64 record;
+
+        sysio::kv_multi_index<"reftbl"_n, record,
+            sysio::indexed_by<"bysecondary"_n, sysio::const_mem_fun<record, uint64_t, &record::get_secondary>>
+        > table(get_self(), get_self().value);
+        auto idx = table.get_index<"bysecondary"_n>();
+
+        for (uint64_t id = 1; id <= 3; ++id)
+            table.emplace(get_self(), [&](auto& r) { r.id = id; r.sec = id * 10; });
+
+        auto rit = table.rbegin();
+        const record& last = *rit;
+        auto sec_rit = idx.rbegin();
+        const record& sec_last = *sec_rit;
+        const record& by_get = idx.get(uint64_t{20});
+        sysio::check(table.available_primary_key() == 4, "refstable: next key should be 4");
+        sysio::check(last.id == 3, "refstable: primary reverse reference lost its row");
+        sysio::check(sec_last.id == 3, "refstable: secondary reverse reference lost its row");
+        sysio::check(by_get.id == 2, "refstable: secondary get reference lost its row");
+
+        auto it = table.find(1);
+        const record* cached = &*it;
+        table.modify(it, get_self(), [](auto& r) { r.sec = 15; });
+        sysio::check(&*it == cached && it->sec == 15, "refstable: modify replaced the cached row");
+
+        auto bound = idx.upper_bound(uint64_t{15});
+        sysio::check(bound->id == 2, "refstable: upper_bound should reach the next key");
+    }
+
     // ── crbegin / crend (const reverse iterators) ───────────────────────────
     [[sysio::action("crbeginend")]] void const_reverse_iter() {
         using namespace _test_multi_index;

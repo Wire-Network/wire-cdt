@@ -1,0 +1,17 @@
+{
+  "tests" : [
+    {
+      "compile_flags": ["-Werror=unused-result"],
+      "expected" : {
+        "exit-code": 255,
+        "stderr": [
+          "ignoring return value of function declared with 'warn_unused_result'.*\n.*kv_set",
+          "ignoring return value of function declared with 'warn_unused_result'.*\n.*kv_erase",
+          "ignoring return value of function declared with 'warn_unused_result'.*\n.*kv_idx_store",
+          "ignoring return value of function declared with 'warn_unused_result'.*\n.*kv_idx_update",
+          "ignoring return value of function declared with 'warn_unused_result'.*\n.*kv_idx_erase"
+        ]
+      }
+    }
+  ]
+}

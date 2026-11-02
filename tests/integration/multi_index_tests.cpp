@@ -77,9 +77,7 @@ BOOST_FIXTURE_TEST_CASE(main_multi_index_tests, TESTER) { try {
    check_failure( "s1skmodify"_n, "cannot pass end iterator to modify" );
    check_failure( "s1skerase"_n, "cannot pass end iterator to erase" );
    check_failure( "s1modpk"_n, "updater cannot change primary key when modifying an object" );
-   // KV: autoincrement limit only triggers when max_key exists in storage,
-   // not through in-memory cache path. Dev safety check only, no data impact.
-   push_action( "testapi"_n, "s1exhaustpk"_n, "testapi"_n, {} );
+   check_failure( "s1exhaustpk"_n, "next primary key in table is at autoincrement limit" );
    check_failure( "s1findfail1"_n, "unable to find key" ); // idx64_require_find_fail
    check_failure( "s1findfail2"_n, "unable to find primary key in require_find" );// idx64_require_find_fail_with_msg
    check_failure( "s1findfail3"_n, "unable to find secondary key" ); // idx64_require_find_sk_fail
@@ -112,6 +110,7 @@ BOOST_FIXTURE_TEST_CASE(multi_index_tests_part2, TESTER) { try {
    push_action( "testapi2"_n, "cbegincend"_n, "testapi2"_n, {} ); // cbegin/cend
    push_action( "testapi2"_n, "codescope"_n,  "testapi2"_n, {} ); // get_code/get_scope
    push_action( "testapi2"_n, "crbeginend"_n, "testapi2"_n, {} ); // crbegin/crend
+   push_action( "testapi2"_n, "refstable"_n,  "testapi2"_n, {} ); // references into the row cache
    push_action( "testapi2"_n, "s1secupd"_n,  "testapi2"_n, {} ); // T3: kv_idx_update verification
    push_action( "testapi2"_n, "tpdeser"_n,  "testapi2"_n, {} ); // time_point explicit-ctor deserialize regression
 

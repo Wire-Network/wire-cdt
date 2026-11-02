@@ -4,6 +4,7 @@
  */
 
 #include <string>
+#include <type_traits>
 
 #include <sysio/sysio.hpp>
 #include <sysio/tester.hpp>
@@ -41,6 +42,16 @@ SYSIO_TEST_BEGIN(system_test)
    CHECK_ASSERT("100", []() { check(false, 100);} );
    CHECK_ASSERT("18446744073709551615", []() { check(false, 18446744073709551615ULL);} );
    CHECK_ASSERT("18446744073709551615", []() { check(false, -1ULL);} );
+
+   // -----------------------------------------------------------
+   // The flags are bool, so a non-zero bitwise result arrives as 1
+   using namespace sysio::internal_use_do_not_use;
+   static_assert( std::is_same_v<decltype(&sysio_assert), void (*)(bool, const char*)> );
+   static_assert( std::is_same_v<decltype(&sysio_assert_message), void (*)(bool, const char*, uint32_t)> );
+   static_assert( std::is_same_v<decltype(&sysio_assert_code), void (*)(bool, uint64_t)> );
+   volatile uint32_t flags = 12;
+   sysio_assert( flags & 4, "flag not set" );
+   CHECK_ASSERT( "flag not set", [&]() { sysio_assert( flags & 2, "flag not set" ); } );
 SYSIO_TEST_END
 
 int main(int argc, char* argv[]) {

@@ -37,6 +37,7 @@ add_cdt_unit_test(varint_tests)
 add_cdt_unit_test(kv_table_tests)
 add_cdt_unit_test(kv_cached_tests)
 add_cdt_unit_test(kv_multi_index_tests)
+add_cdt_unit_test(kv_mock_tests)
 add_cdt_unit_test(kv_secondary_key_tests)
 
 target_compile_options( rope_tests PUBLIC -g )

@@ -569,7 +569,7 @@ public:
       --it;
       check(it.key().id == 10, "prev should be 10");
 
-      // Also test rbegin/rend (std::reverse_iterator)
+      // Also test rbegin/rend
       uint64_t rev_expected[] = {3, 2, 1};
       int ri = 0;
       for (auto rit = tbl.rbegin(); rit != tbl.rend(); ++rit) {
@@ -577,6 +577,12 @@ public:
          ++ri;
       }
       check(ri == 3, "rbegin: should visit 3");
+
+      // A reference from *rit is good for as long as the iterator stays put, across other work.
+      auto last = tbl.rbegin();
+      const my_val& last_row = *last;
+      check(tbl.begin() != tbl.end(), "rbegin: table should not be empty");
+      check(last_row.balance == 3, "rbegin: reference lost its row");
    }
 
    // ── Reverse iteration (secondary) ────────────────────────────────────────

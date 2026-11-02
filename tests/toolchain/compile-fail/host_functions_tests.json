@@ -12,7 +12,7 @@
           "codegen error.*bool kvset",
           "codegen error.*bool kverase",
           "codegen error.*bool kvidxstore",
-          "codegen error.*bool kvidxremove",
+          "codegen error.*bool kvidxerase",
           "codegen error.*bool kvidxupdate",
           "codegen error.*bool setpp\\b",
           "codegen error.*bool setppex",
