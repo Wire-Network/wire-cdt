@@ -22,7 +22,7 @@ extern "C" {
  *  @param data_len - size of data
  *  @param hash - hash result
  *  @param hash_len - size of hash result
- *  @param keccak - whether to use `keccak` or NIST variant; keccak = 1 and NIST == 0
+ *  @param keccak - whether to use `keccak` or NIST variant; keccak = 1 and NIST == 0. Any other value fails the action.
  *
  */
 __attribute__((sysio_wasm_import))
@@ -41,7 +41,7 @@ void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, i
  *  @param t0_len - size of t0_offset
  *  @param t1_offset - offset counters 
  *  @param t1_len - size of t1_offset
- *  @param final - final block flag
+ *  @param final - final block flag: 1 or 0. Any other value fails the action.
  *  @param result - the result of the compression
  *  @param result_len - size of result 
  *  @return -1 if there is an error otherwise 0

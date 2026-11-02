@@ -18,7 +18,7 @@ extern "C" {
 /**
  *  Aborts processing of this action and unwinds all pending changes if the test condition is true
  *
- *  @param test - 0 to abort, 1 to ignore
+ *  @param test - 0 to abort, 1 to ignore. The host rejects any other value, so pass a comparison, not a bitmask.
  *
  *  Example:
  *
@@ -35,7 +35,7 @@ void  sysio_assert( uint32_t test, const char* msg );
 /**
  *  Aborts processing of this action and unwinds all pending changes if the test condition is true
  *
- *  @param test - 0 to abort, 1 to ignore
+ *  @param test - 0 to abort, 1 to ignore. The host rejects any other value, so pass a comparison, not a bitmask.
  *  @param msg - a pointer to the start of string explaining the reason for failure
  *  @param msg_len - length of the string
  */
@@ -46,7 +46,7 @@ void  sysio_assert_message( uint32_t test, const char* msg, uint32_t msg_len );
  *  Aborts processing of this action and unwinds all pending changes if the test condition is true
  *
  *  @brief Aborts processing of this action and unwinds all pending changes
- *  @param test - 0 to abort, 1 to ignore
+ *  @param test - 0 to abort, 1 to ignore. The host rejects any other value, so pass a comparison, not a bitmask.
  *  @param code - the error code
  */
 __attribute__((sysio_wasm_import))
@@ -55,14 +55,11 @@ void  sysio_assert_code( uint32_t test, uint64_t code );
  /**
  *  This method will abort execution of wasm without failing the contract. This is used to bypass all cleanup / destructors that would normally be called.
  *
- *  @param code - the exit code
+ *  @param code - must be 0. Any other value fails the action. The chain gives the code no meaning.
  *  Example:
  *
  *  @code
  *  sysio_exit(0);
- *  sysio_exit(1);
- *  sysio_exit(2);
- *  sysio_exit(3);
  *  @endcode
  */
 __attribute__((sysio_wasm_import, noreturn))

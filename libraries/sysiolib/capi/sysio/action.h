@@ -171,7 +171,7 @@ capi_name current_receiver( void );
 /**
  *  Get the hash of the code currently published on the given account
  *  @param account Name of the account to hash the code of
- *  @param struct_version Version specifying the desired format of the returned struct
+ *  @param struct_version Must be 0. Any other value fails the action.
  *  @param result_buffer Buffer wherein the result should be written
  *  @param buffer_size Size in bytes of result_buffer
  */
