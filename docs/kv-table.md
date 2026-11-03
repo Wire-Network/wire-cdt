@@ -45,6 +45,8 @@ kv::table<"mytbl"_n, K, V> tbl("other"_n);    // reads another contract's data
 
 Writes always land on the receiver, whatever account the handle names, so a handle on another account is for reading. On such a handle `erase(key)` erases the receiver's row of that key. A table with no index never reads the other account first, and a table with one reads the row there and fails if it is missing. `modify` through an iterator on such a handle aborts when the receiver has no row of that key: with `cannot modify a row the receiver does not hold`, or with `KV secondary index entry not found for update` when the new value moves an index entry.
 
+Do not write through a handle on another account. Neither the wrappers nor the host stop it, and if the receiver holds a row of that key, the result can be wrong without an abort. The wrapper works out index changes from the row it read on the other account, but the write lands on the receiver. So the receiver's row can end up with a new secondary key while its index entry keeps the old one, or `upsert` can leave the row with two index entries. `erase(key)` aborts in this case with `KV secondary index entry not found for remove`, unless the two secondary keys match.
+
 ## Query Methods
 
 | Method | Returns | Description |

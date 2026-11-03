@@ -128,8 +128,8 @@ public:
     * account this handle was constructed with; kv_set and kv_erase have no such parameter and
     * always land on the current receiver. A handle opened on a FOREIGN account is therefore
     * read-only in practice -- calling this on one reads their row and writes your own. Nothing
-    * detects that at compile time, and a runtime guard would cost a current_receiver() host call on
-    * every write, so it is left to the caller: construct foreign-code handles for reading only.
+    * detects that at compile time, and no write checks it at run time, so it is left to the
+    * caller: construct foreign-code handles for reading only.
     */
    void set(const T& val, sysio::name payer) {
       auto k = make_key();
