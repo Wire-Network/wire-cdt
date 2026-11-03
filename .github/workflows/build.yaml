@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - "release/*"
+      # Version-bump PR branches: their PR runs the checks.
+      - "!release/prep-*"
     # Tag runs produce the Linux release package set. NOTE: a tag created by a
     # workflow (GITHUB_TOKEN) fires no push event, so tag-release.yaml also
     # dispatches this workflow explicitly on the tag ref; the workflow_dispatch
@@ -12,9 +14,10 @@ on:
     tags:
       - "v*"
   pull_request:
-    branches: 
+    branches:
       - master
       - develop
+      - "release/*"
   workflow_dispatch:
 
 permissions:
@@ -237,6 +240,16 @@ jobs:
             if-no-files-found: error
             retention-days: 30
             compression-level: 0
+  release-tooling:
+    name: Release tooling tests
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test the release version parser
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
+
   verify-packages:
     name: Verify packages
     needs: [build]
@@ -267,21 +280,24 @@ jobs:
     # pointed at the individual jobs could go green on a run that never built.
     # The verdict is therefore made explicitly below. Mirrors
     # wire-sysio/.github/workflows/linux_amd64_build.yaml's all-passing.
-    needs: [discover, build-platforms, build, verify-packages]
+    needs: [discover, build-platforms, build, verify-packages, release-tooling]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      # build and verify-packages are the only two that must SUCCEED:
-      # build-platforms is legitimately skipped, and a failed discover already
-      # shows up as a non-success `build`.
-      - if: needs.build.result != 'success' || needs.verify-packages.result != 'success'
+      # build, verify-packages and release-tooling must SUCCEED: build-platforms
+      # is legitimately skipped, and a failed discover already shows up as a
+      # non-success `build`.
+      - if: >-
+          needs.build.result != 'success' ||
+          needs.verify-packages.result != 'success' ||
+          needs.release-tooling.result != 'success'
         run: false
 
   notification:
     name: Send Notification
     # verify-packages and all-passing are real gates on this workflow's outcome,
     # so the notification must both wait for them and report them.
-    needs: [discover, build-platforms, build, verify-packages, all-passing]
+    needs: [discover, build-platforms, build, verify-packages, release-tooling, all-passing]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -300,5 +316,6 @@ jobs:
             build-platforms:${{ needs.build-platforms.result == 'skipped' && 'success' || needs.build-platforms.result }}
             build:${{ needs.build.result }}
             verify-packages:${{ needs.verify-packages.result }}
+            release-tooling:${{ needs.release-tooling.result }}
             all-passing:${{ needs.all-passing.result }}
           github-context: ${{ toJSON(github) }}

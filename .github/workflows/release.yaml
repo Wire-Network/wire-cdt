@@ -20,7 +20,7 @@ on:
         type: string
         required: true
       skip-master-check:
-        description: "DEBUG ONLY: allow a tag whose commit is not on master"
+        description: "DEBUG ONLY: allow a tag whose commit is on neither master nor its release/<major>.<minor> branch"
         type: boolean
         default: false
 
@@ -83,14 +83,35 @@ jobs:
           fi
 
           target_sha="$(git rev-parse "HEAD^{commit}")"
-          git fetch --force origin master:refs/remotes/origin/master
-          if ! git merge-base --is-ancestor "$target_sha" origin/master; then
+
+          # The tag must sit on its version's line: master, or the
+          # release/<major>.<minor> branch tag-release.yaml cut it from. The
+          # branch name is derived here rather than through cmake-version.py
+          # because this job runs the TAG's copy of the parser, and tags cut
+          # before release branches existed carry a copy without that rule.
+          IFS=. read -r major minor _ <<< "$tag_version"
+          release_branch="release/${major}.${minor}"
+          lines=(master)
+          if git ls-remote --exit-code --heads origin "refs/heads/${release_branch}" >/dev/null; then
+            lines+=("$release_branch")
+          fi
+          on_line=""
+          for line in "${lines[@]}"; do
+            git fetch --force origin "refs/heads/${line}:refs/remotes/origin/${line}"
+            if git merge-base --is-ancestor "$target_sha" "origin/${line}"; then
+              on_line="$line"
+              break
+            fi
+          done
+          if [[ -z "$on_line" ]]; then
             if [[ "$SKIP_MASTER_CHECK" == "true" ]]; then
-              echo "::warning::Tag '$tag' ($target_sha) is not on master; continuing (skip-master-check)."
+              echo "::warning::Tag '$tag' ($target_sha) is on neither master nor ${release_branch}; continuing (skip-master-check)."
             else
-              echo "::error::Tag '$tag' points to $target_sha, which is not on origin/master."
+              echo "::error::Tag '$tag' points to $target_sha, which is on neither origin/master nor origin/${release_branch}."
               exit 1
             fi
+          else
+            echo "Tag '$tag' ($target_sha) is on origin/${on_line}."
           fi
 
           # ONE parser for the VERSION_* block, shared with prepare-release.yaml
@@ -219,11 +240,27 @@ jobs:
           )
           cat "dist/wire-cdt-${VERSION}-checksums.txt"
 
-          # Stable releases (no version suffix) are explicitly marked `latest`
-          # rather than relying on the API's make_latest default; prereleases
-          # can never hold the latest label, so no flag is passed for them.
+          # The `latest` label belongs to the highest published stable version. A
+          # patch cut from an older release/<major>.<minor> branch after a newer
+          # line shipped must not take it. The flag is explicit either way,
+          # because publishing a draft without it lets GitHub default
+          # make_latest to true. Prereleases can never hold the label, so no flag
+          # is passed for them. Kept in lock-step with
+          # wire-sysio/.github/workflows/release.yaml.
           latest_flag=""
-          [[ "$TAG" != *-* ]] && latest_flag="--latest"
+          highest=""
+          if [[ "$TAG" != *-* ]]; then
+            published="$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases \
+              --limit 1000 --json tagName --jq '.[].tagName')"
+            # Only vX.Y.Z tags take part; TAG itself is one, so the grep always matches.
+            highest="$(printf '%s\n%s\n' "$published" "$TAG" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)"
+            if [[ "$highest" == "$TAG" ]]; then
+              latest_flag="--latest"
+            else
+              latest_flag="--latest=false"
+              echo "${highest} outranks ${TAG} and keeps the latest label."
+            fi
+          fi
 
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             # Strategy C: tag-release.yaml already created the DRAFT release
@@ -241,4 +278,8 @@ jobs:
               --title "$TAG" \
               --generate-notes \
               --verify-tag $prerelease_flag $latest_flag
+          fi
+          # A release published by hand may have taken the label; hand it back.
+          if [[ "$latest_flag" == "--latest=false" ]]; then
+            gh release edit "$highest" --repo "$GITHUB_REPOSITORY" --latest
           fi

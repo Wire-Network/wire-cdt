@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - "release/*"
+      # Version-bump PR branches: their PR runs the checks.
+      - "!release/prep-*"
     # Tag runs produce the macOS release asset. NOTE: a tag created by a
     # workflow (GITHUB_TOKEN) fires no push event, so tag-release.yaml also
     # dispatches this workflow explicitly on refs/tags/<tag>; the
@@ -15,6 +17,7 @@ on:
     branches:
       - master
       - develop
+      - "release/*"
   workflow_dispatch:
 
 permissions:
