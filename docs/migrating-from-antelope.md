@@ -326,9 +326,31 @@ for (auto it = idx.begin(); it != idx.end(); ++it)   // rewrite to this
 Postfix has to copy the iterator, and copying a KV iterator duplicates a host-side handle — too
 expensive to do once per loop step. The sweep is mechanical: `it++` → `++it`, `it--` → `--it`.
 
-**The compiler does not find every one.** `rbegin()`/`rend()` return a `std::reverse_iterator`,
-whose postfix operators belong to the adaptor and are not deleted — so a reverse loop using `rit++`
-compiles clean and makes exactly the copy the deletion exists to prevent. Grep those by hand.
+**The compiler does not find every one.** The iterator from `rbegin()` keeps its postfix operators,
+so upstream's reverse loops still compile, and a reverse loop using `rit++` makes exactly the copy
+the deletion exists to prevent. Grep those by hand.
+
+**A declared `std::reverse_iterator` stops compiling.** `const_reverse_iterator` is its own class on
+Wire, so `std::reverse_iterator<table_type::const_iterator> r = t.rbegin();` fails with `no viable
+conversion`, and `iterator_type` is gone. Declare it `auto` or `table_type::const_reverse_iterator`.
+
+**A reverse iterator no longer follows the table, and this one compiles.** `std::reverse_iterator`
+holds the row past the one it reads and works the row out on every read, so erasing `*rit` left `rit`
+good and reading the row before. Wire's holds the row it reads and stays there:
+
+```cpp
+while (rit != t.rend()) t.erase(*rit);   // second pass aborts: cannot use an iterator after erasing its row
+t.erase(*rit); auto id = rit->id;        // aborts the same way, as does copying rit: rit.base(), rit++
+t.erase(*rit); ++rit;                    // reaches the row before, which upstream skips
+```
+
+Rebuild the iterator from the result of `erase` where you need to carry on:
+`rit = table_type::const_reverse_iterator(t.erase(--rit.base()));`. Grep these by hand too: a reverse
+loop that erases or emplaces is the case to read. A row emplaced past the position is not seen.
+
+**A secondary iterator steps from its old key after a `modify` moves that key.** It reads the new
+value, but `++` and `--` start from the old position, where upstream's iterator moved with the entry.
+Find the row again to step from its new position.
 
 **The row type must be default-constructible, and one common shape breaks that without looking
 like it.** A default member initializer is parsed in a complete-class context — deferred until the
@@ -638,7 +660,7 @@ Antelope; what changed is only *who* the payment lands on by default.
 
 | Function(s) | Purpose |
 |---|---|
-| 22 × `kv_*` — `kv_set`, `kv_get`, `kv_erase`, `kv_contains`, `kv_it_*` (8), `kv_idx_*` (10) | The KV database that replaces `db_*_i64`. Full signatures in [kv-intrinsics-reference.md](kv-intrinsics-reference.md). |
+| 19 × `kv_*` — `kv_set`, `kv_get`, `kv_erase`, `kv_it_*` (6), `kv_idx_*` (10) | The KV database that replaces `db_*_i64`. Full signatures in [kv-intrinsics-reference.md](kv-intrinsics-reference.md). |
 | `get_ram_usage(account) → int64_t` | Bytes currently used by an account. `<sysio/system.h>`. |
 | `get_permission_lower_bound(account, permission, buffer, size)` | Iterate an account's permissions from a starting point. `<sysio/permission.h>`. |
 | `blake2b_256(data, data_len, hash, hash_len)` | BLAKE2b-256 hash. `<sysio/crypto_ext.h>`. (`blake2_f`, the compression-function primitive, is in both.) |
@@ -661,14 +683,19 @@ The last two rows fail at compile time rather than deploy, because CDT no longer
 - `set_kv_parameters_packed` → `error: use of undeclared identifier`; `<sysio/privileged.h>` is
   still there, and every other setter in it still compiles.
 
+### Changed on Wire
+
+`check_permission_authorization` takes no delay, because Wire has no delayed transactions. Drop `delay_us` from a raw
+call, and the `provided_delay` argument from a call to the C++ overload.
+
 ### Unchanged
 
 Everything else you already use is present with the same signature: `require_auth`, `require_auth2`,
 `has_auth`, `require_recipient`, `is_account`, `send_inline`, `send_context_free_inline`,
 `read_action_data`, `action_data_size`, `current_receiver`, `publication_time`, `get_sender`,
 `get_code_hash`, `set_action_return_value`, `current_time`, `get_block_num`, `is_feature_activated`,
-the whole `print*` family, the transaction and TAPOS accessors, `check_transaction_authorization` /
-`check_permission_authorization`, the `privileged.h` accessors that remain
+the whole `print*` family, the transaction and TAPOS accessors, `check_transaction_authorization`,
+the `privileged.h` accessors that remain
 (`get_resource_limits`, `set_resource_limits`, `set_proposed_producers`,
 `set_proposed_producers_ex`, `get_blockchain_parameters_packed`,
 `set_blockchain_parameters_packed`, `set_privileged` — but not `set_kv_parameters_packed`, removed
@@ -685,14 +712,15 @@ meaning later. `check()` and the other wrappers already pass valid values. These
 
 | Argument | Wire accepts | Otherwise |
 |---|---|---|
-| `test` on `sysio_assert`, `sysio_assert_message`, `sysio_assert_code` | 0 or 1, so pass a comparison, not `flags & 8` | the action fails |
+| `test` on `sysio_assert`, `sysio_assert_message`, `sysio_assert_code` | 0 or 1. CDT declares it `bool`, so `flags & 8` arrives as 1 | the action fails |
 | `code` on `sysio_exit` | 0 only | the action fails |
-| `keccak` on `sha3`, `final` on `blake2_f` | 0 or 1 | the action fails |
+| `keccak` on `sha3`, `final` on `blake2_f` | 0 or 1. CDT declares them `bool` | the action fails |
 | `hash_len` on `sha3` | 32 only | the action fails |
 | `struct_version` on `get_code_hash`, `max_version` on `get_wasm_parameters_packed` | 0 only | the action fails |
 | error code on `sysio_assert_code` | a value below the reserved range, even when the assert passes | the action fails |
 | Packed arguments such as `send_inline` data | exactly the packed value, with no trailing bytes | the action fails, or `recover_key` returns -1 |
 | Packed transaction for `check_transaction_authorization` | no transaction extensions | the action fails |
+| Output buffer of `alt_bn128_add`, `alt_bn128_mul`, `mod_exp`, `blake2_f` and `k1_recover` | exactly the result's size, which for `mod_exp` is the modulus size | returns -1 |
 
 ---
 
@@ -743,7 +771,8 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 4. Sweep `it++` → `++it` and `it--` → `--it` on table iterators; the postfix forms are deleted.
    Drop any explicit template argument on `find` / `require_find` / `get` / `lower_bound` /
    `upper_bound` — Wire gives each concrete `name` and `uint64_t` overloads where upstream has a
-   member template.
+   member template. Read every reverse loop that erases or emplaces, and every secondary iterator
+   stepped after a `modify` of its key: both compile unchanged and behave differently.
 5. Search for direct `db_*_i64` / `db_idx*` calls — those must be rewritten. `multi_index` table
    declarations carry over; what needs touching is step 4, and the default-constructibility shape
    above if your row is nested in the contract, carries member initializers, *and* the table is
@@ -777,7 +806,7 @@ None of this is required to ship. Do it after the contract builds, deploys and p
 |---|---|
 | [KV Storage Guide](kv-storage-guide.md) | The storage layer, the decision matrix, and `multi_index` → `kv::table` migration |
 | [abi-tables.md](abi-tables.md) | What abigen describes and what it refuses — row types, table names, `[[sysio::kv_key]]` |
-| [kv-intrinsics-reference.md](kv-intrinsics-reference.md) | All 22 KV host functions |
+| [kv-intrinsics-reference.md](kv-intrinsics-reference.md) | All 19 KV host functions |
 | [kv-abi-key-metadata.md](kv-abi-key-metadata.md) | How key metadata lands in the ABI |
 | [native-tester-compilation.md](native-tester-compilation.md) | Host-side contract testing |
 | [protocol-buffers.md](protocol-buffers.md) | Protobuf action data |

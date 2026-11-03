@@ -321,16 +321,15 @@ public:
     * Erase the row, discarding any pending write. Deferred.
     *
     * Probes the store first so that erasing a row that is not there costs nothing and stays legal
-    * inside a read-only transaction. Without the probe, both backing stores short-circuit an erase
-    * of an absent row at flush time, so whether this action issued a write -- and therefore whether
-    * it was legal read-only -- would depend on chain data rather than on the code.
+    * inside a read-only transaction. Without the probe, kv::global would issue its kv_erase at flush
+    * time for a row that is absent, and the chain refuses any kv_erase in a read-only transaction.
     *
     * What is owed is decided by _row -- whether a row is STORED -- never by exists(). On a handle
     * carrying defaults the two differ: a value is always available, and owing the erase off that
-    * would send Store::remove() after a row nobody ever wrote. Both shipped stores re-probe and
-    * absorb it, but the documented Store contract promises no such thing and the chain's own
-    * kv_erase aborts on a missing key -- and dirty() would meanwhile report a debt that does not
-    * exist. When set() left presence unresolved, this call resolves it rather than assuming.
+    * would send Store::remove() after a row nobody ever wrote. Both shipped stores absorb a missing
+    * row, but the documented Store contract promises no such thing -- and dirty() would meanwhile
+    * report a debt that does not exist. When set() left presence unresolved, this call resolves it
+    * rather than assuming.
     *
     * Removal itself is recorded in _removed, separately from what the store is owed, because those
     * two came apart the moment an erase stopped being the only outcome: a row that was never
@@ -482,10 +481,10 @@ private:
    /// and a set-then-remove silently leaves the row it was about to overwrite in place. So resolve
    /// it, and only here -- a handle that never removes after a blind set pays nothing.
    ///
-   /// try_get is the only presence query the Store contract exposes, so this costs a read rather
-   /// than a cheaper contains-style probe. A read is legal inside a read-only transaction, which is
-   /// what matters: resolving cannot make an otherwise-legal action illegal. The value is
-   /// discarded -- _cache already holds what set() put there.
+   /// try_get is the only presence query the Store contract exposes, so this reads the value it
+   /// does not need. A read is legal inside a read-only transaction, which is what matters: resolving
+   /// cannot make an otherwise-legal action illegal. The value is discarded -- _cache already holds
+   /// what set() put there.
    void resolve_row_state() const {
       if (_row != row_state::unresolved) return;
       T scratch;

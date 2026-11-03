@@ -29,11 +29,11 @@ extern "C" __attribute__((sysio_wasm_import)) void set_blockchain_parameters_pac
 extern "C" __attribute__((sysio_wasm_import)) uint32_t get_blockchain_parameters_packed( char* data, uint32_t datalen );
 
 // KV write intrinsics (must be rejected in read-only actions)
-extern "C" __attribute__((sysio_wasm_import)) int64_t kv_set(uint32_t key_format, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size);
-extern "C" __attribute__((sysio_wasm_import)) int64_t kv_erase(uint32_t key_format, const void* key, uint32_t key_size);
-extern "C" __attribute__((sysio_wasm_import)) void kv_idx_store(uint64_t payer, uint32_t table_id, const void* pri_key, uint32_t pri_key_size, const void* sec_key, uint32_t sec_key_size);
-extern "C" __attribute__((sysio_wasm_import)) void kv_idx_remove(uint32_t table_id, const void* pri_key, uint32_t pri_key_size, const void* sec_key, uint32_t sec_key_size);
-extern "C" __attribute__((sysio_wasm_import)) void kv_idx_update(uint64_t payer, uint32_t table_id, const void* pri_key, uint32_t pri_key_size, const void* old_sec_key, uint32_t old_sec_key_size, const void* new_sec_key, uint32_t new_sec_key_size);
+extern "C" __attribute__((sysio_wasm_import)) int32_t kv_set(uint32_t table_id, uint64_t payer, const void* key, uint32_t key_size, const void* value, uint32_t value_size, uint32_t mode);
+extern "C" __attribute__((sysio_wasm_import)) int32_t kv_erase(uint32_t table_id, const void* key, uint32_t key_size);
+extern "C" __attribute__((sysio_wasm_import)) int32_t kv_idx_store(uint32_t table_id, uint64_t payer, const void* pri_key, uint32_t pri_key_size, const void* sec_key, uint32_t sec_key_size);
+extern "C" __attribute__((sysio_wasm_import)) int32_t kv_idx_erase(uint32_t table_id, const void* pri_key, uint32_t pri_key_size, const void* sec_key, uint32_t sec_key_size);
+extern "C" __attribute__((sysio_wasm_import)) int32_t kv_idx_update(uint32_t table_id, uint64_t payer, const void* pri_key, uint32_t pri_key_size, const void* old_sec_key, uint32_t old_sec_key_size, const void* new_sec_key, uint32_t new_sec_key_size);
 
 extern "C" __attribute__((sysio_wasm_import)) int64_t set_proposed_producers( char*, uint32_t );
 extern "C" __attribute__((sysio_wasm_import)) int64_t set_proposed_producers_ex( uint64_t producer_data_format, char *producer_data, uint32_t producer_data_size );
@@ -91,7 +91,7 @@ public:
 // KV write operations must be rejected in read-only actions
    ACTION_TYPE
    bool kvset(){
-      kv_set(0, 0, "k", 1, "v", 1);
+      kv_set(0, 0, "k", 1, "v", 1, 0);
       return true;
    }
    ACTION_TYPE
@@ -105,8 +105,8 @@ public:
       return true;
    }
    ACTION_TYPE
-   bool kvidxremove(){
-      kv_idx_remove(0, "p", 1, "s", 1);
+   bool kvidxerase(){
+      kv_idx_erase(0, "p", 1, "s", 1);
       return true;
    }
    ACTION_TYPE

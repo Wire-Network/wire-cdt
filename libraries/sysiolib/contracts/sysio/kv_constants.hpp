@@ -1,21 +1,51 @@
 #pragma once
 
 #include <cstdint>
-#include <string_view>
 #include <type_traits>
 
 namespace sysio::kv {
 
-/// Chain-enforced maximum KV key size in bytes.
-inline constexpr size_t kv_key_max_bytes = 1024;
+/// Chain-enforced absolute maximum KV key size in bytes. The governance limit starts lower, at 256.
+inline constexpr size_t kv_key_max_bytes = 512;
 
 /// Stack buffer size for value reads/writes. Values up to this size avoid heap allocation.
-/// Only used for non-trivially-copyable types; trivially-copyable types use sizeof(T) directly.
+/// kv::table and kv::global do not use it when is_fixed_serializable_v<T> holds: a read then offers
+/// exactly sizeof(T). multi_index uses it for every row.
 inline constexpr uint32_t kv_value_stack_size = 256;
 
 /// Size in bytes of a scope encoded as a big-endian uint64_t (used as a key prefix
 /// in scoped tables). Equivalent to sizeof(uint64_t).
 inline constexpr uint32_t kv_scope_size = sizeof(uint64_t);
+
+/// Text raised when the host reports a state a wrapper has no contract-supplied message for. A
+/// contract can reach these only through a stale iterator or by writing around the wrappers.
+namespace msg {
+   inline constexpr const char* row_not_found    = "KV key not found for erase";
+   inline constexpr const char* entry_exists     = "KV secondary index entry already exists";
+   inline constexpr const char* entry_not_erased = "KV secondary index entry not found for remove";
+   inline constexpr const char* entry_not_moved  = "KV secondary index entry not found for update";
+   inline constexpr const char* write_refused    = "KV write refused";
+   inline constexpr const char* row_not_modified = "cannot modify a row that no longer exists";
+   inline constexpr const char* row_not_held     = "cannot modify a row the receiver does not hold";
+   inline constexpr const char* row_lost         = "KV row changed during a read";
+   inline constexpr const char* no_table         = "cannot position a default-constructed iterator";
+   inline constexpr const char* iterator_erased  = "cannot use an iterator after erasing its row";
+   inline constexpr const char* past_rend        = "cannot increment reverse iterator at rend";
+   inline constexpr const char* before_rbegin    = "cannot decrement reverse iterator at rbegin";
+   inline constexpr const char* modify_end       = "cannot modify end iterator";
+   inline constexpr const char* erase_end        = "cannot erase end iterator";
+   inline constexpr const char* entry_moved      = "cannot copy an iterator whose index entry has moved";
+   inline constexpr const char* pk_limit         = "next primary key in table is at autoincrement limit";
+   inline constexpr const char* table_start      = "cannot decrement iterator at beginning of table";
+   inline constexpr const char* index_start      = "cannot decrement iterator at beginning of index";
+   inline constexpr const char* table_is_empty   = "cannot decrement end iterator when the table is empty";
+   inline constexpr const char* index_is_empty   = "cannot decrement end iterator when the index is empty";
+   inline constexpr const char* reader_underflow = "be_key_reader underflow";
+   inline constexpr const char* reader_truncated = "be_key_reader: truncated NUL-escape";
+   inline constexpr const char* reader_bad_escape   = "be_key_reader: invalid NUL-escape byte";
+   inline constexpr const char* reader_unterminated = "be_key_reader: unterminated NUL-escape string";
+   inline constexpr const char* reader_too_large    = "be_key_reader: string too large";
+}
 
 // ── table_id computation ─────────────────────────────────────────────────────
 // Each table and each secondary index gets a unique uint16_t table_id.

@@ -38,13 +38,13 @@ namespace sysio {
          int32_t mod_exp( const char* base, uint32_t base_len, const char* exp, uint32_t exp_len, const char* mod, uint32_t mod_len, char* result, uint32_t result_len);
 
          __attribute__((sysio_wasm_import))
-         int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len, const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, int32_t final, char* result, uint32_t result_len);
+         int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len, const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, bool final, char* result, uint32_t result_len);
 
          __attribute__((sysio_wasm_import))
          int32_t k1_recover( const char* sig, uint32_t sig_len, const char* dig, uint32_t dig_len, char* pub, uint32_t pub_len);
 
          __attribute__((sysio_wasm_import))
-         void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, int32_t keccak );
+         void sha3( const char* data, uint32_t data_len, char* hash, uint32_t hash_len, bool keccak );
 
          __attribute__((sysio_wasm_import))
          int32_t blake2b_256( const char* data, uint32_t data_len, char* hash, uint32_t hash_len );
@@ -283,7 +283,7 @@ namespace sysio {
     *  @param op2 - operand 2
     *  @param op2_len - size of operand 2
     *  @param result - result of the addition operation
-    *  @param result_len - size of result
+    *  @param result_len - size of result, which must be exactly 64, or the call returns -1
     *  @return -1 if there is an error otherwise 0
     */
    inline int32_t alt_bn128_add( const char* op1, uint32_t op1_len, const char* op2, uint32_t op2_len, char* result, uint32_t result_len ) {
@@ -316,7 +316,7 @@ namespace sysio {
     *  @param scalar - scalar factor
     *  @param scalar_len - size of scalar
     *  @param result - result of the scalar multiplication operation
-    *  @param result_len - size of result
+    *  @param result_len - size of result, which must be exactly 64, or the call returns -1
     *  @return -1 if there is an error otherwise 0
     */
    inline int32_t alt_bn128_mul( const char* g1, uint32_t g1_len, const char* scalar, uint32_t scalar_len, char* result, uint32_t result_len ) {
@@ -362,12 +362,12 @@ namespace sysio {
     *  @param base - base of the exponentiation (BASE)
     *  @param exp - exponent to raise to that power (EXP)
     *  @param mod - modulus (MOD)
-    *  @param result - result of the modular exponentiation
+    *  @param result - result of the modular exponentiation. Its size must equal mod's size, or the action fails.
     *  @return -1 if there is an error otherwise 0
     */
 
    inline int32_t mod_exp( const bigint& base, const bigint& exp, const bigint& mod, bigint& result) {
-      sysio::check( result.size() >= mod.size(), "mod_exp result parameter's size must be >= mod's size" );
+      sysio::check( result.size() == mod.size(), "mod_exp result parameter's size must be == mod's size" );
       auto ret = internal_use_do_not_use::mod_exp( base.data(), base.size(), exp.data(), exp.size(), mod.data(), mod.size(), result.data(), result.size());
       return ret;
    }
@@ -384,7 +384,7 @@ namespace sysio {
     *  @param mod - modulus (MOD)
     *  @param mod_len - size of mod
     *  @param result - result of the modular exponentiation
-    *  @param result_len - size of result
+    *  @param result_len - size of result, which must equal mod_len, or the call returns -1
     *  @return -1 if there is an error otherwise 0
     */
 
@@ -405,11 +405,11 @@ namespace sysio {
     *  @param t0_offset - offset counters
     *  @param t1_offset - offset counters
     *  @param final - final block flag
-    *  @param result - the result of the compression
+    *  @param result - the result of the compression. Its size must be exactly 64, or the action fails.
     *  @return -1 if there is an error otherwise 0
     */
    inline int32_t blake2_f( uint32_t rounds, const std::vector<char>& state, const std::vector<char>& msg, const std::vector<char>& t0_offset, const std::vector<char>& t1_offset, bool final, std::vector<char>& result) {
-      sysio::check( result.size() >= blake2f_result_size, "blake2_f result parameter's size must be >= 64" );
+      sysio::check( result.size() == blake2f_result_size, "blake2_f result parameter's size must be == 64" );
       return internal_use_do_not_use::blake2_f( rounds, state.data(), state.size(), msg.data(), msg.size(), t0_offset.data(), t0_offset.size(), t1_offset.data(), t1_offset.size(), final, result.data(), result.size());
    }
 
@@ -427,13 +427,13 @@ namespace sysio {
     *  @param t0_len - size of t0_offset
     *  @param t1_offset - offset counters 
     *  @param t1_len - size of t1_offset
-    *  @param final - final block flag: 1 or 0. Any other value fails the action.
+    *  @param final - final block flag
     *  @param result - the result of the compression
-    *  @param result_len - size of result 
+    *  @param result_len - size of result, which must be exactly 64, or the call returns -1
     *  @return -1 if there is an error otherwise 0
     */
    inline int32_t blake2_f( uint32_t rounds, const char* state, uint32_t state_len, const char* msg, uint32_t msg_len,
-                     const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, int32_t final, char* result, uint32_t result_len) {
+                     const char* t0_offset, uint32_t t0_len, const char* t1_offset, uint32_t t1_len, bool final, char* result, uint32_t result_len) {
       return internal_use_do_not_use::blake2_f( rounds, state, state_len, msg, msg_len, t0_offset, t0_len, t1_offset, t1_len, final, result, result_len);
    }
 
@@ -501,13 +501,16 @@ namespace sysio {
    /**
     *  Calculates the uncompressed public key used for a given signature on a given digest.
     *
+    *  Signature bytes are not unique, so a contract must not dedup on them. First bytes 31 to 34, the K1 encoding,
+    *  recover the same key as 27 to 30, and so does the high-`s` twin of a signature.
+    *
     *  @ingroup crypto
     *  @param sig - signature.
     *  @param sig_len - size of signature
     *  @param dig - digest of the message that was signed.
     *  @param dig_len - size of digest
     *  @param pub - public key result
-    *  @param pub_len - size of public key result
+    *  @param pub_len - size of public key result, which must be exactly 65, or the call returns -1
     *
     *  @return -1 if there was an error 0 otherwise.
    */
@@ -521,7 +524,7 @@ namespace sysio {
     *  @ingroup crypto
     *  @param data - data to hash
     *  @param data_len - size of data
-    *  @param hash - output buffer (must be at least 32 bytes)
+    *  @param hash - output buffer (must be exactly 32 bytes)
     *  @param hash_len - size of output buffer
     *  @return -1 if there was an error, 0 otherwise.
     */

@@ -3,5 +3,5 @@
 
 void test_permission( void ) {
    check_transaction_authorization(NULL, 0, NULL, 0, NULL, 0);
-   check_permission_authorization(0, 0, NULL, 0, NULL, 0, 0);
+   check_permission_authorization(0, 0, NULL, 0, NULL, 0);
 }

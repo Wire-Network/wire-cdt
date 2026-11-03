@@ -70,6 +70,19 @@ KV_INDEXED_TABLE_TEST( "kvidxz"_n, tpdeser )
 // still exist in the contract class but can only be tested if deployed as a
 // separate contract with their own dispatch. Skipped here.
 
+// Every index of a full table moves in one action, on the default stack.
+BOOST_FIXTURE_TEST_CASE(kv_table_with_sixteen_indices_fits_the_stack, TESTER) { try {
+   const name account = "kvsixteen"_n;
+   produce_blocks(1);
+   create_account(account);
+   produce_blocks(1);
+   set_code(account, contracts::kv_sixteen_index_tests_wasm());
+   set_abi(account, contracts::kv_sixteen_index_tests_abi().data());
+   produce_blocks(1);
+   push_action(account, "moveall"_n, account, {});
+   BOOST_REQUIRE_EQUAL(validate(), true);
+} FC_LOG_AND_RETHROW() }
+
 BOOST_FIXTURE_TEST_CASE(kv_indexed_table_reqmiss, TESTER) { try {
    produce_blocks(1);
    create_account( "kvidxv"_n );

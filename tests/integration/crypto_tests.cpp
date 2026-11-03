@@ -28,6 +28,13 @@ struct crypto_primitives_tester : tester {
 
 BOOST_AUTO_TEST_SUITE(crypto_primitives_tests)
 
+// The host refuses any flag but 0 or 1, so a non-zero bitwise result only passes because the CDT declares the flag bool.
+BOOST_FIXTURE_TEST_CASE( assert_flag_is_a_bool_tests, crypto_primitives_tester ) try {
+   push_action("sysio"_n, "asserttest"_n, "test"_n, mvo()("flags", 12));
+   BOOST_CHECK_EXCEPTION(push_action("sysio"_n, "asserttest"_n, "test"_n, mvo()("flags", 3)),
+                         sysio_assert_message_exception, sysio_assert_message_is("flag not set"));
+} FC_LOG_AND_RETHROW()
+
 BOOST_FIXTURE_TEST_CASE( sha3_tests, crypto_primitives_tester ) try {
    push_action("sysio"_n, "sha3test"_n, "test"_n, mvo()
       ("val", "hello")

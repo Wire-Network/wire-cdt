@@ -9,6 +9,11 @@ class [[sysio::contract]] crypto_primitives_tests : public contract{
       using contract::contract;
 
       [[sysio::action]]
+      void asserttest(uint32_t flags) {
+         sysio::internal_use_do_not_use::sysio_assert(flags & 4, "flag not set");
+      }
+
+      [[sysio::action]]
       void sha3test(std::string val, sysio::checksum256 sha3_dg) {
          auto hash = sysio::sha3(val.c_str(), val.size());
 

@@ -46,7 +46,7 @@ Each table and each secondary index gets a unique `table_id` computed at compile
 
 ```cpp
 // Primary table:   table_id = compute_table_id("accounts"_n.value)  → 25660
-// Secondary index: sec_table_id = compute_sec_table_id("accounts"_n, "byowner"_n) → 41023
+// Secondary index: sec_table_id = compute_sec_table_id("accounts"_n, "byowner"_n) → 24567
 ```
 
 The `table_id` is passed as the first parameter to all KV intrinsics. Keys no longer embed the table name — saving 8 bytes per row compared to the old 24-byte key layout.
@@ -87,14 +87,14 @@ Fields serialized via `be_key_stream` in `SYSLIB_SERIALIZE` order:
 | `name` | 8B | Big-endian |
 | `bool` | 1B | 0 or 1 |
 
-**Key buffer limit:** The `be_key_stream` encoder uses a 256-byte stack buffer (`KV_KEY_BUF_CAP`). Keys exceeding this size abort with `"be_key_stream: key too large"`. For most use cases 256 bytes is more than sufficient (e.g., 32 `uint64_t` fields = 256 bytes). If you need larger keys, define `KV_KEY_BUF_CAP` before including any KV header:
+**Key buffer limit:** The `be_key_stream` encoder uses a 256-byte stack buffer (`KV_KEY_BUF_CAP`). Keys whose encoded size exceeds this abort with `"be_key_stream: key too large"`. In a string or `vector<char>` field each NUL encodes to two bytes, and the field ends in a two-byte terminator. For most use cases 256 bytes is more than sufficient (e.g., 32 `uint64_t` fields = 256 bytes). If you need larger keys, define `KV_KEY_BUF_CAP` before including any KV header:
 
 ```cpp
 #define KV_KEY_BUF_CAP 512
 #include <sysio/kv_table.hpp>
 ```
 
-Note: the chain enforces a separate maximum key size (`max_kv_key_size`, default 256 bytes). Increasing `KV_KEY_BUF_CAP` beyond the chain limit has no effect — the intrinsic will reject the key.
+Note: the chain enforces a separate maximum key size (`max_kv_key_size`, default 256 bytes, which governance can raise to 512). Increasing `KV_KEY_BUF_CAP` beyond the chain limit has no effect — the intrinsic will reject the key.
 
 ### Global layout
 
