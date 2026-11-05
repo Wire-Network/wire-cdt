@@ -9,7 +9,9 @@ name: Prepare Release
 # on: master, or the version's release/<major>.<minor> branch.
 #
 # Post-bump after a stable release is the SAME operation: dispatch this
-# workflow again with the next development version (e.g. `1.1.0-dev`).
+# workflow again on the branch it shipped from, with its next development
+# version: master's (e.g. `1.2.0-dev`) or a release branch's next patch (e.g.
+# `1.1.0` -> `1.1.1-dev`).
 on:
   workflow_dispatch:
     inputs:

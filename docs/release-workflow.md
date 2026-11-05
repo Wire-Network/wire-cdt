@@ -104,7 +104,9 @@ Two human gates, two dispatches:
    flip does not re-fire `release: published` — no recursion, by design.)
 
 **Post-bump** after a stable release is the same operation as step 1: dispatch
-`Prepare Release` again with the next development version (e.g. `1.1.0-dev`).
+`Prepare Release` again on the branch it shipped from, with its next development
+version: master's (e.g. `1.2.0-dev`) or a release branch's next patch (`1.1.0` →
+`1.1.1-dev`).
 
 ### Release branches
 
