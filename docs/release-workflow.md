@@ -98,10 +98,11 @@ Two human gates, two dispatches:
    dispatches `Publish Release` with the tag.
 6. `Publish Release` checks the tag sits on master or its version's
    `release/<major>.<minor>` branch, waits for both tag-ref builds, downloads
-   both package artifacts, verifies each artifact explicitly, attaches them plus
-   the checksums file to the draft, and flips the draft public. The `latest`
-   label goes to the highest published stable version. (A GITHUB_TOKEN draft
-   flip does not re-fire `release: published` — no recursion, by design.)
+   both package artifacts, verifies each artifact explicitly, and attaches them
+   plus the checksums file to the draft. Its `publish-release` job then flips
+   the draft public and gives the `latest` label to the highest published stable
+   version; that job runs in one queue shared by every tag. (A GITHUB_TOKEN
+   draft flip does not re-fire `release: published` — no recursion, by design.)
 
 **Post-bump** after a stable release is the same operation as step 1: dispatch
 `Prepare Release` again on the branch it shipped from, with its next development
@@ -165,7 +166,9 @@ publish on it.
   one run the same checks as PRs into master. Pushes to `release/prep-*` build
   nothing; their PRs run the checks.
 - **The `latest` label.** It goes to the highest published stable version, so a
-  `1.1.1` cut after `1.2.0` leaves `1.2.0` as latest.
+  `1.1.1` cut after `1.2.0` leaves `1.2.0` as latest. Releases publish one at a
+  time, in the `publish-releases` queue, so two published together cannot
+  leave it on the lower one.
 - **Release notes.** `generate-notes` picks the previous release itself, so the
   notes of a patch cut from an older release branch can start from a newer
   line's release.
@@ -177,8 +180,8 @@ publish on it.
 - Wrong tag or wrong content: delete the draft and the tag, then cut the next
   `-rcN`.
 - `Publish Release` also keeps a `push: tags` trigger and a
-  `gh release create` fallback branch for a human-pushed stable tag with no
-  draft prepared.
+  `gh release create --draft` fallback branch for a human-pushed stable tag with
+  no draft prepared; `publish-release` then publishes it like any other.
 
 ## Human vs system
 

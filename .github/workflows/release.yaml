@@ -138,8 +138,8 @@ jobs:
             echo "prerelease=$prerelease"
           } >> "$GITHUB_OUTPUT"
 
-  publish-release:
-    name: Publish GitHub Release
+  attach-assets:
+    name: Verify & attach release assets
     needs: validate-tag
     runs-on: ubuntu-latest
     # tag-release.yaml dispatches this workflow at the same moment it dispatches
@@ -217,7 +217,7 @@ jobs:
           # build.yaml's verification of the same package set.
           tools/packaging/tests/verify-all.sh dist "$VERSION"
 
-      - name: Publish release
+      - name: Attach release assets
         run: |
           set -euo pipefail
 
@@ -240,6 +240,51 @@ jobs:
           )
           cat "dist/wire-cdt-${VERSION}-checksums.txt"
 
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # Strategy C: tag-release.yaml already created the DRAFT release
+            # (title, notes and the prerelease flag are set there).
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            # Fallback only (a human-pushed tag with no draft prepared): create the
+            # draft here, and publish-release makes it public like any other.
+            prerelease_flag=""
+            [[ "$PRERELEASE" == "true" ]] && prerelease_flag="--prerelease"
+            gh release create "$TAG" dist/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --draft \
+              --title "$TAG" \
+              --generate-notes \
+              --verify-tag $prerelease_flag
+          fi
+
+  # Publishing and the `latest` label run in one queue shared by every tag. The
+  # workflow's concurrency group is per tag, so without it two releases could each
+  # pick the label from a list the other is about to change and leave it on the
+  # lower version. Only this job is serialized; verification and asset uploads
+  # stay per tag.
+  publish-release:
+    name: Publish GitHub Release
+    needs: [validate-tag, attach-assets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: publish-releases
+      # FIFO: each waiting release publishes in turn instead of replacing the one
+      # queued before it.
+      queue: max
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.validate-tag.outputs.tag }}
+    steps:
+      - name: Publish the release
+        run: |
+          set -euo pipefail
+
+          # A GITHUB_TOKEN draft flip does NOT re-fire `release: published`, so
+          # there is no recursion.
+          #
           # The `latest` label belongs to the highest published stable version. A
           # patch cut from an older release/<major>.<minor> branch after a newer
           # line shipped must not take it. The flag is explicit either way,
@@ -262,23 +307,7 @@ jobs:
             fi
           fi
 
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            # Strategy C: tag-release.yaml already created the DRAFT release
-            # (title, notes and the prerelease flag are set there). Attach the
-            # assets, then make it public. A GITHUB_TOKEN draft flip does NOT
-            # re-fire `release: published`, so there is no recursion.
-            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false $latest_flag
-          else
-            # Fallback only (a human-pushed tag with no draft prepared).
-            prerelease_flag=""
-            [[ "$PRERELEASE" == "true" ]] && prerelease_flag="--prerelease"
-            gh release create "$TAG" dist/* \
-              --repo "$GITHUB_REPOSITORY" \
-              --title "$TAG" \
-              --generate-notes \
-              --verify-tag $prerelease_flag $latest_flag
-          fi
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false $latest_flag
           # A release published by hand may have taken the label; hand it back.
           if [[ "$latest_flag" == "--latest=false" ]]; then
             gh release edit "$highest" --repo "$GITHUB_REPOSITORY" --latest
