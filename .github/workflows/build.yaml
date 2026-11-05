@@ -249,6 +249,25 @@ jobs:
       - uses: actions/checkout@v5
       - name: Test the release version parser
         run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
+      # Only a Prepare Release bump PR changes the version. A forward merge from a
+      # release branch can carry that branch's version without a conflict.
+      - name: Check that only a bump PR changes the version
+        if: github.event_name == 'pull_request'
+        env:
+          # Untrusted PR fields: environment variables only, never interpolated
+          # into the script body.
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          # The checkout is the PR's merge result; the base branch's file is
+          # fetched to compare against it.
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git show "${BASE_SHA}:CMakeLists.txt" > "$RUNNER_TEMP/base-CMakeLists.txt"
+          python3 .github/scripts/cmake-version.py check-pr \
+            --base-branch "$BASE_BRANCH" --head-branch "$HEAD_BRANCH" \
+            --base-cmakelists "$RUNNER_TEMP/base-CMakeLists.txt"
 
   verify-packages:
     name: Verify packages

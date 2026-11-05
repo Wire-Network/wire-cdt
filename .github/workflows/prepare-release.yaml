@@ -110,17 +110,22 @@ jobs:
           echo "--- CMakeLists.txt version block ---"
           grep -nE '^set\(VERSION_(MAJOR|MINOR|PATCH|SUFFIX)' target/CMakeLists.txt
 
+          # The parser names the bump branch, so the PR version check recognizes it.
+          prep_branch="$(python3 .github/scripts/cmake-version.py prep-branch "$VERSION")"
+
           {
             echo "channel=$channel"
             echo "previous=$previous"
+            echo "prep-branch=$prep_branch"
           } >> "$GITHUB_OUTPUT"
 
       - name: Push branch and open PR
         working-directory: target
         env:
           CHANNEL: ${{ steps.bump.outputs.channel }}
+          PREP_BRANCH: ${{ steps.bump.outputs.prep-branch }}
         run: |
-          branch="release/prep-v${VERSION}"
+          branch="$PREP_BRANCH"
 
           # A prep branch with an open PR into another branch belongs to that
           # preparation: force-pushing it would re-point that PR at this
