@@ -81,27 +81,97 @@ for, a wire-cdt release. Consumers pin a published release asset.
 Two human gates, two dispatches:
 
 1. **Dispatch `Prepare Release`** with the version (its suffix picks the
-   channel). It rewrites the four `VERSION_*` lines on a `release/prep-v<version>`
-   branch and opens the bump PR.
+   channel) and the branch it lands on (`master`, or the version's
+   `release/<major>.<minor>` branch). It rewrites the four `VERSION_*` lines on a
+   `release/prep-v<version>` branch and opens the bump PR against that branch.
 2. **GATE 1 — review + merge the PR.** Its checks start in the
    approval-required state (a GITHUB_TOKEN-opened PR), so the gate includes an
    "Approve and run" click.
-3. **Dispatch `Tag Release`** with the same version.
+3. **Dispatch `Tag Release`** with the same version and branch.
 4. **GATE 2 — approve the `release` Environment.** `Tag Release`'s job is
    gated on it; nothing is written before the approval.
-5. The system then: asserts master HEAD's `VERSION_*` equals the version,
+5. The system then: asserts the branch HEAD's `VERSION_*` equals the version,
    creates the annotated tag (two API calls — the tag object, then the ref) and
    a **draft** release with generated notes, and **dispatches the linux + macOS
    builds on `refs/tags/<tag>`** — a GITHUB_TOKEN-created tag fires no push
    event, so the tag-ref builds must be dispatched explicitly. Finally it
    dispatches `Publish Release` with the tag.
-6. `Publish Release` waits for both tag-ref builds, downloads both package
-   artifacts, verifies each artifact explicitly, attaches them plus the
-   checksums file to the draft, and flips the draft public. (A GITHUB_TOKEN
+6. `Publish Release` checks the tag sits on master or its version's
+   `release/<major>.<minor>` branch, waits for both tag-ref builds, downloads
+   both package artifacts, verifies each artifact explicitly, and attaches them
+   plus the checksums file to the draft. Its `publish-release` job then flips
+   the draft public and gives the `latest` label to the highest published stable
+   version; that job runs in one queue shared by every tag. (A GITHUB_TOKEN
    draft flip does not re-fire `release: published` — no recursion, by design.)
 
 **Post-bump** after a stable release is the same operation as step 1: dispatch
-`Prepare Release` again with the next development version (e.g. `1.1.0-dev`).
+`Prepare Release` again on the branch it shipped from, with its next development
+version: master's (e.g. `1.2.0-dev`) or a release branch's next patch (`1.1.0` →
+`1.1.1-dev`).
+
+### Release branches
+
+A `release/<major>.<minor>` branch carries one line's releases (`1.1.0-rc1`,
+`1.1.0`, `1.1.1`, …) while master moves on. The same workflows prepare, tag and
+publish on it.
+
+- **Cutting one.** Create `release/<major>.<minor>` from master once master holds
+  everything the line ships. From then on a change reaches the line only through
+  a PR into the branch. Its first bump (say `1.1.0-rc1`) goes through
+  `Prepare Release` with branch `release/1.1`. Master can then move to the next
+  line's `-dev` version the same way, with branch `master`.
+- **Preparing and tagging.** Dispatch both workflows on master. `Tag Release`
+  has to run on master, because the `release` Environment only deploys from
+  master. Both keep master's checkout at the workspace root and check the target
+  branch out into `target/` (always as `refs/heads/<branch>`, never a tag of the
+  same name). Master's `cmake-version.py` validates the inputs and reads and
+  writes the target's version, so no code from the target branch runs in either
+  job.
+- **Which versions go where.** A release branch takes only its own line's
+  versions (`release/1.1` refuses `1.2.0`). Master takes any version whose line
+  has no release branch yet: once `release/1.1` exists, `1.1.*` is refused on
+  master.
+- **Forwarding.** Every PR merged into a release branch is merged forward through
+  each newer line to master: `release/1.1` into `release/1.2`, then
+  `release/1.2` into master. Nothing is merged the other way, so a release
+  branch never picks up a newer line's work.
+  - Branch from the target, outside `release/`, merge the source release branch
+    without committing, and open a PR into the target:
+
+    ```bash
+    git switch -c forward/release-1.1-to-master origin/master
+    git merge --no-ff --no-commit origin/release/1.1
+    # Resolve any conflicts, then confirm the version is still master's:
+    python3 .github/scripts/cmake-version.py read
+    git commit
+    ```
+
+  - The target keeps its own `VERSION_*` lines. A bump on the source does not
+    always conflict: when the two sides changed different lines, git merges them
+    silently (master at `1.2.0-dev` plus `release/1.1` going `1.1.0-dev` to
+    `1.1.0` merges to `1.2.0`). CI fails any PR that changes its base branch's
+    version, except the `release/prep-v<version>` bump PR for a version that
+    branch may carry.
+  - Merge the PR with a merge commit. A squash or rebase leaves the release
+    branch's commits unmerged, so every later forward merges them again.
+  - Never use GitHub's "Resolve conflicts" on a PR whose head is the release
+    branch: it commits the target into the release branch.
+- **Protection.** `Tag Release` refuses a branch whose rules do not require a
+  pull request: the bump PR shows only the version change, so every other commit
+  on the branch must already have been reviewed. `release/*` gets the same
+  branch ruleset as master (approved PRs, no force-push, no deletion), with
+  `release/prep-*` excluded because `Prepare Release` pushes, and on a re-run
+  force-pushes, its bump branches there.
+- **CI.** Pushes to a release branch run the linux and macOS builds, and PRs into
+  one run the same checks as PRs into master. Pushes to `release/prep-*` build
+  nothing; their PRs run the checks.
+- **The `latest` label.** It goes to the highest published stable version, so a
+  `1.1.1` cut after `1.2.0` leaves `1.2.0` as latest. Releases publish one at a
+  time, in the `publish-releases` queue, so two published together cannot
+  leave it on the lower one.
+- **Release notes.** `generate-notes` picks the previous release itself, so the
+  notes of a patch cut from an older release branch can start from a newer
+  line's release.
 
 ### Failure and rollback
 
@@ -110,8 +180,8 @@ Two human gates, two dispatches:
 - Wrong tag or wrong content: delete the draft and the tag, then cut the next
   `-rcN`.
 - `Publish Release` also keeps a `push: tags` trigger and a
-  `gh release create` fallback branch for a human-pushed stable tag with no
-  draft prepared.
+  `gh release create --draft` fallback branch for a human-pushed stable tag with
+  no draft prepared; `publish-release` then publishes it like any other.
 
 ## Human vs system
 
@@ -122,12 +192,12 @@ flowchart TD
     classDef gate fill:#FFD9D9,stroke:#a83232,color:#1a1a1a
 
     H1[/"Human: pick version — its suffix IS the channel<br>(-dev/-rcN = prerelease, none = stable)"/]:::human
-    H2[/"Human: dispatch prepare-release (input: version)"/]:::human
+    H2[/"Human: dispatch prepare-release (inputs: version, branch)"/]:::human
     S1["System: edit VERSION_*, resolve+pin latest<br>wire-cdt release (sysio only), open bump PR"]:::system
     G1{{"GATE 1 — Human: 'Approve and run' the PR checks,<br>review (incl. pinned CDT), merge"}}:::gate
-    H3[/"Human: dispatch tag-release (input: version)"/]:::human
+    H3[/"Human: dispatch tag-release (inputs: version, branch)"/]:::human
     G2{{"GATE 2 — Human: approve 'release' Environment"}}:::gate
-    S3["System: assert version == master HEAD,<br>create annotated tag + DRAFT release,<br>DISPATCH linux + macos builds on the tag ref"]:::system
+    S3["System: assert version == branch HEAD,<br>create annotated tag + DRAFT release,<br>DISPATCH linux + macos builds on the tag ref"]:::system
     S4["System: tag builds produce packages<br>(sysio: installs pinned wire-cdt release deb,<br>builds + asserts system contracts, bundles them)"]:::system
     S6["System: release.yaml — await tag-ref builds,<br>download, verify each artifact explicitly"]:::system
     S7["System: attach assets + checksums,<br>flip draft to public"]:::system
@@ -204,7 +274,7 @@ with `wire-cdt`'s own `Provides: cdt`, blocking their co-install.
 
 ```mermaid
 flowchart TD
-    A[Prepare Release: bump VERSION_* on release/prep-v*] --> B[Merge to master]
+    A[Prepare Release: bump VERSION_* on release/prep-v*] --> B[Merge to master or release/X.Y]
     B --> C[Tag Release: annotated tag + draft release]
     C --> D[Dispatched builds on refs/tags/vX.Y.Z]
     D --> D1[Build toolchain + tests<br/>linux amd64 + macOS arm64]
@@ -213,7 +283,7 @@ flowchart TD
     D3 --> E{verify-packages:<br/>payload + container install +<br/>contract-compile smoke}
     E -- fail --> X1[Fix, re-dispatch — never re-tag]
     E -- pass --> F[Publish Release workflow]
-    F --> F1{Tag valid? on master?<br/>matches VERSION_* incl. suffix?}
+    F --> F1{Tag valid? on master or release/X.Y?<br/>matches VERSION_* incl. suffix?}
     F1 -- no --> X2[Fail fast]
     F1 -- yes --> G[Resolve both tag-ref build runs]
     G --> H[Download + re-verify each artifact]
