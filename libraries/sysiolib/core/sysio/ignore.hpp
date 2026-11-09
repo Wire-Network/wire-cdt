@@ -2,6 +2,8 @@
 
 #include "datastream.hpp"
 
+#include <type_traits>
+
 namespace sysio {
    /**
     * @defgroup ignore
@@ -18,6 +20,24 @@ namespace sysio {
     */
    template <typename T>
    struct [[sysio::ignore]] ignore {};
+
+   /**
+    * True when `T` is `ignore<U>` for some `U`.
+    *
+    * @ingroup ignore
+    * @details A dispatcher leaves the bytes of an `ignore<U>` parameter in the action's datastream for the action
+    * itself to read, so it cannot check that the action's data was read to the end.
+    */
+   template <typename T>
+   struct is_ignore : std::false_type {};
+
+   /// @copydoc is_ignore
+   template <typename T>
+   struct is_ignore<ignore<T>> : std::true_type {};
+
+   /// @copydoc is_ignore
+   template <typename T>
+   inline constexpr bool is_ignore_v = is_ignore<T>::value;
 
     /**
     * Wrapper class to allow sending inline actions with the correct payload

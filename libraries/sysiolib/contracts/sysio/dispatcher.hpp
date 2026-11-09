@@ -2,7 +2,9 @@
 #include "action.hpp"
 
 #include <bluegrass/meta/preprocessor.hpp>
+#include <string_view>
 #include <tuple>
+#include <type_traits>
 
 namespace sysio {
 
@@ -11,6 +13,49 @@ namespace sysio {
    * @ingroup contracts
    * @brief Defines C++ functions to dispatch action to proper action handler inside a contract
    */
+
+   namespace internal_use_do_not_use {
+      /// The message a dispatcher fails an action with when its data holds bytes after the arguments.
+      inline constexpr std::string_view unread_action_data_message = "action data has bytes left after the arguments";
+   }
+
+   /**
+    * Checks that an action's data was read to the end.
+    *
+    * @ingroup dispatcher
+    * @details Every dispatcher calls this once it has unpacked an action's declared arguments, so an action's data
+    * must hold exactly its arguments. An action that declares `ignore<T>` parameters reads the rest of its data
+    * itself through contract::get_datastream(); the dispatcher cannot check it, so the action calls this once it
+    * has read everything it accepts.
+    *
+    * @param ds - The datastream over the action's data, positioned after the last byte read
+    * @post Fails the action with "action data has bytes left after the arguments" if `ds.remaining() != 0`
+    */
+   inline void check_action_data_consumed( const datastream<const char*>& ds ) {
+      check( ds.remaining() == 0, internal_use_do_not_use::unread_action_data_message );
+   }
+
+   namespace internal_use_do_not_use {
+      /**
+       * Unpacks an action handler's arguments from its data.
+       *
+       * Unless an argument is `ignore<T>`, also checks that the data held nothing more (see
+       * check_action_data_consumed). execute_action and the native-module dispatcher both unpack through this.
+       *
+       * @tparam Args - The handler's parameter types
+       * @param ds - The datastream over the action's data
+       * @return The unpacked arguments
+       */
+      template<typename... Args>
+      std::tuple<std::decay_t<Args>...> unpack_action_arguments( datastream<const char*>& ds ) {
+         std::tuple<std::decay_t<Args>...> args;
+         ds >> args;
+         if constexpr( !(is_ignore_v<std::decay_t<Args>> || ...) ) {
+            check_action_data_consumed( ds );
+         }
+         return args;
+      }
+   }
 
 
    /// @cond IMPLEMENTATIONS
@@ -54,10 +99,14 @@ namespace sysio {
     * Unpack the received action and execute the correponding action handler
     *
     * @ingroup dispatcher
+    * @details The action's data must hold exactly its arguments: bytes left after them fail the action (see
+    * check_action_data_consumed). An action that declares `ignore<T>` parameters reads the rest of its data itself,
+    * and is not checked here.
+    *
     * @tparam T - The contract class that has the correponding action handler, this contract should be derived from sysio::contract
-    * @tparam Q - The namespace of the action handler function
     * @tparam Args - The arguments that the action handler accepts, i.e. members of the action
-    * @param obj - The contract object that has the correponding action handler
+    * @param self - The account the action was dispatched to
+    * @param code - The account the action was sent to first
     * @param func - The action handler
     * @return true
     */
@@ -73,9 +122,8 @@ namespace sysio {
          read_action_data( buffer, size );
       }
 
-      std::tuple<std::decay_t<Args>...> args;
       datastream<const char*> ds((char*)buffer, size);
-      ds >> args;
+      auto args = internal_use_do_not_use::unpack_action_arguments<Args...>( ds );
 
       T inst(self, code, ds);
 
@@ -109,6 +157,7 @@ namespace sysio {
  *
  * @ingroup dispatcher
  * @note To be able to use this macro, the contract needs to be derived from sysio::contract
+ * @note Action data with bytes left after the arguments fails the action (see sysio::execute_action).
  * @param TYPE - The class name of the contract
  * @param MEMBERS - The sequence of available actions supported by this contract
  *
