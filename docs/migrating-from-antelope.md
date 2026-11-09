@@ -724,7 +724,8 @@ meaning later. `check()` and the other wrappers already pass valid values. These
 
 ### Stricter action dispatch
 
-The generated dispatcher, `SYSIO_DISPATCH` and the native-module dispatcher check the action data:
+The generated dispatcher, `SYSIO_DISPATCH`, `sysio::execute_action` and the native-module dispatcher check the data
+of a contract's own actions:
 
 | Input | Wire accepts | Otherwise |
 |---|---|---|
@@ -736,8 +737,9 @@ An action that declares `ignore<T>` parameters reads the rest of its data throug
 dispatcher cannot check it. Read every byte the action accepts, then call
 `sysio::check_action_data_consumed(get_datastream())`.
 
-Notification handlers are not checked. Their data belongs to another contract's action, and a handler may declare
-only the leading arguments it uses.
+Notification handlers are not checked, including those a hand-written `apply()` routes through
+`sysio::execute_action`. Their data belongs to another contract's action, and a handler may declare only the leading
+arguments it uses.
 
 An inline action to an action with no arguments carries no data. Send it with `std::tuple<>{}`: a
 `std::vector<char>{}` packs its length, one byte, which the receiving action rejects.

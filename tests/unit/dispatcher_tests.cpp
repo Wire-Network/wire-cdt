@@ -1,6 +1,7 @@
 /**
  * Tests for `<sysio/dispatcher.hpp>`: `execute_action` and `SYSIO_DISPATCH`, and `check_action_data_consumed`, which
- * the generated and native-module dispatchers call.
+ * the generated and native-module dispatchers call. `execute_action` checks a contract's own actions, not the
+ * notifications a hand-written apply() routes through it.
  *
  * The action data is served by mocked `action_data_size` / `read_action_data` intrinsics, so each case packs
  * exactly the bytes it wants the dispatcher to see.
@@ -34,6 +35,9 @@ namespace {
    constexpr char trailing_bytes_message[] = "action data has bytes left after the arguments";
 
    constexpr name account = "test"_n;
+
+   /// The account whose action `account` is notified of.
+   constexpr name sender = "sender"_n;
 
    /// A tail longer than the dispatcher's 512-byte stack buffer, so it is read through `malloc`.
    constexpr size_t large_tail_size = 100'000;
@@ -88,6 +92,12 @@ public:
 
    /// Declares an `ignore` parameter and never reads it.
    void ignoredraw(name nm, ignore<std::vector<char>>) {
+      observed.nm = nm;
+      observed.called = true;
+   }
+
+   /// A notification handler that declares only the first argument of the action it is notified of.
+   void notified(name nm) {
       observed.nm = nm;
       observed.called = true;
    }
@@ -196,6 +206,31 @@ SYSIO_TEST_BEGIN(dispatch_ignore_parameter_test)
    CHECK_EQUAL(observed.called, true);
 SYSIO_TEST_END
 
+// A hand-written apply() routes notifications through execute_action, with the receiver as `self` and the
+// action's account as `code`.
+SYSIO_TEST_BEGIN(execute_action_notification_test)
+   // A notification: the rest of the sender's action data is not the handler's to check.
+   for (const size_t tail : {size_t{0}, size_t{1}, large_tail_size}) {
+      reset();
+      set_action_data(tail, "alice"_n, "bob"_n, uint64_t{42});
+      execute_action(account, sender, &dispatcher_test_contract::notified);
+      CHECK_EQUAL(observed.called, true);
+      CHECK_EQUAL(observed.nm, "alice"_n);
+   }
+
+   // The same handler run as the receiver's own action is checked.
+   reset();
+   set_action_data(0, "alice"_n, "bob"_n, uint64_t{42});
+   CHECK_ASSERT(trailing_bytes_message,
+                []() { execute_action(account, account, &dispatcher_test_contract::notified); });
+   CHECK_EQUAL(observed.called, false);
+
+   reset();
+   set_action_data(0, "alice"_n);
+   execute_action(account, account, &dispatcher_test_contract::notified);
+   CHECK_EQUAL(observed.called, true);
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    bool verbose = false;
    if (argc >= 2 && std::strcmp(argv[1], "-v") == 0) {
@@ -217,5 +252,6 @@ int main(int argc, char* argv[]) {
    SYSIO_TEST(dispatch_trailing_bytes_test);
    SYSIO_TEST(dispatch_binary_extension_test);
    SYSIO_TEST(dispatch_ignore_parameter_test);
+   SYSIO_TEST(execute_action_notification_test);
    return has_failed();
 }

@@ -23,8 +23,8 @@ namespace sysio {
     * Checks that an action's data was read to the end.
     *
     * @ingroup dispatcher
-    * @details Every dispatcher calls this once it has unpacked an action's declared arguments, so an action's data
-    * must hold exactly its arguments. An action that declares `ignore<T>` parameters reads the rest of its data
+    * @details Every dispatcher calls this once it has unpacked the declared arguments of a contract's own action, so
+    * that action's data must hold exactly its arguments. Notifications are not checked. An action that declares `ignore<T>` parameters reads the rest of its data
     * itself through contract::get_datastream(); the dispatcher cannot check it, so the action calls this once it
     * has read everything it accepts.
     *
@@ -39,19 +39,25 @@ namespace sysio {
       /**
        * Unpacks an action handler's arguments from its data.
        *
-       * Unless an argument is `ignore<T>`, also checks that the data held nothing more (see
-       * check_action_data_consumed). execute_action and the native-module dispatcher both unpack through this.
+       * When the action is the receiver's own (`self == code`) and no argument is `ignore<T>`, also checks that the
+       * data held nothing more (see check_action_data_consumed). A notification's data belongs to another contract's
+       * action, and its handler may declare only the leading arguments, so it is not checked. execute_action and the
+       * native-module dispatcher both unpack through this.
        *
        * @tparam Args - The handler's parameter types
        * @param ds - The datastream over the action's data
+       * @param self - The account the action was dispatched to
+       * @param code - The account whose action it is
        * @return The unpacked arguments
        */
       template<typename... Args>
-      std::tuple<std::decay_t<Args>...> unpack_action_arguments( datastream<const char*>& ds ) {
+      std::tuple<std::decay_t<Args>...> unpack_action_arguments( datastream<const char*>& ds, name self, name code ) {
          std::tuple<std::decay_t<Args>...> args;
          ds >> args;
          if constexpr( !(is_ignore_v<std::decay_t<Args>> || ...) ) {
-            check_action_data_consumed( ds );
+            if( self == code ) {
+               check_action_data_consumed( ds );
+            }
          }
          return args;
       }
@@ -99,9 +105,10 @@ namespace sysio {
     * Unpack the received action and execute the correponding action handler
     *
     * @ingroup dispatcher
-    * @details The action's data must hold exactly its arguments: bytes left after them fail the action (see
-    * check_action_data_consumed). An action that declares `ignore<T>` parameters reads the rest of its data itself,
-    * and is not checked here.
+    * @details When `self == code`, the action's data must hold exactly its arguments: bytes left after them fail the
+    * action (see check_action_data_consumed). An action that declares `ignore<T>` parameters reads the rest of its
+    * data itself, and is not checked here. A notification (`self != code`) is not checked either: its data belongs
+    * to another contract's action, and its handler may declare only the leading arguments.
     *
     * @tparam T - The contract class that has the correponding action handler, this contract should be derived from sysio::contract
     * @tparam Args - The arguments that the action handler accepts, i.e. members of the action
@@ -123,7 +130,7 @@ namespace sysio {
       }
 
       datastream<const char*> ds((char*)buffer, size);
-      auto args = internal_use_do_not_use::unpack_action_arguments<Args...>( ds );
+      auto args = internal_use_do_not_use::unpack_action_arguments<Args...>( ds, self, code );
 
       T inst(self, code, ds);
 

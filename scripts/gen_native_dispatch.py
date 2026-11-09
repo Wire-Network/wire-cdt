@@ -117,7 +117,7 @@ def main():
         '         read_action_data(buffer, size);\n'
         '      }\n'
         '      datastream<const char*> ds((char*)buffer, size);\n'
-        '      auto args = internal_use_do_not_use::unpack_action_arguments<Args...>(ds);\n'
+        '      auto args = internal_use_do_not_use::unpack_action_arguments<Args...>(ds, self, code);\n'
         '      T inst(self, code, ds);\n'
         '      if constexpr (std::is_void_v<R>) {\n'
         '         std::apply([&](auto&&... a) { ((&inst)->*func)(a...); }, args);\n'

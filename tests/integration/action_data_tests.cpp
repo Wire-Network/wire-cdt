@@ -1,6 +1,6 @@
 /**
- * On a chain: an action's data must hold exactly its arguments, through the generated dispatcher and through
- * SYSIO_DISPATCH.
+ * On a chain: an action's data must hold exactly its arguments, through the generated dispatcher, through
+ * SYSIO_DISPATCH and through a hand-written apply() that calls execute_action.
  *
  * Covers plain, `binary_extension` and `ignore<T>` parameters, return values and notifications (not checked).
  */
@@ -131,6 +131,29 @@ BOOST_FIXTURE_TEST_CASE(sysio_dispatch_checks_action_data, tester) try {
    check_trailing_bytes_rejected([&] { return push("args"_n, packed(large_tail_size, "alice"_n, uint64_t{42})); });
    push("noargs"_n, {});
    check_trailing_bytes_rejected([&] { return push("noargs"_n, packed(1)); });
+   produce_block();
+} FC_LOG_AND_RETHROW()
+
+BOOST_FIXTURE_TEST_CASE(execute_action_checks_own_actions_only, tester) try {
+   const name sender = "sender"_n;
+   const name receiver = "receiver"_n;
+   create_accounts({sender, receiver});
+   produce_block();
+   set_code(sender, contracts::action_data_wasm());
+   set_abi(sender, contracts::action_data_abi().data());
+   set_code(receiver, contracts::action_data_route_wasm());
+   set_abi(receiver, contracts::action_data_route_abi().data());
+   produce_block();
+
+   // The receiver's apply() routes the notification to a handler that reads only `to`.
+   const auto trace = push_raw(*this, sender, "notify"_n, packed(0, receiver, "alice"_n, uint64_t{42}), sender);
+   BOOST_REQUIRE_EQUAL(trace->action_traces.size(), 2u);
+   BOOST_CHECK_EQUAL(trace->action_traces[1].receiver, receiver);
+
+   // The receiver's own action, routed the same way, is checked.
+   push_raw(*this, receiver, "args"_n, packed(0, "alice"_n, uint64_t{42}), receiver);
+   check_trailing_bytes_rejected(
+      [&] { return push_raw(*this, receiver, "args"_n, packed(1, "alice"_n, uint64_t{42}), receiver); });
    produce_block();
 } FC_LOG_AND_RETHROW()
 
