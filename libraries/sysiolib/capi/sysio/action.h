@@ -142,17 +142,6 @@ __attribute__((sysio_wasm_import))
 void send_inline(char *serialized_action, size_t size);
 
 /**
- * /function
- *  Send an inline context free action in the context of this action's parent transaction
- *
- *  @param serialized_action - serialized action
- *  @param size - size of serialized action in bytes
- *  @pre `serialized_action` is a valid pointer to an array at least `size` bytes long
- */
-__attribute__((sysio_wasm_import))
-void send_context_free_inline(char *serialized_action, size_t size);
-
-/**
  *  Returns the time in microseconds from 1970 of the publication_time
  *  @brief Get the publication time
  *  @return the time in microseconds from 1970 of the publication_time

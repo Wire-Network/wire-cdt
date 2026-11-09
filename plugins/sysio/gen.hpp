@@ -978,7 +978,6 @@ struct generation_utils {
          "kv_idx_erase",
          "kv_idx_update",
          "send_inline",
-         "send_context_free_inline",
          "set_finalizers"
       };
 
@@ -988,8 +987,7 @@ struct generation_utils {
    inline bool is_inline_action_func( const std::string& t ) {
       static const std::set<std::string> inline_action_funcs =
       {
-         "send_inline",
-         "send_context_free_inline"
+         "send_inline"
       };
       return inline_action_funcs.count(t) >= 1;
    }

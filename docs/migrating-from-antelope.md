@@ -597,7 +597,6 @@ per_action = overhead / number_of_actions + 1           (integer division, then 
 
 action NET = that action's own serialized billable size
            + per_action
-           + its matching context_free_data, for a context-free action
 ```
 
 The `+ 1` is unconditional, not a rounding step: consensus divides, then adds one. Where the
@@ -621,9 +620,8 @@ So the payer of the top-level action absorbs the CPU of the whole call tree bene
 
 **Only CPU has that property.** A contract's CPU provisioning has to cover everything its actions
 *cause*, since the whole tree is timed against the top-level payer. Its NET provisioning does not:
-NET is fixed by what arrives on the wire — the input action's own bytes, its share of the
-transaction overhead, and its context-free data — and no inline action or notification adds to it,
-however deep the tree goes.
+NET is fixed by what arrives on the wire — the input action's own bytes and its share of the
+transaction overhead — and no inline action or notification adds to it, however deep the tree goes.
 
 ### Sizing
 
@@ -675,13 +673,16 @@ Antelope; what changed is only *who* the payment lands on by default.
 | `get_permission_last_used`, `get_account_creation_time` | No equivalent intrinsic. Track it in contract state, or read it off-chain. |
 | `add_security_group_participants`, `remove_security_group_participants`, `in_active_security_group`, `get_active_security_group` | No equivalent. Wire does not implement security groups. |
 | `set_kv_parameters_packed` | No equivalent. Wire's KV parameters are not settable from a contract. |
+| `send_context_free_inline`, `get_context_free_data` | See [Features with no Wire equivalent](#features-with-no-wire-equivalent). |
 
-The last two rows fail at compile time rather than deploy, because CDT no longer declares them:
+The last three rows fail at compile time rather than deploy, because CDT no longer declares them:
 
 - `#include <sysio/security_group.h>` → `fatal error: 'sysio/security_group.h' file not found`; the
   header is gone entirely.
 - `set_kv_parameters_packed` → `error: use of undeclared identifier`; `<sysio/privileged.h>` is
   still there, and every other setter in it still compiles.
+- `send_context_free_inline` and `get_context_free_data` → `error: use of undeclared identifier`, and
+  `action::send_context_free` → `error: no member named 'send_context_free'`.
 
 ### Changed on Wire
 
@@ -691,7 +692,7 @@ call, and the `provided_delay` argument from a call to the C++ overload.
 ### Unchanged
 
 Everything else you already use is present with the same signature: `require_auth`, `require_auth2`,
-`has_auth`, `require_recipient`, `is_account`, `send_inline`, `send_context_free_inline`,
+`has_auth`, `require_recipient`, `is_account`, `send_inline`,
 `read_action_data`, `action_data_size`, `current_receiver`, `publication_time`, `get_sender`,
 `get_code_hash`, `set_action_return_value`, `current_time`, `get_block_num`, `is_feature_activated`,
 the whole `print*` family, the transaction and TAPOS accessors, `check_transaction_authorization`,
@@ -738,6 +739,14 @@ preference:
 
 **`get_permission_last_used` / `get_account_creation_time`.** Not available as intrinsics. Record
 what you need in your own tables, or query the history API off-chain.
+
+**Context-free actions and context-free data.** The chain rejects a transaction that carries
+context-free actions, and with them any context-free data, and a contract cannot send a context-free
+inline action. Wire bills every byte of a transaction as NET and never prunes context-free data, so a
+context-free action has nothing to offer over a regular one. Send a regular action, or a regular
+inline action, and carry the data as its arguments. `sysio::transaction` keeps its
+`context_free_actions` field, which must stay empty, so a transaction still packs as the chain
+expects.
 
 ---
 

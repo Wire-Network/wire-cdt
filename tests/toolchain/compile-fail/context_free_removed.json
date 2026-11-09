@@ -1,0 +1,14 @@
+{
+  "tests" : [
+    {
+      "expected" : {
+        "exit-code": 255,
+        "stderr": [
+          "no member named 'send_context_free' in 'sysio::action'",
+          "no member named 'get_context_free_data' in namespace 'sysio'",
+          "no member named 'send_context_free_inline' in namespace 'sysio::internal_use_do_not_use'"
+        ]
+      }
+    }
+  ]
+}

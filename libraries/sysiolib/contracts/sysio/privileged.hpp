@@ -75,18 +75,6 @@ namespace sysio {
       uint32_t net_usage_leeway;
 
       /**
-      * The numerator for the discount on net usage of context-free data
-      * @brief The numerator for the discount on net usage of context-free data
-      */
-      uint32_t context_free_discount_net_usage_num;
-
-      /**
-      * The denominator for the discount on net usage of context-free data
-      * @brief The denominator for the discount on net usage of context-free data
-      */
-      uint32_t context_free_discount_net_usage_den;
-
-      /**
       * The maximum billable cpu usage (in microseconds) for a block
       * @brief The maximum billable cpu usage (in microseconds) for a block
       */
@@ -164,7 +152,6 @@ namespace sysio {
       SYSLIB_SERIALIZE( blockchain_parameters,
                         (max_block_net_usage)(target_block_net_usage_pct)
                         (max_transaction_net_usage)(net_usage_leeway)
-                        (context_free_discount_net_usage_num)(context_free_discount_net_usage_den)
 
                         (max_block_cpu_usage)(target_block_cpu_usage_pct)
                         (max_transaction_cpu_usage)(min_transaction_cpu_usage)

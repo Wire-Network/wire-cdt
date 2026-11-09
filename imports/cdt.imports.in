@@ -34,7 +34,6 @@ get_active_producers
 get_block_num
 get_blockchain_parameters_packed
 get_code_hash
-get_context_free_data
 get_permission_lower_bound
 get_ram_usage
 get_resource_limits
@@ -65,7 +64,6 @@ require_auth
 require_auth2
 require_recipient
 ripemd160
-send_context_free_inline
 send_inline
 set_action_return_value
 set_blockchain_parameters_packed

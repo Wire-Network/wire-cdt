@@ -18,8 +18,7 @@
           "codegen error.*bool setppex",
           "codegen error.*bool swpp",
           "codegen error.*bool spp\\b",
-          "codegen error.*bool sendil\\b",
-          "codegen error.*bool sendcfiil"
+          "codegen error.*bool sendil\\b"
         ]
       }
     }
