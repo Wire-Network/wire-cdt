@@ -42,9 +42,6 @@ namespace sysio {
          void send_inline(char *serialized_action, size_t size);
 
          __attribute__((sysio_wasm_import))
-         void send_context_free_inline(char *serialized_action, size_t size);
-
-         __attribute__((sysio_wasm_import))
          uint64_t  publication_time();
 
          __attribute__((sysio_wasm_import))
@@ -386,17 +383,6 @@ namespace sysio {
       }
 
       /**
-       * Send the action as inline context free action
-       *
-       * @pre This action should not contain any authorizations
-       */
-      void send_context_free() const {
-         sysio::check( authorization.size() == 0, "context free actions cannot have authorizations");
-         auto serialize = pack(*this);
-         internal_use_do_not_use::send_context_free_inline(serialize.data(), serialize.size());
-      }
-
-      /**
        * Retrieve the unpacked data as T
        *
        * @tparam T expected type of data
@@ -547,11 +533,6 @@ namespace sysio {
          to_action(std::forward<Args>(args)...).send();
       }
 
-      template <typename... Args>
-      void send_context_free(Args&&... args)const {
-         to_action(std::forward<Args>(args)...).send_context_free();
-      }
-
    };
 
    template <sysio::name::raw Name, auto... Actions>
@@ -592,11 +573,6 @@ namespace sysio {
       template <size_t Variant, typename... Args>
       void send(Args&&... args)const {
          to_action<Variant>(std::forward<Args>(args)...).send();
-      }
-
-      template <size_t Variant, typename... Args>
-      void send_context_free(Args&&... args) const {
-         to_action<Variant>(std::forward<Args>(args)...).send_context_free();
       }
 
    };

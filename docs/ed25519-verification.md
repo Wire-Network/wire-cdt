@@ -25,7 +25,6 @@ The return value is **0 on success and -1 on failure**. Incorrect lengths,
 signatures, or keys return -1. Check `result == 0`; treating the result as a
 boolean reverses its meaning. Deadline/resource exhaustion and invalid WASM
 memory abort the transaction. They are never converted into verification failures.
-Context-free actions may use the import.
 
 ## Independent signatures in a WASM loop
 

@@ -30,9 +30,6 @@ namespace sysio {
 
          __attribute__((sysio_wasm_import))
          int get_action( uint32_t, uint32_t, char*, size_t);
-
-         __attribute__((sysio_wasm_import))
-         int get_context_free_data( uint32_t, char*, size_t);
       }
    }
 
@@ -99,6 +96,8 @@ namespace sysio {
     *  Class transaction contains the actions, context_free_actions and extensions type for a transaction
     *
     *  @ingroup transaction
+    *  @details The chain does not support context-free actions: it rejects a transaction whose
+    *  `context_free_actions` is not empty. The field stays so that a transaction packs as the chain expects.
     */
    class transaction : public transaction_header {
    public:
@@ -191,18 +190,5 @@ namespace sysio {
     */
    inline uint32_t expiration() {
       return internal_use_do_not_use::expiration();
-   }
-
-   /**
-    * Retrieve the signed_transaction.context_free_data[index].
-    *
-    *  @ingroup transaction
-    *  @param index - the index of the context_free_data entry to retrieve
-    *  @param buff - output buff of the context_free_data entry
-    *  @param size - amount of context_free_data[index] to retrieve into buff, 0 to report required size
-    *  @return size copied, or context_free_data[index].size() if 0 passed for size, or -1 if index not valid
-    */
-   inline int get_context_free_data( uint32_t index, char* buff, size_t size ) {
-      return internal_use_do_not_use::get_context_free_data(index, buff, size);
    }
 }

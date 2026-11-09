@@ -155,12 +155,6 @@ extern "C" {
    void send_inline(char *serialized_action, size_t size) {
       return intrinsics::get().call<intrinsics::send_inline>(serialized_action, size);
    }
-   void send_context_free_inline(char *serialized_action, size_t size) {
-      return intrinsics::get().call<intrinsics::send_context_free_inline>(serialized_action, size);
-   }
-   int get_context_free_data( uint32_t index, char* buff, size_t size ) {
-      return intrinsics::get().call<intrinsics::get_context_free_data>(index, buff, size);
-   }
    capi_name get_sender() {
       return intrinsics::get().call<intrinsics::get_sender>();
    }

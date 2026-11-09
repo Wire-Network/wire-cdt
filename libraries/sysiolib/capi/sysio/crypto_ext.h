@@ -86,7 +86,7 @@ int32_t k1_recover( const char* sig, uint32_t sig_len, const char* dig, uint32_t
  * @param msg Message bytes; correctly signed empty messages are supported.
  * @param msg_len Message length in bytes; at most 65,536.
  * @return 0 on success, -1 for invalid lengths, signatures, or keys.
- * @note Requires env.ed25519_verify on the chain; context-free use is supported.
+ * @note Requires env.ed25519_verify on the chain.
  *       Deadline/resource exhaustion and invalid WASM memory still abort the transaction.
  *       Validator membership, uniqueness, quorum, and replay checks remain caller responsibilities.
  */

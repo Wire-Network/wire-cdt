@@ -110,18 +110,6 @@ uint32_t expiration( void );
 __attribute__((sysio_wasm_import))
 int get_action( uint32_t type, uint32_t index, char* buff, size_t size );
 
-/**
- * Retrieve the signed_transaction.context_free_data[index].
- *
- * @brief Retrieve the signed_transaction.context_free_data[index].
- * @param index - the index of the context_free_data entry to retrieve
- * @param buff - output buff of the context_free_data entry
- * @param size - amount of context_free_data[index] to retrieve into buff, 0 to report required size
- * @return size copied, or context_free_data[index].size() if 0 passed for size, or -1 if index not valid
- */
-__attribute__((sysio_wasm_import))
-int get_context_free_data( uint32_t index, char* buff, size_t size );
-
 #ifdef __cplusplus
 }
 #endif

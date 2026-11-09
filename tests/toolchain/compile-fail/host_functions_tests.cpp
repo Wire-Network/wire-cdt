@@ -41,7 +41,6 @@ extern "C" __attribute__((sysio_wasm_import)) void set_wasm_parameters_packed(co
 extern "C" __attribute__((sysio_wasm_import)) void set_parameters_packed( const char* params, uint32_t params_size );
 
 extern "C" __attribute__((sysio_wasm_import)) void send_inline(char *serialized_action, size_t size);
-extern "C" __attribute__((sysio_wasm_import)) void send_context_free_inline(char *serialized_action, size_t size);
 
 #define ACTION_TYPE  [[sysio::action, sysio::read_only]]
 
@@ -137,11 +136,6 @@ public:
    ACTION_TYPE
    bool sendil(){
       send_inline(NULL, 0);
-      return true;
-   }
-   ACTION_TYPE
-   bool sendcfiil(){     
-      send_context_free_inline(NULL, 0);
       return true;
    }
 };
