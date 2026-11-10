@@ -6,8 +6,11 @@ an extern "C" apply() function that dispatches to the contract class methods.
 
 Unlike SYSIO_DISPATCH, this generator:
   - Has no action count limit (SYSIO_DISPATCH is limited to ~32 by PP macros)
-  - Supports non-void action return types (return value is discarded)
+  - Supports non-void action return types (sets the action's return value)
   - Supports actions spread across multiple classes (e.g. sysio.system)
+
+Like the WASM dispatcher, the generated apply() fails an action whose data holds bytes after its
+arguments (sysio::internal_use_do_not_use::unpack_action_arguments).
 
 Usage:
   python3 gen_native_dispatch.py --abi sysio.bios.abi \
@@ -113,9 +116,8 @@ def main():
         '         buffer = max_stack_buffer_size < size ? malloc(size) : alloca(size);\n'
         '         read_action_data(buffer, size);\n'
         '      }\n'
-        '      std::tuple<std::decay_t<Args>...> args;\n'
         '      datastream<const char*> ds((char*)buffer, size);\n'
-        '      ds >> args;\n'
+        '      auto args = internal_use_do_not_use::unpack_action_arguments<Args...>(ds, self, code);\n'
         '      T inst(self, code, ds);\n'
         '      if constexpr (std::is_void_v<R>) {\n'
         '         std::apply([&](auto&&... a) { ((&inst)->*func)(a...); }, args);\n'

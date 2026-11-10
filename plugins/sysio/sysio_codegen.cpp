@@ -12,9 +12,15 @@
 #include "gen.hpp"
 #include "abigen.hpp"
 #include "tracegen.hpp"
+#include <sysio/dispatch_gen.hpp>
 
 using namespace clang;
 using namespace sysio::cdt;
+
+namespace {
+   /// What a generated wrapper dispatches: the contract's own action, or a notification of another contract's action.
+   enum class dispatch_kind { action, notify };
+}
 
 std::string output;
 std::set<std::string> actions;
@@ -64,6 +70,7 @@ public:
       if (buf.size()) {
          of << "#include <sysio/datastream.hpp>\n"
             << "#include <sysio/name.hpp>\n"
+            << "#include <" << dispatch_gen::dispatcher_header << ">\n"
             << buf;
       }
    }
@@ -72,8 +79,17 @@ public:
      main_name = mn;
    }
 
+   /**
+    * Writes the wrapper that unpacks a handler's arguments from the action data and calls the handler.
+    *
+    * An action's wrapper fails the action if its data holds bytes after the arguments, unless the action declares an
+    * `ignore<T>` parameter: the bytes of those parameters stay in the datastream for the action to read itself. A
+    * notification's wrapper does not check: the data belongs to another contract's action, and a handler may read
+    * only the leading arguments it needs.
+    */
    template <typename F, typename D>
-   void create_dispatch(const std::string& attr, const std::string& func_name, F&& get_str, D decl) {
+   void create_dispatch(dispatch_kind kind, const std::string& attr, const std::string& func_name, F&& get_str,
+                        D decl) {
       constexpr static uint32_t max_stack_size = 512;
       std::string nm = decl->getNameAsString()+"_"+decl->getParent()->getNameAsString();
       if (is_sysio_contract(decl, contract_name)) {
@@ -98,6 +114,7 @@ public:
          ss << "    }\n";
          ss << "    sysio::datastream<const char*> ds{(char*)buff.get(), as};\n";
          int i=0;
+         bool has_ignored_param = false;
          for (auto param : decl->parameters()) {
             clang::LangOptions lang_opts;
             lang_opts.CPlusPlus = true;
@@ -109,7 +126,14 @@ public:
             qt.removeLocalRestrict();
             std::string tn = clang::TypeName::getFullyQualifiedName(qt, ci->getASTContext(), policy);
             ss << "    " << tn << " arg" << i << "; ds >> arg" << i << ";\n";
+            // Tested on the canonical type, so `const ignore<T>&` and an alias of ignore<T> count as ignore<T>, as
+            // they do where abigen names the parameter's ABI type. is_ignorable sees only a spelled ignore<T>.
+            has_ignored_param = has_ignored_param ||
+                                is_class_template_specialization_decl(param->getType().getNonReferenceType(), {"ignore"});
             i++;
+         }
+         if (kind == dispatch_kind::action && !has_ignored_param) {
+            ss << "    " << dispatch_gen::check_action_data_consumed_function << "(ds);\n";
          }
          const auto& call_action = [&]() {
             ss << decl->getParent()->getQualifiedNameAsString() << "{sysio::name{r},sysio::name{c},ds}." << decl->getNameAsString() << "(";
@@ -137,22 +161,22 @@ public:
 
    void create_action_dispatch(clang_wrapper::Decl<CXXMethodDecl*> decl) {
       auto func = [](clang_wrapper::Decl<CXXMethodDecl*> d) { return generation_utils::get_action_name(d); };
-      create_dispatch("sysio_wasm_action", "__sysio_action_", func, decl);
+      create_dispatch(dispatch_kind::action, "sysio_wasm_action", "__sysio_action_", func, decl);
    }
 
    void create_action_dispatch(CXXMethodDecl* decl) {
       auto func = [](CXXMethodDecl* d) { return generation_utils::get_action_name(d); };
-      create_dispatch("sysio_wasm_action", "__sysio_action_", func, decl);
+      create_dispatch(dispatch_kind::action, "sysio_wasm_action", "__sysio_action_", func, decl);
    }
 
    void create_notify_dispatch(clang_wrapper::Decl<CXXMethodDecl*> decl) {
       auto func = [](clang_wrapper::Decl<CXXMethodDecl*> d) { return generation_utils::get_notify_pair(d); };
-      create_dispatch("sysio_wasm_notify", "__sysio_notify_", func, decl);
+      create_dispatch(dispatch_kind::notify, "sysio_wasm_notify", "__sysio_notify_", func, decl);
    }
 
    void create_notify_dispatch(CXXMethodDecl* decl) {
       auto func = [](CXXMethodDecl* d) { return generation_utils::get_notify_pair(d); };
-      create_dispatch("sysio_wasm_notify", "__sysio_notify_", func, decl);
+      create_dispatch(dispatch_kind::notify, "sysio_wasm_notify", "__sysio_notify_", func, decl);
    }
 
    virtual bool VisitCXXMethodDecl(CXXMethodDecl* _decl) {

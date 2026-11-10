@@ -723,6 +723,28 @@ meaning later. `check()` and the other wrappers already pass valid values. These
 | Packed transaction for `check_transaction_authorization` | no transaction extensions | the action fails |
 | Output buffer of `alt_bn128_add`, `alt_bn128_mul`, `mod_exp`, `blake2_f` and `k1_recover` | exactly the result's size, which for `mod_exp` is the modulus size | returns -1 |
 
+### Stricter action dispatch
+
+The generated dispatcher, `SYSIO_DISPATCH`, `sysio::execute_action` and the native-module dispatcher check the data
+of a contract's own actions:
+
+| Input | Wire accepts | Otherwise |
+|---|---|---|
+| Action data | exactly the declared arguments, with no bytes after them | the action fails with `action data has bytes left after the arguments` |
+
+The chain checks the data of its native actions itself.
+
+An action that declares `ignore<T>` parameters reads the rest of its data through `get_datastream()`, so the
+dispatcher cannot check it. Read every byte the action accepts, then call
+`sysio::check_action_data_consumed(get_datastream())`.
+
+Notification handlers are not checked, including those a hand-written `apply()` routes through
+`sysio::execute_action`. Their data belongs to another contract's action, and a handler may declare only the leading
+arguments it uses.
+
+An inline action to an action with no arguments carries no data. Send it with `std::tuple<>{}`: a
+`std::vector<char>{}` packs its length, one byte, which the receiving action rejects.
+
 ---
 
 ## Features with no Wire equivalent
