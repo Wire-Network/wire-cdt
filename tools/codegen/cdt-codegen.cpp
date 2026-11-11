@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <sysio/abi.hpp>
 #include <sysio/abimerge.hpp>
+#include <sysio/dispatch_gen.hpp>
 #include <sysio/whereami/whereami.hpp>
 
 #include <algorithm>
@@ -275,11 +276,20 @@ static bool exists(const char* filename) {
 // Write dispatch code (apply entry point) to an output stream. apply() is a single
 // strong export; the generated dispatcher is the only one in the link (a contract that
 // defines its own apply() suppresses generation upstream via dispatcher_was_found).
+//
+// A direct action whose name the contract does not define goes to sysio::reject_undefined_action,
+// which fails it unless the chain itself handles that action on `sysio`. That holds for a contract
+// with no actions at all, which then accepts no direct action.
 static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>& wasm_actions,
                                  const std::set<wasm_notify>& wasm_notifies,
                                  bool has_pre_dispatch, bool has_post_dispatch) {
+   const auto write_undefined_action = [&](std::string_view indent) {
+      ofs << indent << sysio::cdt::dispatch_gen::reject_undefined_action_function
+          << "(sysio::name{r}, sysio::name{a});\n";
+      if (has_post_dispatch)
+         ofs << indent << "post_dispatch(sysio::name{r}, sysio::name{c}, sysio::name{a});\n";
+   };
    ofs << "extern \"C\" {\n";
-   ofs << "  __attribute__((import_name(\"sysio_assert_code\"))) void sysio_assert_code(bool, uint64_t);";
    ofs << "  void sysio_set_contract_name(uint64_t n);\n";
    ofs << "}\n"; // close extern "C" for intrinsic declarations
    if (has_pre_dispatch)
@@ -307,13 +317,10 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
          ofs << "        break;\n";
       }
       ofs << "      default:\n";
-      if (has_post_dispatch) {
-         ofs << "        if (r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n";
-         ofs << "        else post_dispatch(sysio::name{r}, sysio::name{c}, sysio::name{a});\n";
-      } else {
-         ofs << "        if (r != \"sysio\"_n.value) sysio_assert_code(false, 1);\n";
-      }
+      write_undefined_action("        ");
       ofs << "      }\n";
+   } else {
+      write_undefined_action("      ");
    }
    ofs << "    } else {\n";
    if (wasm_notifies.size()) {
@@ -358,7 +365,8 @@ static void generate_sysio_dispatch(const std::string& output, const std::set<wa
       if (!ofs)
          throw std::runtime_error("cannot open " + output);
       ofs << "#include <cstdint>\n"
-          << "#include <sysio/name.hpp>\n";
+          << "#include <sysio/name.hpp>\n"
+          << "#include <" << sysio::cdt::dispatch_gen::dispatcher_header << ">\n";
       write_sysio_dispatch(ofs, wasm_actions, wasm_notifies, has_pre_dispatch, has_post_dispatch);
       ofs.close();
    } catch (...) {

@@ -85,10 +85,12 @@ BOOST_FIXTURE_TEST_CASE( simple_sysio_tests, tester ) try {
    BOOST_CHECK_THROW(push_action("sysio"_n, "test2"_n, "sysio"_n, mvo() ("arg0", 30)("arg1", "some string")), fc::exception);
    BOOST_CHECK_THROW(push_action("sysio"_n, "test2"_n, "sysio"_n, mvo() ("arg0", 33)("arg1", "not some string")), fc::exception);
 
-   push_action("sysio"_n, "test3"_n, "sysio"_n,
-         mvo()
-         ("arg0", 33)
-         ("arg1", "some string"));
+   // test3 is in the ABI but not in the contract, so it fails.
+   BOOST_CHECK_EXCEPTION(push_action("sysio"_n, "test3"_n, "sysio"_n, mvo() ("arg0", 33) ("arg1", "some string")),
+                         sysio_assert_code_exception, sysio_assert_code_is(1));
+
+   // onblock still reaches post_dispatch on sysio, which checks it was not a defined action.
+   produce_blocks();
 
 } FC_LOG_AND_RETHROW()
 

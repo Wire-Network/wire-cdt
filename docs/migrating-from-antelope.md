@@ -725,14 +725,16 @@ meaning later. `check()` and the other wrappers already pass valid values. These
 
 ### Stricter action dispatch
 
-The generated dispatcher, `SYSIO_DISPATCH`, `sysio::execute_action` and the native-module dispatcher check the data
-of a contract's own actions:
+The generated dispatcher, `SYSIO_DISPATCH` and the native-module dispatcher check the name and the data of a
+contract's own actions, and `sysio::execute_action` in a hand-written `apply()` checks the data:
 
 | Input | Wire accepts | Otherwise |
 |---|---|---|
 | Action data | exactly the declared arguments, with no bytes after them | the action fails with `action data has bytes left after the arguments` |
+| Action name | a name the contract defines | the action fails with error code 1 |
 
-The chain checks the data of its native actions itself.
+A contract deployed on `sysio` needs no handler for the chain's own actions there: its native actions and
+`onblock`. The chain checks the data of its native actions itself.
 
 An action that declares `ignore<T>` parameters reads the rest of its data through `get_datastream()`, so the
 dispatcher cannot check it. Read every byte the action accepts, then call
