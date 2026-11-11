@@ -148,6 +148,12 @@ namespace sysio {
        */
       uint32_t max_kv_secondary_key_size;
 
+      /**
+       * CPU (in microseconds) of a notified contract's code that whoever pays for the notifying action covers; the
+       * contract pays only for its CPU past it. 0 means no stipend.
+       */
+      uint32_t notify_cpu_stipend;
+
 
       SYSLIB_SERIALIZE( blockchain_parameters,
                         (max_block_net_usage)(target_block_net_usage_pct)
@@ -161,6 +167,7 @@ namespace sysio {
 
                         (max_action_return_value_size)
                         (max_kv_key_size)(max_kv_value_size)(max_kv_secondary_key_size)
+                        (notify_cpu_stipend)
       )
    };
 
