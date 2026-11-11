@@ -1,0 +1,9 @@
+{
+   "tests" : [
+      {
+         "expected" : {
+            "abi-file" : "blockchain_parameters_test.abi"
+         }
+      }
+   ]
+}

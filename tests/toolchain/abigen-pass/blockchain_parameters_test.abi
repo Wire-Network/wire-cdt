@@ -1,0 +1,106 @@
+{
+    "____comment": "This file was generated with sysio-abigen. DO NOT EDIT ",
+    "version": "sysio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "blockchain_parameters",
+            "base": "",
+            "fields": [
+                {
+                    "name": "max_block_net_usage",
+                    "type": "uint64"
+                },
+                {
+                    "name": "target_block_net_usage_pct",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_transaction_net_usage",
+                    "type": "uint32"
+                },
+                {
+                    "name": "net_usage_leeway",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_block_cpu_usage",
+                    "type": "uint32"
+                },
+                {
+                    "name": "target_block_cpu_usage_pct",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_transaction_cpu_usage",
+                    "type": "uint32"
+                },
+                {
+                    "name": "min_transaction_cpu_usage",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_transaction_lifetime",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_transaction_delay",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_inline_action_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_inline_action_depth",
+                    "type": "uint16"
+                },
+                {
+                    "name": "max_authority_depth",
+                    "type": "uint16"
+                },
+                {
+                    "name": "max_action_return_value_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_kv_key_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_kv_value_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_kv_secondary_key_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "notify_cpu_stipend",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "setparams",
+            "base": "",
+            "fields": [
+                {
+                    "name": "params",
+                    "type": "blockchain_parameters"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "setparams",
+            "type": "setparams",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}
