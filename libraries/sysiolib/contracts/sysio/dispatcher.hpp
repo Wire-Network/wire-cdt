@@ -2,6 +2,7 @@
 #include "action.hpp"
 
 #include <bluegrass/meta/preprocessor.hpp>
+#include <array>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
@@ -15,8 +16,58 @@ namespace sysio {
    */
 
    namespace internal_use_do_not_use {
+      /// The account whose actions the chain also handles itself.
+      inline constexpr name system_account = "sysio"_n;
+
+      /// The actions the chain handles itself when they are sent to `system_account`: its native actions, and
+      /// `onblock`, which it sends at the start of every block.
+      inline constexpr std::array<name, 8> chain_actions = {
+         "newaccount"_n, "setcode"_n, "setabi"_n, "updateauth"_n, "deleteauth"_n, "linkauth"_n, "unlinkauth"_n,
+         "onblock"_n
+      };
+
+      /// The error code a dispatcher fails an action with when the contract does not define the action's name.
+      inline constexpr uint64_t undefined_action_error_code = 1;
+
       /// The message a dispatcher fails an action with when its data holds bytes after the arguments.
       inline constexpr std::string_view unread_action_data_message = "action data has bytes left after the arguments";
+   }
+
+   /**
+    * True for an action the chain itself handles when it is sent to the `sysio` account.
+    *
+    * @ingroup dispatcher
+    * @details These are the chain's native actions (`newaccount`, `setcode`, `setabi`, `updateauth`, `deleteauth`,
+    * `linkauth`, `unlinkauth`) and `onblock`, which the chain sends to `sysio` at the start of every block. A
+    * contract deployed on `sysio` need not define them. No other receiver and no other action name qualifies.
+    *
+    * @param receiver - The account the action was dispatched to
+    * @param action - The action's name
+    * @return true if the chain handles `action` on `receiver`
+    */
+   constexpr bool is_chain_action( name receiver, name action ) {
+      if( receiver != internal_use_do_not_use::system_account )
+         return false;
+      for( const name chain_action : internal_use_do_not_use::chain_actions ) {
+         if( action == chain_action )
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Handles an action whose name the contract does not define.
+    *
+    * @ingroup dispatcher
+    * @details Every dispatcher calls this for an action name it has no handler for. It fails the action, unless the
+    * chain itself handles the action (see is_chain_action), in which case it returns and the action succeeds.
+    *
+    * @param receiver - The account the action was dispatched to
+    * @param action - The action's name
+    * @post Fails the action with error code 1 unless `is_chain_action(receiver, action)`
+    */
+   inline void reject_undefined_action( name receiver, name action ) {
+      check( is_chain_action(receiver, action), internal_use_do_not_use::undefined_action_error_code );
    }
 
    /**
@@ -164,7 +215,8 @@ namespace sysio {
  *
  * @ingroup dispatcher
  * @note To be able to use this macro, the contract needs to be derived from sysio::contract
- * @note Action data with bytes left after the arguments fails the action (see sysio::execute_action).
+ * @note An action name not in `MEMBERS` fails the action (see sysio::reject_undefined_action), as does action data
+ * with bytes left after the arguments (see sysio::execute_action).
  * @param TYPE - The class name of the contract
  * @param MEMBERS - The sequence of available actions supported by this contract
  *
@@ -180,6 +232,9 @@ extern "C" { \
       if( code == receiver ) { \
          switch( action ) { \
             SYSIO_DISPATCH_HELPER( TYPE, MEMBERS ) \
+            default: \
+               sysio::reject_undefined_action( sysio::name(receiver), sysio::name(action) ); \
+               break; \
          } \
          /* does not allow destructor of thiscontract to run: sysio_exit(0); */ \
       } \

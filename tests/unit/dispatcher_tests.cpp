@@ -1,7 +1,7 @@
 /**
- * Tests for `<sysio/dispatcher.hpp>`: `execute_action` and `SYSIO_DISPATCH`, and `check_action_data_consumed`, which
- * the generated and native-module dispatchers call. `execute_action` checks a contract's own actions, not the
- * notifications a hand-written apply() routes through it.
+ * Tests for `<sysio/dispatcher.hpp>`: `execute_action` and `SYSIO_DISPATCH`, and the helpers the generated and
+ * native-module dispatchers call, `check_action_data_consumed`, `reject_undefined_action` and `is_chain_action`.
+ * `execute_action` checks a contract's own actions, not the notifications a hand-written apply() routes through it.
  *
  * The action data is served by mocked `action_data_size` / `read_action_data` intrinsics, so each case packs
  * exactly the bytes it wants the dispatcher to see.
@@ -34,7 +34,11 @@ namespace {
    /// The message the dispatcher fails with when action data holds bytes after the arguments.
    constexpr char trailing_bytes_message[] = "action data has bytes left after the arguments";
 
-   constexpr name account = "test"_n;
+   /// The error code (as the native `sysio_assert_code` prints it) for an undefined action.
+   constexpr char undefined_action_message[] = "1";
+
+   constexpr name account        = "test"_n;
+   constexpr name system_account = "sysio"_n;
 
    /// The account whose action `account` is notified of.
    constexpr name sender = "sender"_n;
@@ -112,6 +116,22 @@ static_assert(!is_ignore_v<int>);
 static_assert(!is_ignore_v<binary_extension<name>>);
 static_assert(!is_ignore_v<ignore_wrapper<int>>);
 
+// Only the chain's own actions, and only on `sysio`.
+static_assert(is_chain_action("sysio"_n, "newaccount"_n));
+static_assert(is_chain_action("sysio"_n, "setcode"_n));
+static_assert(is_chain_action("sysio"_n, "setabi"_n));
+static_assert(is_chain_action("sysio"_n, "updateauth"_n));
+static_assert(is_chain_action("sysio"_n, "deleteauth"_n));
+static_assert(is_chain_action("sysio"_n, "linkauth"_n));
+static_assert(is_chain_action("sysio"_n, "unlinkauth"_n));
+static_assert(is_chain_action("sysio"_n, "onblock"_n));
+static_assert(!is_chain_action("sysio"_n, "transfer"_n));
+static_assert(!is_chain_action("sysio"_n, "onerror"_n));
+static_assert(!is_chain_action("sysio"_n, name{}));
+static_assert(!is_chain_action("sysio.token"_n, "onblock"_n));
+static_assert(!is_chain_action("test"_n, "setcode"_n));
+static_assert(!is_chain_action(name{}, "onblock"_n));
+
 SYSIO_TEST_BEGIN(check_action_data_consumed_test)
    const char buf[4] = {1, 2, 3, 4};
 
@@ -132,6 +152,21 @@ SYSIO_TEST_BEGIN(check_action_data_consumed_test)
       datastream<const char*> unread(buf, sizeof(buf));
       check_action_data_consumed(unread);
    });
+SYSIO_TEST_END
+
+SYSIO_TEST_BEGIN(reject_undefined_action_test)
+   // Returns for the chain's own actions on `sysio`.
+   for (const name action : {"newaccount"_n, "setcode"_n, "setabi"_n, "updateauth"_n, "deleteauth"_n, "linkauth"_n,
+                             "unlinkauth"_n, "onblock"_n}) {
+      reject_undefined_action(system_account, action);
+   }
+
+   // Fails everything else, on `sysio` and elsewhere.
+   CHECK_ASSERT(undefined_action_message, []() { reject_undefined_action(system_account, "nosuchact"_n); });
+   CHECK_ASSERT(undefined_action_message, []() { reject_undefined_action(system_account, "transfer"_n); });
+   CHECK_ASSERT(undefined_action_message, []() { reject_undefined_action(account, "nosuchact"_n); });
+   CHECK_ASSERT(undefined_action_message, []() { reject_undefined_action(account, "onblock"_n); });
+   CHECK_ASSERT(undefined_action_message, []() { reject_undefined_action("sysio.token"_n, "setcode"_n); });
 SYSIO_TEST_END
 
 SYSIO_TEST_BEGIN(dispatch_exact_arguments_test)
@@ -231,6 +266,23 @@ SYSIO_TEST_BEGIN(execute_action_notification_test)
    CHECK_EQUAL(observed.called, true);
 SYSIO_TEST_END
 
+SYSIO_TEST_BEGIN(dispatch_undefined_action_test)
+   reset();
+   set_action_data(0);
+   CHECK_ASSERT(undefined_action_message, []() { dispatch(account, "nosuchact"_n); });
+   CHECK_ASSERT(undefined_action_message, []() { dispatch(account, "onblock"_n); });
+   CHECK_ASSERT(undefined_action_message, []() { dispatch(system_account, "nosuchact"_n); });
+
+   // On `sysio`, an action the chain handles itself needs no handler.
+   dispatch(system_account, "onblock"_n);
+   dispatch(system_account, "newaccount"_n);
+   CHECK_EQUAL(observed.called, false);
+
+   // A notification of another contract's action reaches no handler under SYSIO_DISPATCH.
+   apply(account.value, "sysio.token"_n.value, "nosuchact"_n.value);
+   CHECK_EQUAL(observed.called, false);
+SYSIO_TEST_END
+
 int main(int argc, char* argv[]) {
    bool verbose = false;
    if (argc >= 2 && std::strcmp(argv[1], "-v") == 0) {
@@ -248,10 +300,12 @@ int main(int argc, char* argv[]) {
    });
 
    SYSIO_TEST(check_action_data_consumed_test);
+   SYSIO_TEST(reject_undefined_action_test);
    SYSIO_TEST(dispatch_exact_arguments_test);
    SYSIO_TEST(dispatch_trailing_bytes_test);
    SYSIO_TEST(dispatch_binary_extension_test);
    SYSIO_TEST(dispatch_ignore_parameter_test);
    SYSIO_TEST(execute_action_notification_test);
+   SYSIO_TEST(dispatch_undefined_action_test);
    return has_failed();
 }

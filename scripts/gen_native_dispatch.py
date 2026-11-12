@@ -10,7 +10,8 @@ Unlike SYSIO_DISPATCH, this generator:
   - Supports actions spread across multiple classes (e.g. sysio.system)
 
 Like the WASM dispatcher, the generated apply() fails an action whose data holds bytes after its
-arguments (sysio::internal_use_do_not_use::unpack_action_arguments).
+arguments (sysio::internal_use_do_not_use::unpack_action_arguments) and an action name the ABI does
+not list (sysio::reject_undefined_action).
 
 Usage:
   python3 gen_native_dispatch.py --abi sysio.bios.abi \
@@ -137,6 +138,9 @@ def main():
         '      if (code == receiver) {\n'
         '         switch (action) {\n'
         f'{case_block}\n'
+        '         default:\n'
+        '            sysio::reject_undefined_action(sysio::name(receiver), sysio::name(action));\n'
+        '            break;\n'
         '         }\n'
         '      }\n'
         '   }\n'

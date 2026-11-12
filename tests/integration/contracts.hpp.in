@@ -18,6 +18,7 @@ namespace sysio::testing {
       static std::vector<char>    action_data_macro_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/action_data_macro_tests.abi"); }
       static std::vector<uint8_t> action_data_route_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/action_data_route_tests.wasm"); }
       static std::vector<char>    action_data_route_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/action_data_route_tests.abi"); }
+      static std::vector<uint8_t> action_data_notify_only_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/action_data_notify_only.wasm"); }
 
       static std::vector<uint8_t> transfer_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../unit/test_contracts/transfer_contract.wasm"); }
       static std::vector<char>    transfer_abi() { return read_abi("${CMAKE_BINARY_DIR}/../unit/test_contracts/transfer_contract.abi"); }
