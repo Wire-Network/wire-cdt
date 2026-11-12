@@ -14,6 +14,11 @@ add_native_contract(
    SOURCES ../toolchain/compile-pass/integer_type_aliases.cpp
 )
 
+add_native_contract(
+   TARGET datastream_header_native
+   SOURCES ../toolchain/compile-pass/datastream_header.cpp
+)
+
 # A forced header must not introduce pedantic errors in consumers. Limit these
 # diagnostics to the regression source, leaving unrelated sysiolib sources alone.
 set_source_files_properties(../toolchain/compile-pass/integer_type_aliases.cpp
