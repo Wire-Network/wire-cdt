@@ -12,6 +12,19 @@ namespace sysio {
     * @brief Defines variable length integer type which provides more efficient serialization
     */
 
+   /// @cond IMPLEMENTATIONS
+   namespace detail::varint {
+      /// Bits of each encoded byte that carry the value.
+      inline constexpr uint8_t payload_mask = 0x7f;
+      /// Set on every encoded byte that is followed by another byte of the same value.
+      inline constexpr uint8_t continuation_bit = 0x80;
+      /// Value bits carried by each encoded byte.
+      inline constexpr uint8_t bits_per_byte = 7;
+      /// Width of an `unsigned_int`. Decoding ends once a byte has supplied bits at or beyond this width.
+      inline constexpr uint8_t unsigned_int_bits = 32;
+   } // namespace detail::varint
+   /// @endcond
+
    /**
     *  Variable Length Unsigned Integer. This provides more efficient serialization of 32-bit unsigned int.
     *  It serialuzes a 32-bit unsigned integer in as few bytes as possible
@@ -216,20 +229,26 @@ namespace sysio {
        /**
         *  Deserialize an unsigned_int object
         *
+        *  Reads the value the way the node reads it: at most five bytes, so a value ends after its fifth byte
+        *  whatever that byte's continuation bit says, and bits beyond the 32nd are discarded. Any byte string
+        *  therefore decodes to the same value, and leaves the stream at the same position, in a contract as in
+        *  the node.
+        *
         *  @param ds - The stream to read
         *  @param vi - The destination for deserialized value
         *  @tparam DataStream - Type of datastream
         *  @return DataStream& - Reference to the datastream
+        *  @pre `ds` holds the encoded bytes; reading past its end fails the stream's own bounds check
         */
        template<typename DataStream>
        friend DataStream& operator >> ( DataStream& ds, unsigned_int& vi ){
-         uint64_t v = 0; char b = 0; uint8_t by = 0;
+         uint32_t v = 0; char b = 0; uint8_t by = 0;
          do {
             ds.get(b);
-            v |= uint32_t(uint8_t(b) & 0x7f) << by;
-            by += 7;
-         } while( uint8_t(b) & 0x80 );
-         vi.value = static_cast<uint32_t>(v);
+            v |= uint32_t(uint8_t(b) & detail::varint::payload_mask) << by;
+            by += detail::varint::bits_per_byte;
+         } while( (uint8_t(b) & detail::varint::continuation_bit) && by < detail::varint::unsigned_int_bits );
+         vi.value = v;
          return ds;
        }
 
