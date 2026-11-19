@@ -81,7 +81,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu24]
+        platform: [ubuntu24, ubuntu26]
+        # ubuntu26 runs on master pushes, release tags and manual dispatches; pull requests and release branch pushes
+        # exclude it. An include naming an excluded platform would add it back, so ubuntu26 must not get one.
+        exclude:
+          - platform: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' && github.event_name != 'workflow_dispatch' && 'ubuntu26' || '' }}
     runs-on: ubuntu-24.04
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
     env:
@@ -137,8 +141,7 @@ jobs:
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-
         - name: Build
           run: |
-            export CC=/usr/bin/clang-18
-            export CXX=/usr/bin/clang++-18
+            # CC and CXX come from the platform image.
             export CCACHE_DIR="$PWD/.ccache"
             # VCPKG_BINARY_SOURCES only works as an environment variable: vcpkg.cmake
             # consumes no -D of that name, so the previous -D form silently did nothing

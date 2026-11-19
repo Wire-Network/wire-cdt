@@ -3,6 +3,7 @@
 > **Supported platforms:**
 >
 > - Ubuntu 24.04 LTS on x86_64
+> - Ubuntu 26.04 LTS on x86_64
 > - macOS on Apple Silicon
 >
 > Earlier Ubuntu versions are not supported for building Wire CDT from source.
@@ -25,7 +26,7 @@ git submodule update --init --recursive
 
 ## Install Dependencies
 
-Wire CDT builds with Clang, CMake, Ninja, and vcpkg. The Linux CI builder uses the LLVM 18 packages from the Ubuntu 24.04 `apt.llvm.org` Noble repository; using the same Linux toolchain locally keeps vcpkg binary-cache ABI keys aligned with CI. The macOS CI builder uses the Xcode Command Line Tools on Apple Silicon.
+Wire CDT builds with Clang, CMake, Ninja, and vcpkg. The Ubuntu 24.04 CI builder uses the LLVM 18 packages from the `apt.llvm.org` Noble repository; using the same Linux toolchain locally keeps vcpkg binary-cache ABI keys aligned with CI. The Ubuntu 26.04 CI builder uses the distribution's Clang 21. The macOS CI builder uses the Xcode Command Line Tools on Apple Silicon.
 
 ### Ubuntu 24.04 x86_64
 
@@ -36,6 +37,7 @@ sudo apt-get install -y \
   ccache \
   cmake \
   curl \
+  file \
   git \
   gnupg \
   jq \
@@ -92,6 +94,41 @@ Optional Python helper:
 python3 -m pip install pygments
 ```
 
+### Ubuntu 26.04 x86_64
+
+Clang 21 comes from the Ubuntu archive; no extra package source is needed.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  build-essential \
+  ccache \
+  clang-21 \
+  clang-tools-21 \
+  cmake \
+  curl \
+  file \
+  git \
+  jq \
+  libcurl4-openssl-dev \
+  libedit-dev \
+  libffi-dev \
+  libgmp-dev \
+  libncurses-dev \
+  libssl-dev \
+  libxml2-dev \
+  libzstd-dev \
+  ninja-build \
+  python3 \
+  python3-dev \
+  python3-numpy \
+  unzip \
+  wget \
+  zip \
+  zlib1g-dev \
+  zstd
+```
+
 ### macOS Apple Silicon
 
 Install Xcode Command Line Tools and Homebrew dependencies:
@@ -129,6 +166,27 @@ From the repository root:
 ```bash
 export CC=/usr/bin/clang-18
 export CXX=/usr/bin/clang++-18
+export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
+export VCPKG_TARGET_TRIPLET=x64-linux-release
+export VCPKG_HOST_TRIPLET=x64-linux-release
+export VCPKG_OVERLAY_TRIPLETS="$PWD/.github/vcpkg-triplets"
+
+cmake -B build -S . -G Ninja \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM" \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
+  -DVCPKG_HOST_TRIPLET="$VCPKG_HOST_TRIPLET" \
+  -DVCPKG_OVERLAY_TRIPLETS="$VCPKG_OVERLAY_TRIPLETS"
+```
+
+### Ubuntu 26.04 x86_64
+
+```bash
+export CC=/usr/bin/clang-21
+export CXX=/usr/bin/clang++-21
 export CMAKE_MAKE_PROGRAM=/usr/bin/ninja
 export VCPKG_TARGET_TRIPLET=x64-linux-release
 export VCPKG_HOST_TRIPLET=x64-linux-release
