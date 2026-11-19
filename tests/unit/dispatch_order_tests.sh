@@ -35,15 +35,15 @@ desc() {
 EOF
 }
 
-# Each descriptor lists its handlers out of order. The second repeats the first's wildcard
-# transfer handler, which must appear once.
+# Each descriptor lists its handlers out of order. Both declare the alpha action and the wildcard transfer
+# notification with different handlers: the descriptor merged first keeps its own, and each is listed once.
 TU_A_ACTIONS='{"name": "zeta", "handler": "act_zeta"}, {"name": "alpha", "handler": "act_alpha"}'
 TU_A_NOTIFIES='{"name": "transfer", "contract": "*", "handler": "on_transfer_any"},
                {"name": "transfer", "contract": "sysio.token", "handler": "on_transfer_token"},
                {"name": "issue", "contract": "*", "handler": "on_issue_any"}'
 TU_B_ACTIONS='{"name": "mid", "handler": "act_mid"}, {"name": "alpha", "handler": "act_alpha_dup"}'
 TU_B_NOTIFIES='{"name": "transfer", "contract": "alice", "handler": "on_transfer_alice"},
-               {"name": "transfer", "contract": "*", "handler": "on_transfer_any"},
+               {"name": "transfer", "contract": "*", "handler": "on_transfer_any_dup"},
                {"name": "issue", "contract": "bob", "handler": "on_issue_bob"}'
 
 # cdt-codegen merges descriptors in filename order, so the two layouts swap which one goes first.
@@ -59,7 +59,7 @@ dispatch_order() {
     grep -E '^ *(case "|default:|if \(a ==|else if \(a ==|(act|on)_[a-z_]+\(r, c\);)' "$1" | sed -E 's/^ +//'
 }
 
-# act_alpha belongs to the descriptor merged first, so the expected order differs only there.
+# $1 and $2 are the alpha and wildcard transfer handlers of the descriptor merged first.
 expected() {
     cat <<EOF
 case "alpha"_n.value:
@@ -80,12 +80,12 @@ on_transfer_alice(r, c);
 case "sysio.token"_n.value:
 on_transfer_token(r, c);
 default:
-on_transfer_any(r, c);
+$2(r, c);
 EOF
 }
 
 check_order() {
-    local label="$1" first_alpha="$2"
+    local label="$1" first_alpha="$2" first_transfer_any="$3"
     local dispatch="$WORK/${label}.dispatch.cpp"
     if ! "$CODEGEN" --finalize --contract order_probe \
             --desc-file "$WORK/${label}/1_"*.desc --desc-file "$WORK/${label}/2_"*.desc \
@@ -98,8 +98,8 @@ check_order() {
         fail "${label}: no dispatch source generated"
         return
     fi
-    if diff -u <(expected "$first_alpha") <(dispatch_order "$dispatch") > "$WORK/${label}.diff"; then
-        pass "${label}: handlers in name order, wildcard last in each notify group"
+    if diff -u <(expected "$first_alpha" "$first_transfer_any") <(dispatch_order "$dispatch") > "$WORK/${label}.diff"; then
+        pass "${label}: handlers in name order, wildcard last, first-merged handler kept"
     else
         fail "${label}: unexpected handler order"
         sed 's/^/      /' "$WORK/${label}.diff"
@@ -107,8 +107,8 @@ check_order() {
 }
 
 echo "Dispatch handler order"
-check_order a_first act_alpha
-check_order b_first act_alpha_dup
+check_order a_first act_alpha on_transfer_any
+check_order b_first act_alpha_dup on_transfer_any_dup
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
