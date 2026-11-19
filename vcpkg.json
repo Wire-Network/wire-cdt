@@ -30,7 +30,7 @@
   "overrides": [
     {
       "name": "llvm",
-      "version": "18.1.6#5"
+      "version": "18.1.6#6"
     },
     {
       "name": "protobuf",

@@ -50,3 +50,7 @@ RUN apt-get update && apt-get upgrade -y && \
     rpm                  \
     autoconf automake libtool
 RUN mkdir -p /opt/llvm && chmod 777 /opt/llvm
+
+ENV CC=/usr/bin/clang-18
+ENV CXX=/usr/bin/clang++-18
+ENV CMAKE_MAKE_PROGRAM=/usr/bin/ninja

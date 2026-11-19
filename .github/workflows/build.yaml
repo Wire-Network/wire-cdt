@@ -38,7 +38,9 @@ jobs:
     name: Discover Platforms
     runs-on: ubuntu-24.04
     outputs:
-      missing-platforms: ${{steps.discover.outputs.missing-platforms}}
+      # The platforms this run builds images for and tests on; `p` maps every platform to its image.
+      missing-platforms: ${{steps.select.outputs.missing-platforms}}
+      platforms: ${{steps.select.outputs.platforms}}
       p: ${{steps.discover.outputs.platforms}}
     steps:
       - name: Discover Platforms
@@ -48,6 +50,19 @@ jobs:
           platform-file: .cicd/platforms.json
           password: ${{secrets.GH_TOKEN}}
           package-name: builders-cdt
+      - name: Select platforms
+        id: select
+        env:
+          ALL_PLATFORMS: ${{ github.ref == 'refs/heads/master' || github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' }}
+          DISCOVERED: ${{ steps.discover.outputs.platforms }}
+          MISSING: ${{ steps.discover.outputs.missing-platforms }}
+        run: |
+          # ubuntu26 runs on master pushes, release tags and manual dispatches. Pull requests and release branch
+          # pushes skip it, its image build included.
+          skip='[]'
+          [[ "$ALL_PLATFORMS" == true ]] || skip='["ubuntu26"]'
+          echo "platforms=$(jq -c --argjson skip "$skip" 'keys - $skip' <<<"$DISCOVERED")" >> "$GITHUB_OUTPUT"
+          echo "missing-platforms=$(jq -c --argjson skip "$skip" '. - $skip' <<<"$MISSING")" >> "$GITHUB_OUTPUT"
   build-platforms:
     name: Build Platforms
     needs: discover
@@ -81,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu24]
+        platform: ${{fromJSON(needs.discover.outputs.platforms)}}
     runs-on: ubuntu-24.04
     container: ${{fromJSON(needs.discover.outputs.p)[matrix.platform].image}}
     env:
@@ -137,8 +152,7 @@ jobs:
               ${{ runner.os }}-${{ matrix.platform }}-vcpkg-binary-
         - name: Build
           run: |
-            export CC=/usr/bin/clang-18
-            export CXX=/usr/bin/clang++-18
+            # CC and CXX come from the platform image.
             export CCACHE_DIR="$PWD/.ccache"
             # VCPKG_BINARY_SOURCES only works as an environment variable: vcpkg.cmake
             # consumes no -D of that name, so the previous -D form silently did nothing
