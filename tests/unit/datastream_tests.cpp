@@ -389,9 +389,13 @@ SYSIO_TEST_BEGIN(datastream_stream_test)
    // std::basic_string<uint8_t>
    ds.seekp(0);
    fill(begin(datastream_buffer), end(datastream_buffer), 0);
-   static const std::basic_string<uint8_t> inputBasicString {0, 1, 2, 3, 4, 5};
+   static const std::basic_string<uint8_t> inputBasicString {0, 1, 2, 3, 128, 255};
    std::basic_string<uint8_t> outputBasicString{};
    ds << inputBasicString;
+   /// Byte strings retain the same length-prefixed wire encoding through the generic overload.
+   constexpr uint8_t expectedByteString[] {6, 0, 1, 2, 3, 128, 255};
+   CHECK_EQUAL( ds.tellp(), sizeof(expectedByteString) )
+   CHECK_EQUAL( memcmp(datastream_buffer, expectedByteString, sizeof(expectedByteString)), 0 )
    ds.seekp(0);
    ds >> outputBasicString;
    CHECK_EQUAL( inputBasicString, outputBasicString )
@@ -402,6 +406,8 @@ SYSIO_TEST_BEGIN(datastream_stream_test)
    fill(begin(datastream_buffer), end(datastream_buffer), 0);
    static const std::basic_string<uint8_t> emptyBasicString;
    ds << emptyBasicString;
+   CHECK_EQUAL( ds.tellp(), 1 )
+   CHECK_EQUAL( datastream_buffer[0], 0 )
    ds.seekp(0);
    ds >> outputBasicString;
    CHECK_EQUAL( emptyBasicString, outputBasicString )
