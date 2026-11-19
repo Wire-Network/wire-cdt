@@ -209,7 +209,7 @@ public:
       } else if (decl.isSysioNotify() && is_sysio_contract(decl, contract_name)) {
          name = generation_utils::get_notify_pair(decl);
          auto first = name.substr(0, name.find("::"));
-         if (first != "*")
+         if (first != wasm_notify::any_contract)
             validate_name(first, [&](auto s) {
                CDT_ERROR("codegen_error", decl->getLocation(), std::string("name (")+s+") is invalid");
             });

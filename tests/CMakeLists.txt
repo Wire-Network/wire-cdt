@@ -81,6 +81,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/abimerge_tests.sh ${CMAKE_BINARY
 add_test(NAME abimerge_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/abimerge_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 set_property(TEST abimerge_tests PROPERTY LABELS unit_tests)
 
+# Handler order in the generated apply(): actions by name, notify groups with the wildcard last.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/dispatch_order_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/dispatch_order_tests.sh COPYONLY)
+add_test(NAME dispatch_order_tests COMMAND ${CMAKE_BINARY_DIR}/tests/unit/dispatch_order_tests.sh "${CMAKE_BINARY_DIR}/bin" WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TEST dispatch_order_tests PROPERTY LABELS unit_tests)
+
 # Staged-header hygiene — every header under <build>/include must still exist in
 # libraries/. Catches a stale copy left behind when a source header is deleted.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unit/staged_headers_tests.sh ${CMAKE_BINARY_DIR}/tests/unit/staged_headers_tests.sh COPYONLY)
