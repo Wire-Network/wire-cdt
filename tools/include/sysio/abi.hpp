@@ -3,6 +3,7 @@
 #include <iostream>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -265,39 +266,31 @@ struct abi_error_message {
    std::string error_msg;
 };
 
+/// A `[[sysio::action]]` handler. Ordered by action name alone, so a set keeps one handler per action.
 struct wasm_action {
    std::string name;
    std::string handler;
+   bool operator<(const wasm_action& a) const { return name < a.name; }
 };
 
+/// A `[[sysio::on_notify("contract::action")]]` handler.
 struct wasm_notify {
+   /// The `contract` of an `on_notify("*::action")` handler, which receives the action from any contract.
+   static constexpr std::string_view any_contract = "*";
+
    std::string name;
    std::string contract;
    std::string handler;
+
+   /// Ordered by action name, then contract, with `any_contract` after every named contract of that action.
+   bool operator<(const wasm_notify& n) const {
+      const bool any   = contract == any_contract;
+      const bool n_any = n.contract == any_contract;
+      if (name == n.name && any != n_any)
+         return n_any;
+      return std::tie(name, contract) < std::tie(n.name, n.contract);
+   }
 };
-
-namespace std {
-   template<>
-   struct less<wasm_action> {
-      bool operator()(const wasm_action& lhs, const wasm_action& rhs) const {
-         return lhs.name < rhs.name;
-      }
-   };
-
-   template<>
-   struct less<wasm_notify> {
-      bool operator()(const wasm_notify& lhs, const wasm_notify& rhs) const {
-         if (lhs.name == rhs.name) {
-            if (lhs.contract == "*" && rhs.contract != "*") {
-               return false;
-            } else if (lhs.contract != "*" && rhs.contract == "*") {
-               return true;
-            }
-         }
-         return std::tie(lhs.name, lhs.contract) < std::tie(rhs.name, rhs.contract);
-      }
-   };
-}
 
 struct abi_enum_value {
    std::string name;

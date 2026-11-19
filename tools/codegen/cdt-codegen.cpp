@@ -337,7 +337,7 @@ static void write_sysio_dispatch(std::ostream& ofs, const std::set<wasm_action>&
             ofs << "        switch (c) {\n";
             action = wn.name;
          }
-         if (wn.contract != "*")
+         if (wn.contract != wasm_notify::any_contract)
             ofs << "        case \"" << wn.contract << "\"_n.value:\n";
          else
             ofs << "        default:\n";
